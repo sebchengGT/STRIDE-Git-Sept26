@@ -24,8 +24,10 @@ library(readr)
 library(geojsonio)
 library(shinyWidgets) # For pickerInput
 
+
 df <- read_parquet("School-Level-v2.parquet")
 uni <- read_parquet("School-Unique-v2.parquet")
+buildablecsv <- read.csv("Buildable_LatLong.csv") 
 IndALL <- read_parquet("IndDistance.ALL2.parquet")
 ind <- read_parquet("SHS-Industry.parquet")
 SDO <- read_parquet("SDOFill.parquet")
@@ -1413,78 +1415,128 @@ server <- function(input, output, session) {
             )
           ))),
       # --- Second Top-Level Tab: Data Explorer (Now a Dropdown Menu) ---
-      nav_panel(
-        title = tags$b("Data Explorer"), # This will be the dropdown title
+      nav_menu(
+        title = tags$b("Data Explorer"),  # Becomes a dropdown
         icon = bs_icon("table"),
-        layout_sidebar(
-          sidebar = sidebar(
-            width = 350,
-            h6("Data Toggles:"),
-            pickerInput(
-              inputId = "DataBuilder_HROD_Region",
-              label = "Select a Region:",
-              choices = sort(unique(uni$Region)),
-              selected = sort(unique(uni$Region)),
-              multiple = TRUE,
-              options = pickerOptions(
-                actionsBox = TRUE,
-                liveSearch = TRUE,
-                header = "Select Categories",
-                title = "No Category Selected",
-                selectedTextFormat = "count > 3",
-                dropupAuto = FALSE, # This tells it NOT to automatically switch direction
-                dropup = FALSE
+        
+        # --- First Child: School Information ---
+        nav_panel(
+          title = "School Information",
+          icon = bs_icon("building"),
+          layout_sidebar(
+            sidebar = sidebar(
+              width = 350,
+              h6("Data Toggles:"),
+              pickerInput(
+                inputId = "DataBuilder_HROD_Region",
+                label = "Select a Region:",
+                choices = sort(unique(uni$Region)),
+                selected = sort(unique(uni$Region)),
+                multiple = TRUE,
+                options = pickerOptions(
+                  actionsBox = TRUE,
+                  liveSearch = TRUE,
+                  header = "Select Categories",
+                  title = "No Category Selected",
+                  selectedTextFormat = "count > 3",
+                  dropupAuto = FALSE,
+                  dropup = FALSE
+                )
               ),
-              choicesOpt = list()
+              uiOutput("DataBuilder_HROD_SDO"), # Existing SDO Selection
+              
+              # --- School Info Toggles ---
+              pickerInput("School_Data_Toggles", strong("School Information Data Toggles"), 
+                          choices = c("School Size Typology" = "School.Size.Typology", 
+                                      "Curricular Offering" = "Modified.COC"),
+                          multiple = TRUE, options = list(`actions-box` = TRUE)),
+              
+              # Teaching Data Toggles
+              pickerInput("Teaching_Data_Toggles", strong("Teaching Data Toggles"), 
+                          choices = c("Total Teachers" = "TotalTeachers", 
+                                      "Teacher Excess" = "Total.Excess", 
+                                      "Teacher Shortage" = "Total.Shortage"),
+                          multiple = TRUE, options = list(`actions-box` = TRUE)),
+              
+              # Non-teaching Data Toggles
+              pickerInput("NTP_Data_Toggles", strong("Non-teaching Data Toggles"), 
+                          choices = c("COS" = "Outlier.Status", 
+                                      "AOII Clustering Status" = "Clustering.Status"),
+                          multiple = TRUE, options = list(`actions-box` = TRUE)),
+              
+              # Enrolment Data Toggles
+              pickerInput("Enrolment_Data_Toggles", strong("Enrolment Data Toggles"), 
+                          choices = c("Total Enrolment" = "TotalEnrolment", "Kinder" = "Kinder", 
+                                      "Grade 1" = "G1", "Grade 2" = "G2", "Grade 3" = "G3", 
+                                      "Grade 4" = "G4", "Grade 5" = "G5", "Grade 6" = "G6", 
+                                      "Grade 7" = "G7", "Grade 8" = "G8", 
+                                      "Grade 9" = "G9", "Grade 10" = "G10", 
+                                      "Grade 11" = "G11", "Grade 12" = "G12"),
+                          multiple = TRUE, options = list(`actions-box` = TRUE)),
+              
+              # Specialization Data Toggles
+              pickerInput("Specialization_Data_Toggles", strong("Specialization Data Toggles"), 
+                          choices = c("English" = "English", "Mathematics" = "Mathematics", 
+                                      "Science" = "Science", 
+                                      "Biological Sciences" = "Biological.Sciences", 
+                                      "Physical Sciences" = "Physical.Sciences"),
+                          multiple = TRUE, options = list(`actions-box` = TRUE)),
+              
+              # Infrastructure Data Toggles
+              pickerInput("EFD_Data_Toggles", strong("Infrastructure Data Toggles"), 
+                          choices = c("Number of Buildings" = "Buildings", 
+                                      "Instructional Rooms" = "Instructional.Rooms.2023.2024", 
+                                      "Classroom Requirement" = "Classroom.Requirement", 
+                                      "Estimated Classroom Shortage" = "Est.CS", 
+                                      "Buildable Space" = "Buidable_space", 
+                                      "Congestion Index" = "Congestion.Index", 
+                                      "Shifting" = "Shifting", 
+                                      "Ownership Type" = "OwnershipType", 
+                                      "Electricity Source" = "ElectricitySource", 
+                                      "Water Source" = "WaterSource", 
+                                      "For Major Repairs" = "Major.Repair.2023.2024", 
+                                      "School Building Priority Index" = "SBPI", 
+                                      "Total Seats" = "Total.Seats.2023.2024", 
+                                      "Total Seats Shortage" = "Total.Seats.Shortage.2023.2024"),
+                          multiple = TRUE, options = list(`actions-box` = TRUE))
             ),
-            uiOutput("DataBuilder_HROD_SDO"), # Existing SDO Selection
-            # School Information Data Toggles
-            pickerInput("School_Data_Toggles", strong("School Information Data Toggles"), 
-                        choices = c("School Size Typology" = "School.Size.Typology", "Curricular Offering" = "Modified.COC"),
-                        multiple = TRUE, options = list(`actions-box` = TRUE)),
             
-            # Teaching Data Toggles
-            pickerInput("Teaching_Data_Toggles", strong("Teaching Data Toggles"), 
-                        choices = c("Total Teachers" = "TotalTeachers", "Teacher Excess" = "Total.Excess", "Teacher Shortage" = "Total.Shortage"),
-                        multiple = TRUE, options = list(`actions-box` = TRUE)),
-            
-            # Non-teaching Data Toggles
-            pickerInput("NTP_Data_Toggles", strong("Non-teaching Data Toggles"), 
-                        choices = c("COS" = "Outlier.Status", "AOII Clustering Status" = "Clustering.Status"),
-                        multiple = TRUE, options = list(`actions-box` = TRUE)),
-            
-            # Enrolment Data Toggles
-            pickerInput("Enrolment_Data_Toggles", strong("Enrolment Data Toggles"), 
-                        choices = c("Total Enrolment" = "TotalEnrolment", "Kinder" = "Kinder", "Grade 1" = "G1", "Grade 2" = "G2", "Grade 3" = "G3", 
-                                    "Grade 4" = "G4", "Grade 5" = "G5", "Grade 6" = "G6", "Grade 7" = "G7", "Grade 8" = "G8", 
-                                    "Grade 9" = "G9", "Grade 10" = "G10", "Grade 11" = "G11", "Grade 12" = "G12"),
-                        multiple = TRUE, options = list(`actions-box` = TRUE)),
-            
-            # Specialization Data Toggles
-            pickerInput("Specialization_Data_Toggles", strong("Specialization Data Toggles"), 
-                        choices = c("English" = "English", "Mathematics" = "Mathematics", "Science" = "Science", 
-                                    "Biological Sciences" = "Biological.Sciences", "Physical Sciences" = "Physical.Sciences"),
-                        multiple = TRUE, options = list(`actions-box` = TRUE)),
-            
-            # Infrastructure Data Toggles
-            pickerInput("EFD_Data_Toggles", strong("Infrastructure Data Toggles"), 
-                        choices = c("Number of Buildings" = "Buildings", "Instructional Rooms" = "Instructional.Rooms.2023.2024", 
-                                    "Classroom Requirement" = "Classroom.Requirement", "Estimated Classroom Shortage" = "Est.CS", 
-                                    "Buildable Space" = "Buidable_space", "Congestion Index" = "Congestion.Index", "Shifting" = "Shifting", 
-                                    "Ownership Type" = "OwnershipType", "Electricity Source" = "ElectricitySource", "Water Source" = "WaterSource", 
-                                    "For Major Repairs" = "Major.Repair.2023.2024", "School Building Priority Index" = "SBPI", 
-                                    "Total Seats" = "Total.Seats.2023.2024", "Total Seats Shortage" = "Total.Seats.Shortage.2023.2024"),
-                        multiple = TRUE, options = list(`actions-box` = TRUE))
-          ),
-          layout_columns(
-            card(
-              card_header(strong("HROD Data Panel")), # Renamed for clarity
-              dataTableOutput("HROD_Table")
+            layout_columns(
+              card(
+                card_header(strong("HROD Data Panel")),
+                dataTableOutput("HROD_Table")
+              ),
+              col_widths = c(12,12)
+            )
+          )
+        ),
+        
+        # --- Second Child: Third Level Dashboard ---
+        nav_panel(
+          title = "Third Level Dashboard",
+          icon = bs_icon("bar-chart-line"),
+          layout_sidebar(
+            sidebar = sidebar(
+              width = 300,
+              h6("Filters"),
+              pickerInput(
+                inputId = "StrandFilter",
+                label = "Select Strand:",
+                choices = c("STEM", "ABM", "HUMSS", "GAS", "TVL"), # example strands
+                multiple = TRUE,
+                options = list(`actions-box` = TRUE)
+              )
             ),
-            col_widths = c(12,12)
+            layout_columns(
+              card(
+                card_header(strong("Third Level Dashboard Output")),
+                plotOutput("ThirdLevelPlot") # placeholder for your viz
+              )
+            )
           )
         )
       ),
+      
       # --- Quick School Search ---
       nav_panel(
         title = tags$b("Quick School Search"),
@@ -1557,7 +1609,8 @@ server <- function(input, output, session) {
                   "Classroom Inventory",
                   "Learner Congestion",
                   "Industries",
-                  "Facilities"
+                  "Facilities",
+                  "LMS"
                 ),
                 selected = "Teaching Deployment"
               )
@@ -1602,11 +1655,13 @@ server <- function(input, output, session) {
   })
   
   # Reactive expression to generate the main panel content
+  # Reactive expression to generate the main panel content
   output$dynamic_resource_panel <- renderUI({
     
     selected_resource_type <- input$resource_type_selection
     
     if (selected_resource_type == "Teaching Deployment") {
+      
       tagList(
         h3("Teaching Deployment Overview"),
         hr(),
@@ -1659,7 +1714,9 @@ server <- function(input, output, session) {
           col_widths = c(4, 8, 12)
         )
       )
+      
     } else if (selected_resource_type == "Non-teaching Deployment") {
+      
       tagList(
         h3("Non-teaching Deployment Overview"),
         hr(),
@@ -1725,7 +1782,9 @@ server <- function(input, output, session) {
           col_widths = c(12,5,7)
         )
       )
+      
     } else if (selected_resource_type == "Classroom Inventory") {
+      
       tagList(
         h3("Classroom Inventory Overview"),
         hr(),
@@ -1755,7 +1814,9 @@ server <- function(input, output, session) {
           )
         )
       )
+      
     } else if (selected_resource_type == "Industries") {
+      
       tagList(
         h3("Industries Overview"),
         hr(),
@@ -1836,11 +1897,13 @@ server <- function(input, output, session) {
           col_widths = c(4, 8, 6, 6, 12)
         )
       )
+      
     } else if (selected_resource_type == "Facilities") {
+      
       tagList(
         h3("Education Facilities Mapping"),
         layout_columns(
-          col_widths = c(6, 6), # Adjust column widths to control horizontal spacing
+          col_widths = c(6, 6), 
           selectInput("EFD_Type", "Select Type",
                       choices = c("New Construction","Electrification","Health","QRF","LMS","ALS-CLC","Gabaldon", "Repairs"),
                       selected = "New Construction"
@@ -1861,7 +1924,9 @@ server <- function(input, output, session) {
           )
         )
       )
+      
     } else if (selected_resource_type == "Learner Congestion") {
+      
       tagList(
         h3("Learner Congestion Mapping (SY 2023-2024)"),
         hr(),
@@ -1876,6 +1941,26 @@ server <- function(input, output, session) {
             card_header(strong("School Mapping")),
             leafletOutput("CongestMapping", height = 800)
           )
+        )
+      )
+      
+    } else if (selected_resource_type == "LMS") {
+      
+      tagList(
+        h3("Last Mile Schools (LMS) Overview"),
+        hr(),
+        layout_columns(
+          card(
+            full_screen = TRUE,
+            card_header(strong("List of Last Mile Schools")),
+            dataTableOutput("LMSTable")
+          ),
+          card(
+            full_screen = TRUE,
+            card_header(strong("LMS Mapping")),
+            leafletOutput("LMSMapping", height = 800)
+          ),
+          col_widths = c(6,6)
         )
       )
     }
@@ -7480,29 +7565,38 @@ server <- function(input, output, session) {
     })
     
     output$SHSMapping <- renderLeaflet({
-      domain = c("Manufacturing and Engineering","Hospitality and Tourism","Professional/Private Services","Public Administration","Business and Finance","Agriculture and Agri-business")
-      p = colorFactor(palette = c("red","orange","violet","green","blue","magenta"), levels = as.factor(domain), ordered = F)
+      domain <- c("Manufacturing and Engineering",
+                  "Hospitality and Tourism",
+                  "Professional/Private Services",
+                  "Public Administration",
+                  "Business and Finance",
+                  "Agriculture and Agri-business")
+      
+      p <- colorFactor(
+        palette = c("red", "orange", "violet", "green", "blue", "magenta"),
+        levels = domain
+      )
+      
       leaflet() %>%
-        setView(lng = 122, lat = 13, zoom =6) %>%
+        setView(lng = 122, lat = 13, zoom = 6) %>%
         addProviderTiles(providers$Esri.WorldImagery, group = "Satellite") %>% 
         addProviderTiles(providers$CartoDB.Positron, group = "Road Map") %>%  
-        addMeasure(position = "topright", primaryLengthUnit = "kilometers", primaryAreaUnit = "sqmeters") %>% 
-        addLegend(position = "bottomright", title = "Legend", pal = p, values = c("Manufacturing and Engineering","Hospitality and Tourism","Professional/Private Services","Public Administration","Business and Finance","Agriculture and Agri-business")) %>% 
+        addMeasure(
+          position = "topright",
+          primaryLengthUnit = "kilometers",
+          primaryAreaUnit = "sqmeters"
+        ) %>% 
+        addLegend(
+          position = "bottomright",
+          title = "Industry Type",
+          pal = p,
+          values = domain
+        ) %>%
         addLayersControl(
-          baseGroups = c("Satellite","Road Map")
+          baseGroups = c("Satellite", "Road Map")
         )
     })
     
-    output$SHSMapping <- renderLeaflet({
-      leaflet() %>%
-        setView(lng = 122, lat = 13, zoom =6) %>%
-        addProviderTiles(providers$Esri.WorldImagery, group = "Satellite") %>% 
-        addProviderTiles(providers$CartoDB.Positron, group = "Road Map") %>% 
-        addMeasure(position = "topright", primaryLengthUnit = "kilometers", primaryAreaUnit = "sqmeters") %>%
-        addLayersControl(
-          baseGroups = c("Satellite","Road Map")
-        )
-    })
     
     output$AO2Mapping <- renderLeaflet({
       p = colorFactor(palette = c("red","orange","green"),domain = c("No AO II and PDO I","With at least 1 AO II or PDO I","With AO II and PDO I"), ordered = T)
@@ -7579,6 +7673,61 @@ server <- function(input, output, session) {
           values = c("Not Congested","Moderately Congested","Severely Congested"))
     })
     
+    # --- LMS Table ---
+    output$LMSTable <- renderDataTable({
+      req(buildablecsv)
+      
+      # Filter only schools with available buildable space
+      lms_data <- buildablecsv %>%
+        filter(`Avaiability of Buildable Space
+                (Y/N)` == "Y") %>%
+        select(
+          `NAME OF SCHOOL`,
+          `Avaiability of Buildable Space (Y/N)`,
+          `OTHER REMARKS (Buildable Space)`
+        )
+      
+      datatable(lms_data, options = list(pageLength = 10, scrollX = TRUE))
+    })
+    
+    # --- LMS Map ---
+    output$LMSMapping <- renderLeaflet({
+      req(buildablecsv)
+      
+      # Filter only schools with available buildable space
+      lms_data <- buildablecsv %>%
+        filter(`Avaiability of Buildable Space
+                (Y/N)` %in% c("Y", "N"))   # keep both for map
+      
+      # Define palette based on Y/N
+      pal <- colorFactor(
+        palette = c("green", "red"),
+        domain = c("Y", "N")
+      )
+      
+      leaflet(lms_data) %>%
+        addProviderTiles(providers$CartoDB.Positron) %>%
+        setView(lng = 122, lat = 13, zoom = 6) %>%
+        addCircleMarkers(
+          lng = ~Longitude,
+          lat = ~Latitude,
+          color = ~pal(`Avaiability of Buildable Space
+                        (Y/N)`),
+          label = ~`NAME OF SCHOOL`,
+          radius = 6,
+          fillOpacity = 0.8
+        ) %>%
+        addLegend(
+          position = "bottomright",
+          title = "Buildable Space",
+          pal = pal,
+          values = ~`Avaiability of Buildable Space
+          (Y/N)`,
+          labFormat = labelFormat(transform = function(x) {
+            ifelse(x == "Y", "With Buildable Space", "No Buildable Space")
+          })
+        )
+    })
     
     
     RegRCT <- input$resource_map_region
