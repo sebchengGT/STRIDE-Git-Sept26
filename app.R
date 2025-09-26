@@ -1961,7 +1961,7 @@ server <- function(input, output, session) {
         layout_columns(
           card(
             full_screen = TRUE,
-            card_header(strong("List of Last Mile Schools")),
+            card_header(strong("List of Last Mile Schools (Regional View)")),
             dataTableOutput("LMSTable")
           ),
           card(
@@ -7561,6 +7561,105 @@ server <- function(input, output, session) {
   
   observeEvent(input$Mapping_Run, {
     
+    # --- LMS Table ---
+    output$LMSTable <- renderDataTable({
+      req(buildablecsv)
+      
+      lms_data <- buildablecsv %>%
+        # filter by REGION input
+        filter(REGION == input$resource_map_region) %>%
+        # only those with buildable space available
+        
+        filter(`Avaiability of Buildable Space (Y/N)` == "Y") %>%
+        select(
+          `NAME OF SCHOOL`,
+          `Avaiability of Buildable Space (Y/N)`,
+          `OTHER REMARKS (Buildable Space)`,
+          `NO. OF SITES`,
+          `SCOPE OF WORKS`,
+          `TOTAL CLASSROOMS`
+        )
+      
+      
+      # LD,
+      # `Avaiability of Buildable Space (Y/N)`,
+      # `OTHER REMARKS (Buildable Space)`,
+      # `OTHER DESIGN CONFIGURATION`,
+      # `NO. OF ACADEMIC CLASSROOMS`,
+      # `NO. OF WORKSHOP (equivalent to 2-CL)`,
+      # `NO. OF ICT/COMPUTER LABORATORY (equivalent to 2-CL)`,
+      # `NO. OF SCIENCE LABORATORY (equivalent to 2-CL)`,
+      # `NO. OF AVR (equivalent to 2-CL)`,
+      # `NO. OF HOME ECONOMICS (equivalent to 2-CL)`,
+      # `WITH DEMOLITION? YES/ NO`,
+      # `WITH SITE IMPROVEMENT? YES/ NO`,
+      # `WITH SLOPE PROTECTION? YES/NO`,
+      # `OTHER REMARKS`,
+      # `With Site Development Plan?`,
+      # `With proposal from OTHER SOURCES, including LGUs, NGOs, Private Sector etc)?`,
+      # `Site Ownership`,
+      # `OTHER REMARKS Site Ownership`,
+      # `Viability / Accessibility (Y/N)`,
+      # `OTHER REMARKS Viability / Accessibility`,
+      # `Operational Readiness (Y/N)`,
+      # `OTHER REMARKS Operational Readiness`,
+      # `Implementability of Proposed Scope (Y/N)`,
+      # `OTHER REMARKS Implementability of Proposed Scope`,
+      # `Geotechnical Testing (Y/N)`,
+      # `OTHER REMARKS Geotechnical Testing`,
+      # Longitude,   
+      # Latitude 
+      
+      datatable(
+        lms_data,
+        options = list(pageLength = 10, scrollX = TRUE, fixedColumns = list(leftColumns = 2)),
+        selection = "single",   #allow single row selection
+        extensions = c("FixedColumns") ,
+        callback = JS("window.dispatchEvent(new Event('resize'));")
+      )
+    })
+    
+    # Filter data based on user selections
+    lms_data <- buildablecsv %>%
+      filter(REGION == input$resource_map_region)
+    
+    # Color palette for Buildable Space
+    pal <- colorFactor(
+      palette = c("green", "red"),
+      domain = c("Y", "N")
+    )
+    
+    leafletProxy("LMSMapping", data = lms_data) %>%
+      clearMarkers() %>%
+      clearControls() %>%
+      addAwesomeMarkers(
+        lng = ~Longitude,
+        lat = ~Latitude,
+        label = ~paste0(
+          "<b>", `NAME OF SCHOOL`, "</b><br>",
+          "School ID: ", `SCHOOL ID`, "<br>",
+          "Municipality: ", `MUNICIPALITY/ LOCATION`, "<br>",
+          "Division: ", DIVISION, "<br>",
+          "Region: ", REGION
+        ) %>% lapply(htmltools::HTML),  # ensures HTML formatting works
+        icon = ~makeAwesomeIcon(
+          icon = "graduation-cap",
+          library = "fa",
+          markerColor = ifelse(`Avaiability of Buildable Space (Y/N)` == "Y", "green", "red")
+        ),
+        clusterOptions = markerClusterOptions(disableClusteringAtZoom = 15)
+      ) %>%   # 👈 move pipe up here
+      addLegend(
+        position = "bottomright",
+        title = "Buildable Space",
+        pal = pal,
+        values = lms_data$`Avaiability of Buildable Space (Y/N)`,
+        labFormat = labelFormat(transform = function(x) {
+          ifelse(x == "Y", "No Buildable Space", "With Buildable Space")
+        })
+      )
+    
+    
     output$TeacherShortage_Mapping <- renderLeaflet({
       p = colorFactor(palette = c("red","deepskyblue","green"),domain = c("Shortage","Excess","Balanced"), ordered = T)
       leaflet() %>%
@@ -7682,65 +7781,6 @@ server <- function(input, output, session) {
           values = c("Not Congested","Moderately Congested","Severely Congested"))
     })
     
-    # --- LMS Table ---
-    output$LMSTable <- renderDataTable({
-      req(buildablecsv)
-      
-      lms_data <- buildablecsv %>%
-        # filter by REGION input
-        filter(REGION == input$resource_map_region) %>%
-        # filter by DIVISION input
-        filter(DIVISION == input$Resource_SDO) %>%
-        # only those with buildable space available
-        
-        filter(`Avaiability of Buildable Space (Y/N)` == "Y") %>%
-        select(
-          `NAME OF SCHOOL`,
-          `Avaiability of Buildable Space (Y/N)`,
-          `OTHER REMARKS (Buildable Space)`,
-          LD,
-          `NO. OF SITES`,
-          `SCOPE OF WORKS`,
-          `OTHER DESIGN CONFIGURATION`,
-          `NO. OF ACADEMIC CLASSROOMS`,
-          `NO. OF WORKSHOP (equivalent to 2-CL)`,
-          `NO. OF ICT/COMPUTER LABORATORY (equivalent to 2-CL)`,
-          `NO. OF SCIENCE LABORATORY (equivalent to 2-CL)`,
-          `NO. OF AVR (equivalent to 2-CL)`,
-          `NO. OF HOME ECONOMICS (equivalent to 2-CL)`,
-          `TOTAL CLASSROOMS`,
-          `WITH DEMOLITION? YES/ NO`,
-          `WITH SITE IMPROVEMENT? YES/ NO`,
-          `WITH SLOPE PROTECTION? YES/NO`,
-          `OTHER REMARKS`,
-          `With Site Development Plan?`,
-          `With proposal from OTHER SOURCES, including LGUs, NGOs, Private Sector etc)?`,
-          `Avaiability of Buildable Space (Y/N)`,
-          `OTHER REMARKS (Buildable Space)`,
-          `Site Ownership`,
-          `OTHER REMARKS Site Ownership`,
-          `Viability / Accessibility (Y/N)`,
-          `OTHER REMARKS Viability / Accessibility`,
-          `Operational Readiness (Y/N)`,
-          `OTHER REMARKS Operational Readiness`,
-          `Implementability of Proposed Scope (Y/N)`,
-          `OTHER REMARKS Implementability of Proposed Scope`,
-          `Geotechnical Testing (Y/N)`,
-          `OTHER REMARKS Geotechnical Testing`,
-          Longitude,   
-          Latitude     
-        )
-      
-      datatable(
-        lms_data,
-        options = list(pageLength = 10, scrollX = TRUE, fixedColumns = list(leftColumns = 4)),
-        selection = "single",   #allow single row selection
-        extensions = c("FixedColumns") ,
-        callback = JS("window.dispatchEvent(new Event('resize'));")
-      )
-    })
-    
-    # --- LMS Map (initialize once) ---
     output$LMSMapping <- renderLeaflet({
       leaflet() %>%
         addProviderTiles(providers$Esri.WorldImagery, group = "Satellite") %>%
@@ -7752,77 +7792,6 @@ server <- function(input, output, session) {
         )
     })
     
-    
-    # --- LMS Map (update markers when filters change) ---
-    observe({
-      req(buildablecsv)
-      
-      # Filter data based on user selections
-      lms_data <- buildablecsv %>%
-        filter(REGION == input$resource_map_region) %>%
-        filter(DIVISION == input$Resource_SDO) %>%
-        filter(`Avaiability of Buildable Space (Y/N)` %in% c("Y", "N"))
-      
-      # Color palette for Buildable Space
-      pal <- colorFactor(
-        palette = c("green", "red"),
-        domain = c("Y", "N")
-      )
-      
-      # --- Zoom map when a row is selected ---
-      observeEvent(input$LMSTable_rows_selected, {
-        req(buildablecsv)
-        req(input$LMSTable_rows_selected)  # make sure a row is selected
-        
-        # Recreate the filtered dataset (same as in LMSTable)
-        lms_data <- buildablecsv %>%
-          filter(REGION == input$resource_map_region) %>%
-          filter(DIVISION == input$Resource_SDO) %>%
-          filter(`Avaiability of Buildable Space (Y/N)` == "Y")
-        
-        # Get the selected row index
-        selected_row <- input$LMSTable_rows_selected
-        
-        # Get the school’s coordinates
-        school <- lms_data[selected_row, ]
-        
-        # Zoom to the selected school on the map
-        leafletProxy("LMSMapping") %>%
-          setView(lng = school$Longitude, lat = school$Latitude, zoom = 16)
-      })
-      
-      
-      leafletProxy("LMSMapping", data = lms_data) %>%
-        clearMarkers() %>%
-        clearControls() %>%
-        addAwesomeMarkers(
-          lng = ~Longitude,
-          lat = ~Latitude,
-          label = ~paste0(
-            "<b>", `NAME OF SCHOOL`, "</b><br>",
-            "School ID: ", `SCHOOL ID`, "<br>",
-            "Municipality: ", `MUNICIPALITY/ LOCATION`, "<br>",
-            "Division: ", DIVISION, "<br>",
-            "Region: ", REGION
-          ) %>% lapply(htmltools::HTML),  # ensures HTML formatting works
-          icon = ~makeAwesomeIcon(
-            icon = "graduation-cap",
-            library = "fa",
-            markerColor = ifelse(`Avaiability of Buildable Space (Y/N)` == "Y", "green", "red")
-          ),
-          clusterOptions = markerClusterOptions(disableClusteringAtZoom = 15)
-        ) %>%   # 👈 move pipe up here
-        addLegend(
-          position = "bottomright",
-          title = "Buildable Space",
-          pal = pal,
-          values = lms_data$`Avaiability of Buildable Space (Y/N)`,
-          labFormat = labelFormat(transform = function(x) {
-            ifelse(x == "Y", "With Buildable Space", "No Buildable Space")
-          })
-        )
-    }) 
-      
     
     RegRCT <- input$resource_map_region
     SDORCT1 <- input$Resource_SDO
@@ -8183,6 +8152,33 @@ server <- function(input, output, session) {
                 options = list(scrollX = TRUE, pageLength = 10, columnDefs = list(list(className = 'dt-center', targets ="_all")), dom = 'Bfrtip', buttons = list('csv','excel','pdf','print')))
     })
     
+  })
+  
+  observeEvent(input$LMSTable_rows_selected, {
+    req(buildablecsv)
+    req(input$LMSTable_rows_selected)  # make sure a row is selected
+    
+    # Recreate the filtered dataset (same as in LMSTable)
+    lms_data <- buildablecsv %>%
+      filter(REGION == input$resource_map_region)
+    
+    df1 <- reactive({
+      
+      if (is.null(input$LMSMapping_bounds)) {
+        lms_data
+      } else {
+        bounds <- input$LMSMapping_bounds
+        latRng <- range(bounds$north, bounds$south)
+        lngRng <- range(bounds$east, bounds$west)
+        
+        subset(lms_data,
+               Latitude >= latRng[1] & Latitude <= latRng[2] & Longitude >= lngRng[1] & Longitude <= lngRng[2])
+      }
+    })
+    
+    row_selected = df1()[input$LMSTable_rows_selected,]
+    leafletProxy("LMSMapping") %>%
+      setView(lng = row_selected$Longitude, lat = row_selected$Latitude, zoom = 15)
   })
   
   observeEvent(input$TextTable_rows_selected, {
