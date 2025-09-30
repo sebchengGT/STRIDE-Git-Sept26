@@ -7813,7 +7813,8 @@ server <- function(input, output, session) {
     mainreactlevreg <- df %>% filter(Region == RegRCT) %>% filter(Level == Lev)
     mainreactlevdiv <- df %>% filter(Region == RegRCT) %>% filter(Division == SDORCT1) %>% filter(Level == Lev)
     mainreactCR <- uni %>% filter(Region == RegRCT) %>% filter(Division == SDORCT1) %>% filter(Legislative.District == DistRCT1) %>% distinct(SchoolID, .keep_all = TRUE) %>% arrange(desc(SBPI))
-    mainreactSHS <- df %>% filter(Region == RegRCT) %>% filter(Level == "SHS") %>% distinct(SchoolID, .keep_all = TRUE) %>% filter(SchoolID %in% SHS_Pilot2)
+    mainreactSHS <- df %>% filter(Region == RegRCT) %>% filter(Level == "SHS") %>% distinct(SchoolID, .keep_all = TRUE) #Remove the filter of Pilot 2 CLEA4
+    mainreactSHS_pilot <- mainreactSHS %>% filter(SchoolID %in% SHS_Pilot2) # Need to seperate
     mainreactind <- ind %>% filter(Region == RegRCT)
     mainreactEFD <- EFDMP %>% 
       filter(!is.na(Old.Region), Old.Region != "") %>% 
@@ -8046,7 +8047,8 @@ server <- function(input, output, session) {
     output$SHSListTable <- DT::renderDT(server = FALSE, {datatable(dfreact_SHS() %>% select("School.Name", "TotalEnrolment") %>% rename("School" = School.Name, "Total Enrolment" = TotalEnrolment) %>% arrange(desc("School.Name")), extension = 'Buttons', rownames = FALSE, options = list(scrollX = TRUE, pageLength = 5, columnDefs = list(list(className = 'dt-center', targets ="_all")), dom = 'Bfrtip', buttons = list('csv','excel','pdf','print')))})
     
     output$SHSCount <- renderValueBox({
-      valueBox(tags$p(strong(nrow(mainreactSHS)), style = "font-size: 100%; text-align: center;"), subtitle = NULL)})
+      valueBox(tags$p(strong(nrow(mainreactSHS_pilot)), style = "font-size: 100%; text-align: center;"), subtitle = NULL)})
+    #change mainreactSHS to mainreactSHS_pilot
     
     output$SHSCountUniv <- renderValueBox({
       mainvalue <- df %>% filter(Region == input$resource_map_region) %>% filter(Level == "SHS")
@@ -18693,6 +18695,7 @@ server <- function(input, output, session) {
   })
   
 }
+
 
 
 shinyApp(ui, server)
