@@ -7683,54 +7683,23 @@ server <- function(input, output, session) {
           pal = p, 
           values = c("Not Congested","Moderately Congested","Severely Congested"))
     })
+   
     
-    # --- LMS Table ---
+    #LMSTABLE 
     output$LMSTable <- renderDataTable({
-      req(buildablecsv)
+      req(LMS, uni, buildablecsv)
       
-      lms_data <- buildablecsv %>%
-        # filter by REGION input
-        filter(REGION == input$resource_map_region) %>%
-        # filter by DIVISION input
-        filter(DIVISION == input$Resource_SDO) %>%
-        # only those with buildable space available
-        
-        filter(`Avaiability of Buildable Space (Y/N)` == "Y") %>%
-        select(
+      lms_data <- LMS %>%
+        filter(LMS == 1) %>%   # Step 1: LMS only
+        left_join(uni, by = c("School_ID" = "SchoolID")) %>%   # Step 2: lat/long
+        left_join(buildablecsv, by = c(`Buildable_Space` = `Avaiability of Buildable Space (Y/N)`)) %>%  # Step 2: buildable remarks
+        filter(Region == input$resource_map_region) %>%       # Step 3
+        filter(Division == input$Resource_SDO) %>%            # Step 3
+        filter(LD == input$leg_district) %>%                  # Step 3
+        select(                                                # Step 4
           `NAME OF SCHOOL`,
           `Avaiability of Buildable Space (Y/N)`,
-          `OTHER REMARKS (Buildable Space)`,
-          LD,
-          `NO. OF SITES`,
-          `SCOPE OF WORKS`,
-          `OTHER DESIGN CONFIGURATION`,
-          `NO. OF ACADEMIC CLASSROOMS`,
-          `NO. OF WORKSHOP (equivalent to 2-CL)`,
-          `NO. OF ICT/COMPUTER LABORATORY (equivalent to 2-CL)`,
-          `NO. OF SCIENCE LABORATORY (equivalent to 2-CL)`,
-          `NO. OF AVR (equivalent to 2-CL)`,
-          `NO. OF HOME ECONOMICS (equivalent to 2-CL)`,
-          `TOTAL CLASSROOMS`,
-          `WITH DEMOLITION? YES/ NO`,
-          `WITH SITE IMPROVEMENT? YES/ NO`,
-          `WITH SLOPE PROTECTION? YES/NO`,
-          `OTHER REMARKS`,
-          `With Site Development Plan?`,
-          `With proposal from OTHER SOURCES, including LGUs, NGOs, Private Sector etc)?`,
-          `Avaiability of Buildable Space (Y/N)`,
-          `OTHER REMARKS (Buildable Space)`,
-          `Site Ownership`,
-          `OTHER REMARKS Site Ownership`,
-          `Viability / Accessibility (Y/N)`,
-          `OTHER REMARKS Viability / Accessibility`,
-          `Operational Readiness (Y/N)`,
-          `OTHER REMARKS Operational Readiness`,
-          `Implementability of Proposed Scope (Y/N)`,
-          `OTHER REMARKS Implementability of Proposed Scope`,
-          `Geotechnical Testing (Y/N)`,
-          `OTHER REMARKS Geotechnical Testing`,
-          Longitude,   
-          Latitude     
+          `OTHER REMARKS (Buildable Space)`
         )
       
       datatable(
@@ -7741,63 +7710,7 @@ server <- function(input, output, session) {
         callback = JS("window.dispatchEvent(new Event('resize'));")
       )
     })
-    # --- LMS Table ---
-    output$LMSTable <- renderDataTable({
-      req(buildablecsv)
-      
-      lms_data <- buildablecsv %>%
-        # filter by REGION input
-        filter(REGION == input$resource_map_region) %>%
-        # filter by DIVISION input
-        filter(DIVISION == input$Resource_SDO) %>%
-        # only those with buildable space available
-        filter(`Avaiability of Buildable Space (Y/N)` == "Y") %>%
-        select(
-          `NAME OF SCHOOL`,
-          `Avaiability of Buildable Space (Y/N)`,
-          `OTHER REMARKS (Buildable Space)`,
-          #LD,
-          #`NO. OF SITES`,
-          #`SCOPE OF WORKS`,
-          #`OTHER DESIGN CONFIGURATION`,
-          #`NO. OF ACADEMIC CLASSROOMS`,
-          #`NO. OF WORKSHOP (equivalent to 2-CL)`,
-          #`NO. OF ICT/COMPUTER LABORATORY (equivalent to 2-CL)`,
-          #`NO. OF SCIENCE LABORATORY (equivalent to 2-CL)`,
-          #`NO. OF AVR (equivalent to 2-CL)`,
-          #`NO. OF HOME ECONOMICS (equivalent to 2-CL)`,
-          #`TOTAL CLASSROOMS`,
-          #`WITH DEMOLITION? YES/ NO`,
-          #`WITH SITE IMPROVEMENT? YES/ NO`,
-          #`WITH SLOPE PROTECTION? YES/NO`,
-          #`OTHER REMARKS`,
-          #`With Site Development Plan?`,
-          #`With proposal from OTHER SOURCES, including LGUs, NGOs, Private Sector etc)?`,
-          #`Avaiability of Buildable Space (Y/N)`,
-          #`OTHER REMARKS (Buildable Space)`,
-          #`Site Ownership`,
-          #`OTHER REMARKS Site Ownership`,
-          #`Viability / Accessibility (Y/N)`,
-          #`OTHER REMARKS Viability / Accessibility`,
-          #`Operational Readiness (Y/N)`,
-          #`OTHER REMARKS Operational Readiness`,
-          #`Implementability of Proposed Scope (Y/N)`,
-          #`OTHER REMARKS Implementability of Proposed Scope`,
-          #`Geotechnical Testing (Y/N)`,
-          #`OTHER REMARKS Geotechnical Testing`,
-          #Longitude,   
-          #Latitude     
-        )
-      
-      datatable(
-        lms_data,
-        options = list(pageLength = 10, scrollX = TRUE, fixedColumns = list(leftColumns = 4)),
-        selection = "single",   # allow single row selection
-        extensions = c("FixedColumns"),
-        callback = JS("window.dispatchEvent(new Event('resize'));")
-      )
-    })
-    
+  
     # --- LMS Map (initialize once) ---
     output$LMSMapping <- renderLeaflet({
       # Define palette once here, with explicit factor order
