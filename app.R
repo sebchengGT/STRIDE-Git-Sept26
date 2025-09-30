@@ -8143,7 +8143,7 @@ server <- function(input, output, session) {
       }
     })
     
-    output$CLTable <- DT::renderDT(dfreact_CL() %>% select("School.Name","SBPI","Instructional.Rooms.2023.2024","Classroom.Requirement","Est.CS","Buidable_space") %>% rename("School" = School.Name, "School Building Priority Index" = SBPI, "Classroom Inventory" = Instructional.Rooms.2023.2024, "Classroom Requirement" = Classroom.Requirement, "Estimate Classroom Shortage" = Est.CS, "Buildable Space" = Buidable_space), filter = 'top', options = list(scrollX = TRUE, columnDefs = list(list(className = 'dt-center', targets ="_all")), rownames = FALSE, dom = 'Bfrtip', buttons = list('csv','excel','pdf','print')))
+    output$CLTable <- DT::renderDT(dfreact_CL() %>% select("School.Name","SBPI","Instructional.Rooms.2023.2024","Classroom.Requirement","Est.CS","Buidable_space") %>% rename("School" = School.Name, "School Building Priority Index" = SBPI, "Classroom Inventory" = Instructional.Rooms.2023.2024, "Classroom Requirement" = Classroom.Requirement, "Estimate Classroom Shortage" = Est.CS, "Buildable Space" = Buidable_space), filter = 'top', options = list(scrollX = TRUE,scrollY= "300px", columnDefs = list(list(className = 'dt-center', targets ="_all")), rownames = FALSE, dom = 'Bfrtip', buttons = list('csv','excel','pdf','print')))
     
     dfreact_SHS <- reactive({
       
@@ -8652,20 +8652,18 @@ server <- function(input, output, session) {
       # The GMISDiv is already in the long format, so we can directly pass it to renderDataTable.
       # We use the DT package functions to create a well-formatted and interactive table.
       DT::datatable(
-        GMISDiv2,
-        filter = 'top', # Adds filter boxes to the top of each column
-        extensions = c("FixedColumns", "Buttons"),
-        options = list(
-          dom = 'Bfrtip',
-          buttons = list(
-            list(extend = 'csv', filename = 'GMIS_Data'),
-            list(extend = 'excel', filename = 'GMIS_Data'), # Excel download button
-            list(extend = 'pdf', filename = 'GMIS_Data')    # PDF download button
-          ),
-          fixedColumns = list(leftColumns = 2),
-          columnDefs = list(list(className = 'dt-center', targets = '_all')),
-          rownames = FALSE
-        )
+          GMISDiv2, # Adds filter boxes to the top of each column
+          filter = "top",
+          extensions = "FixedHeader",
+          options = list(
+            fixedHeader = list(
+              header = TRUE,
+              footer = FALSE),
+            scrollY = "300px",
+            scrollCollapse = TRUE,
+            columnDefs = list(list(className = 'dt-center', targets = '_all')),
+            rownames = FALSE
+          )
       )
     })
     
