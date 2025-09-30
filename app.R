@@ -7814,7 +7814,7 @@ server <- function(input, output, session) {
     mainreactlevdiv <- df %>% filter(Region == RegRCT) %>% filter(Division == SDORCT1) %>% filter(Level == Lev)
     mainreactCR <- uni %>% filter(Region == RegRCT) %>% filter(Division == SDORCT1) %>% filter(Legislative.District == DistRCT1) %>% distinct(SchoolID, .keep_all = TRUE) %>% arrange(desc(SBPI))
     mainreactSHS <- df %>% filter(Region == RegRCT) %>% filter(Level == "SHS") %>% distinct(SchoolID, .keep_all = TRUE) #Remove the filter of Pilot 2 CLEA4
-    mainreactSHS_pilot <- mainreactSHS %>% filter(SchoolID %in% SHS_Pilot2) # Need to seperate
+    mainreactSHS_pilot <- mainreactSHS %>% filter(SchoolID %in% SHS_Pilot2) # Need to seperatee
     mainreactind <- ind %>% filter(Region == RegRCT)
     mainreactEFD <- EFDMP %>% 
       filter(!is.na(Old.Region), Old.Region != "") %>% 
