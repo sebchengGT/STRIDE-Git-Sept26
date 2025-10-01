@@ -1832,14 +1832,10 @@ server <- function(input, output, session) {
         h3("Industries Overview"),
         hr(),
         layout_column_wrap(
-          width = 1/3,
+          width = 1/2,
           card(
             card_header(strong("Total SHS Count")),
             valueBoxOutput("SHSCountUniv")
-          ),
-          card(
-            card_header(strong("Pilot SHS Count")),
-            valueBoxOutput("SHSCount")
           ),
           card(
             card_header(strong("Total Industry Count")),
@@ -7842,7 +7838,7 @@ server <- function(input, output, session) {
     mainreactlevreg <- df %>% filter(Region == RegRCT) %>% filter(Level == Lev)
     mainreactlevdiv <- df %>% filter(Region == RegRCT) %>% filter(Division == SDORCT1) %>% filter(Level == Lev)
     mainreactCR <- uni %>% filter(Region == RegRCT) %>% filter(Division == SDORCT1) %>% filter(Legislative.District == DistRCT1) %>% distinct(SchoolID, .keep_all = TRUE) %>% arrange(desc(SBPI))
-    mainreactSHS <- df %>% filter(Region == RegRCT) %>% filter(Level == "SHS") %>% distinct(SchoolID, .keep_all = TRUE) #Remove the filter of Pilot 2 CLEA4
+    mainreactSHS <- df %>% filter(Region == RegRCT) %>% filter(Division == SDORCT1) %>% filter(Legislative.District == DistRCT1) %>% filter(Level == "SHS") %>% distinct(SchoolID, .keep_all = TRUE) #Remove the filter of Pilot 2 CLEA4
     mainreactSHS_pilot <- mainreactSHS %>% filter(SchoolID %in% SHS_Pilot2) # Need to seperatee
     mainreactind <- ind %>% filter(Region == RegRCT)
     mainreactEFD <- EFDMP %>% 
@@ -8057,7 +8053,7 @@ server <- function(input, output, session) {
       }
     })
     
-    output$CLTable <- DT::renderDT(dfreact_CL() %>% select("School.Name","SBPI","Instructional.Rooms.2023.2024","Classroom.Requirement","Est.CS","Buidable_space") %>% rename("School" = School.Name, "School Building Priority Index" = SBPI, "Classroom Inventory" = Instructional.Rooms.2023.2024, "Classroom Requirement" = Classroom.Requirement, "Estimate Classroom Shortage" = Est.CS, "Buildable Space" = Buidable_space), filter = 'top', options = list(scrollX = TRUE, columnDefs = list(list(className = 'dt-center', targets ="_all")), rownames = FALSE, dom = 'Bfrtip', buttons = list('csv','excel','pdf','print')))
+    output$CLTable <- DT::renderDT(dfreact_CL() %>% select("School.Name","SBPI","Instructional.Rooms.2023.2024","Classroom.Requirement","Est.CS","Buidable_space") %>% rename("School" = School.Name, "School Building Priority Index" = SBPI, "Classroom Inventory" = Instructional.Rooms.2023.2024, "Classroom Requirement" = Classroom.Requirement, "Estimate Classroom Shortage" = Est.CS, "Buildable Space" = Buidable_space), filter = 'top', options = list(scrollX = TRUE,scrollY= "300px", columnDefs = list(list(className = 'dt-center', targets ="_all")), rownames = FALSE, dom = 'Bfrtip', buttons = list('csv','excel','pdf','print')))
     
     dfreact_SHS <- reactive({
       
@@ -8073,14 +8069,23 @@ server <- function(input, output, session) {
       }
     })
     
-    output$SHSListTable <- DT::renderDT(server = FALSE, {datatable(dfreact_SHS() %>% select("School.Name", "TotalEnrolment") %>% rename("School" = School.Name, "Total Enrolment" = TotalEnrolment) %>% arrange(desc("School.Name")), extension = 'Buttons', rownames = FALSE, options = list(scrollX = TRUE, pageLength = 5, columnDefs = list(list(className = 'dt-center', targets ="_all")), dom = 'Bfrtip', buttons = list('csv','excel','pdf','print')))})
+    output$SHSListTable <- DT::renderDT(server = FALSE, {datatable(dfreact_SHS() %>% select("School.Name", "TotalEnrolment") %>% rename("School" = School.Name, "Total Enrolment" = TotalEnrolment), extension = 'Buttons', rownames = FALSE, options = list(scrollX = TRUE, pageLength = 5, columnDefs = list(list(className = 'dt-center', targets ="_all")), dom = 'Bfrtip', buttons = list('csv','excel','pdf','print')))})
     
     output$SHSCount <- renderValueBox({
       valueBox(tags$p(strong(nrow(mainreactSHS)), style = "font-size: 100%; text-align: center;"), subtitle = NULL)})
     
+    SHS_count_reactive <- eventReactive(input$Mapping_Run, {
+      
+      mainvalue <- df %>% 
+        filter(Region == input$resource_map_region) %>% 
+        filter(Level == "SHS")
+      
+      # This returns the COUNT (a single number)
+      return(nrow(mainvalue))
+    })
+    
     output$SHSCountUniv <- renderValueBox({
-      mainvalue <- df %>% filter(Region == input$resource_map_region) %>% filter(Level == "SHS")
-      valueBox(tags$p(strong(nrow(mainvalue)), style = "font-size: 100%; text-align: center;"), subtitle = NULL)})
+      valueBox(tags$p(strong(SHS_count_reactive()), style = "font-size: 100%; text-align: center;"), subtitle = NULL)})
     
     output$IndCount <- renderValueBox({
       valueBox(tags$p(strong(nrow(mainreactind)), style = "font-size: 100%; text-align: center;"), subtitle = NULL)})
@@ -8566,20 +8571,18 @@ server <- function(input, output, session) {
       # The GMISDiv is already in the long format, so we can directly pass it to renderDataTable.
       # We use the DT package functions to create a well-formatted and interactive table.
       DT::datatable(
-        GMISDiv2,
-        filter = 'top', # Adds filter boxes to the top of each column
-        extensions = c("FixedColumns", "Buttons"),
-        options = list(
-          dom = 'Bfrtip',
-          buttons = list(
-            list(extend = 'csv', filename = 'GMIS_Data'),
-            list(extend = 'excel', filename = 'GMIS_Data'), # Excel download button
-            list(extend = 'pdf', filename = 'GMIS_Data')    # PDF download button
-          ),
-          fixedColumns = list(leftColumns = 2),
-          columnDefs = list(list(className = 'dt-center', targets = '_all')),
-          rownames = FALSE
-        )
+          GMISDiv2, # Adds filter boxes to the top of each column
+          filter = "top",
+          extensions = "FixedHeader",
+          options = list(
+            fixedHeader = list(
+              header = TRUE,
+              footer = FALSE),
+            scrollY = "300px",
+            scrollCollapse = TRUE,
+            columnDefs = list(list(className = 'dt-center', targets = '_all')),
+            rownames = FALSE
+          )
       )
     })
     
@@ -8588,10 +8591,14 @@ server <- function(input, output, session) {
   observeEvent(input$SHSListTable_rows_selected, {
     
     RegRCT <- input$resource_map_region
+    SDORCT1 <- input$Resource_SDO
+    DistRCT1 <- input$Resource_LegDist
+    Lev <- input$resource_map_level
+    TypeEFD <- input$EFD_Type
     
     region_selected <- IndALL %>% filter(Region == RegRCT) %>% arrange(Distance)
     
-    mainreact1 <- df %>% filter(Region == RegRCT) %>% filter(Level == "SHS") %>% distinct(SchoolID, .keep_all = TRUE) %>% filter(SchoolID %in% SHS_Pilot2)
+    mainreact1 <- df %>% filter(Region == RegRCT) %>% filter(Division == SDORCT1) %>% filter(Legislative.District == DistRCT1) %>% filter(Level == "SHS") %>% distinct(SchoolID, .keep_all = TRUE)
     
     df1 <- reactive({
       
@@ -8634,17 +8641,17 @@ server <- function(input, output, session) {
     output$WholCount2 <- renderValueBox({
       valueBox(tags$p(strong(sum(SHSIndustries$Sector == "Agriculture and Agri-business")), style = "font-size: 100%; text-align: center;"), subtitle = NULL)})
     
-    rowselected_SHStable <- SHS_Pilot %>%  filter(SchoolID == row_selected$SchoolID) %>% select(Region,Division,Modified.COC,School.Name,SchoolID,Typology,SHS.Enrolment,ClassesOrganized,TeacherRequirement,JHSTeachers,SHSTeachers,TrackOffering,TrackOffering.Intended,SHS.Packages) %>% rename("School ID" = SchoolID,"Schools Division Office" = Division,"Modified Curricular Offering" = Modified.COC,"School Name" = School.Name,"School Size Typology" = Typology,"Track Offering" = TrackOffering,"SHS Enrolment" = SHS.Enrolment,"Classes Organized" = ClassesOrganized,"Teacher Requirement" = TeacherRequirement,"JHS Teacher Inventory" = JHSTeachers,"SHS Teacher Inventory" = SHSTeachers,"Delivered Learning Packages (2018-2025)"=SHS.Packages,"Track Offering (Intended)"=TrackOffering.Intended) %>% mutate(dplyr::across(tidyr::everything(), as.character)) %>% pivot_longer(
+    rowselected_SHStable <- df %>% filter(SchoolID == row_selected$SchoolID) %>% slice(1) %>% select(Region,Division,Modified.COC,School.Name,SchoolID,SHS.Enrolment,SHS.Packages) %>% rename("School ID" = SchoolID,"Schools Division Office" = Division,"Modified Curricular Offering" = Modified.COC,"School Name" = School.Name,"Delivered Learning Packages (2018-2025)"=SHS.Packages) %>% mutate(dplyr::across(tidyr::everything(), as.character)) %>% pivot_longer(
       cols = everything(),    # Pivot all columns selected in details_to_pivot
       names_to = "Profile Item",     # Name of the new column holding the original column names
       values_to = "Data")     # Name of the new column holding the original values
     
-    rowselected_SHStablespec <- SHS_Pilot %>%  filter(SchoolID == row_selected$SchoolID) %>% select(English,Mathematics,Science,Biological.Sciences,Physical.Sciences,General.Ed,Araling.Panlipunan,TLE,MAPEH,Filipino,ESP,Agriculture,ECE,SPED) %>% rename("Biological Sciences" = Biological.Sciences,"Physical Sciences" = Physical.Sciences,"General Education" = General.Ed,"Araling Panlipunan" = Araling.Panlipunan,"Early Chilhood Education" = ECE) %>% mutate(dplyr::across(tidyr::everything(), as.character)) %>% pivot_longer(
+    rowselected_SHStablespec <- df %>%  filter(SchoolID == row_selected$SchoolID) %>% slice(1) %>% select(English,Mathematics,Science,Biological.Sciences,Physical.Sciences,General.Ed,Araling.Panlipunan,TLE,MAPEH,Filipino,ESP,Agriculture,ECE,SPED) %>% rename("Biological Sciences" = Biological.Sciences,"Physical Sciences" = Physical.Sciences,"General Education" = General.Ed,"Araling Panlipunan" = Araling.Panlipunan,"Early Chilhood Education" = ECE) %>% mutate(dplyr::across(tidyr::everything(), as.character)) %>% pivot_longer(
       cols = everything(),    # Pivot all columns selected in details_to_pivot
       names_to = "Profile Item",     # Name of the new column holding the original column names
       values_to = "Data")     # Name of the new column holding the original values
     
-    rowselected_SHStablespec2 <- SHS_Pilot %>% select(English,Mathematics,Science,Biological.Sciences,Physical.Sciences,General.Ed,Araling.Panlipunan,TLE,MAPEH,Filipino,ESP,Agriculture,ECE,SPED) %>% rename("Biological Sciences" = Biological.Sciences,"Physical Sciences" = Physical.Sciences,"General Education" = General.Ed,"Araling Panlipunan" = Araling.Panlipunan,"Early Chilhood Education" = ECE) %>% mutate(dplyr::across(tidyr::everything(), as.character)) %>% pivot_longer(
+    rowselected_SHStablespec2 <- df %>% select(English,Mathematics,Science,Biological.Sciences,Physical.Sciences,General.Ed,Araling.Panlipunan,TLE,MAPEH,Filipino,ESP,Agriculture,ECE,SPED) %>% rename("Biological Sciences" = Biological.Sciences,"Physical Sciences" = Physical.Sciences,"General Education" = General.Ed,"Araling Panlipunan" = Araling.Panlipunan,"Early Chilhood Education" = ECE) %>% mutate(dplyr::across(tidyr::everything(), as.character)) %>% pivot_longer(
       cols = everything(),    # Pivot all columns selected in details_to_pivot
       names_to = "Profile",     # Name of the new column holding the original column names
       values_to = "Data") %>% mutate(Data = as.numeric(Data)) %>% group_by(Profile) %>% summarise(Data = sum(Data, na.rm = TRUE))
