@@ -7710,7 +7710,7 @@ server <- function(input, output, session) {
         callback = JS("window.dispatchEvent(new Event('resize'));")
       )
     })
-  
+    
     # --- LMS Map (initialize once) ---
     output$LMSMapping <- renderLeaflet({
       # Define palette once here, with explicit factor order
