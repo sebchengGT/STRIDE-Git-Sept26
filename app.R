@@ -7689,13 +7689,13 @@ server <- function(input, output, session) {
       lms_data <- LMS %>%
         filter(LMS == 1) %>%   # Step 1: LMS only
         left_join(uni, by = c("School_ID" = "SchoolID")) %>%   # Step 2: lat/long
-        left_join(buildablecsv, by = c(`Buildable_Space` = `Avaiability of Buildable Space (Y/N)`)) %>%  # Step 2: buildable remarks
+        left_join(buildablecsv, by = c("School_ID" = "SCHOOL ID")) %>%  # Step 2: buildable remarks
         filter(Region == input$resource_map_region) %>%       # Step 3
         filter(Division == input$Resource_SDO) %>%            # Step 3
         filter(LD == input$leg_district) %>%                  # Step 3
         select(                                                # Step 4
           `NAME OF SCHOOL`,
-          `Avaiability of Buildable Space (Y/N)`,
+          Buidable_space,
           `OTHER REMARKS (Buildable Space)`
         )
       
