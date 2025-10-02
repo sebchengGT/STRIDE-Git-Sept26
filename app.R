@@ -118,18 +118,7 @@ ui <- fluidPage(
              error_message = "Invalid username or password!" # Custom error message
            )
     )
-  ),
-  
-  fluidRow(
-    column(width = 12,
-           div(
-             style = "text-align: right; padding-bottom: 10px;",
-             shinyauthr::logoutUI(
-               id = "logout",
-               label = "Log Out",
-               icon = icon("sign-out-alt"),
-               class = "btn btn-danger"
-             )))), 
+  ), 
   # Custom styling
   
   shinyjs::hidden(
@@ -226,14 +215,8 @@ server <- function(input, output, session) {
   
   output$STRIDE2 <- renderUI({
     page_navbar(
-      title = div(
-        tags$span(
-          strong("DepEd STRIDE Dashboard"),
-          style = "font-size: 1em; margin-bottom: 0.2em;"),"",
-        tags$p(
-          em("based on GMIS (April 2025) and eBEIS (SY 2024-2025)"),
-          style = "font-size: 0.7em; color: black;  margin-top: 0.1em; margin-bottom: 0;"
-        )),
+      # no title, just the nav items
+      
       theme = bs_theme(
         version = 5,
         bootswatch = "sandstone",
@@ -1675,7 +1658,17 @@ server <- function(input, output, session) {
                    marginwidth = "0")
           )
         )
-      ))
+      ),
+      
+      nav_item(
+        shinyauthr::logoutUI(
+          id = "logout",
+          label = "Log Out",
+          icon = icon("sign-out-alt"),
+          class = "btn btn-danger"
+        )
+      )
+    )
   })
   
   # Reactive expression to generate the main panel content
