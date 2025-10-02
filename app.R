@@ -76,9 +76,20 @@ ui <- fluidPage(
   theme = bs_theme(version = 5,
                    bootswatch = "litera",
                    font_scale = 0.9,
-                   base_font = font_google("Poppins")),
+                   base_font = font_google("Alan Sans")),
   # Use shinyjs to easily show/hide elements
   shinyjs::useShinyjs(),
+  
+  tags$head(
+    includeCSS("www/style.css")
+  ),
+  
+  tags$div(class = "app-header",
+    h2("DepEd STRIDE Dashboard"),
+    p("Based on GMIS (April 2025) and eBEIS (SY 2024–2025)")
+),
+  
+  
   
   # tags$head(
   #   tags$style(HTML("
@@ -94,10 +105,6 @@ ui <- fluidPage(
   #                   "))),
   # 
   # Row for the login panel UI
-  fluidRow(
-    layout_columns(
-      imageOutput("StrideLogo"),
-      col_widths = c(-3,6,-3))),
   
   fluidRow(
     column(width = 12,
@@ -133,7 +140,13 @@ ui <- fluidPage(
   shinyjs::hidden(
     div(
       id = "mgmt_content",
-      uiOutput("STRIDE2"))))
+      uiOutput("STRIDE2"))),
+
+
+tags$footer(
+  class = "app-footer",
+  tags$p("© 2025 Department of Education • STRIDE Project")))
+
 
 
 # Define server logic required to draw a histogram
@@ -18705,3 +18718,4 @@ server <- function(input, output, session) {
 }
 
 shinyApp(ui, server)
+
