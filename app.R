@@ -721,8 +721,8 @@ server <- function(input, output, session) {
                       #     header = "Select a Category"
                       #   )
                       # ),
-                      uiOutput("PosSelectionGMIS"),
-                      input_task_button("GMISRun", icon_busy = fontawesome::fa_i("refresh", class = "fa-spin", "aria-hidden" = "true"), strong("Show Selection"), class = "btn-danger")),
+                      uiOutput("PosSelectionGMIS")),
+                    # input_task_button("GMISRun", icon_busy = fontawesome::fa_i("refresh", class = "fa-spin", "aria-hidden" = "true"), strong("Show Selection"), class = "btn-danger")),
                     layout_columns(
                       card(
                         card_header(strong("GMIS Data")),
@@ -8592,107 +8592,87 @@ server <- function(input, output, session) {
     
   }, ignoreNULL = TRUE, ignoreInit = TRUE)
   
-  observeEvent(input$GMISRun, {
+  #plantilla position observe
+  observe({
+    req(input$RegionGMIS, input$SDOGMIS, input$PosSelGMIS)  # ensures all inputs exist
     
     dfGMIS <- read.csv("GMIS-FillingUpPerPosition-2025.csv")
     
     RegGMISRCT <- input$RegionGMIS
     SDOGMISRCT <- input$SDOGMIS
-    PosCatGMISRCT <- input$PosCatGMIS
     PosSelGMISRCT <- input$PosSelGMIS
     
-    # 1. Corrected: Filter only. Keep all columns.
-    GMISDiv <- dfGMIS %>% 
-      filter(GMIS.Region %in% RegGMISRCT) %>% 
-      filter(Position %in% PosSelGMISRCT) %>% 
-      filter(GMIS.Division %in% SDOGMISRCT) %>% 
-      group_by(Position) %>% 
-      summarise(Filled = sum(Total.Filled), Unfilled = sum(Total.Unfilled, na.rm = TRUE)) %>% 
-      pivot_longer(cols = c("Filled","Unfilled"), names_to = "Status", values_to = "Count")
+    # 1. Filter and transform
+    GMISDiv <- dfGMIS %>%
+      filter(GMIS.Region %in% RegGMISRCT) %>%
+      filter(Position %in% PosSelGMISRCT) %>%
+      filter(GMIS.Division %in% SDOGMISRCT) %>%
+      group_by(Position) %>%
+      summarise(
+        Filled = sum(Total.Filled),
+        Unfilled = sum(Total.Unfilled, na.rm = TRUE)
+      ) %>%
+      pivot_longer(cols = c("Filled", "Unfilled"), names_to = "Status", values_to = "Count")
     
-    # %>% 
-    #   mutate(Filling.Up.Rate = round(Filled/Authorized, digits = 4)*100)
-    
-    # This part is for a separate data table and can remain as-is.
-    # It correctly performs its own summarization on the filtered GMISDiv.
-    # GMISreactFinalDiv <- GMISDiv %>% 
-    #   group_by(GMIS.Region,GMIS.Division,Position) %>% 
-    #   summarise(Filled = sum(Total.Filled), 
-    #             Authorized = sum(Total.Authorized)) |> 
-    #   mutate(Filling.Up.Rate = round(Filled/Authorized, digits = 4)*100)
-    # 
-    # GMISreactFinalDiv <- GMISreactFinalDiv |> 
-    #   mutate(Filling.Up.Rate = sprintf("%.2f", `Filling.Up.Rate`)) %>% 
-    #   rename("Division" = GMIS.Division, "Filling Up Rate" = Filling.Up.Rate)
-    
+    # --- Plot ---
     output$GMISTable <- renderPlotly({
-      
-      # 2. Corrected: Summarize the data for the plot here.
-      # It now works because GMISDiv still contains GMIS.Division.
-      plot_data_stacked <- GMISDiv 
+      plot_data_stacked <- GMISDiv
       plot_data_totals <- plot_data_stacked %>%
         group_by(Position) %>%
         summarise(TotalCount = sum(Count))
+      
       category_colors <- c("Filled" = "blue", "Unfilled" = "red")
       
-      
-      # The rest of the plot code remains the same.
-      p <- ggplot(plot_data_stacked, aes(x = factor(Position), y = Count, fill = factor(Status, levels = c("Unfilled", "Filled")),
-                                         text = paste("Position: ", Position,
-                                                      "<br>Category: ", Status,
-                                                      "<br>Total", Count))) +
+      p <- ggplot(plot_data_stacked, aes(
+        x = factor(Position),
+        y = Count,
+        fill = factor(Status, levels = c("Unfilled", "Filled")),
+        text = paste("Position: ", Position,
+                     "<br>Category: ", Status,
+                     "<br>Total", Count)
+      )) +
         geom_bar(stat = "identity", position = "stack") +
-        
-        # Add the text layer for the totals on top of the bars
-        geom_text(data = plot_data_totals,
-                  aes(x = Position, y = TotalCount * 1.05, label = scales::comma(TotalCount)), # Modified line
-                  inherit.aes = FALSE,
-                  size = 3.5,
-                  color = "black") +
-        
+        geom_text(
+          data = plot_data_totals,
+          aes(x = Position, y = TotalCount * 1.05, label = scales::comma(TotalCount)),
+          inherit.aes = FALSE,
+          size = 3.5,
+          color = "black"
+        ) +
         labs(x = "Position", y = "Count") +
         scale_y_continuous(labels = scales::comma) +
         scale_fill_manual(name = "Legend", values = category_colors) +
         theme_minimal() +
         theme(legend.position = "bottom")
       
-      ggplotly(p, tooltip = "text", source = "stackedBarPlot") %>% 
+      ggplotly(p, tooltip = "text", source = "stackedBarPlot") %>%
         layout(hoverlabel = list(bgcolor = "white"))
     })
     
-    # Assuming the above code for creating GMISDiv is already in your server function
-    # and `GMISDiv` is a reactive expression. If it's not a reactive, you may need to
-    # make it one or define it inside the render function.
-    
+    # --- DataTable ---
     output$GMISTable1 <- renderDataTable({
-      
-      GMISDiv2 <- dfGMIS %>% 
-        filter(GMIS.Region %in% RegGMISRCT) %>% 
-        filter(Position %in% PosSelGMISRCT) %>% 
-        filter(GMIS.Division %in% SDOGMISRCT) %>% 
-        group_by(GMIS.Region, GMIS.Division, Position) %>% 
+      GMISDiv2 <- dfGMIS %>%
+        filter(GMIS.Region %in% RegGMISRCT) %>%
+        filter(Position %in% PosSelGMISRCT) %>%
+        filter(GMIS.Division %in% SDOGMISRCT) %>%
+        group_by(GMIS.Region, GMIS.Division, Position) %>%
         summarise(
-          Filled = sum(Total.Filled), 
+          Filled = sum(Total.Filled),
           Unfilled = sum(Total.Unfilled, na.rm = TRUE),
-          Authorized = sum(Total.Authorized) # Corrected: Add the Authorized column
-        ) %>% 
+          Authorized = sum(Total.Authorized)
+        ) %>%
         mutate(Filling.Up.Rate = round(Filled / Authorized, digits = 4) * 100) %>%
         mutate(Filling.Up.Rate = sprintf("%.2f", `Filling.Up.Rate`)) %>%
         rename("Division" = GMIS.Division, "Filling Up Rate" = `Filling.Up.Rate`)
       
-      # Ensure the data is not empty before rendering
-      req(GMISDiv2) 
+      req(GMISDiv2)
       
-      # The GMISDiv is already in the long format, so we can directly pass it to renderDataTable.
-      # We use the DT package functions to create a well-formatted and interactive table.
       DT::datatable(
-        GMISDiv2, # Adds filter boxes to the top of each column
+        GMISDiv2,
         filter = "top",
         extensions = "FixedHeader",
         options = list(
-          fixedHeader = list(
-            header = TRUE,
-            footer = FALSE),
+          fixedHeader = list(header = TRUE, footer = FALSE),
           scrollY = "300px",
           scrollCollapse = TRUE,
           columnDefs = list(list(className = 'dt-center', targets = '_all')),
@@ -8700,7 +8680,6 @@ server <- function(input, output, session) {
         )
       )
     })
-    
   })
   
   observeEvent(input$SHSListTable_rows_selected, {
@@ -10732,31 +10711,35 @@ server <- function(input, output, session) {
   })
   
   output$regprof_DT <- DT::renderDT({
+    data_to_display <- filtered_school_data_region() %>% 
+      select(Region, Division, Legislative.District, SchoolID, School.Name, School.Type, School.Size.Typology, Modified.COC, TotalEnrolment, Clustering.Status, PDOI_Deployment) %>% 
+      rename("Modified Curricular Offering" = Modified.COC)
     
-    data_to_display <- filtered_school_data_region() %>% select(Region, Division, Legislative.District, SchoolID, School.Name, School.Type, School.Size.Typology, Modified.COC, TotalEnrolment, Clustering.Status, PDOI_Deployment) %>% rename("Modified Curricular Offering" = Modified.COC)
-    
-    # You might want to add a check for NULL or empty data if filtered_school_data_division()
-    # could return such states and you want to display a message or an empty table.
     if (is.null(data_to_display) || nrow(data_to_display) == 0) {
       return(DT::datatable(
         data.frame("Message" = "No data available based on current selection."),
-        options = list(dom = 't',
-                       scrollX = TRUE,
-                       fixedColumns = list(leftColumns = 5)), # 't' hides all controls, showing only the table body
+        options = list(dom = 't', scrollX = TRUE, fixedColumns = list(leftColumns = 5)),
         rownames = FALSE
       ))
     }
     
     DT::datatable(
       data_to_display,
-      extensions = c("FixedHeader", "FixedColumns"),
+      extensions = c("FixedHeader", "FixedColumns", "Buttons"),
       options = list(
         pageLength = 10, 
         scrollX = TRUE,
         scrollY = 400,
         autoWidth = TRUE,
         fixedHeader = TRUE,
-        fixedColumns = list(leftColumns = 5)),
+        fixedColumns = list(leftColumns = 5),
+        dom = 'Bfrtip',
+        buttons = list(
+          list(extend = "csv", exportOptions = list(modifier = list(page = "all"))),
+          list(extend = "excel", exportOptions = list(modifier = list(page = "all"))),
+          list(extend = "print", exportOptions = list(modifier = list(page = "all")))
+        )
+      ),
       filter = 'top',
       selection = 'multiple',
       rownames = FALSE
@@ -10764,40 +10747,51 @@ server <- function(input, output, session) {
   })
   
   output$regprof_DT_CL <- DT::renderDT({
-    
     data_to_display <- filtered_LMS_region() %>%
       mutate(across(13:17, ~ case_when(
         . == 0 ~ "No",
         TRUE ~ "Yes"
-      ))) %>% select(Region, Division, Legislative_District, School_ID, School_Name, Total_Enrollment, Instructional_Rooms, CL_Req, Estimated_CL_Shortage, With_Excess, Without_Shortage,Buildable_space,LMS,GIDCA) %>% rename("Classroom Requirement" = CL_Req,"Estimated Classroom Shortage" = Estimated_CL_Shortage,"Schools with Excess Classrooms" = With_Excess,"Schools without Classroom Shortage" = Without_Shortage,"Schools with Buildable Space" = Buildable_space)
+      ))) %>% 
+      select(Region, Division, Legislative_District, School_ID, School_Name, Total_Enrollment, Instructional_Rooms, CL_Req, Estimated_CL_Shortage, With_Excess, Without_Shortage, Buildable_space, LMS, GIDCA) %>% 
+      rename(
+        "Classroom Requirement" = CL_Req,
+        "Estimated Classroom Shortage" = Estimated_CL_Shortage,
+        "Schools with Excess Classrooms" = With_Excess,
+        "Schools without Classroom Shortage" = Without_Shortage,
+        "Schools with Buildable Space" = Buildable_space
+      )
     
-    # You might want to add a check for NULL or empty data if filtered_school_data_division()
-    # could return such states and you want to display a message or an empty table.
     if (is.null(data_to_display) || nrow(data_to_display) == 0) {
       return(DT::datatable(
         data.frame("Message" = "No data available based on current selection."),
-        options = list(dom = 't',
-                       scrollX = TRUE,
-                       fixedColumns = list(leftColumns = 5)), # 't' hides all controls, showing only the table body
+        options = list(dom = 't', scrollX = TRUE, fixedColumns = list(leftColumns = 5)),
         rownames = FALSE
       ))
     }
     
     DT::datatable(
       data_to_display,
-      extensions = c("FixedHeader", "FixedColumns"),
+      extensions = c("FixedHeader", "FixedColumns", "Buttons"),
       options = list(
         pageLength = 10, 
         scrollX = TRUE,
         scrollY = 400,
         autoWidth = TRUE,
         fixedHeader = TRUE,
-        fixedColumns = list(leftColumns = 5)),
+        fixedColumns = list(leftColumns = 5),
+        dom = 'Bfrtip',
+        buttons = list(
+          list(extend = "csv", exportOptions = list(modifier = list(page = "all"))),
+          list(extend = "excel", exportOptions = list(modifier = list(page = "all"))),
+          list(extend = "print", exportOptions = list(modifier = list(page = "all")))
+        )
+      ),
       filter = 'top',
       selection = 'multiple',
       rownames = FALSE
     )
   })
+  
   filtered_cloud_region <- reactive({
     req(cloud)
     
