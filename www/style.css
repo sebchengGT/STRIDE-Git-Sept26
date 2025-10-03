@@ -53,7 +53,7 @@ body::before {
   text-align: left;
 }
 /* Animate the login box */
-#login-login_ui {
+/*#login-login_ui {
   animation: slideUp 1s ease-out;
 }
 .fade-in {
@@ -135,7 +135,7 @@ body::before {
 
 
 /* Animate "Please Log in" */
-#login-title {
+/*#login-title {
   animation: fadeInDown 1s ease-out;
 }
 
@@ -161,7 +161,7 @@ body::before {
   margin-right: 70px;
 }
 
-.card {
+/*.card {
   opacity: 0;
   transform: translateY(40px);
   transition: all 0.8s ease-out;
@@ -170,7 +170,7 @@ body::before {
 .card.animate {
   opacity: 1;
   transform: translateY(0);
-}
+}*/
 
 .bslib-sidebar-layout>.sidebar>.sidebar-content {
     display: flex
