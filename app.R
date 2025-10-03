@@ -2,7 +2,7 @@
 #test commit
 #TEST
 #testingsept302025
-#testcommitoctober12025
+#testcommitoctober120252
 library(tidyverse)
 library(DT)
 library(dplyr)
@@ -7945,7 +7945,7 @@ server <- function(input, output, session) {
       filter(LMS == 1) %>%   # Step 1: LMS only
       left_join(uni %>% select(SchoolID,Latitude,Longitude), by = c("School_ID" = "SchoolID")) %>%   # Step 2: lat/long
       left_join(buildablecsv %>% select(SCHOOL.ID,OTHER.REMARKS..Buildable.Space..), by = c("School_ID" = "SCHOOL.ID")) %>% 
-      filter(Region == RegRCT)
+      filter(Region == RegRCT) %>% filter(Division == SDORCT1)
     
     values.LMS <- paste(
       "School Name:",mainreactLMS$School_Name,
