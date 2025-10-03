@@ -80,14 +80,25 @@ ui <- fluidPage(
   # Use shinyjs to easily show/hide elements
   shinyjs::useShinyjs(),
   
+  
   tags$head(
     includeCSS("www/style.css")
   ),
   
-  tags$div(class = "app-header",
-    h2("DepEd STRIDE Dashboard"),
-    p("Based on GMIS (April 2025) and eBEIS (SY 2024–2025)")
-),
+  tags$div(
+    class = "app-header",
+    style = "display: flex; align-items: center; gap: 15px; justify-content: center;",
+    
+    # Logo
+    tags$img(src = "logo3.png", height = "60px"),
+    
+    # Text beside the logo
+    tags$div(
+      h2("DepEd STRIDE Dashboard"),
+      p("Based on GMIS (April 2025) and eBEIS (SY 2024–2025)")
+    )
+  ),
+  
   
   
   
@@ -108,7 +119,8 @@ ui <- fluidPage(
   
   fluidRow(
     column(width = 12,
-           # Add the login UI
+           div(
+             id = "login-title",# Add the login UI
            shinyauthr::loginUI(
              id = "login",
              title = "Please Log In",
@@ -117,7 +129,7 @@ ui <- fluidPage(
              login_title = "Log In",
              error_message = "Invalid username or password!" # Custom error message
            )
-    )
+    ))
   ), 
   # Custom styling
   
@@ -130,6 +142,7 @@ ui <- fluidPage(
     div(
       id = "mgmt_content",
       uiOutput("STRIDE2"))),
+  
 
 
 tags$footer(
@@ -181,7 +194,8 @@ server <- function(input, output, session) {
     auth_status <- credentials()$user_auth
     if (auth_status) {
       # User is authenticated. Let's get their details.
-      user_info <- credentials()$info # This is a tibble with the user's row
+      user_info <- credentials()$info
+      # This is a tibble with the user's row
       
       # Ensure user_info is available and has the username
       # (It should if auth_status is TRUE and your user_base is set up correctly)
@@ -5790,10 +5804,42 @@ server <- function(input, output, session) {
             legend.position = "bottom", # Position legend at the bottom
             plot.title = element_text(hjust = 0.5)) # Center the plot title
     
-    # Convert ggplot to plotly, ensuring custom text is used for hover
-    ggplotly(p, tooltip = "text", source = "schoolcountplot_region") %>%
-      layout(hoverlabel = list(bgcolor = "white"),
-             margin = list(b = 100)) # Increase bottom margin for x-axis labels
+    # Build a small frame-based plotly animation that grows the bars from 0->full
+    # Create scaled frames for a smooth startup animation
+    n_frames <- 8
+    scales_seq <- seq(0, 1, length.out = n_frames)
+
+    frames_df <- plot_data %>%
+      tidyr::crossing(frame_step = seq_along(scales_seq)) %>%
+      mutate(scale = scales_seq[frame_step],
+             Count_scaled = Count * scale,
+             hover_text = paste("Region: ", Region,
+                                "<br>School Type: ", Modified.COC,
+                                "<br>Count: ", scales::comma(Count)))
+
+    # Use plot_ly with frames and stacked bars
+    p_plotly <- plot_ly(
+      data = frames_df,
+      x = ~factor(Modified.COC, levels = coc_levels),
+      y = ~Count_scaled,
+      color = ~Region,
+      frame = ~frame_step,
+      type = 'bar',
+      text = ~hover_text,
+      hoverinfo = 'text',
+      marker = list(line = list(width = 0.5, color = 'black'))
+    ) %>%
+      layout(barmode = 'stack',
+             hoverlabel = list(bgcolor = 'white'),
+             margin = list(b = 100),
+             xaxis = list(title = 'Modified Curricular Offering', tickangle = 45),
+             yaxis = list(title = 'Number of Schools'))
+
+    # Auto-play the animation on render using a tiny JS hook
+    p_plotly <- htmlwidgets::onRender(p_plotly,
+      "function(el, x) {\n\n        // Small timeout to ensure plot is fully initialized\n        setTimeout(function(){\n          try{\n            Plotly.animate(el, null, {frame: {duration: 80, redraw: false}, transition: {duration: 0}, mode: 'immediate'});\n          }catch(e){\n            console.log('Animation error:', e);\n          }\n        }, 150);\n      }")
+
+    p_plotly
   })
   
   output$SOSSS_DataTable <- DT::renderDT({
