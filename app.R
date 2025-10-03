@@ -1438,14 +1438,9 @@ server <- function(input, output, session) {
             )
           ))),
       # --- Second Top-Level Tab: Data Explorer (Now a Dropdown Menu) ---
-      nav_menu(
+      nav_panel(
         title = tags$b("Data Explorer"),  # Becomes a dropdown
         icon = bs_icon("table"),
-        
-        # --- First Child: School Information ---
-        nav_panel(
-          title = "School Information",
-          icon = bs_icon("building"),
           layout_sidebar(
             sidebar = sidebar(
               width = 350,
@@ -1533,33 +1528,7 @@ server <- function(input, output, session) {
             )
           )
         ),
-        
-        # --- Second Child: Third Level Dashboard ---
-        nav_panel(
-          title = "Third Level Dashboard",
-          icon = bs_icon("bar-chart-line"),
-          layout_sidebar(
-            sidebar = sidebar(
-              width = 300,
-              h6("Filters"),
-              pickerInput(
-                inputId = "StrandFilter",
-                label = "Select Strand:",
-                choices = c("STEM", "ABM", "HUMSS", "GAS", "TVL"), # example strands
-                multiple = TRUE,
-                options = list(`actions-box` = TRUE)
-              )
-            ),
-            layout_columns(
-              card(
-                card_header(strong("Third Level Dashboard Output")),
-                plotOutput("ThirdLevelPlot") # placeholder for your viz
-              )
-            )
-          )
-        )
-      ),
-      
+   
       # --- Quick School Search ---
       nav_panel(
         title = tags$b("Quick School Search"),
@@ -5828,42 +5797,42 @@ server <- function(input, output, session) {
             legend.position = "bottom", # Position legend at the bottom
             plot.title = element_text(hjust = 0.5)) # Center the plot title
     
-    # Build a small frame-based plotly animation that grows the bars from 0->full
-    # Create scaled frames for a smooth startup animation
-    n_frames <- 8
-    scales_seq <- seq(0, 1, length.out = n_frames)
-    
-    frames_df <- plot_data %>%
-      tidyr::crossing(frame_step = seq_along(scales_seq)) %>%
-      mutate(scale = scales_seq[frame_step],
-             Count_scaled = Count * scale,
-             hover_text = paste("Region: ", Region,
-                                "<br>School Type: ", Modified.COC,
-                                "<br>Count: ", scales::comma(Count)))
-    
-    # Use plot_ly with frames and stacked bars
-    p_plotly <- plot_ly(
-      data = frames_df,
-      x = ~factor(Modified.COC, levels = coc_levels),
-      y = ~Count_scaled,
-      color = ~Region,
-      frame = ~frame_step,
-      type = 'bar',
-      text = ~hover_text,
-      hoverinfo = 'text',
-      marker = list(line = list(width = 0.5, color = 'black'))
-    ) %>%
-      layout(barmode = 'stack',
-             hoverlabel = list(bgcolor = 'white'),
-             margin = list(b = 100),
-             xaxis = list(title = 'Modified Curricular Offering', tickangle = 45),
-             yaxis = list(title = 'Number of Schools'))
-    
-    # Auto-play the animation on render using a tiny JS hook
-    p_plotly <- htmlwidgets::onRender(p_plotly,
-                                      "function(el, x) {\n\n        // Small timeout to ensure plot is fully initialized\n        setTimeout(function(){\n          try{\n            Plotly.animate(el, null, {frame: {duration: 80, redraw: false}, transition: {duration: 0}, mode: 'immediate'});\n          }catch(e){\n            console.log('Animation error:', e);\n          }\n        }, 150);\n      }")
-    
-    p_plotly
+  #   # Build a small frame-based plotly animation that grows the bars from 0->full
+  #   # Create scaled frames for a smooth startup animation
+  #   n_frames <- 8
+  #   scales_seq <- seq(0, 1, length.out = n_frames)
+  #   
+  #   frames_df <- plot_data %>%
+  #     tidyr::crossing(frame_step = seq_along(scales_seq)) %>%
+  #     mutate(scale = scales_seq[frame_step],
+  #            Count_scaled = Count * scale,
+  #            hover_text = paste("Region: ", Region,
+  #                               "<br>School Type: ", Modified.COC,
+  #                               "<br>Count: ", scales::comma(Count)))
+  #   
+  #   # Use plot_ly with frames and stacked bars
+  #   p_plotly <- plot_ly(
+  #     data = frames_df,
+  #     x = ~factor(Modified.COC, levels = coc_levels),
+  #     y = ~Count_scaled,
+  #     color = ~Region,
+  #     frame = ~frame_step,
+  #     type = 'bar',
+  #     text = ~hover_text,
+  #     hoverinfo = 'text',
+  #     marker = list(line = list(width = 0.5, color = 'black'))
+  #   ) %>%
+  #     layout(barmode = 'stack',
+  #            hoverlabel = list(bgcolor = 'white'),
+  #            margin = list(b = 100),
+  #            xaxis = list(title = 'Modified Curricular Offering', tickangle = 45),
+  #            yaxis = list(title = 'Number of Schools'))
+  #   
+  #   # Auto-play the animation on render using a tiny JS hook
+  #   p_plotly <- htmlwidgets::onRender(p_plotly,
+  #                                     "function(el, x) {\n\n        // Small timeout to ensure plot is fully initialized\n        setTimeout(function(){\n          try{\n            Plotly.animate(el, null, {frame: {duration: 80, redraw: false}, transition: {duration: 0}, mode: 'immediate'});\n          }catch(e){\n            console.log('Animation error:', e);\n          }\n        }, 150);\n      }")
+  #   
+  #   p_plotly
   })
   
   output$SOSSS_DataTable <- DT::renderDT({
@@ -7758,30 +7727,30 @@ server <- function(input, output, session) {
     
     
     #LMSTABLE 
-    output$LMSTable <- renderDataTable({
-      req(LMS, uni, buildablecsv)
-      
-      lms_data <- LMS %>%
-        filter(LMS == 1) %>%   # Step 1: LMS only
-        left_join(uni, by = c("School_ID" = "SchoolID")) %>%   # Step 2: lat/long
-        left_join(buildablecsv, by = c(`Buildable_Space` = `Avaiability of Buildable Space (Y/N)`)) %>%  # Step 2: buildable remarks
-        filter(Region == input$resource_map_region) %>%       # Step 3
-        filter(Division == input$Resource_SDO) %>%            # Step 3
-        filter(LD == input$leg_district) %>%                  # Step 3
-        select(                                                # Step 4
-          `NAME OF SCHOOL`,
-          `Avaiability of Buildable Space (Y/N)`,
-          `OTHER REMARKS (Buildable Space)`
-        )
-      
-      datatable(
-        lms_data,
-        options = list(pageLength = 10, scrollX = TRUE, fixedColumns = list(leftColumns = 4)),
-        selection = "single",   #allow single row selection
-        extensions = c("FixedColumns") ,
-        callback = JS("window.dispatchEvent(new Event('resize'));")
-      )
-    })
+    # output$LMSTable <- renderDataTable({
+    #   req(LMS, uni, buildablecsv)
+    #   
+    #   lms_data <- LMS %>%
+    #     filter(LMS == 1) %>%   # Step 1: LMS only
+    #     left_join(uni, by = c("School_ID" = "SchoolID")) %>%   # Step 2: lat/long
+    #     left_join(buildablecsv, by = c(`Buildable_Space` = `Avaiability of Buildable Space (Y/N)`)) %>%  # Step 2: buildable remarks
+    #     filter(Region == input$resource_map_region) %>%       # Step 3
+    #     filter(Division == input$Resource_SDO) %>%            # Step 3
+    #     filter(LD == input$leg_district) %>%                  # Step 3
+    #     select(                                                # Step 4
+    #       `NAME OF SCHOOL`,
+    #       `Avaiability of Buildable Space (Y/N)`,
+    #       `OTHER REMARKS (Buildable Space)`
+    #     )
+    #   
+    #   datatable(
+    #     lms_data,
+    #     options = list(pageLength = 10, scrollX = TRUE, fixedColumns = list(leftColumns = 4)),
+    #     selection = "single",   #allow single row selection
+    #     extensions = c("FixedColumns") ,
+    #     callback = JS("window.dispatchEvent(new Event('resize'));")
+    #   )
+    # })
     
     # --- LMS Map (initialize once) ---
     
@@ -7812,39 +7781,39 @@ server <- function(input, output, session) {
     })
     
     #LMSTABLE 
-    output$LMSTable <- renderDataTable({
-      
-      lms_data <- LMS %>%
-        filter(LMS == 1) %>%   # Step 1: LMS only
-        left_join(uni %>% select(SchoolID,Latitude,Longitude), by = c("School_ID" = "SchoolID")) %>%   # Step 2: lat/long
-        left_join(buildablecsv %>% select(SCHOOL.ID,OTHER.REMARKS..Buildable.Space..), by = c("School_ID" = "SCHOOL.ID"))          # always filter Region
-      
-      # # Apply Division filter only if not "Select Input"
-      # if (!is.null(input$Resource_SDO) && input$Resource_SDO != "Select Input") {
-      #   lms_data <- lms_data %>% filter(Division == input$Resource_SDO)
-      # }
-      # 
-      # # Apply District filter only if not "Select Input"
-      # if (!is.null(input$Resource_LegDist) && input$Resource_LegDist != "Select Input") {
-      #   lms_data <- lms_data %>% filter(LD == input$Resource_LegDist)
-      # }
-      
-      # Final select
-      lms_data <- lms_data %>%
-        select(
-          School_Name,
-          Buildable_space,
-          OTHER.REMARKS..Buildable.Space..
-        )
-      
-      datatable(
-        lms_data,
-        options = list(pageLength = 10, scrollX = TRUE),
-        selection = "single",   # allow single row selection
-        extensions = c("FixedColumns"),
-        callback = JS("window.dispatchEvent(new Event('resize'));")
-      )
-    })
+    # output$LMSTable <- renderDataTable({
+    #   
+    #   lms_data <- LMS %>%
+    #     filter(LMS == 1) %>%   # Step 1: LMS only
+    #     left_join(uni %>% select(SchoolID,Latitude,Longitude), by = c("School_ID" = "SchoolID")) %>%   # Step 2: lat/long
+    #     left_join(buildablecsv %>% select(SCHOOL.ID,OTHER.REMARKS..Buildable.Space..), by = c("School_ID" = "SCHOOL.ID"))          # always filter Region
+    #   
+    #   # # Apply Division filter only if not "Select Input"
+    #   # if (!is.null(input$Resource_SDO) && input$Resource_SDO != "Select Input") {
+    #   #   lms_data <- lms_data %>% filter(Division == input$Resource_SDO)
+    #   # }
+    #   # 
+    #   # # Apply District filter only if not "Select Input"
+    #   # if (!is.null(input$Resource_LegDist) && input$Resource_LegDist != "Select Input") {
+    #   #   lms_data <- lms_data %>% filter(LD == input$Resource_LegDist)
+    #   # }
+    #   
+    #   # Final select
+    #   lms_data <- lms_data %>%
+    #     select(
+    #       School_Name,
+    #       Buildable_space,
+    #       OTHER.REMARKS..Buildable.Space..
+    #     )
+    #   
+    #   datatable(
+    #     lms_data,
+    #     options = list(pageLength = 10, scrollX = TRUE),
+    #     selection = "single",   # allow single row selection
+    #     extensions = c("FixedColumns"),
+    #     callback = JS("window.dispatchEvent(new Event('resize'));")
+    #   )
+    # })
     
     
     # --- LMS Map (initialize once) ---
@@ -7978,9 +7947,36 @@ server <- function(input, output, session) {
       left_join(buildablecsv %>% select(SCHOOL.ID,OTHER.REMARKS..Buildable.Space..), by = c("School_ID" = "SCHOOL.ID")) %>% 
       filter(Region == RegRCT)
     
+    values.LMS <- paste(
+      "School Name:",mainreactLMS$School_Name,
+      "<br>Division:", mainreactLMS$Division,
+      "<br>Leg. District:", mainreactLMS$Legislative_District,
+      "<br>Number of Classrooms:", mainreactLMS$Instructional_Rooms,
+      "<br>Classroom Requirement:", mainreactLMS$CL_Req,
+      "<br>Estimated Classroom Shortage:", mainreactLMS$Estimated_CL_Shortage,
+      "<br>Buildable Space:", ifelse(mainreactLMS$Buildable_space == 1, "Yes", "No")) %>% lapply(htmltools::HTML)
     
-    leafletProxy("LMSMapping") %>% clearMarkers() %>% clearMarkerClusters() %>% setView(lng = mainreactLMS$Longitude[1], lat = mainreactLMS$Latitude[1], zoom = 7) %>% 
-      addAwesomeMarkers(clusterOptions = markerClusterOptions(disableClusteringAtZoom = 15), lng = mainreactLMS$Longitude, lat = mainreactLMS$Latitude)
+    
+    leafletProxy("LMSMapping") %>%
+      clearMarkers() %>%
+      clearMarkerClusters() %>%
+      setView(
+        lng = mainreactLMS$Longitude[1],
+        lat = mainreactLMS$Latitude[1],
+        zoom = 7
+      ) %>%
+      addAwesomeMarkers(
+        clusterOptions = markerClusterOptions(disableClusteringAtZoom = 12),
+        lng = mainreactLMS$Longitude,
+        lat = mainreactLMS$Latitude,
+        icon = makeAwesomeIcon(icon = "education", library = "glyphicon",
+        markerColor = case_when(
+          mainreactLMS$Buildable_space == 0 ~ "red", # Corrected to '=='
+          mainreactLMS$Buildable_space == 1 ~ "green" # Corrected to '=='
+        )),
+        label = values.LMS,
+        labelOptions = labelOptions(noHide = F, textsize = "12px", direction = "top")
+      )
     
     df1 <- reactive({
       
@@ -8011,18 +8007,35 @@ server <- function(input, output, session) {
       
       # Final select
       finalLMS <- df1() %>%
-        select(
+        # 1. Convert Buildable_space from 1/0 to "Yes"/"No"
+        dplyr::mutate(
+          Buildable_space = dplyr::if_else(Buildable_space == 1, "Yes", "No")
+        ) %>%
+        # 2. Select the desired columns
+        dplyr::select(
           School_Name,
-          Buildable_space,
-          OTHER.REMARKS..Buildable.Space..
+          Instructional_Rooms,
+          CL_Req,
+          Estimated_CL_Shortage,
+          Buildable_space
+        ) %>%
+        # 3. Rename columns for display
+        dplyr::rename(
+          "School Name" = School_Name,
+          "Classrooms" = Instructional_Rooms,
+          "Classroom Requirement" = CL_Req,
+          "Classroom Shortage" = Estimated_CL_Shortage,
+          "Buildable Space" = Buildable_space
         )
       
       datatable(
         finalLMS,
-        options = list(pageLength = 10, scrollX = TRUE),
-        selection = "single",   # allow single row selection
-        extensions = c("FixedColumns"),
-        callback = JS("window.dispatchEvent(new Event('resize'));")
+        options = list(scrollX = TRUE, pageLength = 10, dom = 'Bfrtip',
+                       buttons = list('csv', 'excel', 'pdf', 'print'), columnDefs = list(list(className = 'dt-center', targets = "_all"))),
+        selection = "single",  # allow single row selection
+        extension = 'Buttons',
+        rownames = FALSE,
+        callback = JS("window.dispatchEvent(new Event('resize'));") # Final closing parenthesis was missing
       )
     })
     
@@ -8767,9 +8780,10 @@ server <- function(input, output, session) {
           columnDefs = list(list(className = 'dt-center', targets = '_all')),
           rownames = FALSE
         )
-      )
+      ))
     })
   })
+      
   
   observeEvent(input$SHSListTable_rows_selected, {
     
