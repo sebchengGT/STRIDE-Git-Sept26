@@ -77,9 +77,32 @@ ui <- fluidPage(
   theme = bs_theme(version = 5,
                    bootswatch = "litera",
                    font_scale = 0.9,
-                   base_font = font_google("Poppins")),
+                   base_font = font_google("Alan Sans")),
   # Use shinyjs to easily show/hide elements
   shinyjs::useShinyjs(),
+  
+  
+  tags$head(
+    includeCSS("www/style.css"),
+    includeScript("www/script.js")
+  ),
+  
+  tags$div(
+    class = "app-header",
+    style = "display: flex; align-items: center; gap: 15px; justify-content: center;",
+    
+    # Logo
+    tags$img(src = "logo3.png", height = "60px"),
+    
+    # Text beside the logo
+    tags$div(
+      h2("DepEd STRIDE Dashboard"),
+      p("Based on GMIS (April 2025) and eBEIS (SY 2024–2025)")
+    )
+  ),
+  
+  
+  
   
   # tags$head(
   #   tags$style(HTML("
@@ -95,35 +118,21 @@ ui <- fluidPage(
   #                   "))),
   # 
   # Row for the login panel UI
-  fluidRow(
-    layout_columns(
-      imageOutput("StrideLogo"),
-      col_widths = c(-3,6,-3))),
-  
-  fluidRow(
-    column(width = 12,
-           # Add the login UI
-           shinyauthr::loginUI(
-             id = "login",
-             title = "Please Log In",
-             user_title = "Username",
-             pass_title = "Password",
-             login_title = "Log In",
-             error_message = "Invalid username or password!" # Custom error message
-           )
-    )
-  ),
   
   fluidRow(
     column(width = 12,
            div(
-             style = "text-align: right; padding-bottom: 10px;",
-             shinyauthr::logoutUI(
-               id = "logout",
-               label = "Log Out",
-               icon = icon("sign-out-alt"),
-               class = "btn btn-danger"
-             )))), 
+             id = "login-title",# Add the login UI
+             shinyauthr::loginUI(
+               id = "login",
+               title = "Please Log In",
+               user_title = "Username",
+               pass_title = "Password",
+               login_title = "Log In",
+               error_message = "Invalid username or password!" # Custom error message
+             )
+           ))
+  ), 
   # Custom styling
   
   shinyjs::hidden(
@@ -134,7 +143,14 @@ ui <- fluidPage(
   shinyjs::hidden(
     div(
       id = "mgmt_content",
-      uiOutput("STRIDE2"))))
+      uiOutput("STRIDE2"))),
+  
+  
+  
+  tags$footer(
+    class = "app-footer",
+    tags$p("© 2025 Department of Education • STRIDE Project")))
+
 
 
 # Define server logic required to draw a histogram
@@ -180,7 +196,8 @@ server <- function(input, output, session) {
     auth_status <- credentials()$user_auth
     if (auth_status) {
       # User is authenticated. Let's get their details.
-      user_info <- credentials()$info # This is a tibble with the user's row
+      user_info <- credentials()$info
+      # This is a tibble with the user's row
       
       # Ensure user_info is available and has the username
       # (It should if auth_status is TRUE and your user_base is set up correctly)
@@ -214,14 +231,8 @@ server <- function(input, output, session) {
   
   output$STRIDE2 <- renderUI({
     page_navbar(
-      title = div(
-        tags$span(
-          strong("DepEd STRIDE Dashboard"),
-          style = "font-size: 1em; margin-bottom: 0.2em;"),"",
-        tags$p(
-          em("based on GMIS (April 2025) and eBEIS (SY 2024-2025)"),
-          style = "font-size: 0.7em; color: black;  margin-top: 0.1em; margin-bottom: 0;"
-        )),
+      # no title, just the nav items
+      
       theme = bs_theme(
         version = 5,
         bootswatch = "sandstone",
@@ -1663,7 +1674,17 @@ server <- function(input, output, session) {
                    marginwidth = "0")
           )
         )
-      ))
+      ),
+      
+      nav_item(
+        shinyauthr::logoutUI(
+          id = "logout",
+          label = "Log Out",
+          icon = icon("sign-out-alt"),
+          class = "btn btn-danger"
+        )
+      )
+    )
   })
   
   # Reactive expression to generate the main panel content
@@ -5807,10 +5828,42 @@ server <- function(input, output, session) {
             legend.position = "bottom", # Position legend at the bottom
             plot.title = element_text(hjust = 0.5)) # Center the plot title
     
-    # Convert ggplot to plotly, ensuring custom text is used for hover
-    ggplotly(p, tooltip = "text", source = "schoolcountplot_region") %>%
-      layout(hoverlabel = list(bgcolor = "white"),
-             margin = list(b = 100)) # Increase bottom margin for x-axis labels
+    # Build a small frame-based plotly animation that grows the bars from 0->full
+    # Create scaled frames for a smooth startup animation
+    n_frames <- 8
+    scales_seq <- seq(0, 1, length.out = n_frames)
+    
+    frames_df <- plot_data %>%
+      tidyr::crossing(frame_step = seq_along(scales_seq)) %>%
+      mutate(scale = scales_seq[frame_step],
+             Count_scaled = Count * scale,
+             hover_text = paste("Region: ", Region,
+                                "<br>School Type: ", Modified.COC,
+                                "<br>Count: ", scales::comma(Count)))
+    
+    # Use plot_ly with frames and stacked bars
+    p_plotly <- plot_ly(
+      data = frames_df,
+      x = ~factor(Modified.COC, levels = coc_levels),
+      y = ~Count_scaled,
+      color = ~Region,
+      frame = ~frame_step,
+      type = 'bar',
+      text = ~hover_text,
+      hoverinfo = 'text',
+      marker = list(line = list(width = 0.5, color = 'black'))
+    ) %>%
+      layout(barmode = 'stack',
+             hoverlabel = list(bgcolor = 'white'),
+             margin = list(b = 100),
+             xaxis = list(title = 'Modified Curricular Offering', tickangle = 45),
+             yaxis = list(title = 'Number of Schools'))
+    
+    # Auto-play the animation on render using a tiny JS hook
+    p_plotly <- htmlwidgets::onRender(p_plotly,
+                                      "function(el, x) {\n\n        // Small timeout to ensure plot is fully initialized\n        setTimeout(function(){\n          try{\n            Plotly.animate(el, null, {frame: {duration: 80, redraw: false}, transition: {duration: 0}, mode: 'immediate'});\n          }catch(e){\n            console.log('Animation error:', e);\n          }\n        }, 150);\n      }")
+    
+    p_plotly
   })
   
   output$SOSSS_DataTable <- DT::renderDT({
@@ -7703,6 +7756,35 @@ server <- function(input, output, session) {
           values = c("Not Congested","Moderately Congested","Severely Congested"))
     })
     
+    
+    #LMSTABLE 
+    output$LMSTable <- renderDataTable({
+      req(LMS, uni, buildablecsv)
+      
+      lms_data <- LMS %>%
+        filter(LMS == 1) %>%   # Step 1: LMS only
+        left_join(uni, by = c("School_ID" = "SchoolID")) %>%   # Step 2: lat/long
+        left_join(buildablecsv, by = c(`Buildable_Space` = `Avaiability of Buildable Space (Y/N)`)) %>%  # Step 2: buildable remarks
+        filter(Region == input$resource_map_region) %>%       # Step 3
+        filter(Division == input$Resource_SDO) %>%            # Step 3
+        filter(LD == input$leg_district) %>%                  # Step 3
+        select(                                                # Step 4
+          `NAME OF SCHOOL`,
+          `Avaiability of Buildable Space (Y/N)`,
+          `OTHER REMARKS (Buildable Space)`
+        )
+      
+      datatable(
+        lms_data,
+        options = list(pageLength = 10, scrollX = TRUE, fixedColumns = list(leftColumns = 4)),
+        selection = "single",   #allow single row selection
+        extensions = c("FixedColumns") ,
+        callback = JS("window.dispatchEvent(new Event('resize'));")
+      )
+    })
+    
+    # --- LMS Map (initialize once) ---
+    
     output$LMSMapping <- renderLeaflet({
       # Define palette once here, with explicit factor order
       pal <- colorFactor(
@@ -8668,6 +8750,13 @@ server <- function(input, output, session) {
       req(GMISDiv2)
       
       DT::datatable(
+        GMISDiv2, # Adds filter boxes to the top of each column
+        filter = "top",
+        extensions = "FixedHeader",
+        options = list(
+          fixedHeader = list(
+            header = TRUE,
+            footer = FALSE),
         GMISDiv2,
         filter = "top",
         extensions = "FixedHeader",

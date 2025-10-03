@@ -1,0 +1,201 @@
+body {
+  background-color: #f9fafc;
+  font-family: 'Alan Sans', sans-serif;
+  margin: 0;
+  padding-bottom: 60px; /* leave space so footer doesn’t overlap */
+  opacity: 1; /* keep content fully visible */
+}
+
+/* Watermark logo */
+body::before {
+  content: "";
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: url("logo1.png") no-repeat center center;
+  background-size: 60%;
+  opacity: 0.5;   /* 👈 adjust watermark visibility */
+  z-index: -1;
+}
+
+/* Login page wrapper */
+.login-page {
+  display: flex;
+  justify-content: center;
+  margin-top: 60px;   /* 👈 space between header and login */
+  padding: 20px;
+}
+
+/* Login panel (choose ONE method) */
+#login-panel {
+  width: 500px;
+  max-width: 100%;
+  margin: 150px auto !important;  /* pushes login panel down */
+  padding: 20px;
+  /* If you want vertical center instead, replace margin with:
+     position: relative;
+     top: 50%;
+     transform: translateY(-50%);
+  */
+}
+
+/* Style the login card */
+#login .panel,
+#login .card, 
+#login .well {
+  background-color: rgba(0, 45, 98, 0.9) !important; /* dark blue card */
+  color: #fff !important;
+  padding: 25px;
+  border-radius: 12px;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+  max-width: 400px;
+  margin: auto;
+  text-align: left;
+}
+/* Animate the login box */
+#login-login_ui {
+  animation: slideUp 1s ease-out;
+}
+.fade-in {
+  animation: slideUp 1s ease-out;
+}
+
+@keyframes slideUp {
+  0% {
+    transform: translateY(40px);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* ==== HEADER ==== */
+.app-header {
+  background: linear-gradient(rgba(0, 45, 98, 0.9), rgba(0, 45, 98, 0.9));
+  color: white;
+  padding: 15px;
+  text-align: center;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+}
+
+.app-header h2 {
+  text-align: center;
+  margin: 0;
+  font-size: 1.8em;
+}
+
+.app-header p {
+  margin: 0;
+  font-size: 0.9em;
+  opacity: 0.8;
+}
+
+/* Well box */
+.well {
+  display: block;
+  background-color: #13345ade;
+  color: white;
+  padding: 1rem;
+  border-radius: 2.375rem;
+  text-shadow: 2px 3px black;
+}
+
+/* ==== FOOTER ==== */
+.app-footer {
+  background-color: #f1f1f1;
+  color: #444;
+  text-align: center;
+  padding: 10px;
+  position: fixed;
+  bottom: 0;
+  width: 100%;
+  border-top: 1px solid #ccc;
+  font-size: 0.9em;
+}
+
+/* ==== CUSTOM CARDS ==== */
+.card-header {
+  background-color: #e6f0ff !important;
+  color: #002D62 !important;
+  font-weight: bold;
+}
+
+/* ==== VALUE BOX ==== */
+.value-box .value {
+  font-size: 1.2em;
+  color: #d63384;
+}
+.value-box .title {
+  white-space: normal !important;
+}
+
+
+/* Animate "Please Log in" */
+#login-title {
+  animation: fadeInDown 1s ease-out;
+}
+
+@keyframes fadeInDown {
+  0% {
+    opacity: 0;
+    transform: translateY(-30px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+} 
+ /* Force navbar items to left align */
+.navbar-nav {
+  justify-content: flex-start !important;
+}
+.navbar-collapse {
+  justify-content: flex-start !important;
+}
+
+.navbar .nav-item {
+  margin-right: 70px;
+}
+
+.card {
+  opacity: 0;
+  transform: translateY(40px);
+  transition: all 0.8s ease-out;
+}
+
+.card.animate {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.bslib-sidebar-layout>.sidebar>.sidebar-content {
+    display: flex
+;
+    flex-direction: column;
+    gap: var(--bslib-spacer, 1rem);
+    padding: var(--_padding);
+    padding-top: var(--_padding-icon);
+    background: #23558f;
+    font-family: "Times New Roman", Times, serif;
+    font-size: 15px;
+    letter-spacing: 0px;
+    word-spacing: -0.4px;
+    color: #FFFFFF;
+    font-weight: 700;
+    text-decoration: none;
+    font-style: italic;
+    font-variant: normal;
+    text-transform: none;
+    text-align: center;
+    
+}
+
+
+
+
+
+  
