@@ -2,6 +2,7 @@
 #test commit
 #TEST
 #testingsept302025
+#testcommitoctober12025
 library(tidyverse)
 library(DT)
 library(dplyr)
@@ -29,7 +30,7 @@ library(shinyWidgets) # For pickerInput
 
 df <- read_parquet("School-Level-v2.parquet")
 uni <- read_parquet("School-Unique-v2.parquet")
-buildablecsv <- read.csv("Buildable_LatLong.csv", check.names = FALSE)
+buildablecsv <- read.csv("Buildable_LatLong.csv")
 
 # Clean column names: remove line breaks, extra spaces
 names(buildablecsv) <- gsub("[\r\n]", " ", names(buildablecsv))
@@ -731,8 +732,8 @@ server <- function(input, output, session) {
                       #     header = "Select a Category"
                       #   )
                       # ),
-                      uiOutput("PosSelectionGMIS"),
-                      input_task_button("GMISRun", icon_busy = fontawesome::fa_i("refresh", class = "fa-spin", "aria-hidden" = "true"), strong("Show Selection"), class = "btn-danger")),
+                      uiOutput("PosSelectionGMIS")),
+                    # input_task_button("GMISRun", icon_busy = fontawesome::fa_i("refresh", class = "fa-spin", "aria-hidden" = "true"), strong("Show Selection"), class = "btn-danger")),
                     layout_columns(
                       card(
                         card_header(strong("GMIS Data")),
@@ -2021,19 +2022,41 @@ server <- function(input, output, session) {
     filtered_division <- c(df[df$Region==input$cloud_dashboard_region_filter,"Division"])
     selectInput("cloud_Dashboard_SDO",HTML(paste0("Division ", em(style = "font-size: 0.8em;", "(for Legislative District data):"))), filtered_division, selected = filtered_division[1])})
   
-  output$resource_map_division<- renderUI({
-    filtered_division <- c(df[df$Region==input$resource_map_region,"Division"])
-    selectInput("Resource_SDO","Select a Division:", filtered_division, selected = filtered_division[1])})
+  # --- Division UI ---
+  output$resource_map_division <- renderUI({
+    filtered_division <- c(df[df$Region == input$resource_map_region, "Division"])
+    
+    selectInput(
+      "Resource_SDO",
+      "Select a Division:",
+      choices = c("Select Input" , filtered_division),
+      selected = "Select Input"
+    )
+  })
   
   output$explorer_division<- renderUI({
     filtered_division <- c(df[df$Region==input$explorer_region,"Division"])
     selectInput("Explorer_SDO","Select a Division:", filtered_division, selected = filtered_division[1])})
   
-  #For Legislative District:
-  
+  # --- Legislative District UI ---
   output$resource_map_legislative_district <- renderUI({
-    filtered_district <- c(df[which(df$Division == input$Resource_SDO), "Legislative.District"])
-    selectInput("Resource_LegDist","Select a Legislative District:", filtered_district, selected = filtered_district[1])})
+    if (is.null(input$Resource_SDO) || input$Resource_SDO == "Select Input") {
+      selectInput(
+        "Resource_LegDist",
+        "Select a Legislative District:",
+        choices = "Select Input",
+        selected = "Select Input"
+      )
+    } else {
+      filtered_district <- c(df[df$Division == input$Resource_SDO, "Legislative.District"])
+      selectInput(
+        "Resource_LegDist",
+        "Select a Legislative District:",
+        choices = c("Select Input", filtered_district),
+        selected = "Select Input"
+      )
+    }
+  })
   
   # Reactive value to store uploaded data
   uploaded_data <- reactiveVal(NULL)
@@ -7761,6 +7784,7 @@ server <- function(input, output, session) {
     })
     
     # --- LMS Map (initialize once) ---
+    
     output$LMSMapping <- renderLeaflet({
       # Define palette once here, with explicit factor order
       pal <- colorFactor(
@@ -7787,91 +7811,127 @@ server <- function(input, output, session) {
         )
     })
     
-    # --- LMS Map (update markers when filters change) ---
-    observe({
-      req(buildablecsv)
+    #LMSTABLE 
+    output$LMSTable <- renderDataTable({
       
-      # Filter data based on user selections
-      lms_data <- buildablecsv %>%
-        filter(REGION == input$resource_map_region) %>%
-        filter(DIVISION == input$Resource_SDO) %>%
-        filter(`Avaiability of Buildable Space (Y/N)` %in% c("Y", "N"))
+      lms_data <- LMS %>%
+        filter(LMS == 1) %>%   # Step 1: LMS only
+        left_join(uni %>% select(SchoolID,Latitude,Longitude), by = c("School_ID" = "SchoolID")) %>%   # Step 2: lat/long
+        left_join(buildablecsv %>% select(SCHOOL.ID,OTHER.REMARKS..Buildable.Space..), by = c("School_ID" = "SCHOOL.ID"))          # always filter Region
       
-      # Same palette as above
-      pal <- colorFactor(
-        palette = c("green", "red"),
-        domain = factor(c("Y", "N"), levels = c("Y", "N"))
-      )
+      # # Apply Division filter only if not "Select Input"
+      # if (!is.null(input$Resource_SDO) && input$Resource_SDO != "Select Input") {
+      #   lms_data <- lms_data %>% filter(Division == input$Resource_SDO)
+      # }
+      # 
+      # # Apply District filter only if not "Select Input"
+      # if (!is.null(input$Resource_LegDist) && input$Resource_LegDist != "Select Input") {
+      #   lms_data <- lms_data %>% filter(LD == input$Resource_LegDist)
+      # }
       
-      # --- Zoom map when a row is selected ---
-      observeEvent(input$LMSTable_rows_selected, {
-        req(buildablecsv)
-        req(input$LMSTable_rows_selected)
-        
-        lms_data_zoom <- buildablecsv %>%
-          filter(REGION == input$resource_map_region) %>%
-          filter(DIVISION == input$Resource_SDO) %>%
-          filter(`Avaiability of Buildable Space (Y/N)` == "Y")
-        
-        selected_row <- input$LMSTable_rows_selected
-        school <- lms_data_zoom[selected_row, ]
-        
-        leafletProxy("LMSMapping") %>%
-          setView(lng = school$Longitude, lat = school$Latitude, zoom = 16)
-      })
-      
-      # Update markers only
-      leafletProxy("LMSMapping", data = lms_data) %>%
-        clearMarkers() %>%
-        addAwesomeMarkers(
-          lng = ~Longitude,
-          lat = ~Latitude,
-          popup = ~htmltools::HTML(paste0(
-            "<b>", `NAME OF SCHOOL`, "</b><br>",
-            "School ID: ", `SCHOOL ID`, "<br>",
-            "Municipality: ", `MUNICIPALITY/ LOCATION`, "<br>",
-            "Division: ", DIVISION, "<br>",
-            "Region: ", REGION, "<hr>",
-            "<b>LD:</b> ", LD, "<br>",
-            "<b>No. of Sites:</b> ", `NO. OF SITES`, "<br>",
-            "<b>Scope of Works:</b> ", `SCOPE OF WORKS`, "<br>",
-            "<b>Other Config:</b> ", `OTHER DESIGN CONFIGURATION`, "<br>",
-            "<b>Academic Classrooms:</b> ", `NO. OF ACADEMIC CLASSROOMS`, "<br>",
-            "<b>Workshops (2-CL):</b> ", `NO. OF WORKSHOP (equivalent to 2-CL)`, "<br>",
-            "<b>ICT Labs (2-CL):</b> ", `NO. OF ICT/COMPUTER LABORATORY (equivalent to 2-CL)`, "<br>",
-            "<b>Science Labs (2-CL):</b> ", `NO. OF SCIENCE LABORATORY (equivalent to 2-CL)`, "<br>",
-            "<b>AVR (2-CL):</b> ", `NO. OF AVR (equivalent to 2-CL)`, "<br>",
-            "<b>Home Econ (2-CL):</b> ", `NO. OF HOME ECONOMICS (equivalent to 2-CL)`, "<br>",
-            "<b>Total Classrooms:</b> ", `TOTAL CLASSROOMS`, "<br>",
-            "<b>With Demolition?:</b> ", `WITH DEMOLITION? YES/ NO`, "<br>",
-            "<b>With Site Improvement?:</b> ", `WITH SITE IMPROVEMENT? YES/ NO`, "<br>",
-            "<b>With Slope Protection?:</b> ", `WITH SLOPE PROTECTION? YES/NO`, "<br>",
-            "<b>Remarks:</b> ", `OTHER REMARKS`, "<br>",
-            "<b>Site Dev Plan?:</b> ", `With Site Development Plan?`, "<br>",
-            "<b>Other Proposals?:</b> ", `With proposal from OTHER SOURCES, including LGUs, NGOs, Private Sector etc)?`, "<br>",
-            "<b>Buildable Space:</b> ", `Avaiability of Buildable Space (Y/N)`, "<br>",
-            "<b>Remarks (Buildable):</b> ", `OTHER REMARKS (Buildable Space)`, "<br>",
-            "<b>Site Ownership:</b> ", `Site Ownership`, "<br>",
-            "<b>Remarks Ownership:</b> ", `OTHER REMARKS Site Ownership`, "<br>",
-            "<b>Accessibility:</b> ", `Viability / Accessibility (Y/N)`, "<br>",
-            "<b>Remarks Access:</b> ", `OTHER REMARKS Viability / Accessibility`, "<br>",
-            "<b>Operational Readiness:</b> ", `Operational Readiness (Y/N)`, "<br>",
-            "<b>Remarks OR:</b> ", `OTHER REMARKS Operational Readiness`, "<br>",
-            "<b>Implementability:</b> ", `Implementability of Proposed Scope (Y/N)`, "<br>",
-            "<b>Remarks Impl:</b> ", `OTHER REMARKS Implementability of Proposed Scope`, "<br>",
-            "<b>Geotechnical Testing:</b> ", `Geotechnical Testing (Y/N)`, "<br>",
-            "<b>Remarks Geotech:</b> ", `OTHER REMARKS Geotechnical Testing`
-          )),
-          icon = ~makeAwesomeIcon(
-            icon = "graduation-cap",
-            library = "fa",
-            markerColor = ifelse(`Avaiability of Buildable Space (Y/N)` == "Y", "green", "red")
-          ),
-          clusterOptions = markerClusterOptions(disableClusteringAtZoom = 15)
+      # Final select
+      lms_data <- lms_data %>%
+        select(
+          School_Name,
+          Buildable_space,
+          OTHER.REMARKS..Buildable.Space..
         )
       
-      
+      datatable(
+        lms_data,
+        options = list(pageLength = 10, scrollX = TRUE),
+        selection = "single",   # allow single row selection
+        extensions = c("FixedColumns"),
+        callback = JS("window.dispatchEvent(new Event('resize'));")
+      )
     })
+    
+    
+    # --- LMS Map (initialize once) ---
+    
+    
+    # --- LMS Map (update markers when filters change) ---
+    # observe({
+    #   req(buildablecsv)
+    # 
+    #   # Filter data based on user selections
+    #   lms_data <- lms_data
+    # 
+    #   # Same palette as above
+    #   pal <- colorFactor(
+    #     palette = c("green", "red"),
+    #     domain = factor(c("Y", "N"), levels = c("Y", "N"))
+    #   )
+    # 
+    #   # --- Zoom map when a row is selected ---
+    #   observeEvent(input$LMSTable_rows_selected, {
+    #     req(lms_data)
+    #     req(input$LMSTable_rows_selected)
+    # 
+    #     lms_data_zoom <- lms_data %>%
+    #       filter(REGION == input$resource_map_region) %>%
+    #       filter(DIVISION == input$Resource_SDO) %>%
+    #       filter(`Avaiability of Buildable Space (Y/N)` == "Y")
+    # 
+    #     selected_row <- input$LMSTable_rows_selected
+    #     school <- lms_data_zoom[selected_row, ]
+    # 
+    #     leafletProxy("LMSMapping") %>%
+    #       setView(lng = school$Longitude, lat = school$Latitude, zoom = 16)
+    #   })
+    # 
+    #   # Update markers only
+    #   leafletProxy("LMSMapping", data = lms_data) %>%
+    #     clearMarkers() %>%
+    #     addAwesomeMarkers(
+    #       lng = ~Longitude,
+    #       lat = ~Latitude,
+    #       popup = ~htmltools::HTML(paste0(
+    #         "<b>", `NAME OF SCHOOL`, "</b><br>",
+    #         "School ID: ", `SCHOOL ID`, "<br>",
+    #         "Municipality: ", `MUNICIPALITY/ LOCATION`, "<br>",
+    #         "Division: ", DIVISION, "<br>",
+    #         "Region: ", REGION, "<hr>",
+    #         "<b>LD:</b> ", LD, "<br>",
+    #         "<b>No. of Sites:</b> ", `NO. OF SITES`, "<br>",
+    #         "<b>Scope of Works:</b> ", `SCOPE OF WORKS`, "<br>",
+    #         "<b>Other Config:</b> ", `OTHER DESIGN CONFIGURATION`, "<br>",
+    #         "<b>Academic Classrooms:</b> ", `NO. OF ACADEMIC CLASSROOMS`, "<br>",
+    #         "<b>Workshops (2-CL):</b> ", `NO. OF WORKSHOP (equivalent to 2-CL)`, "<br>",
+    #         "<b>ICT Labs (2-CL):</b> ", `NO. OF ICT/COMPUTER LABORATORY (equivalent to 2-CL)`, "<br>",
+    #         "<b>Science Labs (2-CL):</b> ", `NO. OF SCIENCE LABORATORY (equivalent to 2-CL)`, "<br>",
+    #         "<b>AVR (2-CL):</b> ", `NO. OF AVR (equivalent to 2-CL)`, "<br>",
+    #         "<b>Home Econ (2-CL):</b> ", `NO. OF HOME ECONOMICS (equivalent to 2-CL)`, "<br>",
+    #         "<b>Total Classrooms:</b> ", `TOTAL CLASSROOMS`, "<br>",
+    #         "<b>With Demolition?:</b> ", `WITH DEMOLITION? YES/ NO`, "<br>",
+    #         "<b>With Site Improvement?:</b> ", `WITH SITE IMPROVEMENT? YES/ NO`, "<br>",
+    #         "<b>With Slope Protection?:</b> ", `WITH SLOPE PROTECTION? YES/NO`, "<br>",
+    #         "<b>Remarks:</b> ", `OTHER REMARKS`, "<br>",
+    #         "<b>Site Dev Plan?:</b> ", `With Site Development Plan?`, "<br>",
+    #         "<b>Other Proposals?:</b> ", `With proposal from OTHER SOURCES, including LGUs, NGOs, Private Sector etc)?`, "<br>",
+    #         "<b>Buildable Space:</b> ", `Avaiability of Buildable Space (Y/N)`, "<br>",
+    #         "<b>Remarks (Buildable):</b> ", `OTHER REMARKS (Buildable Space)`, "<br>",
+    #         "<b>Site Ownership:</b> ", `Site Ownership`, "<br>",
+    #         "<b>Remarks Ownership:</b> ", `OTHER REMARKS Site Ownership`, "<br>",
+    #         "<b>Accessibility:</b> ", `Viability / Accessibility (Y/N)`, "<br>",
+    #         "<b>Remarks Access:</b> ", `OTHER REMARKS Viability / Accessibility`, "<br>",
+    #         "<b>Operational Readiness:</b> ", `Operational Readiness (Y/N)`, "<br>",
+    #         "<b>Remarks OR:</b> ", `OTHER REMARKS Operational Readiness`, "<br>",
+    #         "<b>Implementability:</b> ", `Implementability of Proposed Scope (Y/N)`, "<br>",
+    #         "<b>Remarks Impl:</b> ", `OTHER REMARKS Implementability of Proposed Scope`, "<br>",
+    #         "<b>Geotechnical Testing:</b> ", `Geotechnical Testing (Y/N)`, "<br>",
+    #         "<b>Remarks Geotech:</b> ", `OTHER REMARKS Geotechnical Testing`
+    #       )),
+    #       icon = ~makeAwesomeIcon(
+    #         icon = "graduation-cap",
+    #         library = "fa",
+    #         markerColor = ifelse(`Avaiability of Buildable Space (Y/N)` == "Y", "green", "red")
+    #       ),
+    #       clusterOptions = markerClusterOptions(disableClusteringAtZoom = 15)
+    #     )
+    # 
+    # 
+    # })
     
     
     
@@ -7912,6 +7972,60 @@ server <- function(input, output, session) {
         ),
         levels = c("Before 2025", "2025-2030", "After 2030")
       ))
+    mainreactLMS <- LMS %>%
+      filter(LMS == 1) %>%   # Step 1: LMS only
+      left_join(uni %>% select(SchoolID,Latitude,Longitude), by = c("School_ID" = "SchoolID")) %>%   # Step 2: lat/long
+      left_join(buildablecsv %>% select(SCHOOL.ID,OTHER.REMARKS..Buildable.Space..), by = c("School_ID" = "SCHOOL.ID")) %>% 
+      filter(Region == RegRCT)
+    
+    
+    leafletProxy("LMSMapping") %>% clearMarkers() %>% clearMarkerClusters() %>% setView(lng = mainreactLMS$Longitude[1], lat = mainreactLMS$Latitude[1], zoom = 7) %>% 
+      addAwesomeMarkers(clusterOptions = markerClusterOptions(disableClusteringAtZoom = 15), lng = mainreactLMS$Longitude, lat = mainreactLMS$Latitude)
+    
+    df1 <- reactive({
+      
+      if (is.null(input$LMSMapping_bounds)) {
+        mainreactLMS
+      } else {
+        bounds <- input$LMSMapping_bounds
+        latRng <- range(bounds$north, bounds$south)
+        lngRng <- range(bounds$east, bounds$west)
+        
+        subset(mainreactLMS,
+               Latitude >= latRng[1] & Latitude <= latRng[2] & Longitude >= lngRng[1] & Longitude <= lngRng[2])
+      }
+    })
+    
+    
+    output$LMSTable <- renderDataTable({
+      
+      # # Apply Division filter only if not "Select Input"
+      # if (!is.null(input$Resource_SDO) && input$Resource_SDO != "Select Input") {
+      #   df1() <- df1() %>% filter(Division == input$Resource_SDO)
+      # }
+      # 
+      # # Apply District filter only if not "Select Input"
+      # if (!is.null(input$Resource_LegDist) && input$Resource_LegDist != "Select Input") {
+      #   df1() <- df1() %>% filter(LD == input$Resource_LegDist)
+      # }
+      
+      # Final select
+      finalLMS <- df1() %>%
+        select(
+          School_Name,
+          Buildable_space,
+          OTHER.REMARKS..Buildable.Space..
+        )
+      
+      datatable(
+        finalLMS,
+        options = list(pageLength = 10, scrollX = TRUE),
+        selection = "single",   # allow single row selection
+        extensions = c("FixedColumns"),
+        callback = JS("window.dispatchEvent(new Event('resize'));")
+      )
+    })
+    
     
     NetShortage <- df %>% select(Region,Division,Level,TeacherShortage,TeacherExcess) %>%
       pivot_longer(cols = c(TeacherShortage, TeacherExcess), names_to = "Inventory", values_to = "Count") %>% mutate(Count=as.numeric(Count)) %>% na.omit(Count) %>% group_by(Region, Division,Level, Inventory) %>% summarize(Count = sum(Count)) %>% pivot_wider(names_from = "Inventory", values_from = "Count") %>% mutate(NetShortage=TeacherShortage-TeacherExcess) %>% mutate(NetShortage = ifelse(NetShortage < 0, 0, NetShortage))
@@ -8246,6 +8360,36 @@ server <- function(input, output, session) {
     
   })
   
+  observeEvent(input$LMSTable_rows_selected, {
+    
+    RegRCT <- input$resource_map_region
+    
+    mainreactLMS <- LMS %>%
+      filter(LMS == 1) %>%   # Step 1: LMS only
+      left_join(uni %>% select(SchoolID,Latitude,Longitude), by = c("School_ID" = "SchoolID")) %>%   # Step 2: lat/long
+      left_join(buildablecsv %>% select(SCHOOL.ID,OTHER.REMARKS..Buildable.Space..), by = c("School_ID" = "SCHOOL.ID")) %>%
+      filter(Region == RegRCT)
+    
+    df1 <- reactive({
+      
+      if (is.null(input$LMSMapping_bounds)) {
+        mainreactLMS
+      } else {
+        bounds <- input$LMSMapping_bounds
+        latRng <- range(bounds$north, bounds$south)
+        lngRng <- range(bounds$east, bounds$west)
+        
+        subset(mainreactLMS,
+               Latitude >= latRng[1] & Latitude <= latRng[2] & Longitude >= lngRng[1] & Longitude <= lngRng[2])
+      }
+    })
+    
+    row_selected = df1()[input$LMSTable_rows_selected,]
+    leafletProxy("LMSMapping") %>%
+      setView(lng = row_selected$Longitude, lat = row_selected$Latitude, zoom = 15)
+    
+  })
+  
   observeEvent(input$TextTable_rows_selected, {
     
     Text <- input$text
@@ -8530,99 +8674,81 @@ server <- function(input, output, session) {
     
   }, ignoreNULL = TRUE, ignoreInit = TRUE)
   
-  observeEvent(input$GMISRun, {
+  #plantilla position observe
+  observe({
+    req(input$RegionGMIS, input$SDOGMIS, input$PosSelGMIS)  # ensures all inputs exist
     
     dfGMIS <- read.csv("GMIS-FillingUpPerPosition-2025.csv")
     
     RegGMISRCT <- input$RegionGMIS
     SDOGMISRCT <- input$SDOGMIS
-    PosCatGMISRCT <- input$PosCatGMIS
     PosSelGMISRCT <- input$PosSelGMIS
     
-    # 1. Corrected: Filter only. Keep all columns.
-    GMISDiv <- dfGMIS %>% 
-      filter(GMIS.Region %in% RegGMISRCT) %>% 
-      filter(Position %in% PosSelGMISRCT) %>% 
-      filter(GMIS.Division %in% SDOGMISRCT) %>% 
-      group_by(Position) %>% 
-      summarise(Filled = sum(Total.Filled), Unfilled = sum(Total.Unfilled, na.rm = TRUE)) %>% 
-      pivot_longer(cols = c("Filled","Unfilled"), names_to = "Status", values_to = "Count")
+    # 1. Filter and transform
+    GMISDiv <- dfGMIS %>%
+      filter(GMIS.Region %in% RegGMISRCT) %>%
+      filter(Position %in% PosSelGMISRCT) %>%
+      filter(GMIS.Division %in% SDOGMISRCT) %>%
+      group_by(Position) %>%
+      summarise(
+        Filled = sum(Total.Filled),
+        Unfilled = sum(Total.Unfilled, na.rm = TRUE)
+      ) %>%
+      pivot_longer(cols = c("Filled", "Unfilled"), names_to = "Status", values_to = "Count")
     
-    # %>% 
-    #   mutate(Filling.Up.Rate = round(Filled/Authorized, digits = 4)*100)
-    
-    # This part is for a separate data table and can remain as-is.
-    # It correctly performs its own summarization on the filtered GMISDiv.
-    # GMISreactFinalDiv <- GMISDiv %>% 
-    #   group_by(GMIS.Region,GMIS.Division,Position) %>% 
-    #   summarise(Filled = sum(Total.Filled), 
-    #             Authorized = sum(Total.Authorized)) |> 
-    #   mutate(Filling.Up.Rate = round(Filled/Authorized, digits = 4)*100)
-    # 
-    # GMISreactFinalDiv <- GMISreactFinalDiv |> 
-    #   mutate(Filling.Up.Rate = sprintf("%.2f", `Filling.Up.Rate`)) %>% 
-    #   rename("Division" = GMIS.Division, "Filling Up Rate" = Filling.Up.Rate)
-    
+    # --- Plot ---
     output$GMISTable <- renderPlotly({
-      
-      # 2. Corrected: Summarize the data for the plot here.
-      # It now works because GMISDiv still contains GMIS.Division.
-      plot_data_stacked <- GMISDiv 
+      plot_data_stacked <- GMISDiv
       plot_data_totals <- plot_data_stacked %>%
         group_by(Position) %>%
         summarise(TotalCount = sum(Count))
+      
       category_colors <- c("Filled" = "blue", "Unfilled" = "red")
       
-      
-      # The rest of the plot code remains the same.
-      p <- ggplot(plot_data_stacked, aes(x = factor(Position), y = Count, fill = factor(Status, levels = c("Unfilled", "Filled")),
-                                         text = paste("Position: ", Position,
-                                                      "<br>Category: ", Status,
-                                                      "<br>Total", Count))) +
+      p <- ggplot(plot_data_stacked, aes(
+        x = factor(Position),
+        y = Count,
+        fill = factor(Status, levels = c("Unfilled", "Filled")),
+        text = paste("Position: ", Position,
+                     "<br>Category: ", Status,
+                     "<br>Total", Count)
+      )) +
         geom_bar(stat = "identity", position = "stack") +
-        
-        # Add the text layer for the totals on top of the bars
-        geom_text(data = plot_data_totals,
-                  aes(x = Position, y = TotalCount * 1.05, label = scales::comma(TotalCount)), # Modified line
-                  inherit.aes = FALSE,
-                  size = 3.5,
-                  color = "black") +
-        
+        geom_text(
+          data = plot_data_totals,
+          aes(x = Position, y = TotalCount * 1.05, label = scales::comma(TotalCount)),
+          inherit.aes = FALSE,
+          size = 3.5,
+          color = "black"
+        ) +
         labs(x = "Position", y = "Count") +
         scale_y_continuous(labels = scales::comma) +
         scale_fill_manual(name = "Legend", values = category_colors) +
         theme_minimal() +
         theme(legend.position = "bottom")
       
-      ggplotly(p, tooltip = "text", source = "stackedBarPlot") %>% 
+      ggplotly(p, tooltip = "text", source = "stackedBarPlot") %>%
         layout(hoverlabel = list(bgcolor = "white"))
     })
     
-    # Assuming the above code for creating GMISDiv is already in your server function
-    # and `GMISDiv` is a reactive expression. If it's not a reactive, you may need to
-    # make it one or define it inside the render function.
-    
+    # --- DataTable ---
     output$GMISTable1 <- renderDataTable({
-      
-      GMISDiv2 <- dfGMIS %>% 
-        filter(GMIS.Region %in% RegGMISRCT) %>% 
-        filter(Position %in% PosSelGMISRCT) %>% 
-        filter(GMIS.Division %in% SDOGMISRCT) %>% 
-        group_by(GMIS.Region, GMIS.Division, Position) %>% 
+      GMISDiv2 <- dfGMIS %>%
+        filter(GMIS.Region %in% RegGMISRCT) %>%
+        filter(Position %in% PosSelGMISRCT) %>%
+        filter(GMIS.Division %in% SDOGMISRCT) %>%
+        group_by(GMIS.Region, GMIS.Division, Position) %>%
         summarise(
-          Filled = sum(Total.Filled), 
+          Filled = sum(Total.Filled),
           Unfilled = sum(Total.Unfilled, na.rm = TRUE),
-          Authorized = sum(Total.Authorized) # Corrected: Add the Authorized column
-        ) %>% 
+          Authorized = sum(Total.Authorized)
+        ) %>%
         mutate(Filling.Up.Rate = round(Filled / Authorized, digits = 4) * 100) %>%
         mutate(Filling.Up.Rate = sprintf("%.2f", `Filling.Up.Rate`)) %>%
         rename("Division" = GMIS.Division, "Filling Up Rate" = `Filling.Up.Rate`)
       
-      # Ensure the data is not empty before rendering
-      req(GMISDiv2) 
+      req(GMISDiv2)
       
-      # The GMISDiv is already in the long format, so we can directly pass it to renderDataTable.
-      # We use the DT package functions to create a well-formatted and interactive table.
       DT::datatable(
         GMISDiv2, # Adds filter boxes to the top of each column
         filter = "top",
@@ -8631,6 +8757,11 @@ server <- function(input, output, session) {
           fixedHeader = list(
             header = TRUE,
             footer = FALSE),
+        GMISDiv2,
+        filter = "top",
+        extensions = "FixedHeader",
+        options = list(
+          fixedHeader = list(header = TRUE, footer = FALSE),
           scrollY = "300px",
           scrollCollapse = TRUE,
           columnDefs = list(list(className = 'dt-center', targets = '_all')),
@@ -8638,7 +8769,6 @@ server <- function(input, output, session) {
         )
       )
     })
-    
   })
   
   observeEvent(input$SHSListTable_rows_selected, {
@@ -10670,31 +10800,35 @@ server <- function(input, output, session) {
   })
   
   output$regprof_DT <- DT::renderDT({
+    data_to_display <- filtered_school_data_region() %>% 
+      select(Region, Division, Legislative.District, SchoolID, School.Name, School.Type, School.Size.Typology, Modified.COC, TotalEnrolment, Clustering.Status, PDOI_Deployment) %>% 
+      rename("Modified Curricular Offering" = Modified.COC)
     
-    data_to_display <- filtered_school_data_region() %>% select(Region, Division, Legislative.District, SchoolID, School.Name, School.Type, School.Size.Typology, Modified.COC, TotalEnrolment, Clustering.Status, PDOI_Deployment) %>% rename("Modified Curricular Offering" = Modified.COC)
-    
-    # You might want to add a check for NULL or empty data if filtered_school_data_division()
-    # could return such states and you want to display a message or an empty table.
     if (is.null(data_to_display) || nrow(data_to_display) == 0) {
       return(DT::datatable(
         data.frame("Message" = "No data available based on current selection."),
-        options = list(dom = 't',
-                       scrollX = TRUE,
-                       fixedColumns = list(leftColumns = 5)), # 't' hides all controls, showing only the table body
+        options = list(dom = 't', scrollX = TRUE, fixedColumns = list(leftColumns = 5)),
         rownames = FALSE
       ))
     }
     
     DT::datatable(
       data_to_display,
-      extensions = c("FixedHeader", "FixedColumns"),
+      extensions = c("FixedHeader", "FixedColumns", "Buttons"),
       options = list(
         pageLength = 10, 
         scrollX = TRUE,
         scrollY = 400,
         autoWidth = TRUE,
         fixedHeader = TRUE,
-        fixedColumns = list(leftColumns = 5)),
+        fixedColumns = list(leftColumns = 5),
+        dom = 'Bfrtip',
+        buttons = list(
+          list(extend = "csv", exportOptions = list(modifier = list(page = "all"))),
+          list(extend = "excel", exportOptions = list(modifier = list(page = "all"))),
+          list(extend = "print", exportOptions = list(modifier = list(page = "all")))
+        )
+      ),
       filter = 'top',
       selection = 'multiple',
       rownames = FALSE
@@ -10702,40 +10836,51 @@ server <- function(input, output, session) {
   })
   
   output$regprof_DT_CL <- DT::renderDT({
-    
     data_to_display <- filtered_LMS_region() %>%
       mutate(across(13:17, ~ case_when(
         . == 0 ~ "No",
         TRUE ~ "Yes"
-      ))) %>% select(Region, Division, Legislative_District, School_ID, School_Name, Total_Enrollment, Instructional_Rooms, CL_Req, Estimated_CL_Shortage, With_Excess, Without_Shortage,Buildable_space,LMS,GIDCA) %>% rename("Classroom Requirement" = CL_Req,"Estimated Classroom Shortage" = Estimated_CL_Shortage,"Schools with Excess Classrooms" = With_Excess,"Schools without Classroom Shortage" = Without_Shortage,"Schools with Buildable Space" = Buildable_space)
+      ))) %>% 
+      select(Region, Division, Legislative_District, School_ID, School_Name, Total_Enrollment, Instructional_Rooms, CL_Req, Estimated_CL_Shortage, With_Excess, Without_Shortage, Buildable_space, LMS, GIDCA) %>% 
+      rename(
+        "Classroom Requirement" = CL_Req,
+        "Estimated Classroom Shortage" = Estimated_CL_Shortage,
+        "Schools with Excess Classrooms" = With_Excess,
+        "Schools without Classroom Shortage" = Without_Shortage,
+        "Schools with Buildable Space" = Buildable_space
+      )
     
-    # You might want to add a check for NULL or empty data if filtered_school_data_division()
-    # could return such states and you want to display a message or an empty table.
     if (is.null(data_to_display) || nrow(data_to_display) == 0) {
       return(DT::datatable(
         data.frame("Message" = "No data available based on current selection."),
-        options = list(dom = 't',
-                       scrollX = TRUE,
-                       fixedColumns = list(leftColumns = 5)), # 't' hides all controls, showing only the table body
+        options = list(dom = 't', scrollX = TRUE, fixedColumns = list(leftColumns = 5)),
         rownames = FALSE
       ))
     }
     
     DT::datatable(
       data_to_display,
-      extensions = c("FixedHeader", "FixedColumns"),
+      extensions = c("FixedHeader", "FixedColumns", "Buttons"),
       options = list(
         pageLength = 10, 
         scrollX = TRUE,
         scrollY = 400,
         autoWidth = TRUE,
         fixedHeader = TRUE,
-        fixedColumns = list(leftColumns = 5)),
+        fixedColumns = list(leftColumns = 5),
+        dom = 'Bfrtip',
+        buttons = list(
+          list(extend = "csv", exportOptions = list(modifier = list(page = "all"))),
+          list(extend = "excel", exportOptions = list(modifier = list(page = "all"))),
+          list(extend = "print", exportOptions = list(modifier = list(page = "all")))
+        )
+      ),
       filter = 'top',
       selection = 'multiple',
       rownames = FALSE
     )
   })
+  
   filtered_cloud_region <- reactive({
     req(cloud)
     
