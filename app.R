@@ -2029,8 +2029,8 @@ server <- function(input, output, session) {
     selectInput(
       "Resource_SDO",
       "Select a Division:",
-      choices = c("Select Input" , filtered_division),
-      selected = "Select Input"
+      choices = filtered_division,
+      selected = filtered_division[1]
     )
   })
   
@@ -2052,8 +2052,8 @@ server <- function(input, output, session) {
       selectInput(
         "Resource_LegDist",
         "Select a Legislative District:",
-        choices = c("Select Input", filtered_district),
-        selected = "Select Input"
+        choices = filtered_district,
+        selected = filtered_district[1]
       )
     }
   })
