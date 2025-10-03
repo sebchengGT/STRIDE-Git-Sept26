@@ -161,5 +161,41 @@ body::before {
   margin-right: 70px;
 }
 
+.card {
+  opacity: 0;
+  transform: translateY(40px);
+  transition: all 0.8s ease-out;
+}
+
+.card.animate {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.bslib-sidebar-layout>.sidebar>.sidebar-content {
+    display: flex
+;
+    flex-direction: column;
+    gap: var(--bslib-spacer, 1rem);
+    padding: var(--_padding);
+    padding-top: var(--_padding-icon);
+    background: #23558f;
+    font-family: "Times New Roman", Times, serif;
+    font-size: 15px;
+    letter-spacing: 0px;
+    word-spacing: -0.4px;
+    color: #FFFFFF;
+    font-weight: 700;
+    text-decoration: none;
+    font-style: italic;
+    font-variant: normal;
+    text-transform: none;
+    text-align: center;
+    
+}
+
+
+
+
 
   

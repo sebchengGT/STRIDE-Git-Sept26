@@ -82,7 +82,8 @@ ui <- fluidPage(
   
   
   tags$head(
-    includeCSS("www/style.css")
+    includeCSS("www/style.css"),
+    includeScript("www/script.js")
   ),
   
   tags$div(
@@ -121,15 +122,15 @@ ui <- fluidPage(
     column(width = 12,
            div(
              id = "login-title",# Add the login UI
-           shinyauthr::loginUI(
-             id = "login",
-             title = "Please Log In",
-             user_title = "Username",
-             pass_title = "Password",
-             login_title = "Log In",
-             error_message = "Invalid username or password!" # Custom error message
-           )
-    ))
+             shinyauthr::loginUI(
+               id = "login",
+               title = "Please Log In",
+               user_title = "Username",
+               pass_title = "Password",
+               login_title = "Log In",
+               error_message = "Invalid username or password!" # Custom error message
+             )
+           ))
   ), 
   # Custom styling
   
@@ -143,11 +144,11 @@ ui <- fluidPage(
       id = "mgmt_content",
       uiOutput("STRIDE2"))),
   
-
-
-tags$footer(
-  class = "app-footer",
-  tags$p("© 2025 Department of Education • STRIDE Project")))
+  
+  
+  tags$footer(
+    class = "app-footer",
+    tags$p("© 2025 Department of Education • STRIDE Project")))
 
 
 
@@ -5808,7 +5809,7 @@ server <- function(input, output, session) {
     # Create scaled frames for a smooth startup animation
     n_frames <- 8
     scales_seq <- seq(0, 1, length.out = n_frames)
-
+    
     frames_df <- plot_data %>%
       tidyr::crossing(frame_step = seq_along(scales_seq)) %>%
       mutate(scale = scales_seq[frame_step],
@@ -5816,7 +5817,7 @@ server <- function(input, output, session) {
              hover_text = paste("Region: ", Region,
                                 "<br>School Type: ", Modified.COC,
                                 "<br>Count: ", scales::comma(Count)))
-
+    
     # Use plot_ly with frames and stacked bars
     p_plotly <- plot_ly(
       data = frames_df,
@@ -5834,11 +5835,11 @@ server <- function(input, output, session) {
              margin = list(b = 100),
              xaxis = list(title = 'Modified Curricular Offering', tickangle = 45),
              yaxis = list(title = 'Number of Schools'))
-
+    
     # Auto-play the animation on render using a tiny JS hook
     p_plotly <- htmlwidgets::onRender(p_plotly,
-      "function(el, x) {\n\n        // Small timeout to ensure plot is fully initialized\n        setTimeout(function(){\n          try{\n            Plotly.animate(el, null, {frame: {duration: 80, redraw: false}, transition: {duration: 0}, mode: 'immediate'});\n          }catch(e){\n            console.log('Animation error:', e);\n          }\n        }, 150);\n      }")
-
+                                      "function(el, x) {\n\n        // Small timeout to ensure plot is fully initialized\n        setTimeout(function(){\n          try{\n            Plotly.animate(el, null, {frame: {duration: 80, redraw: false}, transition: {duration: 0}, mode: 'immediate'});\n          }catch(e){\n            console.log('Animation error:', e);\n          }\n        }, 150);\n      }")
+    
     p_plotly
   })
   
@@ -7731,7 +7732,7 @@ server <- function(input, output, session) {
           pal = p, 
           values = c("Not Congested","Moderately Congested","Severely Congested"))
     })
-   
+    
     
     #LMSTABLE 
     output$LMSTable <- renderDataTable({
@@ -7758,7 +7759,7 @@ server <- function(input, output, session) {
         callback = JS("window.dispatchEvent(new Event('resize'));")
       )
     })
-  
+    
     # --- LMS Map (initialize once) ---
     output$LMSMapping <- renderLeaflet({
       # Define palette once here, with explicit factor order
@@ -7872,7 +7873,7 @@ server <- function(input, output, session) {
       
     })
     
-      
+    
     
     RegRCT <- input$resource_map_region
     SDORCT1 <- input$Resource_SDO
@@ -8623,18 +8624,18 @@ server <- function(input, output, session) {
       # The GMISDiv is already in the long format, so we can directly pass it to renderDataTable.
       # We use the DT package functions to create a well-formatted and interactive table.
       DT::datatable(
-          GMISDiv2, # Adds filter boxes to the top of each column
-          filter = "top",
-          extensions = "FixedHeader",
-          options = list(
-            fixedHeader = list(
-              header = TRUE,
-              footer = FALSE),
-            scrollY = "300px",
-            scrollCollapse = TRUE,
-            columnDefs = list(list(className = 'dt-center', targets = '_all')),
-            rownames = FALSE
-          )
+        GMISDiv2, # Adds filter boxes to the top of each column
+        filter = "top",
+        extensions = "FixedHeader",
+        options = list(
+          fixedHeader = list(
+            header = TRUE,
+            footer = FALSE),
+          scrollY = "300px",
+          scrollCollapse = TRUE,
+          columnDefs = list(list(className = 'dt-center', targets = '_all')),
+          rownames = FALSE
+        )
       )
     })
     
@@ -18757,4 +18758,3 @@ server <- function(input, output, session) {
 }
 
 shinyApp(ui, server)
-
