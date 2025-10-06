@@ -17,3 +17,13 @@ document.addEventListener("DOMContentLoaded", animateCards);
 $(document).on('shiny:value', function() {
   animateCards();
 });
+
+// Sync card + text scaling with page zoom
+function syncDashboardScale() {
+  const scale = window.innerWidth / window.outerWidth;
+  document.documentElement.style.setProperty('--zoom-scale', scale);
+}
+
+window.addEventListener('resize', syncDashboardScale);
+window.addEventListener('load', syncDashboardScale);
+

@@ -27,41 +27,38 @@ library(readr)
 library(geojsonio)
 library(shinyWidgets) # For pickerInput
 
+# HROD Data Upload
+df <- read_parquet("School-Level-v2.parquet") # per Level Data
+uni <- read_parquet("School-Unique-v2.parquet") # School-level Data
+IndALL <- read_parquet("IndDistance.ALL2.parquet") # Industry Distances
+ind <- read_parquet("SHS-Industry.parquet") # Industry Coordinates
+SDO <- read_parquet("SDOFill.parquet") # SDO and Regional Filling-up Rate
+DBMProp <- read.csv("DBM-Proposal.csv") # Teacher Shortage Data
 
-df <- read_parquet("School-Level-v2.parquet")
-uni <- read_parquet("School-Unique-v2.parquet")
-buildablecsv <- read.csv("Buildable_LatLong.csv")
-
-# Clean column names: remove line breaks, extra spaces
-names(buildablecsv) <- gsub("[\r\n]", " ", names(buildablecsv))
-names(buildablecsv) <- trimws(names(buildablecsv))
-
-# Ensure lat/long are numeric
-buildablecsv$Latitude <- as.numeric(buildablecsv$Latitude)
-buildablecsv$Longitude <- as.numeric(buildablecsv$Longitude)
-
-IndALL <- read_parquet("IndDistance.ALL2.parquet")
-ind <- read_parquet("SHS-Industry.parquet")
-SDO <- read_parquet("SDOFill.parquet")
-dfz <- read.csv("COS Regional Breakdown2.csv") %>% select(1:5)
-Excess <- read_parquet("NationwideExcess.parquet")
-SHS_Pilot <- read.csv("PilotSchools.csv")
-SHS_Pilot2 <- as.list(SHS_Pilot$SchoolID)
-EFDProj <- read_parquet("EFDProj.parquet")
-ElecProposal <- read.csv("ElecProp.csv") %>% mutate(Estimated.Cost = as.numeric(Estimated.Cost))
-DBMProp <- read.csv("DBM-Proposal.csv")
-SBMaster <- read.csv("School_Building_MasterPlan.csv")
+# EFD Data Upload
 EFDDB <- read.csv("EFD-DataBuilder-2025.csv")
 EFDMP <- read_parquet("EFD-Masterlist.parquet")
 EFD_Projects <- read.csv("EFD-ProgramsList-Aug2025.csv") %>% mutate(Allocation = as.numeric(Allocation)) %>% mutate(Completion = as.numeric(Completion)) %>% filter(FundingYear >= 2020)
-cloud <- read_parquet("Cloud_Consolidated.parquet")
-cloud_v2 <- read_parquet("Cloud_Consolidated_v2.parquet")
-cloud_v3 <- read_parquet("Cloud_Consolidated_v3.parquet")
+LMS <- read_parquet("EFD-LMS-GIDCA-NSBI2023.parquet") %>% mutate(Region = case_when(Region == "Region IV-B" ~ "MIMAROPA", TRUE ~ Region)) %>% mutate(With_Shortage = case_when(Estimated_CL_Shortage > 0 ~ 1, TRUE ~ 0))
 geojson_data <- geojson_read("gadm41_PHL_1.json", what = "sp")
 geojson_table <- as.data.frame(geojson_data)
 regprov <- read.csv("RegProv.Congestion.csv")
 geojson_table <- left_join(geojson_table,regprov, by="NAME_1")
-LMS <- read_parquet("EFD-LMS-GIDCA-NSBI2023.parquet") %>% mutate(Region = case_when(Region == "Region IV-B" ~ "MIMAROPA", TRUE ~ Region)) %>% mutate(With_Shortage = case_when(Estimated_CL_Shortage > 0 ~ 1, TRUE ~ 0))
+buildablecsv <- read.csv("Buildable_LatLong.csv")
+# Clean column names: remove line breaks, extra spaces
+names(buildablecsv) <- gsub("[\r\n]", " ", names(buildablecsv))
+names(buildablecsv) <- trimws(names(buildablecsv))
+# Ensure lat/long are numeric
+buildablecsv$Latitude <- as.numeric(buildablecsv$Latitude)
+buildablecsv$Longitude <- as.numeric(buildablecsv$Longitude)
+
+
+# CLOUD Data Upload
+cloud <- read_parquet("Cloud_Consolidated.parquet")
+cloud_v2 <- read_parquet("Cloud_Consolidated_v2.parquet")
+cloud_v3 <- read_parquet("Cloud_Consolidated_v3.parquet")
+
+
 
 user_base <- tibble::tibble(
   user = c("iamdeped", "depedadmin"),
@@ -86,6 +83,9 @@ ui <- fluidPage(
     includeCSS("www/style.css"),
     includeScript("www/script.js")
   ),
+  
+  tags$head(tags$meta(name = "viewport", content = "width=device-width, initial-scale=1.0, maximum-scale=3.0")),
+  
   
   tags$div(
     class = "app-header",
@@ -141,9 +141,14 @@ ui <- fluidPage(
       uiOutput("STRIDE1"))),
   
   shinyjs::hidden(
-    div(
+    div(class = "dashboard-container",
+      uiOutput("STRIDE2")  # your dashboard content
+  ),
+  div(
       id = "mgmt_content",
       uiOutput("STRIDE2"))),
+    
+  
   
   
   
@@ -227,6 +232,16 @@ server <- function(input, output, session) {
       shinyjs::show("StrideLogo")
       shinyjs::hide("main_content")
       shinyjs::hide("mgmt_content")
+    }
+    
+    if (auth_status) {
+      # Logged in → Dashboard mode
+      shinyjs::runjs('document.body.classList.remove("login-bg");')
+      shinyjs::runjs('document.body.classList.add("dashboard-bg");')
+    } else {
+      # Logged out → Login mode
+      shinyjs::runjs('document.body.classList.remove("dashboard-bg");')
+      shinyjs::runjs('document.body.classList.add("login-bg");')
     }})
   
   output$STRIDE2 <- renderUI({
@@ -7038,36 +7053,6 @@ server <- function(input, output, session) {
       formatPercentage('Completion', digits = 1)
   })
   
-  output$SchoolBuilding_MasterPlan <- renderPlot({
-    # Ensure SBMaster is a data frame. If it's a reactive expression, use SBMaster()
-    mainreactreghist <- SBMaster 
-    
-    # Define a consistent dodge width for both bars and text
-    dodge_width <- 0.9 # Default for position_dodge is 0.9
-    
-    ggplot(mainreactreghist, aes(x = reorder(Region, Classrooms, FUN = sum), # Reorder by sum of classrooms for better overall ordering
-                                 y = Classrooms, 
-                                 fill = factor(Year, levels = c("2025","2026","2027","2028","2029","2030")))) +
-      geom_bar(stat = "identity", position = position_dodge(width = dodge_width), color = "black") + 
-      labs(
-        title = "School Building Master Plan", # Main plot title
-        x = "Region", 
-        y = "Number of Classrooms",
-        fill = "Year" # Legend title
-      ) +
-      scale_fill_discrete(guide = guide_legend(nrow = 1)) + 
-      theme_minimal() + # Use a clean theme
-      theme(
-        axis.text.x = element_text(angle = 45, hjust = 1), # Keep x-axis labels slanted
-        legend.position = "top",
-        legend.direction = "horizontal",
-        legend.box = "horizontal",# <--- Make the legend horizontal
-        legend.justification = "center", # <--- Center the legend items
-        legend.box.just = "center", # <--- Center the legend box if multiple legends exist
-        plot.title = element_text(hjust = 0.5) # Center the plot title
-      )
-  })
-  
   output$DataBuilder_HROD_SDO <- renderUI({
     
     divisions_vector <- uni %>% 
@@ -7274,8 +7259,6 @@ server <- function(input, output, session) {
          filetype = "image/png"
     )}, deleteFile = FALSE)
   
-  output$NationwideExcess <- DT::renderDT({datatable(Excess, options = list(scrollX = TRUE, pageLength = 50, columnDefs = list(list(className = 'dt-center', targets ="_all")), rownames = FALSE))})
-  
   
   output$ESEx <- renderValueBox({
     valueBox(strong("50,579"), subtitle = strong("Excess"), icon = icon("users"), color = "blue")
@@ -7311,9 +7294,6 @@ server <- function(input, output, session) {
   
   output$cos <- renderValueBox({
     valueBox("7,062", subtitle = "Outlier Schools", icon = icon("school"), color = "purple")
-  })
-  
-  output$COSRB <- DT::renderDT({datatable(dfz, rownames = FALSE, options = list(scrollX = TRUE, pageLength = 20, columnDefs = list(list(className = 'dt-left', targets ="_all"))))
   })
   
   output$otherdataselection <- renderUI({
@@ -7951,7 +7931,6 @@ server <- function(input, output, session) {
     mainreactlevdiv <- df %>% filter(Region == RegRCT) %>% filter(Division == SDORCT1) %>% filter(Level == Lev)
     mainreactCR <- uni %>% filter(Region == RegRCT) %>% filter(Division == SDORCT1) %>% filter(Legislative.District == DistRCT1) %>% distinct(SchoolID, .keep_all = TRUE) %>% arrange(desc(SBPI))
     mainreactSHS <- df %>% filter(Region == RegRCT) %>% filter(Division == SDORCT1) %>% filter(Legislative.District == DistRCT1) %>% filter(Level == "SHS") %>% distinct(SchoolID, .keep_all = TRUE) #Remove the filter of Pilot 2 CLEA4
-    mainreactSHS_pilot <- mainreactSHS %>% filter(SchoolID %in% SHS_Pilot2) # Need to seperatee
     mainreactind <- ind %>% filter(Region == RegRCT)
     mainreactEFD <- EFDMP %>% 
       filter(!is.na(Old.Region), Old.Region != "") %>% 

@@ -6,8 +6,15 @@ body {
   opacity: 1; /* keep content fully visible */
 }
 
+body.login-bg {
+  background: none;
+  background-size: cover;
+  background-attachment: fixed;
+  color: white;
+}
+
 /* Watermark logo */
-body::before {
+body.login-bg::before {
   content: "";
   position: fixed;
   top: 0; left: 0;
@@ -16,6 +23,12 @@ body::before {
   background-size: 60%;
   opacity: 0.5;   /* 👈 adjust watermark visibility */
   z-index: -1;
+}
+
+body.dashboard-bg {
+  background-color: #f9fafc;
+  background-image: none;
+  color: #333;
 }
 
 /* Login page wrapper */
@@ -53,7 +66,7 @@ body::before {
   text-align: left;
 }
 /* Animate the login box */
-#login-login_ui {
+/*#login-login_ui {
   animation: slideUp 1s ease-out;
 }
 .fade-in {
@@ -135,7 +148,7 @@ body::before {
 
 
 /* Animate "Please Log in" */
-#login-title {
+/*#login-title {
   animation: fadeInDown 1s ease-out;
 }
 
@@ -158,19 +171,37 @@ body::before {
 }
 
 .navbar .nav-item {
-  margin-right: 70px;
+  margin: auto;
 }
 
+
+.dashboard-container {
+  transform-origin: top left;
+  transform: scale(var(--zoom-scale, 1)); /* Controlled by JS */
+  transition: transform 0.2s ease-out;
+}
+
+/* Prevent text from compressing */
+.card,
+.card-body,
+.card-header {
+  text-align: center;
+  font-size: 17px; /* base size */
+  line-height: 1.3;
+  overflow: visible;
+  white-space: normal;
+  font-family: 'Alan Sans', sans-serif;
+}
+
+  
 /*.card {
-  opacity: 0;
-  transform: translateY(40px);
-  transition: all 0.8s ease-out;
+  text-align: -webkit-center;
 }
 
 .card.animate {
   opacity: 1;
   transform: translateY(0);
-}
+}*/
 
 .bslib-sidebar-layout>.sidebar>.sidebar-content {
     display: flex*/
@@ -181,7 +212,8 @@ body::before {
     padding-top: var(--_padding-icon);
     background: #23558f;
     font-family: "Times New Roman", Times, serif;
-    font-size: 15px;
+    font-size: 17px;
+    text-shadow: 1px 2px 2px #black;
     letter-spacing: 0px;
     word-spacing: -0.4px;
     color: #FFFFFF;
@@ -193,8 +225,40 @@ body::before {
     text-align: center;
     
 }
+.bslib-sidebar-layout .sidebar-title
+Specificity: (0,2,0)
+ {
+    color: white;
+    font-size: 35px;
+    line-height: 1.0;
+    margin-top: 0;
+    margin-bottom: 1rem;
+    padding-bottom: 1rem;
+    border-bottom: var(--_border);
+    text-align: left;
+}
 
+.bslib-accordion-panel-3227 {
+    box-shadow: 2px 2px 7px 1px #306a90;
+    font-weight: 800;
+}
+.sidebar-content>.bslib-gap-spacing{
+  sidebar-width: auto;
+}
 
+body.dashboard-bg {
+  background: url("backg2.png") no-repeat center top;
+  background-size: cover;              /* Ensures it fills the entire screen */
+  background-attachment: scroll;       /* ✅ Moves down as you scroll */
+  background-position: center top;
+  color: #333;
+}
+
+.accordion .accordion-button:not(.collapsed) {
+    box-shadow: none;
+    font-weight: bolder;
+    background-color: #eee567;
+}
 
 
 
