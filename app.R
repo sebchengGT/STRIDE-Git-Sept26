@@ -84,6 +84,9 @@ ui <- fluidPage(
     includeScript("www/script.js")
   ),
   
+  tags$head(tags$meta(name = "viewport", content = "width=device-width, initial-scale=1.0, maximum-scale=3.0")),
+  
+  
   tags$div(
     class = "app-header",
     style = "display: flex; align-items: center; gap: 15px; justify-content: center;",
@@ -138,9 +141,14 @@ ui <- fluidPage(
       uiOutput("STRIDE1"))),
   
   shinyjs::hidden(
-    div(
+    div(class = "dashboard-container",
+      uiOutput("STRIDE2")  # your dashboard content
+  ),
+  div(
       id = "mgmt_content",
       uiOutput("STRIDE2"))),
+    
+  
   
   
   
@@ -224,6 +232,16 @@ server <- function(input, output, session) {
       shinyjs::show("StrideLogo")
       shinyjs::hide("main_content")
       shinyjs::hide("mgmt_content")
+    }
+    
+    if (auth_status) {
+      # Logged in → Dashboard mode
+      shinyjs::runjs('document.body.classList.remove("login-bg");')
+      shinyjs::runjs('document.body.classList.add("dashboard-bg");')
+    } else {
+      # Logged out → Login mode
+      shinyjs::runjs('document.body.classList.remove("dashboard-bg");')
+      shinyjs::runjs('document.body.classList.add("login-bg");')
     }})
   
   output$STRIDE2 <- renderUI({
