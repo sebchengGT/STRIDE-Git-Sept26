@@ -6192,9 +6192,7 @@ server <- function(input, output, session) {
     
     # --- Empty Data Handling ---
     if (nrow(current_filtered_data) == 0) {
-      return(ggplotly(ggplot() +
-                        annotate("text", x = 0.5, y = 0.5, label = "No data for selected regions/divisions") +
-                        theme_void()))
+      return(NULL) 
     }
     
     # Prepare the data for plotting
@@ -7107,7 +7105,7 @@ server <- function(input, output, session) {
     }
   })
   
-  output$HROD_Table <- DT::renderDT(server = FALSE, {
+  output$HROD_Table <- DT::renderDT(server = TRUE, {
     # Get all unique choices from the original dataset for comparison
     all_regions <- unique(uni$Region)
     all_divisions <- unique(uni$Division)
@@ -7143,6 +7141,7 @@ server <- function(input, output, session) {
       filter = 'top',
       options = list(
         scrollX = TRUE,
+        fixedColumns = list(leftColumns = 6), 
         pageLength = 10,
         columnDefs = list(list(className = 'dt-center', targets = "_all")),
         rownames = FALSE,
@@ -7651,27 +7650,54 @@ server <- function(input, output, session) {
     
     
     output$AO2Mapping <- renderLeaflet({
-      p = colorFactor(palette = c("red","orange","green"),domain = c("No AO II and PDO I","With at least 1 AO II or PDO I","With AO II and PDO I"), ordered = T)
+      p = colorFactor(
+        palette = c("red","orange","green"),
+        domain = c("No AO II and PDO I","With at least 1 AO II or PDO I","With AO II and PDO I"),
+        ordered = TRUE
+      )
+      
       leaflet() %>%
-        setView(lng = 122, lat = 13, zoom =6) %>%
+        setView(lng = 122, lat = 13, zoom = 6) %>%
         addProviderTiles(providers$Esri.WorldImagery, group = "Satellite") %>% 
         addProviderTiles(providers$CartoDB.Positron, group = "Road Map") %>%  
         addMeasure(position = "topright", primaryLengthUnit = "kilometers", primaryAreaUnit = "sqmeters") %>% 
-        addLegend(position = "bottomright", title = "Legend", pal = p, values = c("No AO II and PDO I","With at least 1 AO II or PDO I","With AO II and PDO I")) %>% 
-        addLayersControl(
-          baseGroups = c("Satellite","Road Map")
-        )
+        addLegend(
+          position = "bottomright",
+          title = "Legend",
+          pal = p,
+          values = c("No AO II and PDO I","With at least 1 AO II or PDO I","With AO II and PDO I")
+        ) %>% 
+        addLayersControl(baseGroups = c("Satellite","Road Map"))
     })
     
     output$CLMapping <- renderLeaflet({
-      domain = c("Extreme (>2.0)","Major (1.6-2.0)","Minor (0.6-1.5)","Mild (0-0.5)")
-      p = colorFactor(palette = c("red","orange","yellow","green"), levels = as.factor(domain), ordered = F)
+      # Legend domain + palette
+      domain <- c(
+        "Extreme (>2.0)", 
+        "Major (1.6-2.0)", 
+        "Minor (0.6-1.5)", 
+        "Mild (0-0.5)"
+      )
+      
+      pal <- colorFactor(
+        palette = c("red", "orange", "yellow", "green"),
+        domain = domain,
+        ordered = TRUE
+      )
+      
       leaflet() %>%
-        setView(lng = 122, lat = 13, zoom =6) %>%
+        setView(lng = 122, lat = 13, zoom = 6) %>%
         addProviderTiles(providers$Esri.WorldImagery, group = "Satellite") %>% 
         addProviderTiles(providers$CartoDB.Positron, group = "Road Map") %>%  
-        addMeasure(position = "topright", primaryLengthUnit = "kilometers", primaryAreaUnit = "sqmeters") %>% 
-        addLegend(position = "bottomright", title = "Legend", pal = p, values = c("Extreme (>2.0)","Major (1.6-2.0)","Minor (0.6-1.5)","Mild (0-0.5)")) %>% 
+        addMeasure(position = "topright",
+                   primaryLengthUnit = "kilometers",
+                   primaryAreaUnit = "sqmeters") %>% 
+        addLegend(
+          position = "bottomright",
+          title = "Legend",
+          pal = pal,
+          values = domain
+        ) %>% 
         addLayersControl(
           baseGroups = c("Satellite","Road Map")
         )
@@ -8064,34 +8090,126 @@ server <- function(input, output, session) {
     
     values.ind <- paste(mainreactind$Company,"<br>Province:",mainreactind$Province) %>% lapply(htmltools::HTML)
     
-    leafletProxy("SHSMapping") %>% clearMarkers() %>% clearMarkerClusters() %>% setView(lng = mainreactSHS$Longitude[1], lat = mainreactSHS$Latitude[1], zoom = 7) %>%
-      addCircleMarkers(clusterOptions = markerClusterOptions(disableClusteringAtZoom = 15), lng = mainreactSHS$Longitude, lat = mainreactSHS$Latitude, radius= 6, fillOpacity = 1, fillColor = "orange", stroke = TRUE,label = values_industry, labelOptions = labelOptions(noHide = F, textsize = "12px", direction = "top", fill = TRUE, style = list("border-color" = "rgba(0,0,0,0.5)")), color = "black") %>% 
-      addAwesomeMarkers(clusterOptions = markerClusterOptions(disableClusteringAtZoom = 12), lng = mainreactind$Longitude, lat = mainreactind$Latitude, icon = makeAwesomeIcon(icon = "cog",library = "glyphicon", ,markerColor = case_when(mainreactind$Sector == "Manufacturing and Engineering" ~ "red", mainreactind$Sector == "Hospitality and Tourism" ~ "orange", mainreactind$Sector == "Professional/Private Services" ~ "violet", mainreactind$Sector == "Public Administration" ~ "green", mainreactind$Sector == "Business and Finance" ~ "blue",mainreactind$Sector == "Agriculture and Agri-business" ~ "magenta")), label = values.ind, labelOptions = labelOptions(noHide = F, textsize = "12px", direction = "top"))
+    leafletProxy("SHSMapping") %>%
+      clearMarkers() %>%
+      clearMarkerClusters() %>%
+      setView(
+        lng = mainreactSHS$Longitude[1],
+        lat = mainreactSHS$Latitude[1],
+        zoom = 7
+      ) %>%
+      
+      # --- SHS Schools (always orange university icons) ---
+      addAwesomeMarkers(
+        clusterOptions = markerClusterOptions(disableClusteringAtZoom = 15),
+        lng = mainreactSHS$Longitude,
+        lat = mainreactSHS$Latitude,
+        icon = makeAwesomeIcon(
+          icon = "university",
+          library = "fa",
+          markerColor = "orange"   
+        ),
+        label = values_industry,
+        labelOptions = labelOptions(
+          noHide = FALSE,
+          textsize = "12px",
+          direction = "top",
+          fill = TRUE,
+          style = list("border-color" = "rgba(0,0,0,0.5)")
+        )
+      ) %>%
+      
+      # --- Industry markers (cog icons, colored by sector) ---
+      addAwesomeMarkers(
+        clusterOptions = markerClusterOptions(disableClusteringAtZoom = 12),
+        lng = mainreactind$Longitude,
+        lat = mainreactind$Latitude,
+        icon = makeAwesomeIcon(
+          icon = "cog",
+          library = "fa",
+          markerColor = dplyr::case_when(
+            mainreactind$Sector == "Manufacturing and Engineering"     ~ "red",
+            mainreactind$Sector == "Hospitality and Tourism"           ~ "orange",
+            mainreactind$Sector == "Professional/Private Services"     ~ "purple",
+            mainreactind$Sector == "Public Administration"             ~ "green",
+            mainreactind$Sector == "Business and Finance"              ~ "blue",
+            mainreactind$Sector == "Agriculture and Agri-business"     ~ "pink",
+            TRUE                                                       ~ "gray"
+          )
+        ),
+        label = values.ind,
+        labelOptions = labelOptions(
+          noHide = FALSE,
+          textsize = "12px",
+          direction = "top"
+        )
+      )
     
-    leafletProxy("CLMapping") %>% clearMarkers() %>% clearMarkerClusters() %>%  setView(lng = mainreactCR$Longitude[1], lat = mainreactCR$Latitude[1], zoom = 7) %>% addCircleMarkers(clusterOptions = markerClusterOptions(), lng = mainreactCR$Longitude, lat = mainreactCR$Latitude, radius= 6, fillOpacity = 1, stroke = FALSE, popup = values_classrooom_shortage_popup, options = popupOptions(),label = values_classrooom_shortage, labelOptions = labelOptions(noHide = T, textsize = "12px", direction = "top", fill = TRUE, style = list("border-color" = "rgba(0,0,0,0.5)")),color = case_when(mainreactCR$SBPI <=1.0 & mainreactCR$SBPI > 0 ~ "green", mainreactCR$SBPI > 1.0 & mainreactCR$SBPI <=1.5 ~ "yellow", mainreactCR$SBPI > 1.5 & mainreactCR$SBPI<= 2.0 ~ "orange",  mainreactCR$SBPI > 2.0  ~ "red"))
+    observe({
+      req(mainreactCR)
+      
+      # Build icons vectorized
+      icons <- awesomeIcons(
+        icon = "university",
+        library = "fa",
+        markerColor = case_when(
+          suppressWarnings(as.numeric(mainreactCR$SBPI)) <= 1.0 & as.numeric(mainreactCR$SBPI) > 0 ~ "green",   # Mild (0–0.5)
+          suppressWarnings(as.numeric(mainreactCR$SBPI)) > 1.0  & as.numeric(mainreactCR$SBPI) <= 1.5 ~ "yellow",  # Minor (0.6–1.5)
+          suppressWarnings(as.numeric(mainreactCR$SBPI)) > 1.5  & as.numeric(mainreactCR$SBPI) <= 2.0 ~ "orange",  # Major (1.6–2.0)
+          suppressWarnings(as.numeric(mainreactCR$SBPI)) > 2.0 ~ "red",  # Extreme (>2.0)
+          TRUE ~ "lightgray"  # fallback
+        )
+      )
+      
+      leafletProxy("CLMapping") %>%
+        clearMarkers() %>%
+        clearMarkerClusters() %>%
+        setView(
+          lng = mainreactCR$Longitude[1],
+          lat = mainreactCR$Latitude[1],
+          zoom = 7
+        ) %>%
+        addAwesomeMarkers(
+          clusterOptions = markerClusterOptions(disableClusteringAtZoom = 15),
+          lng = mainreactCR$Longitude,
+          lat = mainreactCR$Latitude,
+          popup = values_classrooom_shortage_popup,
+          options = popupOptions(),
+          label = values_classrooom_shortage,
+          labelOptions = labelOptions(
+            noHide = FALSE,
+            textsize = "12px",
+            direction = "top"
+          ),
+          icon = icons   # ✅ vectorized icons
+        )
+    })
     
-    
-    leafletProxy("AO2Mapping") %>% clearMarkers() %>% clearMarkerClusters() %>%
+    leafletProxy("AO2Mapping") %>%
+      clearMarkers() %>%
+      clearMarkerClusters() %>%
       setView(lng = mainreactNTP$Longitude[1], lat = mainreactNTP$Latitude[1], zoom = 7) %>%
-      addCircleMarkers(
-        clusterOptions = markerClusterOptions(),
+      addAwesomeMarkers(
+        clusterOptions = markerClusterOptions(disableClusteringAtZoom = 15),
         lng = mainreactNTP$Longitude,
         lat = mainreactNTP$Latitude,
-        radius = 6,
-        fillOpacity = 1,
-        stroke = FALSE,
         popup = values.non_teaching_popup,
         options = popupOptions(),
         label = values.non_teaching,
-        labelOptions = labelOptions(noHide = TRUE, textsize = "12px", direction = "top"),
-        fillColor = case_when( # Changed from markerColor to fillColor
-          mainreactNTP$Clustering.Status %in% c("Dedicated","Clustered") & mainreactNTP$PDOI_Deployment == "With PDO I" ~ "green",
-          mainreactNTP$Clustering.Status %in% c("Dedicated","Clustered") & mainreactNTP$PDOI_Deployment == "Without PDO I" ~ "orange",
-          mainreactNTP$Clustering.Status == "None Deployed" & mainreactNTP$PDOI_Deployment == "With PDO I" ~ "orange",
-          mainreactNTP$Clustering.Status == "None Deployed" & mainreactNTP$PDOI_Deployment == "Without PDO I" ~ "red",
-          TRUE ~ "lightgray" # Default color
+        labelOptions = labelOptions(noHide = FALSE, textsize = "12px", direction = "top"),
+        icon = makeAwesomeIcon(
+          icon = "user",
+          library = "fa",
+          markerColor = case_when(
+            mainreactNTP$Clustering.Status %in% c("Dedicated","Clustered") & mainreactNTP$PDOI_Deployment == "With PDO I" ~ "green",
+            mainreactNTP$Clustering.Status %in% c("Dedicated","Clustered") & mainreactNTP$PDOI_Deployment == "Without PDO I" ~ "orange",
+            mainreactNTP$Clustering.Status == "None Deployed" & mainreactNTP$PDOI_Deployment == "With PDO I" ~ "orange",
+            mainreactNTP$Clustering.Status == "None Deployed" & mainreactNTP$PDOI_Deployment == "Without PDO I" ~ "red",
+            TRUE ~ "lightgray"
+          )
         )
       )
+
     
     leafletProxy("TeacherShortage_Mapping") %>% clearMarkers() %>% clearMarkerClusters() %>% setView(lng = mainreact1$Longitude[1], lat = mainreact1$Latitude[1], zoom = 7) %>% 
       addAwesomeMarkers(clusterOptions = markerClusterOptions(disableClusteringAtZoom = 15), lng = mainreact1$Longitude, lat = mainreact1$Latitude, popup = values_teacher_shortage_popup, options = popupOptions(), label = values_teacher_shortage, labelOptions = labelOptions(noHide = F, textsize = "12px", direction = "top"), icon = makeAwesomeIcon(icon = "education", library = "glyphicon", markerColor = case_when(mainreact1$TeacherShortage > 0 ~ "red", mainreact1$TeacherExcess > 0 ~ "blue", (mainreact1$TeacherExcess == 0 & mainreact1$TeacherShortage == 0) ~ "green", is.na(mainreact1$TeacherShortage) ~ "gray")))
