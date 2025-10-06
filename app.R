@@ -87,6 +87,9 @@ ui <- fluidPage(
     includeScript("www/script.js")
   ),
   
+  tags$head(tags$meta(name = "viewport", content = "width=device-width, initial-scale=1.0, maximum-scale=3.0")),
+  
+  
   tags$div(
     class = "app-header",
     style = "display: flex; align-items: center; gap: 15px; justify-content: center;",
@@ -141,9 +144,14 @@ ui <- fluidPage(
       uiOutput("STRIDE1"))),
   
   shinyjs::hidden(
-    div(
+    div(class = "dashboard-container",
+      uiOutput("STRIDE2")  # your dashboard content
+  ),
+  div(
       id = "mgmt_content",
       uiOutput("STRIDE2"))),
+    
+  
   
   
   
