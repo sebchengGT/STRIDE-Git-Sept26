@@ -227,6 +227,16 @@ server <- function(input, output, session) {
       shinyjs::show("StrideLogo")
       shinyjs::hide("main_content")
       shinyjs::hide("mgmt_content")
+    }
+    
+    if (auth_status) {
+      # Logged in → Dashboard mode
+      shinyjs::runjs('document.body.classList.remove("login-bg");')
+      shinyjs::runjs('document.body.classList.add("dashboard-bg");')
+    } else {
+      # Logged out → Login mode
+      shinyjs::runjs('document.body.classList.remove("dashboard-bg");')
+      shinyjs::runjs('document.body.classList.add("login-bg");')
     }})
   
   output$STRIDE2 <- renderUI({

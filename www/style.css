@@ -6,8 +6,15 @@ body {
   opacity: 1; /* keep content fully visible */
 }
 
+body.login-bg {
+  background: none;
+  background-size: cover;
+  background-attachment: fixed;
+  color: white;
+}
+
 /* Watermark logo */
-body::before {
+body.login-bg::before {
   content: "";
   position: fixed;
   top: 0; left: 0;
@@ -16,6 +23,12 @@ body::before {
   background-size: 60%;
   opacity: 0.5;   /* 👈 adjust watermark visibility */
   z-index: -1;
+}
+
+body.dashboard-bg {
+  background-color: #f9fafc;
+  background-image: none;
+  color: #333;
 }
 
 /* Login page wrapper */
@@ -158,13 +171,17 @@ body::before {
 }
 
 .navbar .nav-item {
-  margin-right: 70px;
+  margin: auto;
 }
 
+
+.card-body {
+  text-align: -webkit-center;
+}
+  
+  
 /*.card {
-  opacity: 0;
-  transform: translateY(40px);
-  transition: all 0.8s ease-out;
+  text-align: -webkit-center;
 }
 
 .card.animate {
@@ -192,6 +209,11 @@ body::before {
     text-transform: none;
     text-align: center;
     
+}
+
+.bslib-accordion-panel-3227 {
+    box-shadow: 2px 2px 7px 1px #306a90;
+    font-weight: 800;
 }
 
 
