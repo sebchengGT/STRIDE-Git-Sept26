@@ -7670,6 +7670,7 @@ server <- function(input, output, session) {
         addLayersControl(baseGroups = c("Satellite","Road Map"))
     })
     
+    # --- Base map with static legend ---
     output$CLMapping <- renderLeaflet({
       # Legend domain + palette
       domain <- c(
@@ -7689,9 +7690,11 @@ server <- function(input, output, session) {
         setView(lng = 122, lat = 13, zoom = 6) %>%
         addProviderTiles(providers$Esri.WorldImagery, group = "Satellite") %>% 
         addProviderTiles(providers$CartoDB.Positron, group = "Road Map") %>%  
-        addMeasure(position = "topright",
-                   primaryLengthUnit = "kilometers",
-                   primaryAreaUnit = "sqmeters") %>% 
+        addMeasure(
+          position = "topright",
+          primaryLengthUnit = "kilometers",
+          primaryAreaUnit = "sqmeters"
+        ) %>% 
         addLegend(
           position = "bottomright",
           title = "Legend",
@@ -7702,6 +7705,7 @@ server <- function(input, output, session) {
           baseGroups = c("Satellite","Road Map")
         )
     })
+    
     
     output$FacMapping <- renderLeaflet({
       leaflet() %>%
@@ -8145,20 +8149,21 @@ server <- function(input, output, session) {
         )
       )
     
+    # --- Update markers with leafletProxy ---
     observe({
       req(mainreactCR)
       
-      # Build icons vectorized
       icons <- awesomeIcons(
         icon = "university",
         library = "fa",
         markerColor = case_when(
-          suppressWarnings(as.numeric(mainreactCR$SBPI)) <= 1.0 & as.numeric(mainreactCR$SBPI) > 0 ~ "green",   # Mild (0–0.5)
-          suppressWarnings(as.numeric(mainreactCR$SBPI)) > 1.0  & as.numeric(mainreactCR$SBPI) <= 1.5 ~ "yellow",  # Minor (0.6–1.5)
-          suppressWarnings(as.numeric(mainreactCR$SBPI)) > 1.5  & as.numeric(mainreactCR$SBPI) <= 2.0 ~ "orange",  # Major (1.6–2.0)
-          suppressWarnings(as.numeric(mainreactCR$SBPI)) > 2.0 ~ "red",  # Extreme (>2.0)
-          TRUE ~ "lightgray"  # fallback
-        )
+          suppressWarnings(as.numeric(mainreactCR$SBPI)) > 0   & as.numeric(mainreactCR$SBPI) <= 0.5 ~ "green",   # Mild (0–0.5)
+          suppressWarnings(as.numeric(mainreactCR$SBPI)) > 0.5 & as.numeric(mainreactCR$SBPI) <= 1.5 ~ "yellow",  # Minor (0.6–1.5)
+          suppressWarnings(as.numeric(mainreactCR$SBPI)) > 1.5 & as.numeric(mainreactCR$SBPI) <= 2.0 ~ "orange",  # Major (1.6–2.0)
+          suppressWarnings(as.numeric(mainreactCR$SBPI)) > 2.0                                         ~ "red",     # Extreme (>2.0)
+          TRUE                                                                                        ~ "lightgray"
+        ),
+        iconColor = "white"
       )
       
       leafletProxy("CLMapping") %>%
@@ -8181,7 +8186,7 @@ server <- function(input, output, session) {
             textsize = "12px",
             direction = "top"
           ),
-          icon = icons   # ✅ vectorized icons
+          icon = icons
         )
     })
     
