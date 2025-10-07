@@ -25,8 +25,7 @@ library(ggplot2)
 library(plotly)
 library(readr)
 library(geojsonio)
-library(shinyWidgets) # For pickerInput
-library(shinyalert) 
+library(shinyWidgets)
 
 # HROD Data Upload
 df <- read_parquet("School-Level-v2.parquet") # per Level Data
@@ -1700,13 +1699,13 @@ observeEvent(input$show_curricular_graphs, {
       )
       ,
       
-      nav_menu(
+      nav_panel(
         title = tags$b("Data Explorer"),  # Dropdown menu
         icon = bs_icon("table"),
-        
-        # --- Nav Panel 1: School Information ---
-        nav_panel(
-          title = tags$b("School Information"),
+        # 
+        # # --- Nav Panel 1: School Information ---
+        # nav_panel(
+        #   title = tags$b("School Information"),
           layout_sidebar(
             sidebar = sidebar(
               width = 350,
@@ -1787,65 +1786,65 @@ observeEvent(input$show_curricular_graphs, {
             )
           )
         ),
-        
-        # --- Nav Panel 2: Third Level Dashboard ---
-        nav_panel(
-          title = tags$b("Third Level Dashboard"),
-          layout_sidebar(
-            sidebar = sidebar(
-              width = 350, 
-              h6("Strand Filter:"),
-              pickerInput(
-                inputId = "ThirdLevel_Strands",
-                label = "Select Strand(s):",
-                choices = c(
-                  "ADMINISTRATION",
-                  "DEPED ATTACHED AGENCIES",
-                  "FINANCE",
-                  "HUMAN RESOURCE AND ORGANIZATIONAL DEVELOPMENT",
-                  "LEARNING SYSTEM",
-                  "LEGAL AND LEGISLATIVE AFFAIRS",
-                  "OFFICE OF THE SECRETARY",
-                  "OPERATIONS",
-                  "PROCUREMENT",
-                  "STRATEGIC MANAGEMENT",
-                  "TEACHERS AND EDUCATION COUNCIL SECRETARIAT"
-                ),
-                selected = c(
-                  "ADMINISTRATION",
-                  "DEPED ATTACHED AGENCIES",
-                  "FINANCE",
-                  "HUMAN RESOURCE AND ORGANIZATIONAL DEVELOPMENT",
-                  "LEARNING SYSTEM",
-                  "LEGAL AND LEGISLATIVE AFFAIRS",
-                  "OFFICE OF THE SECRETARY",
-                  "OPERATIONS",
-                  "PROCUREMENT",
-                  "STRATEGIC MANAGEMENT",
-                  "TEACHERS AND EDUCATION COUNCIL SECRETARIAT"
-                ),
-                multiple = TRUE,
-                options = pickerOptions(
-                  actionsBox = TRUE,
-                  liveSearch = TRUE,
-                  header = "Select Strand(s)",
-                  title = "No Strand Selected",
-                  selectedTextFormat = "count > 3",
-                  dropupAuto = FALSE,
-                  dropup = FALSE
-                )
-              )
-            ),
-            
-            layout_columns(
-              card(
-                card_header(strong("Third Level Officials")),
-                dataTableOutput("ThirdLevel_Table")
-              ),
-              col_widths = c(12,12)
-            )
-          )
-        )),
+        # 
+        # # --- Nav Panel 2: Third Level Dashboard ---
+        # nav_panel(
+        #   title = tags$b("Third Level Dashboard"),
+        #   layout_sidebar(
+        #     sidebar = sidebar(
+        #       width = 350, 
+        #       h6("Strand Filter:"),
+        #       pickerInput(
+        #         inputId = "ThirdLevel_Strands",
+        #         label = "Select Strand(s):",
+        #         choices = c(
+        #           "ADMINISTRATION",
+        #           "DEPED ATTACHED AGENCIES",
+        #           "FINANCE",
+        #           "HUMAN RESOURCE AND ORGANIZATIONAL DEVELOPMENT",
+        #           "LEARNING SYSTEM",
+        #           "LEGAL AND LEGISLATIVE AFFAIRS",
+        #           "OFFICE OF THE SECRETARY",
+        #           "OPERATIONS",
+        #           "PROCUREMENT",
+        #           "STRATEGIC MANAGEMENT",
+        #           "TEACHERS AND EDUCATION COUNCIL SECRETARIAT"
+        #         ),
+        #         selected = c(
+        #           "ADMINISTRATION",
+        #           "DEPED ATTACHED AGENCIES",
+        #           "FINANCE",
+        #           "HUMAN RESOURCE AND ORGANIZATIONAL DEVELOPMENT",
+        #           "LEARNING SYSTEM",
+        #           "LEGAL AND LEGISLATIVE AFFAIRS",
+        #           "OFFICE OF THE SECRETARY",
+        #           "OPERATIONS",
+        #           "PROCUREMENT",
+        #           "STRATEGIC MANAGEMENT",
+        #           "TEACHERS AND EDUCATION COUNCIL SECRETARIAT"
+        #         ),
+        #         multiple = TRUE,
+        #         options = pickerOptions(
+        #           actionsBox = TRUE,
+        #           liveSearch = TRUE,
+        #           header = "Select Strand(s)",
+        #           title = "No Strand Selected",
+        #           selectedTextFormat = "count > 3",
+        #           dropupAuto = FALSE,
+        #           dropup = FALSE
+        #         )
+        #       )
+        #     ),
+        #     
+        #     layout_columns(
+        #       card(
+        #         card_header(strong("Third Level Officials")),
+        #         dataTableOutput("ThirdLevel_Table")
+        #       ),
+        #       col_widths = c(12,12)
+        #     )
+        #   )
+        # )),
       
         
    
@@ -8890,12 +8889,13 @@ observeEvent(input$show_curricular_graphs, {
   observeEvent(input$LMSTable_rows_selected, {
     
     RegRCT <- input$resource_map_region
+    SDORCT1 <- input$Resource_SDO
     
     mainreactLMS <- LMS %>%
       filter(LMS == 1) %>%   # Step 1: LMS only
       left_join(uni %>% select(SchoolID,Latitude,Longitude), by = c("School_ID" = "SchoolID")) %>%   # Step 2: lat/long
-      left_join(buildablecsv %>% select(SCHOOL.ID,OTHER.REMARKS..Buildable.Space..), by = c("School_ID" = "SCHOOL.ID")) %>%
-      filter(Region == RegRCT)
+      left_join(buildablecsv %>% select(SCHOOL.ID,OTHER.REMARKS..Buildable.Space..), by = c("School_ID" = "SCHOOL.ID")) %>% 
+      filter(Region == RegRCT) %>% filter(Division == SDORCT1)
     
     df1 <- reactive({
       
