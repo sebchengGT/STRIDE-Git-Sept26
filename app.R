@@ -92,12 +92,12 @@ ui <- fluidPage(
     style = "display: flex; align-items: center; gap: 15px; justify-content: center;",
     
     # Logo
-    tags$img(src = "logo3.png", height = "60px"),
+    tags$img(src = "logo3.png", height = "100px"),
     
     # Text beside the logo
     tags$div(
       h2("DepEd STRIDE Dashboard"),
-      p("Based on GMIS (April 2025) and eBEIS (SY 2024–2025)")
+      p("Strategic Inventory for Deployment Efficiency")
     )
   ),
   
@@ -154,7 +154,7 @@ ui <- fluidPage(
   
   tags$footer(
     class = "app-footer",
-    tags$p("© 2025 Department of Education • STRIDE Project")))
+    tags$p("© Based on GMIS (April 2025) and eBEIS (SY 2024–2025)")))
 
 
 
@@ -172,7 +172,8 @@ server <- function(input, output, session) {
       # You can also set width and height here, e.g., width = 400,
       # or control them in the imageOutput in the UI.
     )
-  }, deleteFile = FALSE) # deleteFile = FALSE is important for pre-existing static files
+  }, deleteFile = FALSE)
+  # deleteFile = FALSE is important for pre-existing static files
   
   
   # Call the shinyauthr::logoutServer module
@@ -182,7 +183,81 @@ server <- function(input, output, session) {
   )
   
   
-  # --- Authentication ---
+  # --- Curricular Offering Bar Chart ---
+  output$Curricular_Offering_Bar <- renderPlotly({
+    data <- data.frame(
+      Category = c("Purely ES", "JHS with SHS", "ES and JHS (K to 10)",
+                   "Purely JHS", "All Offering (K to 12)", "Purely SHS"),
+      Count = c(35036, 6598, 1690, 1367, 832, 262)
+    )
+    
+    plot_ly(
+      data,
+      x = ~Category, y = ~Count,
+      type = "bar", marker = list(color = "#002D62")
+    ) |>
+      layout(title = list(text = "Curricular Offering Distribution", x = 0.5),
+             xaxis = list(title = ""), yaxis = list(title = "Number of Schools"))
+  })
+  
+  # --- Curricular Offering Pie Chart ---
+  output$Curricular_Offering_Pie <- renderPlotly({
+    data <- data.frame(
+      Category = c("Purely ES", "JHS with SHS", "ES and JHS (K to 10)",
+                   "Purely JHS", "All Offering (K to 12)", "Purely SHS"),
+      Count = c(35036, 6598, 1690, 1367, 832, 262)
+    )
+    
+    plot_ly(
+      data,
+      labels = ~Category, values = ~Count, type = "pie",
+      textinfo = "label+percent", insidetextorientation = "radial"
+    ) |> layout(title = list(text = "Curricular Offering (Pie)", x = 0.5))
+  })
+  
+  # --- Toggle visibility for Curricular Offering graphs ---
+observeEvent(input$show_curricular_graphs, {
+  if (input$show_curricular_graphs %% 2 == 1) {
+    shinyjs::show("curricular_graphs")
+    updateActionButton(session, "show_curricular_graphs", label = "Hide Graphs")
+  } else {
+    shinyjs::hide("curricular_graphs")
+    updateActionButton(session, "show_curricular_graphs", label = "Show Graphs")
+  }
+})
+
+  # --- School Size Typology Bar Chart ---
+  output$School_Size_Typology_Bar <- renderPlotly({
+    data <- data.frame(
+      Size = c("Very Small", "Small", "Medium", "Large",
+               "Very Large", "Extremely Large", "Mega"),
+      Count = c(24976, 10105, 5726, 4210, 727, 38, 3)
+    )
+    
+    plot_ly(
+      data,
+      x = ~Size, y = ~Count,
+      type = "bar", marker = list(color = "#0074D9")
+    ) |>
+      layout(title = list(text = "School Size Typology Distribution", x = 0.5),
+             xaxis = list(title = ""), yaxis = list(title = "Number of Schools"))
+  })
+  
+  # --- School Size Typology Pie Chart ---
+  output$School_Size_Typology_Pie <- renderPlotly({
+    data <- data.frame(
+      Size = c("Very Small", "Small", "Medium", "Large",
+               "Very Large", "Extremely Large", "Mega"),
+      Count = c(24976, 10105, 5726, 4210, 727, 38, 3)
+    )
+    
+    plot_ly(
+      data,
+      labels = ~Size, values = ~Count,
+      type = "pie", textinfo = "label+percent",
+      insidetextorientation = "radial"
+    ) |> layout(title = list(text = "School Size Typology (Pie)", x = 0.5))
+  })# --- Authentication ---
   # Call the shinyauthr::loginServer module
   # credentials() will be a reactive returning a tibble with user_auth, info, and additional columns from user_base
   credentials <- shinyauthr::loginServer(
@@ -291,6 +366,9 @@ server <- function(input, output, session) {
     }
     "
       ),
+      
+      
+      
       nav_spacer(),
       
       # --- First Top-Level Tab: Dashboard ---
@@ -354,14 +432,6 @@ server <- function(input, output, session) {
               accordion_panel(
                 title = "National Statistics",
                 icon = bsicons::bs_icon("bar-chart"), # Optional icon
-                # accordion_panel(
-                #   title = "Learner Overview",
-                #   layout_column_wrap(
-                #     width = 1/4,
-                #     value_box(title = "Total Learners", value = "21,669,181"),
-                #     value_box(title = "Total ES Learners", value = "12,877,988"),
-                #     value_box(title = "Total JHS Learners", value = "6,341,976"),
-                #     value_box(title = "Total SHS Learners", value = "2,449,217"))),
                 accordion_panel(
                   title = "Curricular Offering",
                   layout_column_wrap(
@@ -385,6 +455,80 @@ server <- function(input, output, session) {
                     value_box(title = "Extremely Large", value = "38"),
                     value_box(title = "Mega", value = "3")
                   )),
+                # accordion_panel(
+                #   title = "Learner Overview",
+                #   layout_column_wrap(
+                #     width = 1/4,
+                #     value_box(title = "Total Learners", value = "21,669,181"),
+                #     value_box(title = "Total ES Learners", value = "12,877,988"),
+                #     value_box(title = "Total JHS Learners", value = "6,341,976"),
+                #     value_box(title = "Total SHS Learners", value = "2,449,217"))),
+                # accordion_panel(
+                #   title = "Curricular Offering",
+                #   layout_column_wrap(
+                #     width = 1/6,
+                #     value_box(title = "Purely ES", value = "35,036"),
+                #     value_box(title = "JHS with SHS", value = "6,598"),
+                #     value_box(title = "ES and JHS (K to 10)", value = "1,690"),
+                #     value_box(title = "Purely JHS", value = "1,367"),
+                #     value_box(title = "All Offering (K to 12)", value = "832"),
+                #     value_box(title = "Purely SHS", value = "262")
+                #   ),
+                #   
+                #   # --- Button to toggle visibility ---
+                #   div(
+                #     style = "text-align:center; margin-top:15px;",
+                #     actionButton("show_curricular_graphs", "Show Graphs", 
+                #                  class = "btn btn-primary btn-sm")
+                #   ),
+                #   
+                #   # --- Graph container (initially hidden) ---
+                #   shinyjs::hidden(
+                #     div(
+                #       id = "curricular_graphs",
+                #       layout_column_wrap(
+                #         width = 1/2,
+                #         card(
+                #           card_header("Curricular Offering - Bar Chart"),
+                #           card_body(plotlyOutput("Curricular_Offering_Bar", height = "300px"))
+                #         ),
+                #         card(
+                #           card_header("Curricular Offering - Pie Chart"),
+                #           card_body(plotlyOutput("Curricular_Offering_Pie", height = "300px"))
+                #         )
+                #       )
+                #     )
+                #   )),
+                # accordion_panel(
+                #   title = "School Size Typology",
+                #   layout_columns(
+                #     col_widths = c(6, 6),
+                #     
+                #     # 👈 Left column — Value Boxes
+                #     layout_column_wrap(
+                #       width = 1/2,
+                #       value_box(title = "Very Small", value = "24,976"),
+                #       value_box(title = "Small", value = "10,105"),
+                #       value_box(title = "Medium", value = "5,726"),
+                #       value_box(title = "Large", value = "4,210"),
+                #       value_box(title = "Very Large", value = "727"),
+                #       value_box(title = "Extremely Large", value = "38"),
+                #       value_box(title = "Mega", value = "3")
+                #     ),
+                #     
+                #     # 👉 Right column — Graphs stacked
+                #     layout_column_wrap(
+                #       width = 1,
+                #       card(
+                #         card_header("School Size Typology - Bar Chart"),
+                #         card_body(plotlyOutput("School_Size_Typology_Bar", height = "300px"))
+                #       ),
+                #       card(
+                #         card_header("School Size Typology - Pie Chart"),
+                #         card_body(plotlyOutput("School_Size_Typology_Pie", height = "300px"))
+                #       )
+                #     )
+                #   )),
                 accordion_panel(
                   title = "Classroom Data",
                   layout_column_wrap(

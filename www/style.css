@@ -88,7 +88,7 @@ body.dashboard-bg {
 .app-header {
   background: linear-gradient(rgba(0, 45, 98, 0.9), rgba(0, 45, 98, 0.9));
   color: white;
-  padding: 15px;
+  padding: 4px;
   text-align: center;
   position: sticky;
   top: 0;
@@ -172,6 +172,7 @@ body.dashboard-bg {
 
 .navbar .nav-item {
   margin: auto;
+  font-size: 20px;
 }
 
 
@@ -186,12 +187,15 @@ body.dashboard-bg {
 .card-body,
 .card-header {
   text-align: center;
-  font-size: 17px; /* base size */
+  font-size: 15px; /* base size */
   line-height: 1.3;
   overflow: visible;
   white-space: normal;
-  font-family: 'Alan Sans', sans-serif;
+  font-weight: bolder;
+  font-family: 'Georgia', sans-serif;
+  box-shadow: 2px 1px 3px 0px rgba(0, 0, 0, 0.98);
 }
+
 
   
 /*.card {
@@ -225,18 +229,13 @@ body.dashboard-bg {
     text-align: center;
     
 }
-.bslib-sidebar-layout .sidebar-title
-Specificity: (0,2,0)
- {
-    color: white;
-    font-size: 35px;
-    line-height: 1.0;
-    margin-top: 0;
-    margin-bottom: 1rem;
-    padding-bottom: 1rem;
-    border-bottom: var(--_border);
-    text-align: left;
+.bslib-sidebar-layout .sidebar .sidebar-title {
+  color: #ffffff !important; /* Change to your desired color */
+  font-size: 28px;
+  font-weight: 900;
+  text-shadow: 2px 2px 3px black;
 }
+
 
 .bslib-accordion-panel-3227 {
     box-shadow: 2px 2px 7px 1px #306a90;
@@ -247,11 +246,7 @@ Specificity: (0,2,0)
 }
 
 body.dashboard-bg {
-  background: url("backg2.png") no-repeat center top;
-  background-size: cover;              /* Ensures it fills the entire screen */
-  background-attachment: scroll;       /* ✅ Moves down as you scroll */
-  background-position: center top;
-  color: #333;
+  background-color: #A3A3A3;
 }
 
 .accordion .accordion-button:not(.collapsed) {
@@ -259,6 +254,82 @@ body.dashboard-bg {
     font-weight: bolder;
     background-color: #eee567;
 }
+
+#Curricular_Offering_Bar, #School_Size_Typology_Bar {
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  padding: 10px;
+}
+
+.card-header b {
+  text-align: left;
+}
+
+#curricular_graphs {
+  transition: opacity 0.5s ease;
+}
+
+#curricular_graphs[style*="display: none"] {
+  opacity: 0;
+}
+
+.app-header h2 {
+    text-align: center;
+    margin: 0;
+    font-size: 40px;
+    text-shadow: 5px 4px 2px #000000;
+}
+
+.app-header p {
+    margin: 0;
+    font-size: 23px;
+    opacity: 0.8;
+    text-shadow: 5px 4px 2px #000000;
+}
+
+.value-box .title {
+  color: #002D62 !important; /* DepEd blue or choose your color */
+  font-weight: 800;
+  font-size: 1em;
+  text-transform: uppercase;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.4);
+  letter-spacing: 0.5px;
+}
+.value-box .value {
+  color: #FFD700 !important; /* gold */
+  font-size: 1.4em;
+  font-weight: 900;
+  text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.5);
+}
+
+.value-box {
+  background-color: #f0f4ff;
+  border-radius: 10px;
+  padding: 12px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+  transition: transform 0.2s ease;
+}
+
+.value-box:hover {
+  transform: translateY(-3px);
+}
+
+ ==== CARD HEADERS (Dashboard Section Titles) ==== */
+.card-header {
+  background: linear-gradient(90deg, #002D62, #004c99); /* DepEd Blue gradient */
+  color: #ffffff !important;
+  font-weight: 900;
+  font-size: 20px;
+  letter-spacing: 0.5px;
+  text-shadow: 2px 2px 3px rgba(0, 0, 0, 0.4);
+  border-radius: 10px 10px 0 0; /* Rounded top corners */
+  text-align: center;
+  padding: 10px 15px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+
 
 
 
