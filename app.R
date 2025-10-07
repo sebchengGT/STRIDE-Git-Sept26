@@ -1456,6 +1456,105 @@ server <- function(input, output, session) {
             )
           ))),
       # --- Second Top-Level Tab: Data Explorer --
+      tags$head(
+        tags$style(HTML("
+    /* ===== GENERAL SCROLL FIX ===== */
+    .bslib-sidebar, 
+    .bslib-sidebar-content, 
+    .sidebar, 
+    .bslib-card {
+      overflow-x: hidden !important;
+    }
+
+    /* ===== PICKER INPUT DROPDOWNS (sidebar only) ===== */
+    .bslib-sidebar .bootstrap-select,
+    .bslib-sidebar .dropdown-menu {
+      max-width: 100% !important;
+      width: 100% !important;
+    }
+
+    /* Fix dropdowns expanding outside sidebar */
+    .bslib-sidebar .dropdown-menu.open {
+      left: 0 !important;
+      right: 0 !important;
+      width: 100% !important;
+      overflow-x: hidden !important;
+      white-space: normal !important; /* allow text wrapping */
+      word-wrap: break-word !important;
+    }
+
+    /* Allow long option labels to wrap to next line */
+    .bootstrap-select .dropdown-menu li a span.text {
+      white-space: normal !important;
+      word-break: break-word !important;
+      display: inline-block !important;
+    }
+
+    /* Prevent layout_sidebar from causing scrollbars */
+    .bslib-layout-sidebar {
+      overflow-x: hidden !important;
+    }
+
+    /* ===== NAVBAR SPACING FIX ===== */
+    .navbar-nav, .bslib-navbar-nav {
+      display: flex !important;
+      align-items: center !important;
+      gap: 10px !important; /* reduce space between nav items */
+    }
+
+    /* Ensure no extra right spacing between nav menus */
+    .navbar-nav > li, .bslib-navbar-nav > li {
+      margin-right: 0 !important;
+      padding-right: 0 !important;
+    }
+
+    /* ===== NAVBAR DROPDOWN FIX ===== */
+    .navbar .dropdown-menu,
+    .bslib-navbar .dropdown-menu {
+      width: auto !important;
+      min-width: 220px !important;
+      text-align: left !important;
+      white-space: nowrap !important;
+      word-wrap: normal !important;
+      border-radius: 6px !important;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1) !important;
+      margin-top: 4px !important; /* reduce dropdown gap */
+      margin-bottom: 4px !important;
+    }
+
+    /* Adjust Data Explorer dropdown items */
+    .navbar .dropdown-menu > li > a,
+    .bslib-navbar .dropdown-menu > li > a {
+      padding: 8px 14px !important;
+      font-weight: 600 !important;
+      display: block !important;
+    }
+
+    /* Hover effect */
+    .navbar .dropdown-menu > li > a:hover,
+    .bslib-navbar .dropdown-menu > li > a:hover {
+      background-color: #2c3895 !important;
+      color: white !important;
+    }
+
+    /* ===== THIRD LEVEL DASHBOARD DROPDOWN FIX ===== */
+    .navbar .dropdown-menu li a,
+    .bslib-navbar .dropdown-menu li a {
+      white-space: normal !important;
+      word-break: break-word !important;
+      line-height: 1.2em !important;
+    }
+
+    /* Keeps dropdown text readable without overlap */
+    .navbar .dropdown-menu li,
+    .bslib-navbar .dropdown-menu li {
+      padding-top: 4px !important;
+      padding-bottom: 4px !important;
+    }
+  "))
+      )
+      ,
+      
       nav_menu(
         title = tags$b("Data Explorer"),  # Dropdown menu
         icon = bs_icon("table"),
@@ -7224,17 +7323,18 @@ server <- function(input, output, session) {
         select(
           OFFICE,
           BUREAU.SERVICE,
+          NAME,
           POSITION,
           DESIGNATION,
           TELEPHONE.NUMBER,
-          DEPED.EMAIL,
-          OFFICE.EMAIL
+          DEPED.EMAIL
         ),
       extension = 'Buttons',
       filter = 'top',
       options = list(
         scrollX = TRUE,
         autoWidth = TRUE,
+        fixedColumns = list(leftColumns = 4),
         pageLength = 10,
         columnDefs = list(list(className = 'dt-center', targets = "_all")),
         dom = 'Bfrtip',
@@ -7269,58 +7369,109 @@ server <- function(input, output, session) {
   })
   
   
-  observeEvent(input$TextRun, {
-    
-    # --- Validation check for empty input ---
-    if (is.null(input$text) || trimws(input$text) == "") {
-      shinyalert(
-        title = "Invalid Input",
-        text = "Please enter a school name before clicking 'Show Selection'.",
-        type = "error",
-        closeOnClickOutside = TRUE,
-        showConfirmButton = TRUE,
-        timer = 2000,             
-        animation = FALSE         
-      )
-      return(NULL)                
-    }
-    
-    Text <- input$text
-    
-    mainreact1 <- uni %>% arrange(Region) %>% arrange(Division) %>% filter(grepl(Text, as.character(School.Name), ignore.case = TRUE))  #arrange first by Division before filtering & make sure this is the same in row_selected
-    
-    values.comp <- paste(strong("SCHOOL INFORMATION"),"<br>School Name",mainreact1$School.Name,"<br>School ID:",mainreact1$SchoolID) %>% lapply(htmltools::HTML)
-    
-    values.df <- paste(mainreact1$School.Name %>% lapply(htmltools::HTML))
-    
-    leafletProxy("TextMapping") %>% clearMarkers() %>% clearMarkerClusters() %>% setView(lng = mainreact1$Longitude[1], lat = mainreact1$Latitude[1], zoom = 4.5) %>% 
-      addAwesomeMarkers(lng = mainreact1$Longitude, lat = mainreact1$Latitude,  icon = makeAwesomeIcon(icon = "education",library = "glyphicon",markerColor = "blue"), label = values.comp, labelOptions = labelOptions(noHide = F, textsize = "12px", direction = "top", fill = TRUE, style = list("border-color" = "rgba(0,0,0,0.5)")))
-    
-    df1 <- reactive({
-      
-      if (is.null(input$TextMapping_bounds)) {
-        mainreact1
-      } else {
-        bounds <- input$TextMapping_bounds
-        latRng <- range(bounds$north, bounds$south)
-        lngRng <- range(bounds$east, bounds$west)
-        
-        subset(mainreact1,
-               Latitude >= latRng[1] & Latitude <= latRng[2] & Longitude >= lngRng[1] & Longitude <= lngRng[2])
-      }
-    })
-    
-    output$TextTable <- DT::renderDT(server = FALSE, {datatable(df1() %>% select("Region","Division","Legislative.District","Municipality","School.Name") %>% rename("School" = School.Name), extension = 'Buttons', rownames = FALSE, options = list(scrollX = TRUE, pageLength = 10, columnDefs = list(list(className = 'dt-center', targets ="_all")), dom = 'lrtip'), filter = "top")})
+  # --- Initialize map only once ---
+  output$TextMapping <- renderLeaflet({
+    leaflet() %>%
+      setView(lng = 122, lat = 13, zoom = 5) %>%
+      addProviderTiles(providers$Esri.WorldImagery, group = "Satellite") %>%
+      addProviderTiles(providers$CartoDB.Positron, group = "Road Map") %>%
+      addMeasure(position = "topright",
+                 primaryLengthUnit = "kilometers",
+                 primaryAreaUnit = "sqmeters") %>%
+      addLayersControl(baseGroups = c("Satellite", "Road Map"))
   })
   
-  output$TextMapping <- renderLeaflet({
-    leaflet() %>% 
-      setView(lng = 122, lat = 13, zoom =5) %>%
-      addProviderTiles(providers$Esri.WorldImagery, group = "Satellite") %>% 
-      addProviderTiles(providers$CartoDB.Positron, group = "Road Map") %>% 
-      addMeasure(position = "topright", primaryLengthUnit = "kilometers", primaryAreaUnit = "sqmeters") %>% 
-      addLayersControl(
-        baseGroups = c("Satellite","Road Map"))
+  # --- Reactive controls for input and button ---
+  observe({
+    txt <- trimws(input$text)
+    
+    # Disable button if text is empty
+    shinyjs::toggleState("TextRun", condition = txt != "")
+    
+    # Show or hide warning message
+    output$text_warning <- renderText({
+      if (txt == "") {
+        "⚠ Please enter a school name before showing results."
+      } else {
+        ""
+      }
+    })
+  })
+  
+  
+  # --- Observe button click ---
+  observeEvent(input$TextRun, {
+    Text <- trimws(input$text)
+    
+    # Extra safety check (should not trigger because button is disabled when blank)
+    if (Text == "") return()
+    
+    # --- Filter data based on input ---
+    mainreact1 <- uni %>%
+      arrange(Region, Division) %>%
+      filter(grepl(Text, as.character(School.Name), ignore.case = TRUE))
+    
+    # --- Handle no matching results ---
+    if (nrow(mainreact1) == 0) {
+      output$text_warning <- renderText(paste0("⚠ No results found for '", Text, "'."))
+      leafletProxy("TextMapping") %>%
+        clearMarkers() %>%
+        clearMarkerClusters()
+      output$TextTable <- DT::renderDT(NULL)
+      return()
+    } else {
+      output$text_warning <- renderText("")  # clear any old warning
+    }
+    
+    # --- Create leaflet labels ---
+    values.comp <- paste(
+      strong("SCHOOL INFORMATION"),
+      "<br>School Name:", mainreact1$School.Name,
+      "<br>School ID:", mainreact1$SchoolID
+    ) %>% lapply(htmltools::HTML)
+    
+    # --- Update leaflet map ---
+    leafletProxy("TextMapping") %>%
+      clearMarkers() %>%
+      clearMarkerClusters() %>%
+      setView(lng = mainreact1$Longitude[1],
+              lat = mainreact1$Latitude[1],
+              zoom = 4.5) %>%
+      addAwesomeMarkers(
+        lng = mainreact1$Longitude,
+        lat = mainreact1$Latitude,
+        icon = makeAwesomeIcon(
+          icon = "education",
+          library = "glyphicon",
+          markerColor = "blue"
+        ),
+        label = values.comp,
+        labelOptions = labelOptions(
+          noHide = FALSE,
+          textsize = "12px",
+          direction = "top",
+          fill = TRUE,
+          style = list("border-color" = "rgba(0,0,0,0.5)")
+        )
+      )
+    
+    # --- Render DataTable ---
+    output$TextTable <- DT::renderDT(server = FALSE, {
+      datatable(
+        mainreact1 %>%
+          select("Region", "Division", "Legislative.District", "Municipality", "School.Name") %>%
+          rename("School" = "School.Name"),
+        extension = 'Buttons',
+        rownames = FALSE,
+        options = list(
+          scrollX = TRUE,
+          pageLength = 10,
+          columnDefs = list(list(className = 'dt-center', targets = "_all")),
+          dom = 'lrtip'
+        ),
+        filter = "top"
+      )
+    })
   })
   
   output$deped <- renderImage({
