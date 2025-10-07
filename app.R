@@ -26,6 +26,7 @@ library(plotly)
 library(readr)
 library(geojsonio)
 library(shinyWidgets) # For pickerInput
+library(shinyalert) 
 
 # HROD Data Upload
 df <- read_parquet("School-Level-v2.parquet") # per Level Data
@@ -1548,7 +1549,7 @@ server <- function(input, output, session) {
           title = tags$b("Third Level Dashboard"),
           layout_sidebar(
             sidebar = sidebar(
-              width = 350,  # match School Information sidebar width
+              width = 350, 
               h6("Strand Filter:"),
               pickerInput(
                 inputId = "ThirdLevel_Strands",
@@ -1601,7 +1602,7 @@ server <- function(input, output, session) {
             )
           )
         )),
-        
+      
         
    
       # --- Quick School Search ---
@@ -7269,6 +7270,20 @@ server <- function(input, output, session) {
   
   
   observeEvent(input$TextRun, {
+    
+    # --- Validation check for empty input ---
+    if (is.null(input$text) || trimws(input$text) == "") {
+      shinyalert(
+        title = "Invalid Input",
+        text = "Please enter a school name before clicking 'Show Selection'.",
+        type = "error",
+        closeOnClickOutside = TRUE,
+        showConfirmButton = TRUE,
+        timer = 2000,             
+        animation = FALSE         
+      )
+      return(NULL)                
+    }
     
     Text <- input$text
     
