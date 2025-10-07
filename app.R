@@ -58,6 +58,8 @@ cloud <- read_parquet("Cloud_Consolidated.parquet")
 cloud_v2 <- read_parquet("Cloud_Consolidated_v2.parquet")
 cloud_v3 <- read_parquet("Cloud_Consolidated_v3.parquet")
 
+#Data Explorer 
+ThirdLevel <- read.csv("2025-Third Level Officials DepEd.csv", stringsAsFactors = FALSE)
 
 
 user_base <- tibble::tibble(
@@ -1452,10 +1454,14 @@ server <- function(input, output, session) {
               )
             )
           ))),
-      # --- Second Top-Level Tab: Data Explorer (Now a Dropdown Menu) ---
-      nav_panel(
-        title = tags$b("Data Explorer"),  # Becomes a dropdown
+      # --- Second Top-Level Tab: Data Explorer --
+      nav_menu(
+        title = tags$b("Data Explorer"),  # Dropdown menu
         icon = bs_icon("table"),
+        
+        # --- Nav Panel 1: School Information ---
+        nav_panel(
+          title = tags$b("School Information"),
           layout_sidebar(
             sidebar = sidebar(
               width = 350,
@@ -1476,28 +1482,24 @@ server <- function(input, output, session) {
                   dropup = FALSE
                 )
               ),
-              uiOutput("DataBuilder_HROD_SDO"), # Existing SDO Selection
+              uiOutput("DataBuilder_HROD_SDO"),
               
-              # --- School Info Toggles ---
               pickerInput("School_Data_Toggles", strong("School Information Data Toggles"), 
                           choices = c("School Size Typology" = "School.Size.Typology", 
                                       "Curricular Offering" = "Modified.COC"),
                           multiple = TRUE, options = list(`actions-box` = TRUE)),
               
-              # Teaching Data Toggles
               pickerInput("Teaching_Data_Toggles", strong("Teaching Data Toggles"), 
                           choices = c("Total Teachers" = "TotalTeachers", 
                                       "Teacher Excess" = "Total.Excess", 
                                       "Teacher Shortage" = "Total.Shortage"),
                           multiple = TRUE, options = list(`actions-box` = TRUE)),
               
-              # Non-teaching Data Toggles
               pickerInput("NTP_Data_Toggles", strong("Non-teaching Data Toggles"), 
                           choices = c("COS" = "Outlier.Status", 
                                       "AOII Clustering Status" = "Clustering.Status"),
                           multiple = TRUE, options = list(`actions-box` = TRUE)),
               
-              # Enrolment Data Toggles
               pickerInput("Enrolment_Data_Toggles", strong("Enrolment Data Toggles"), 
                           choices = c("Total Enrolment" = "TotalEnrolment", "Kinder" = "Kinder", 
                                       "Grade 1" = "G1", "Grade 2" = "G2", "Grade 3" = "G3", 
@@ -1507,7 +1509,6 @@ server <- function(input, output, session) {
                                       "Grade 11" = "G11", "Grade 12" = "G12"),
                           multiple = TRUE, options = list(`actions-box` = TRUE)),
               
-              # Specialization Data Toggles
               pickerInput("Specialization_Data_Toggles", strong("Specialization Data Toggles"), 
                           choices = c("English" = "English", "Mathematics" = "Mathematics", 
                                       "Science" = "Science", 
@@ -1515,7 +1516,6 @@ server <- function(input, output, session) {
                                       "Physical Sciences" = "Physical.Sciences"),
                           multiple = TRUE, options = list(`actions-box` = TRUE)),
               
-              # Infrastructure Data Toggles
               pickerInput("EFD_Data_Toggles", strong("Infrastructure Data Toggles"), 
                           choices = c("Number of Buildings" = "Buildings", 
                                       "Instructional Rooms" = "Instructional.Rooms.2023.2024", 
@@ -1533,7 +1533,6 @@ server <- function(input, output, session) {
                                       "Total Seats Shortage" = "Total.Seats.Shortage.2023.2024"),
                           multiple = TRUE, options = list(`actions-box` = TRUE))
             ),
-            
             layout_columns(
               card(
                 card_header(strong("HROD Data Panel")),
@@ -1543,6 +1542,67 @@ server <- function(input, output, session) {
             )
           )
         ),
+        
+        # --- Nav Panel 2: Third Level Dashboard ---
+        nav_panel(
+          title = tags$b("Third Level Dashboard"),
+          layout_sidebar(
+            sidebar = sidebar(
+              width = 350,  # match School Information sidebar width
+              h6("Strand Filter:"),
+              pickerInput(
+                inputId = "ThirdLevel_Strands",
+                label = "Select Strand(s):",
+                choices = c(
+                  "ADMINISTRATION",
+                  "DEPED ATTACHED AGENCIES",
+                  "FINANCE",
+                  "HUMAN RESOURCE AND ORGANIZATIONAL DEVELOPMENT",
+                  "LEARNING SYSTEM",
+                  "LEGAL AND LEGISLATIVE AFFAIRS",
+                  "OFFICE OF THE SECRETARY",
+                  "OPERATIONS",
+                  "PROCUREMENT",
+                  "STRATEGIC MANAGEMENT",
+                  "TEACHERS AND EDUCATION COUNCIL SECRETARIAT"
+                ),
+                selected = c(
+                  "ADMINISTRATION",
+                  "DEPED ATTACHED AGENCIES",
+                  "FINANCE",
+                  "HUMAN RESOURCE AND ORGANIZATIONAL DEVELOPMENT",
+                  "LEARNING SYSTEM",
+                  "LEGAL AND LEGISLATIVE AFFAIRS",
+                  "OFFICE OF THE SECRETARY",
+                  "OPERATIONS",
+                  "PROCUREMENT",
+                  "STRATEGIC MANAGEMENT",
+                  "TEACHERS AND EDUCATION COUNCIL SECRETARIAT"
+                ),
+                multiple = TRUE,
+                options = pickerOptions(
+                  actionsBox = TRUE,
+                  liveSearch = TRUE,
+                  header = "Select Strand(s)",
+                  title = "No Strand Selected",
+                  selectedTextFormat = "count > 3",
+                  dropupAuto = FALSE,
+                  dropup = FALSE
+                )
+              )
+            ),
+            
+            layout_columns(
+              card(
+                card_header(strong("Third Level Officials")),
+                dataTableOutput("ThirdLevel_Table")
+              ),
+              col_widths = c(12,12)
+            )
+          )
+        )),
+        
+        
    
       # --- Quick School Search ---
       nav_panel(
@@ -1665,8 +1725,7 @@ server <- function(input, output, session) {
           id = "logout",
           label = "Log Out",
           icon = icon("sign-out-alt"),
-          class = "btn btn-danger"
-        )
+          class = "btn btn-danger")
       )
     )
   })
@@ -7146,6 +7205,46 @@ server <- function(input, output, session) {
           )
         )
       )
+    )
+  })
+  
+  filtered_third <- reactive({
+    df <- ThirdLevel %>%
+      filter(STRAND %in% input$ThirdLevel_Strands)
+    print(head(df))
+    df
+  })
+  
+  output$ThirdLevel_Table <- DT::renderDT(server = TRUE, {
+    
+
+    datatable(
+      filtered_third() %>%
+        select(
+          OFFICE,
+          BUREAU.SERVICE,
+          POSITION,
+          DESIGNATION,
+          TELEPHONE.NUMBER,
+          DEPED.EMAIL,
+          OFFICE.EMAIL
+        ),
+      extension = 'Buttons',
+      filter = 'top',
+      options = list(
+        scrollX = TRUE,
+        autoWidth = TRUE,
+        pageLength = 10,
+        columnDefs = list(list(className = 'dt-center', targets = "_all")),
+        dom = 'Bfrtip',
+        buttons = list(
+          list(extend = "csv", exportOptions = list(modifier = list(page = "all"))),
+          list(extend = "excel", exportOptions = list(modifier = list(page = "all"))),
+          list(extend = "print", exportOptions = list(modifier = list(page = "all")))
+        )
+      )
+      
+
     )
   })
   
