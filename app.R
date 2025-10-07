@@ -181,6 +181,7 @@ server <- function(input, output, session) {
     active = reactive(credentials()$user_auth) # Logout button active only when logged in
   )
   
+  
   # --- Authentication ---
   # Call the shinyauthr::loginServer module
   # credentials() will be a reactive returning a tibble with user_auth, info, and additional columns from user_base
@@ -1660,14 +1661,15 @@ server <- function(input, output, session) {
         )
       ),
       
-      nav_item(
+      # ✅ Logout button shown as its own nav tab
+      nav_panel(
+        title = tagList(bs_icon("box-arrow-right"), "Log Out"),
         shinyauthr::logoutUI(
           id = "logout",
-          label = "Log Out",
-          icon = icon("sign-out-alt"),
-          class = "btn btn-danger"
+          label = "Click to Log Out"
         )
-      )
+      ),
+      
     )
   })
   
