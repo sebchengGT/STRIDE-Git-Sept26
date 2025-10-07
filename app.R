@@ -26,6 +26,7 @@ library(plotly)
 library(readr)
 library(geojsonio)
 library(shinyWidgets) # For pickerInput
+library(shinyalert) 
 
 # HROD Data Upload
 df <- read_parquet("School-Level-v2.parquet") # per Level Data
@@ -58,6 +59,8 @@ cloud <- read_parquet("Cloud_Consolidated.parquet")
 cloud_v2 <- read_parquet("Cloud_Consolidated_v2.parquet")
 cloud_v3 <- read_parquet("Cloud_Consolidated_v3.parquet")
 
+#Data Explorer 
+ThirdLevel <- read.csv("2025-Third Level Officials DepEd.csv", stringsAsFactors = FALSE)
 
 
 user_base <- tibble::tibble(
@@ -1597,10 +1600,113 @@ observeEvent(input$show_curricular_graphs, {
               )
             )
           ))),
-      # --- Second Top-Level Tab: Data Explorer (Now a Dropdown Menu) ---
-      nav_panel(
-        title = tags$b("Data Explorer"),  # Becomes a dropdown
+      # --- Second Top-Level Tab: Data Explorer --
+      tags$head(
+        tags$style(HTML("
+    /* ===== GENERAL SCROLL FIX ===== */
+    .bslib-sidebar, 
+    .bslib-sidebar-content, 
+    .sidebar, 
+    .bslib-card {
+      overflow-x: hidden !important;
+    }
+
+    /* ===== PICKER INPUT DROPDOWNS (sidebar only) ===== */
+    .bslib-sidebar .bootstrap-select,
+    .bslib-sidebar .dropdown-menu {
+      max-width: 100% !important;
+      width: 100% !important;
+    }
+
+    /* Fix dropdowns expanding outside sidebar */
+    .bslib-sidebar .dropdown-menu.open {
+      left: 0 !important;
+      right: 0 !important;
+      width: 100% !important;
+      overflow-x: hidden !important;
+      white-space: normal !important; /* allow text wrapping */
+      word-wrap: break-word !important;
+    }
+
+    /* Allow long option labels to wrap to next line */
+    .bootstrap-select .dropdown-menu li a span.text {
+      white-space: normal !important;
+      word-break: break-word !important;
+      display: inline-block !important;
+    }
+
+    /* Prevent layout_sidebar from causing scrollbars */
+    .bslib-layout-sidebar {
+      overflow-x: hidden !important;
+    }
+
+    /* ===== NAVBAR SPACING FIX ===== */
+    .navbar-nav, .bslib-navbar-nav {
+      display: flex !important;
+      align-items: center !important;
+      gap: 10px !important; /* reduce space between nav items */
+    }
+
+    /* Ensure no extra right spacing between nav menus */
+    .navbar-nav > li, .bslib-navbar-nav > li {
+      margin-right: 0 !important;
+      padding-right: 0 !important;
+    }
+
+    /* ===== NAVBAR DROPDOWN FIX ===== */
+    .navbar .dropdown-menu,
+    .bslib-navbar .dropdown-menu {
+      width: auto !important;
+      min-width: 220px !important;
+      text-align: left !important;
+      white-space: nowrap !important;
+      word-wrap: normal !important;
+      border-radius: 6px !important;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1) !important;
+      margin-top: 4px !important; /* reduce dropdown gap */
+      margin-bottom: 4px !important;
+    }
+
+    /* Adjust Data Explorer dropdown items */
+    .navbar .dropdown-menu > li > a,
+    .bslib-navbar .dropdown-menu > li > a {
+      padding: 8px 14px !important;
+      font-weight: 600 !important;
+      display: block !important;
+    }
+
+    /* Hover effect */
+    .navbar .dropdown-menu > li > a:hover,
+    .bslib-navbar .dropdown-menu > li > a:hover {
+      background-color: #2c3895 !important;
+      color: white !important;
+    }
+
+    /* ===== THIRD LEVEL DASHBOARD DROPDOWN FIX ===== */
+    .navbar .dropdown-menu li a,
+    .bslib-navbar .dropdown-menu li a {
+      white-space: normal !important;
+      word-break: break-word !important;
+      line-height: 1.2em !important;
+    }
+
+    /* Keeps dropdown text readable without overlap */
+    .navbar .dropdown-menu li,
+    .bslib-navbar .dropdown-menu li {
+      padding-top: 4px !important;
+      padding-bottom: 4px !important;
+    }
+  "))
+      )
+      ,
+      
+      nav_menu(
+        title = tags$b("Data Explorer"),  # Dropdown menu
         icon = bs_icon("table"),
+        
+        # --- Nav Panel 1: School Information ---
+        nav_panel(
+          title = tags$b("School Information"),
           layout_sidebar(
             sidebar = sidebar(
               width = 350,
@@ -1621,28 +1727,24 @@ observeEvent(input$show_curricular_graphs, {
                   dropup = FALSE
                 )
               ),
-              uiOutput("DataBuilder_HROD_SDO"), # Existing SDO Selection
+              uiOutput("DataBuilder_HROD_SDO"),
               
-              # --- School Info Toggles ---
               pickerInput("School_Data_Toggles", strong("School Information Data Toggles"), 
                           choices = c("School Size Typology" = "School.Size.Typology", 
                                       "Curricular Offering" = "Modified.COC"),
                           multiple = TRUE, options = list(`actions-box` = TRUE)),
               
-              # Teaching Data Toggles
               pickerInput("Teaching_Data_Toggles", strong("Teaching Data Toggles"), 
                           choices = c("Total Teachers" = "TotalTeachers", 
                                       "Teacher Excess" = "Total.Excess", 
                                       "Teacher Shortage" = "Total.Shortage"),
                           multiple = TRUE, options = list(`actions-box` = TRUE)),
               
-              # Non-teaching Data Toggles
               pickerInput("NTP_Data_Toggles", strong("Non-teaching Data Toggles"), 
                           choices = c("COS" = "Outlier.Status", 
                                       "AOII Clustering Status" = "Clustering.Status"),
                           multiple = TRUE, options = list(`actions-box` = TRUE)),
               
-              # Enrolment Data Toggles
               pickerInput("Enrolment_Data_Toggles", strong("Enrolment Data Toggles"), 
                           choices = c("Total Enrolment" = "TotalEnrolment", "Kinder" = "Kinder", 
                                       "Grade 1" = "G1", "Grade 2" = "G2", "Grade 3" = "G3", 
@@ -1652,7 +1754,6 @@ observeEvent(input$show_curricular_graphs, {
                                       "Grade 11" = "G11", "Grade 12" = "G12"),
                           multiple = TRUE, options = list(`actions-box` = TRUE)),
               
-              # Specialization Data Toggles
               pickerInput("Specialization_Data_Toggles", strong("Specialization Data Toggles"), 
                           choices = c("English" = "English", "Mathematics" = "Mathematics", 
                                       "Science" = "Science", 
@@ -1660,7 +1761,6 @@ observeEvent(input$show_curricular_graphs, {
                                       "Physical Sciences" = "Physical.Sciences"),
                           multiple = TRUE, options = list(`actions-box` = TRUE)),
               
-              # Infrastructure Data Toggles
               pickerInput("EFD_Data_Toggles", strong("Infrastructure Data Toggles"), 
                           choices = c("Number of Buildings" = "Buildings", 
                                       "Instructional Rooms" = "Instructional.Rooms.2023.2024", 
@@ -1678,7 +1778,6 @@ observeEvent(input$show_curricular_graphs, {
                                       "Total Seats Shortage" = "Total.Seats.Shortage.2023.2024"),
                           multiple = TRUE, options = list(`actions-box` = TRUE))
             ),
-            
             layout_columns(
               card(
                 card_header(strong("HROD Data Panel")),
@@ -1688,6 +1787,67 @@ observeEvent(input$show_curricular_graphs, {
             )
           )
         ),
+        
+        # --- Nav Panel 2: Third Level Dashboard ---
+        nav_panel(
+          title = tags$b("Third Level Dashboard"),
+          layout_sidebar(
+            sidebar = sidebar(
+              width = 350, 
+              h6("Strand Filter:"),
+              pickerInput(
+                inputId = "ThirdLevel_Strands",
+                label = "Select Strand(s):",
+                choices = c(
+                  "ADMINISTRATION",
+                  "DEPED ATTACHED AGENCIES",
+                  "FINANCE",
+                  "HUMAN RESOURCE AND ORGANIZATIONAL DEVELOPMENT",
+                  "LEARNING SYSTEM",
+                  "LEGAL AND LEGISLATIVE AFFAIRS",
+                  "OFFICE OF THE SECRETARY",
+                  "OPERATIONS",
+                  "PROCUREMENT",
+                  "STRATEGIC MANAGEMENT",
+                  "TEACHERS AND EDUCATION COUNCIL SECRETARIAT"
+                ),
+                selected = c(
+                  "ADMINISTRATION",
+                  "DEPED ATTACHED AGENCIES",
+                  "FINANCE",
+                  "HUMAN RESOURCE AND ORGANIZATIONAL DEVELOPMENT",
+                  "LEARNING SYSTEM",
+                  "LEGAL AND LEGISLATIVE AFFAIRS",
+                  "OFFICE OF THE SECRETARY",
+                  "OPERATIONS",
+                  "PROCUREMENT",
+                  "STRATEGIC MANAGEMENT",
+                  "TEACHERS AND EDUCATION COUNCIL SECRETARIAT"
+                ),
+                multiple = TRUE,
+                options = pickerOptions(
+                  actionsBox = TRUE,
+                  liveSearch = TRUE,
+                  header = "Select Strand(s)",
+                  title = "No Strand Selected",
+                  selectedTextFormat = "count > 3",
+                  dropupAuto = FALSE,
+                  dropup = FALSE
+                )
+              )
+            ),
+            
+            layout_columns(
+              card(
+                card_header(strong("Third Level Officials")),
+                dataTableOutput("ThirdLevel_Table")
+              ),
+              col_widths = c(12,12)
+            )
+          )
+        )),
+      
+        
    
       # --- Quick School Search ---
       nav_panel(
@@ -1810,10 +1970,10 @@ observeEvent(input$show_curricular_graphs, {
         title = tagList(bs_icon("box-arrow-right"), "Log Out"),
         shinyauthr::logoutUI(
           id = "logout",
-          label = "Click to Log Out"
-        )
-      ),
-      
+          label = "Log Out",
+          icon = icon("sign-out-alt"),
+          class = "btn btn-danger")
+      )
     )
   })
   
@@ -7295,6 +7455,47 @@ observeEvent(input$show_curricular_graphs, {
     )
   })
   
+  filtered_third <- reactive({
+    df <- ThirdLevel %>%
+      filter(STRAND %in% input$ThirdLevel_Strands)
+    print(head(df))
+    df
+  })
+  
+  output$ThirdLevel_Table <- DT::renderDT(server = TRUE, {
+    
+
+    datatable(
+      filtered_third() %>%
+        select(
+          OFFICE,
+          BUREAU.SERVICE,
+          NAME,
+          POSITION,
+          DESIGNATION,
+          TELEPHONE.NUMBER,
+          DEPED.EMAIL
+        ),
+      extension = 'Buttons',
+      filter = 'top',
+      options = list(
+        scrollX = TRUE,
+        autoWidth = TRUE,
+        fixedColumns = list(leftColumns = 4),
+        pageLength = 10,
+        columnDefs = list(list(className = 'dt-center', targets = "_all")),
+        dom = 'Bfrtip',
+        buttons = list(
+          list(extend = "csv", exportOptions = list(modifier = list(page = "all"))),
+          list(extend = "excel", exportOptions = list(modifier = list(page = "all"))),
+          list(extend = "print", exportOptions = list(modifier = list(page = "all")))
+        )
+      )
+      
+
+    )
+  })
+  
   
   output$explorer_efd_data_table <- DT::renderDT(server = FALSE, {datatable(EFDDB %>% filter(Region == input$explorer_efd_region_filter) %>% filter(Division == input$explorer_efd_SDO) %>% arrange(District), extension = 'Buttons', filter = 'top', options = list(scrollX = TRUE, pageLength = 10, columnDefs = list(list(className = 'dt-center', targets ="_all")), rownames = FALSE, dom = 'Bfrtip', buttons = list('csv','excel','print')))})
   
@@ -7315,44 +7516,109 @@ observeEvent(input$show_curricular_graphs, {
   })
   
   
-  observeEvent(input$TextRun, {
-    
-    Text <- input$text
-    
-    mainreact1 <- uni %>% arrange(Region) %>% arrange(Division) %>% filter(grepl(Text, as.character(School.Name), ignore.case = TRUE))  #arrange first by Division before filtering & make sure this is the same in row_selected
-    
-    values.comp <- paste(strong("SCHOOL INFORMATION"),"<br>School Name",mainreact1$School.Name,"<br>School ID:",mainreact1$SchoolID) %>% lapply(htmltools::HTML)
-    
-    values.df <- paste(mainreact1$School.Name %>% lapply(htmltools::HTML))
-    
-    leafletProxy("TextMapping") %>% clearMarkers() %>% clearMarkerClusters() %>% setView(lng = mainreact1$Longitude[1], lat = mainreact1$Latitude[1], zoom = 4.5) %>% 
-      addAwesomeMarkers(lng = mainreact1$Longitude, lat = mainreact1$Latitude,  icon = makeAwesomeIcon(icon = "education",library = "glyphicon",markerColor = "blue"), label = values.comp, labelOptions = labelOptions(noHide = F, textsize = "12px", direction = "top", fill = TRUE, style = list("border-color" = "rgba(0,0,0,0.5)")))
-    
-    df1 <- reactive({
-      
-      if (is.null(input$TextMapping_bounds)) {
-        mainreact1
-      } else {
-        bounds <- input$TextMapping_bounds
-        latRng <- range(bounds$north, bounds$south)
-        lngRng <- range(bounds$east, bounds$west)
-        
-        subset(mainreact1,
-               Latitude >= latRng[1] & Latitude <= latRng[2] & Longitude >= lngRng[1] & Longitude <= lngRng[2])
-      }
-    })
-    
-    output$TextTable <- DT::renderDT(server = FALSE, {datatable(df1() %>% select("Region","Division","Legislative.District","Municipality","School.Name") %>% rename("School" = School.Name), extension = 'Buttons', rownames = FALSE, options = list(scrollX = TRUE, pageLength = 10, columnDefs = list(list(className = 'dt-center', targets ="_all")), dom = 'lrtip'), filter = "top")})
+  # --- Initialize map only once ---
+  output$TextMapping <- renderLeaflet({
+    leaflet() %>%
+      setView(lng = 122, lat = 13, zoom = 5) %>%
+      addProviderTiles(providers$Esri.WorldImagery, group = "Satellite") %>%
+      addProviderTiles(providers$CartoDB.Positron, group = "Road Map") %>%
+      addMeasure(position = "topright",
+                 primaryLengthUnit = "kilometers",
+                 primaryAreaUnit = "sqmeters") %>%
+      addLayersControl(baseGroups = c("Satellite", "Road Map"))
   })
   
-  output$TextMapping <- renderLeaflet({
-    leaflet() %>% 
-      setView(lng = 122, lat = 13, zoom =5) %>%
-      addProviderTiles(providers$Esri.WorldImagery, group = "Satellite") %>% 
-      addProviderTiles(providers$CartoDB.Positron, group = "Road Map") %>% 
-      addMeasure(position = "topright", primaryLengthUnit = "kilometers", primaryAreaUnit = "sqmeters") %>% 
-      addLayersControl(
-        baseGroups = c("Satellite","Road Map"))
+  # --- Reactive controls for input and button ---
+  observe({
+    txt <- trimws(input$text)
+    
+    # Disable button if text is empty
+    shinyjs::toggleState("TextRun", condition = txt != "")
+    
+    # Show or hide warning message
+    output$text_warning <- renderText({
+      if (txt == "") {
+        "⚠ Please enter a school name before showing results."
+      } else {
+        ""
+      }
+    })
+  })
+  
+  
+  # --- Observe button click ---
+  observeEvent(input$TextRun, {
+    Text <- trimws(input$text)
+    
+    # Extra safety check (should not trigger because button is disabled when blank)
+    if (Text == "") return()
+    
+    # --- Filter data based on input ---
+    mainreact1 <- uni %>%
+      arrange(Region, Division) %>%
+      filter(grepl(Text, as.character(School.Name), ignore.case = TRUE))
+    
+    # --- Handle no matching results ---
+    if (nrow(mainreact1) == 0) {
+      output$text_warning <- renderText(paste0("⚠ No results found for '", Text, "'."))
+      leafletProxy("TextMapping") %>%
+        clearMarkers() %>%
+        clearMarkerClusters()
+      output$TextTable <- DT::renderDT(NULL)
+      return()
+    } else {
+      output$text_warning <- renderText("")  # clear any old warning
+    }
+    
+    # --- Create leaflet labels ---
+    values.comp <- paste(
+      strong("SCHOOL INFORMATION"),
+      "<br>School Name:", mainreact1$School.Name,
+      "<br>School ID:", mainreact1$SchoolID
+    ) %>% lapply(htmltools::HTML)
+    
+    # --- Update leaflet map ---
+    leafletProxy("TextMapping") %>%
+      clearMarkers() %>%
+      clearMarkerClusters() %>%
+      setView(lng = mainreact1$Longitude[1],
+              lat = mainreact1$Latitude[1],
+              zoom = 4.5) %>%
+      addAwesomeMarkers(
+        lng = mainreact1$Longitude,
+        lat = mainreact1$Latitude,
+        icon = makeAwesomeIcon(
+          icon = "education",
+          library = "glyphicon",
+          markerColor = "blue"
+        ),
+        label = values.comp,
+        labelOptions = labelOptions(
+          noHide = FALSE,
+          textsize = "12px",
+          direction = "top",
+          fill = TRUE,
+          style = list("border-color" = "rgba(0,0,0,0.5)")
+        )
+      )
+    
+    # --- Render DataTable ---
+    output$TextTable <- DT::renderDT(server = FALSE, {
+      datatable(
+        mainreact1 %>%
+          select("Region", "Division", "Legislative.District", "Municipality", "School.Name") %>%
+          rename("School" = "School.Name"),
+        extension = 'Buttons',
+        rownames = FALSE,
+        options = list(
+          scrollX = TRUE,
+          pageLength = 10,
+          columnDefs = list(list(className = 'dt-center', targets = "_all")),
+          dom = 'lrtip'
+        ),
+        filter = "top"
+      )
+    })
   })
   
   output$deped <- renderImage({
@@ -7796,6 +8062,7 @@ observeEvent(input$show_curricular_graphs, {
         addLayersControl(baseGroups = c("Satellite","Road Map"))
     })
     
+    # --- Base map with static legend ---
     output$CLMapping <- renderLeaflet({
       # Legend domain + palette
       domain <- c(
@@ -7815,9 +8082,11 @@ observeEvent(input$show_curricular_graphs, {
         setView(lng = 122, lat = 13, zoom = 6) %>%
         addProviderTiles(providers$Esri.WorldImagery, group = "Satellite") %>% 
         addProviderTiles(providers$CartoDB.Positron, group = "Road Map") %>%  
-        addMeasure(position = "topright",
-                   primaryLengthUnit = "kilometers",
-                   primaryAreaUnit = "sqmeters") %>% 
+        addMeasure(
+          position = "topright",
+          primaryLengthUnit = "kilometers",
+          primaryAreaUnit = "sqmeters"
+        ) %>% 
         addLegend(
           position = "bottomright",
           title = "Legend",
@@ -7828,6 +8097,7 @@ observeEvent(input$show_curricular_graphs, {
           baseGroups = c("Satellite","Road Map")
         )
     })
+    
     
     output$FacMapping <- renderLeaflet({
       leaflet() %>%
@@ -8270,20 +8540,21 @@ observeEvent(input$show_curricular_graphs, {
         )
       )
     
+    # --- Update markers with leafletProxy ---
     observe({
       req(mainreactCR)
       
-      # Build icons vectorized
       icons <- awesomeIcons(
         icon = "university",
         library = "fa",
         markerColor = case_when(
-          suppressWarnings(as.numeric(mainreactCR$SBPI)) <= 1.0 & as.numeric(mainreactCR$SBPI) > 0 ~ "green",   # Mild (0–0.5)
-          suppressWarnings(as.numeric(mainreactCR$SBPI)) > 1.0  & as.numeric(mainreactCR$SBPI) <= 1.5 ~ "yellow",  # Minor (0.6–1.5)
-          suppressWarnings(as.numeric(mainreactCR$SBPI)) > 1.5  & as.numeric(mainreactCR$SBPI) <= 2.0 ~ "orange",  # Major (1.6–2.0)
-          suppressWarnings(as.numeric(mainreactCR$SBPI)) > 2.0 ~ "red",  # Extreme (>2.0)
-          TRUE ~ "lightgray"  # fallback
-        )
+          suppressWarnings(as.numeric(mainreactCR$SBPI)) > 0   & as.numeric(mainreactCR$SBPI) <= 0.5 ~ "green",   # Mild (0–0.5)
+          suppressWarnings(as.numeric(mainreactCR$SBPI)) > 0.5 & as.numeric(mainreactCR$SBPI) <= 1.5 ~ "yellow",  # Minor (0.6–1.5)
+          suppressWarnings(as.numeric(mainreactCR$SBPI)) > 1.5 & as.numeric(mainreactCR$SBPI) <= 2.0 ~ "orange",  # Major (1.6–2.0)
+          suppressWarnings(as.numeric(mainreactCR$SBPI)) > 2.0                                         ~ "red",     # Extreme (>2.0)
+          TRUE                                                                                        ~ "lightgray"
+        ),
+        iconColor = "white"
       )
       
       leafletProxy("CLMapping") %>%
@@ -8306,7 +8577,7 @@ observeEvent(input$show_curricular_graphs, {
             textsize = "12px",
             direction = "top"
           ),
-          icon = icons   # ✅ vectorized icons
+          icon = icons
         )
     })
     
