@@ -1,0 +1,336 @@
+body {
+  background-color: #f9fafc;
+  font-family: 'Alan Sans', sans-serif;
+  margin: 0;
+  padding-bottom: 60px; /* leave space so footer doesn’t overlap */
+  opacity: 1; /* keep content fully visible */
+}
+
+body.login-bg {
+  background: none;
+  background-size: cover;
+  background-attachment: fixed;
+  color: white;
+}
+
+/* Watermark logo */
+body.login-bg::before {
+  content: "";
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: url("STRIDE logo.png") no-repeat center center;
+  background-size: 60%;
+  opacity: 0.5;   /* 👈 adjust watermark visibility */
+  z-index: -1;
+}
+
+body.dashboard-bg {
+  background-color: #f9fafc;
+  background-image: none;
+  color: #333;
+}
+
+/* Login page wrapper */
+.login-page {
+  display: flex;
+  justify-content: center;
+  margin-top: 60px;   /* 👈 space between header and login */
+  padding: 20px;
+}
+
+/* Login panel (choose ONE method) */
+#login-panel {
+  width: 500px;
+  max-width: 100%;
+  margin: 150px auto !important;  /* pushes login panel down */
+  padding: 20px;
+  /* If you want vertical center instead, replace margin with:
+     position: relative;
+     top: 50%;
+     transform: translateY(-50%);
+  */
+}
+
+/* Style the login card */
+#login .panel,
+#login .card, 
+#login .well {
+  background-color: rgba(0, 45, 98, 0.9) !important; /* dark blue card */
+  color: #fff !important;
+  padding: 25px;
+  border-radius: 12px;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+  max-width: 400px;
+  margin: auto;
+  text-align: left;
+}
+/* Animate the login box */
+/*#login-login_ui {
+  animation: slideUp 1s ease-out;
+}
+.fade-in {
+  animation: slideUp 1s ease-out;
+}
+
+@keyframes slideUp {
+  0% {
+    transform: translateY(40px);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* ==== HEADER ==== */
+.app-header {
+  background: linear-gradient(rgba(0, 45, 98, 0.9), rgba(0, 45, 98, 0.9));
+  color: white;
+  padding: 4px;
+  text-align: center;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+}
+
+.app-header h2 {
+  text-align: center;
+  margin: 0;
+  font-size: 1.8em;
+}
+
+.app-header p {
+  margin: 0;
+  font-size: 0.9em;
+  opacity: 0.8;
+}
+
+/* Well box */
+.well {
+  display: block;
+  background-color: #13345ade;
+  color: white;
+  padding: 1rem;
+  border-radius: 2.375rem;
+  text-shadow: 2px 3px black;
+}
+
+/* ==== FOOTER ==== */
+.app-footer {
+  background-color: #f1f1f1;
+  color: #444;
+  text-align: center;
+  padding: 10px;
+  position: fixed;
+  bottom: 0;
+  width: 100%;
+  border-top: 1px solid #ccc;
+  font-size: 0.9em;
+}
+
+/* ==== CUSTOM CARDS ==== */
+/*.card-header {
+  background-color: #e6f0ff !important;
+  color: #002D62 !important;
+  font-weight: bold;
+}
+
+/* ==== VALUE BOX ==== */
+.value-box .value {
+  font-size: 1.2em;
+  color: #d63384;
+}
+.value-box .title {
+  white-space: normal !important;
+}
+
+
+/* Animate "Please Log in" */
+/*#login-title {
+  animation: fadeInDown 1s ease-out;
+}
+
+@keyframes fadeInDown {
+  0% {
+    opacity: 0;
+    transform: translateY(-30px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+} 
+ /* Force navbar items to left align */
+.navbar-nav {
+  justify-content: flex-start !important;
+}
+.navbar-collapse {
+  justify-content: flex-start !important;
+}
+
+.navbar .nav-item {
+  margin: auto;
+  font-size: 20px;
+}
+
+
+.dashboard-container {
+  transform-origin: top left;
+  transform: scale(var(--zoom-scale, 1)); /* Controlled by JS */
+  transition: transform 0.2s ease-out;
+}
+
+/* Prevent text from compressing */
+.card,
+.card-body,
+.card-header {
+  text-align: center;
+  font-size: 15px; /* base size */
+  line-height: 1.3;
+  overflow: visible;
+  white-space: normal;
+  font-weight: bolder;
+  font-family: 'Georgia', sans-serif;
+  box-shadow: 2px 1px 3px 0px rgba(0, 0, 0, 0.98);
+}
+
+
+  
+/*.card {
+  text-align: -webkit-center;
+}
+
+.card.animate {
+  opacity: 1;
+  transform: translateY(0);
+}*/
+
+.bslib-sidebar-layout>.sidebar>.sidebar-content {
+    display: flex*/
+;
+    flex-direction: column;
+    gap: var(--bslib-spacer, 1rem);
+    padding: var(--_padding);
+    padding-top: var(--_padding-icon);
+    background: #23558f;
+    font-family: "Times New Roman", Times, serif;
+    font-size: 17px;
+    text-shadow: 1px 2px 2px #black;
+    letter-spacing: 0px;
+    word-spacing: -0.4px;
+    color: #FFFFFF;
+    font-weight: 700;
+    text-decoration: none;
+    font-style: italic;
+    font-variant: normal;
+    text-transform: none;
+    text-align: center;
+    
+}
+.bslib-sidebar-layout .sidebar .sidebar-title {
+  color: #ffffff !important; /* Change to your desired color */
+  font-size: 28px;
+  font-weight: 900;
+  text-shadow: 2px 2px 3px black;
+}
+
+
+.bslib-accordion-panel-3227 {
+    box-shadow: 2px 2px 7px 1px #306a90;
+    font-weight: 800;
+}
+.sidebar-content>.bslib-gap-spacing{
+  sidebar-width: auto;
+}
+
+body.dashboard-bg {
+  background-color: #A3A3A3;
+}
+
+.accordion .accordion-button:not(.collapsed) {
+    box-shadow: none;
+    font-weight: bolder;
+    background-color: #eee567;
+}
+
+#Curricular_Offering_Bar, #School_Size_Typology_Bar {
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  padding: 10px;
+}
+
+.card-header b {
+  text-align: left;
+}
+
+#curricular_graphs {
+  transition: opacity 0.5s ease;
+}
+
+#curricular_graphs[style*="display: none"] {
+  opacity: 0;
+}
+
+.app-header h2 {
+    text-align: center;
+    margin: 0;
+    font-size: 40px;
+    text-shadow: 5px 4px 2px #000000;
+}
+
+.app-header p {
+    margin: 0;
+    font-size: 23px;
+    opacity: 0.8;
+    text-shadow: 5px 4px 2px #000000;
+}
+
+.value-box .title {
+  color: #002D62 !important; /* DepEd blue or choose your color */
+  font-weight: 800;
+  font-size: 1em;
+  text-transform: uppercase;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.4);
+  letter-spacing: 0.5px;
+}
+.value-box .value {
+  color: #FFD700 !important; /* gold */
+  font-size: 1.4em;
+  font-weight: 900;
+  text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.5);
+}
+
+.value-box {
+  background-color: #f0f4ff;
+  border-radius: 10px;
+  padding: 12px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+  transition: transform 0.2s ease;
+}
+
+.value-box:hover {
+  transform: translateY(-3px);
+}
+
+ ==== CARD HEADERS (Dashboard Section Titles) ==== */
+.card-header {
+  background: linear-gradient(90deg, #002D62, #004c99); /* DepEd Blue gradient */
+  color: #ffffff !important;
+  font-weight: 900;
+  font-size: 20px;
+  letter-spacing: 0.5px;
+  text-shadow: 2px 2px 3px rgba(0, 0, 0, 0.4);
+  border-radius: 10px 10px 0 0; /* Rounded top corners */
+  text-align: center;
+  padding: 10px 15px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+
+
+
+
+  

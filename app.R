@@ -2,6 +2,7 @@
 #test commit
 #TEST
 #testingsept302025
+#testcommitoctober120252
 library(tidyverse)
 library(DT)
 library(dplyr)
@@ -24,43 +25,42 @@ library(ggplot2)
 library(plotly)
 library(readr)
 library(geojsonio)
-library(shinyWidgets) # For pickerInput
+library(shinyWidgets)
 
+# HROD Data Upload
+df <- read_parquet("School-Level-v2.parquet") # per Level Data
+uni <- read_parquet("School-Unique-v2.parquet") # School-level Data 
+IndALL <- read_parquet("IndDistance.ALL2.parquet") # Industry Distances
+ind <- read_parquet("SHS-Industry.parquet") # Industry Coordinates
+SDO <- read_parquet("SDOFill.parquet") # SDO and Regional Filling-up Rate
+DBMProp <- read.csv("DBM-Proposal.csv") # Teacher Shortage Data
 
-df <- read_parquet("School-Level-v2.parquet")
-uni <- read_parquet("School-Unique-v2.parquet")
-buildablecsv <- read.csv("Buildable_LatLong.csv", check.names = FALSE)
-
-# Clean column names: remove line breaks, extra spaces
-names(buildablecsv) <- gsub("[\r\n]", " ", names(buildablecsv))
-names(buildablecsv) <- trimws(names(buildablecsv))
-
-# Ensure lat/long are numeric
-buildablecsv$Latitude <- as.numeric(buildablecsv$Latitude)
-buildablecsv$Longitude <- as.numeric(buildablecsv$Longitude)
-
-IndALL <- read_parquet("IndDistance.ALL2.parquet")
-ind <- read_parquet("SHS-Industry.parquet")
-SDO <- read_parquet("SDOFill.parquet")
-dfz <- read.csv("COS Regional Breakdown2.csv") %>% select(1:5)
-Excess <- read_parquet("NationwideExcess.parquet")
-SHS_Pilot <- read.csv("PilotSchools.csv")
-SHS_Pilot2 <- as.list(SHS_Pilot$SchoolID)
-EFDProj <- read_parquet("EFDProj.parquet")
-ElecProposal <- read.csv("ElecProp.csv") %>% mutate(Estimated.Cost = as.numeric(Estimated.Cost))
-DBMProp <- read.csv("DBM-Proposal.csv")
-SBMaster <- read.csv("School_Building_MasterPlan.csv")
+# EFD Data Upload
 EFDDB <- read.csv("EFD-DataBuilder-2025.csv")
 EFDMP <- read_parquet("EFD-Masterlist.parquet")
 EFD_Projects <- read.csv("EFD-ProgramsList-Aug2025.csv") %>% mutate(Allocation = as.numeric(Allocation)) %>% mutate(Completion = as.numeric(Completion)) %>% filter(FundingYear >= 2020)
-cloud <- read_parquet("Cloud_Consolidated.parquet")
-cloud_v2 <- read_parquet("Cloud_Consolidated_v2.parquet")
-cloud_v3 <- read_parquet("Cloud_Consolidated_v3.parquet")
+LMS <- read_parquet("EFD-LMS-GIDCA-NSBI2023.parquet") %>% mutate(Region = case_when(Region == "Region IV-B" ~ "MIMAROPA", TRUE ~ Region)) %>% mutate(With_Shortage = case_when(Estimated_CL_Shortage > 0 ~ 1, TRUE ~ 0))
 geojson_data <- geojson_read("gadm41_PHL_1.json", what = "sp")
 geojson_table <- as.data.frame(geojson_data)
 regprov <- read.csv("RegProv.Congestion.csv")
 geojson_table <- left_join(geojson_table,regprov, by="NAME_1")
-LMS <- read_parquet("EFD-LMS-GIDCA-NSBI2023.parquet") %>% mutate(Region = case_when(Region == "Region IV-B" ~ "MIMAROPA", TRUE ~ Region)) %>% mutate(With_Shortage = case_when(Estimated_CL_Shortage > 0 ~ 1, TRUE ~ 0))
+buildablecsv <- read.csv("Buildable_LatLong.csv")
+# Clean column names: remove line breaks, extra spaces
+names(buildablecsv) <- gsub("[\r\n]", " ", names(buildablecsv))
+names(buildablecsv) <- trimws(names(buildablecsv))
+# Ensure lat/long are numeric
+buildablecsv$Latitude <- as.numeric(buildablecsv$Latitude)
+buildablecsv$Longitude <- as.numeric(buildablecsv$Longitude)
+
+
+# CLOUD Data Upload
+cloud <- read_parquet("Cloud_Consolidated.parquet")
+cloud_v2 <- read_parquet("Cloud_Consolidated_v2.parquet")
+cloud_v3 <- read_parquet("Cloud_Consolidated_v3.parquet")
+
+#Data Explorer 
+ThirdLevel <- read.csv("2025-Third Level Officials DepEd.csv", stringsAsFactors = FALSE)
+
 
 user_base <- tibble::tibble(
   user = c("iamdeped", "depedadmin"),
@@ -76,9 +76,35 @@ ui <- fluidPage(
   theme = bs_theme(version = 5,
                    bootswatch = "litera",
                    font_scale = 0.9,
-                   base_font = font_google("Poppins")),
+                   base_font = font_google("Alan Sans")),
   # Use shinyjs to easily show/hide elements
   shinyjs::useShinyjs(),
+  
+  
+  tags$head(
+    includeCSS("www/style.css"),
+    includeScript("www/script.js")
+  ),
+  
+  tags$head(tags$meta(name = "viewport", content = "width=device-width, initial-scale=1.0, maximum-scale=3.0")),
+  
+  
+  tags$div(
+    class = "app-header",
+    style = "display: flex; align-items: center; gap: 15px; justify-content: center;",
+    
+    # Logo
+    tags$img(src = "logo3.png", height = "100px"),
+    
+    # Text beside the logo
+    tags$div(
+      h2("DepEd STRIDE Dashboard"),
+      p("Strategic Inventory for Deployment Efficiency")
+    )
+  ),
+  
+  
+  
   
   # tags$head(
   #   tags$style(HTML("
@@ -94,35 +120,21 @@ ui <- fluidPage(
   #                   "))),
   # 
   # Row for the login panel UI
-  fluidRow(
-    layout_columns(
-      imageOutput("StrideLogo"),
-      col_widths = c(-3,6,-3))),
-  
-  fluidRow(
-    column(width = 12,
-           # Add the login UI
-           shinyauthr::loginUI(
-             id = "login",
-             title = "Please Log In",
-             user_title = "Username",
-             pass_title = "Password",
-             login_title = "Log In",
-             error_message = "Invalid username or password!" # Custom error message
-           )
-    )
-  ),
   
   fluidRow(
     column(width = 12,
            div(
-             style = "text-align: right; padding-bottom: 10px;",
-             shinyauthr::logoutUI(
-               id = "logout",
-               label = "Log Out",
-               icon = icon("sign-out-alt"),
-               class = "btn btn-danger"
-             )))), 
+             id = "login-title",# Add the login UI
+             shinyauthr::loginUI(
+               id = "login",
+               title = "Please Log In",
+               user_title = "Username",
+               pass_title = "Password",
+               login_title = "Log In",
+               error_message = "Invalid username or password!" # Custom error message
+             )
+           ))
+  ), 
   # Custom styling
   
   shinyjs::hidden(
@@ -131,9 +143,21 @@ ui <- fluidPage(
       uiOutput("STRIDE1"))),
   
   shinyjs::hidden(
+    div(class = "dashboard-container",
+        uiOutput("STRIDE2")  # your dashboard content
+    ),
     div(
       id = "mgmt_content",
-      uiOutput("STRIDE2"))))
+      uiOutput("STRIDE2"))),
+  
+  
+  
+  
+  
+  tags$footer(
+    class = "app-footer",
+    tags$p("© Based on GMIS (April 2025) and eBEIS (SY 2024–2025)")))
+
 
 
 # Define server logic required to draw a histogram
@@ -150,7 +174,8 @@ server <- function(input, output, session) {
       # You can also set width and height here, e.g., width = 400,
       # or control them in the imageOutput in the UI.
     )
-  }, deleteFile = FALSE) # deleteFile = FALSE is important for pre-existing static files
+  }, deleteFile = FALSE)
+  # deleteFile = FALSE is important for pre-existing static files
   
   
   # Call the shinyauthr::logoutServer module
@@ -159,7 +184,82 @@ server <- function(input, output, session) {
     active = reactive(credentials()$user_auth) # Logout button active only when logged in
   )
   
-  # --- Authentication ---
+  
+  # --- Curricular Offering Bar Chart ---
+  output$Curricular_Offering_Bar <- renderPlotly({
+    data <- data.frame(
+      Category = c("Purely ES", "JHS with SHS", "ES and JHS (K to 10)",
+                   "Purely JHS", "All Offering (K to 12)", "Purely SHS"),
+      Count = c(35036, 6598, 1690, 1367, 832, 262)
+    )
+    
+    plot_ly(
+      data,
+      x = ~Category, y = ~Count,
+      type = "bar", marker = list(color = "#002D62")
+    ) |>
+      layout(title = list(text = "Curricular Offering Distribution", x = 0.5),
+             xaxis = list(title = ""), yaxis = list(title = "Number of Schools"))
+  })
+  
+  # --- Curricular Offering Pie Chart ---
+  output$Curricular_Offering_Pie <- renderPlotly({
+    data <- data.frame(
+      Category = c("Purely ES", "JHS with SHS", "ES and JHS (K to 10)",
+                   "Purely JHS", "All Offering (K to 12)", "Purely SHS"),
+      Count = c(35036, 6598, 1690, 1367, 832, 262)
+    )
+    
+    plot_ly(
+      data,
+      labels = ~Category, values = ~Count, type = "pie",
+      textinfo = "label+percent", insidetextorientation = "radial"
+    ) |> layout(title = list(text = "Curricular Offering (Pie)", x = 0.5))
+  })
+  
+  # --- Toggle visibility for Curricular Offering graphs ---
+  observeEvent(input$show_curricular_graphs, {
+    if (input$show_curricular_graphs %% 2 == 1) {
+      shinyjs::show("curricular_graphs")
+      updateActionButton(session, "show_curricular_graphs", label = "Hide Graphs")
+    } else {
+      shinyjs::hide("curricular_graphs")
+      updateActionButton(session, "show_curricular_graphs", label = "Show Graphs")
+    }
+  })
+  
+  # --- School Size Typology Bar Chart ---
+  output$School_Size_Typology_Bar <- renderPlotly({
+    data <- data.frame(
+      Size = c("Very Small", "Small", "Medium", "Large",
+               "Very Large", "Extremely Large", "Mega"),
+      Count = c(24976, 10105, 5726, 4210, 727, 38, 3)
+    )
+    
+    plot_ly(
+      data,
+      x = ~Size, y = ~Count,
+      type = "bar", marker = list(color = "#0074D9")
+    ) |>
+      layout(title = list(text = "School Size Typology Distribution", x = 0.5),
+             xaxis = list(title = ""), yaxis = list(title = "Number of Schools"))
+  })
+  
+  # --- School Size Typology Pie Chart ---
+  output$School_Size_Typology_Pie <- renderPlotly({
+    data <- data.frame(
+      Size = c("Very Small", "Small", "Medium", "Large",
+               "Very Large", "Extremely Large", "Mega"),
+      Count = c(24976, 10105, 5726, 4210, 727, 38, 3)
+    )
+    
+    plot_ly(
+      data,
+      labels = ~Size, values = ~Count,
+      type = "pie", textinfo = "label+percent",
+      insidetextorientation = "radial"
+    ) |> layout(title = list(text = "School Size Typology (Pie)", x = 0.5))
+  })# --- Authentication ---
   # Call the shinyauthr::loginServer module
   # credentials() will be a reactive returning a tibble with user_auth, info, and additional columns from user_base
   credentials <- shinyauthr::loginServer(
@@ -179,7 +279,8 @@ server <- function(input, output, session) {
     auth_status <- credentials()$user_auth
     if (auth_status) {
       # User is authenticated. Let's get their details.
-      user_info <- credentials()$info # This is a tibble with the user's row
+      user_info <- credentials()$info
+      # This is a tibble with the user's row
       
       # Ensure user_info is available and has the username
       # (It should if auth_status is TRUE and your user_base is set up correctly)
@@ -209,18 +310,22 @@ server <- function(input, output, session) {
       shinyjs::show("StrideLogo")
       shinyjs::hide("main_content")
       shinyjs::hide("mgmt_content")
+    }
+    
+    if (auth_status) {
+      # Logged in → Dashboard mode
+      shinyjs::runjs('document.body.classList.remove("login-bg");')
+      shinyjs::runjs('document.body.classList.add("dashboard-bg");')
+    } else {
+      # Logged out → Login mode
+      shinyjs::runjs('document.body.classList.remove("dashboard-bg");')
+      shinyjs::runjs('document.body.classList.add("login-bg");')
     }})
   
   output$STRIDE2 <- renderUI({
     page_navbar(
-      title = div(
-        tags$span(
-          strong("DepEd STRIDE Dashboard"),
-          style = "font-size: 1em; margin-bottom: 0.2em;"),"",
-        tags$p(
-          em("based on GMIS (April 2025) and eBEIS (SY 2024-2025)"),
-          style = "font-size: 0.7em; color: black;  margin-top: 0.1em; margin-bottom: 0;"
-        )),
+      # no title, just the nav items
+      
       theme = bs_theme(
         version = 5,
         bootswatch = "sandstone",
@@ -263,6 +368,9 @@ server <- function(input, output, session) {
     }
     "
       ),
+      
+      
+      
       nav_spacer(),
       
       # --- First Top-Level Tab: Dashboard ---
@@ -326,14 +434,6 @@ server <- function(input, output, session) {
               accordion_panel(
                 title = "National Statistics",
                 icon = bsicons::bs_icon("bar-chart"), # Optional icon
-                # accordion_panel(
-                #   title = "Learner Overview",
-                #   layout_column_wrap(
-                #     width = 1/4,
-                #     value_box(title = "Total Learners", value = "21,669,181"),
-                #     value_box(title = "Total ES Learners", value = "12,877,988"),
-                #     value_box(title = "Total JHS Learners", value = "6,341,976"),
-                #     value_box(title = "Total SHS Learners", value = "2,449,217"))),
                 accordion_panel(
                   title = "Curricular Offering",
                   layout_column_wrap(
@@ -357,6 +457,80 @@ server <- function(input, output, session) {
                     value_box(title = "Extremely Large", value = "38"),
                     value_box(title = "Mega", value = "3")
                   )),
+                # accordion_panel(
+                #   title = "Learner Overview",
+                #   layout_column_wrap(
+                #     width = 1/4,
+                #     value_box(title = "Total Learners", value = "21,669,181"),
+                #     value_box(title = "Total ES Learners", value = "12,877,988"),
+                #     value_box(title = "Total JHS Learners", value = "6,341,976"),
+                #     value_box(title = "Total SHS Learners", value = "2,449,217"))),
+                # accordion_panel(
+                #   title = "Curricular Offering",
+                #   layout_column_wrap(
+                #     width = 1/6,
+                #     value_box(title = "Purely ES", value = "35,036"),
+                #     value_box(title = "JHS with SHS", value = "6,598"),
+                #     value_box(title = "ES and JHS (K to 10)", value = "1,690"),
+                #     value_box(title = "Purely JHS", value = "1,367"),
+                #     value_box(title = "All Offering (K to 12)", value = "832"),
+                #     value_box(title = "Purely SHS", value = "262")
+                #   ),
+                #   
+                #   # --- Button to toggle visibility ---
+                #   div(
+                #     style = "text-align:center; margin-top:15px;",
+                #     actionButton("show_curricular_graphs", "Show Graphs", 
+                #                  class = "btn btn-primary btn-sm")
+                #   ),
+                #   
+                #   # --- Graph container (initially hidden) ---
+                #   shinyjs::hidden(
+                #     div(
+                #       id = "curricular_graphs",
+                #       layout_column_wrap(
+                #         width = 1/2,
+                #         card(
+                #           card_header("Curricular Offering - Bar Chart"),
+                #           card_body(plotlyOutput("Curricular_Offering_Bar", height = "300px"))
+                #         ),
+                #         card(
+                #           card_header("Curricular Offering - Pie Chart"),
+                #           card_body(plotlyOutput("Curricular_Offering_Pie", height = "300px"))
+                #         )
+                #       )
+                #     )
+                #   )),
+                # accordion_panel(
+                #   title = "School Size Typology",
+                #   layout_columns(
+                #     col_widths = c(6, 6),
+                #     
+                #     # 👈 Left column — Value Boxes
+                #     layout_column_wrap(
+                #       width = 1/2,
+                #       value_box(title = "Very Small", value = "24,976"),
+                #       value_box(title = "Small", value = "10,105"),
+                #       value_box(title = "Medium", value = "5,726"),
+                #       value_box(title = "Large", value = "4,210"),
+                #       value_box(title = "Very Large", value = "727"),
+                #       value_box(title = "Extremely Large", value = "38"),
+                #       value_box(title = "Mega", value = "3")
+                #     ),
+                #     
+                #     # 👉 Right column — Graphs stacked
+                #     layout_column_wrap(
+                #       width = 1,
+                #       card(
+                #         card_header("School Size Typology - Bar Chart"),
+                #         card_body(plotlyOutput("School_Size_Typology_Bar", height = "300px"))
+                #       ),
+                #       card(
+                #         card_header("School Size Typology - Pie Chart"),
+                #         card_body(plotlyOutput("School_Size_Typology_Pie", height = "300px"))
+                #       )
+                #     )
+                #   )),
                 accordion_panel(
                   title = "Classroom Data",
                   layout_column_wrap(
@@ -720,8 +894,8 @@ server <- function(input, output, session) {
                       #     header = "Select a Category"
                       #   )
                       # ),
-                      uiOutput("PosSelectionGMIS"),
-                      input_task_button("GMISRun", icon_busy = fontawesome::fa_i("refresh", class = "fa-spin", "aria-hidden" = "true"), strong("Show Selection"), class = "btn-danger")),
+                      uiOutput("PosSelectionGMIS")),
+                    # input_task_button("GMISRun", icon_busy = fontawesome::fa_i("refresh", class = "fa-spin", "aria-hidden" = "true"), strong("Show Selection"), class = "btn-danger")),
                     layout_columns(
                       card(
                         card_header(strong("GMIS Data")),
@@ -1425,128 +1599,313 @@ server <- function(input, output, session) {
               )
             )
           ))),
-      # --- Second Top-Level Tab: Data Explorer (Now a Dropdown Menu) ---
+      # --- Second Top-Level Tab: Data Explorer --
+  #     tags$head(
+  #       tags$style(HTML("
+  #   /* ===== GENERAL SCROLL FIX ===== */
+  #   .bslib-sidebar, 
+  #   .bslib-sidebar-content, 
+  #   .sidebar, 
+  #   .bslib-card {
+  #     overflow-x: hidden !important;
+  #   }
+  # 
+  #   /* ===== PICKER INPUT DROPDOWNS (sidebar only) ===== */
+  #   .bslib-sidebar .bootstrap-select,
+  #   .bslib-sidebar .dropdown-menu {
+  #     max-width: 100% !important;
+  #     width: 100% !important;
+  #   }
+  # 
+  #   /* Fix dropdowns expanding outside sidebar */
+  #   .bslib-sidebar .dropdown-menu.open {
+  #     left: 0 !important;
+  #     right: 0 !important;
+  #     width: 100% !important;
+  #     overflow-x: hidden !important;
+  #     white-space: normal !important; /* allow text wrapping */
+  #     word-wrap: break-word !important;
+  #   }
+  # 
+  #   /* Allow long option labels to wrap to next line */
+  #   .bootstrap-select .dropdown-menu li a span.text {
+  #     white-space: normal !important;
+  #     word-break: break-word !important;
+  #     display: inline-block !important;
+  #   }
+  # 
+  #   /* Prevent layout_sidebar from causing scrollbars */
+  #   .bslib-layout-sidebar {
+  #     overflow-x: hidden !important;
+  #   }
+  # 
+  #   /* ===== NAVBAR SPACING FIX ===== */
+  #   .navbar-nav, .bslib-navbar-nav {
+  #     display: flex !important;
+  #     align-items: center !important;
+  #     gap: 10px !important; /* reduce space between nav items */
+  #   }
+  # 
+  #   /* Ensure no extra right spacing between nav menus */
+  #   .navbar-nav > li, .bslib-navbar-nav > li {
+  #     margin-right: 0 !important;
+  #     padding-right: 0 !important;
+  #   }
+  # 
+  #   /* ===== NAVBAR DROPDOWN FIX ===== */
+  #   .navbar .dropdown-menu,
+  #   .bslib-navbar .dropdown-menu {
+  #     width: auto !important;
+  #     min-width: 220px !important;
+  #     text-align: left !important;
+  #     white-space: nowrap !important;
+  #     word-wrap: normal !important;
+  #     border-radius: 6px !important;
+  #     box-shadow: 0 4px 10px rgba(0,0,0,0.1) !important;
+  #     margin-top: 4px !important; /* reduce dropdown gap */
+  #     margin-bottom: 4px !important;
+  #   }
+  # 
+  #   /* Adjust Data Explorer dropdown items */
+  #   .navbar .dropdown-menu > li > a,
+  #   .bslib-navbar .dropdown-menu > li > a {
+  #     padding: 8px 14px !important;
+  #     font-weight: 600 !important;
+  #     display: block !important;
+  #   }
+  # 
+  #   /* Hover effect */
+  #   .navbar .dropdown-menu > li > a:hover,
+  #   .bslib-navbar .dropdown-menu > li > a:hover {
+  #     background-color: #2c3895 !important;
+  #     color: white !important;
+  #   }
+  # 
+  #   /* ===== THIRD LEVEL DASHBOARD DROPDOWN FIX ===== */
+  #   .navbar .dropdown-menu li a,
+  #   .bslib-navbar .dropdown-menu li a {
+  #     white-space: normal !important;
+  #     word-break: break-word !important;
+  #     line-height: 1.2em !important;
+  #   }
+  # 
+  #   /* Keeps dropdown text readable without overlap */
+  #   .navbar .dropdown-menu li,
+  #   .bslib-navbar .dropdown-menu li {
+  #     padding-top: 4px !important;
+  #     padding-bottom: 4px !important;
+  #   }
+  #       /* ===== FIX: Excess white space in Third Level Dashboard sidebar ===== */
+  #   #ThirdLevel_Strands + .dropdown-menu.inner {
+  #     max-height: 250px !important; /* adjust height for better scrolling */
+  #     overflow-y: auto !important;
+  #   }
+  # 
+  #   #ThirdLevel_Strands + .dropdown-menu {
+  #     margin-bottom: 0 !important;
+  #     padding-bottom: 0 !important;
+  #   }
+  # 
+  #   /* Remove unwanted bottom gap in the sidebar for this panel */
+  #   .bslib-sidebar {
+  #     padding-bottom: 0 !important;
+  #     margin-bottom: 0 !important;
+  #   }
+  # 
+  # "))
+  #     )
+  #     ,
+  #     
+  
+  tags$head(
+    tags$style(HTML("
+  /* ===== Fix: Prevent horizontal scroll on sidebar ===== */
+  .bslib-sidebar {
+    overflow-x: hidden !important;
+  }
+
+  /* ===== Fix: Dropdown menus stay inside sidebar width ===== */
+  .bslib-sidebar .bootstrap-select .dropdown-menu {
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow-x: hidden !important;
+    white-space: normal !important;
+    word-wrap: break-word !important;
+    word-break: break-word !important;
+  }
+
+  /* ===== Fix: Allow long dropdown options to wrap nicely ===== */
+  .bootstrap-select .dropdown-menu li a span.text {
+    white-space: normal !important;
+    word-wrap: break-word !important;
+    word-break: break-word !important;
+    display: inline-block !important;
+    line-height: 1.2em !important;
+  }
+
+  /* Optional: make dropdown box slightly wider and padded */
+  .bootstrap-select .dropdown-menu li a {
+    padding: 6px 10px !important;
+  }
+  "))
+  ),
+  
       nav_menu(
-        title = tags$b("Data Explorer"),  # Becomes a dropdown
+        title = tags$b("Data Explorer"),  # Dropdown menu
         icon = bs_icon("table"),
-        
-        # --- First Child: School Information ---
+
+        # --- Nav Panel 1: School Information ---
         nav_panel(
-          title = "School Information",
-          icon = bs_icon("building"),
-          layout_sidebar(
-            sidebar = sidebar(
-              width = 350,
-              h6("Data Toggles:"),
-              pickerInput(
-                inputId = "DataBuilder_HROD_Region",
-                label = "Select a Region:",
-                choices = sort(unique(uni$Region)),
-                selected = sort(unique(uni$Region)),
-                multiple = TRUE,
-                options = pickerOptions(
-                  actionsBox = TRUE,
-                  liveSearch = TRUE,
-                  header = "Select Categories",
-                  title = "No Category Selected",
-                  selectedTextFormat = "count > 3",
-                  dropupAuto = FALSE,
-                  dropup = FALSE
-                )
-              ),
-              uiOutput("DataBuilder_HROD_SDO"), # Existing SDO Selection
-              
-              # --- School Info Toggles ---
-              pickerInput("School_Data_Toggles", strong("School Information Data Toggles"), 
-                          choices = c("School Size Typology" = "School.Size.Typology", 
-                                      "Curricular Offering" = "Modified.COC"),
-                          multiple = TRUE, options = list(`actions-box` = TRUE)),
-              
-              # Teaching Data Toggles
-              pickerInput("Teaching_Data_Toggles", strong("Teaching Data Toggles"), 
-                          choices = c("Total Teachers" = "TotalTeachers", 
-                                      "Teacher Excess" = "Total.Excess", 
-                                      "Teacher Shortage" = "Total.Shortage"),
-                          multiple = TRUE, options = list(`actions-box` = TRUE)),
-              
-              # Non-teaching Data Toggles
-              pickerInput("NTP_Data_Toggles", strong("Non-teaching Data Toggles"), 
-                          choices = c("COS" = "Outlier.Status", 
-                                      "AOII Clustering Status" = "Clustering.Status"),
-                          multiple = TRUE, options = list(`actions-box` = TRUE)),
-              
-              # Enrolment Data Toggles
-              pickerInput("Enrolment_Data_Toggles", strong("Enrolment Data Toggles"), 
-                          choices = c("Total Enrolment" = "TotalEnrolment", "Kinder" = "Kinder", 
-                                      "Grade 1" = "G1", "Grade 2" = "G2", "Grade 3" = "G3", 
-                                      "Grade 4" = "G4", "Grade 5" = "G5", "Grade 6" = "G6", 
-                                      "Grade 7" = "G7", "Grade 8" = "G8", 
-                                      "Grade 9" = "G9", "Grade 10" = "G10", 
-                                      "Grade 11" = "G11", "Grade 12" = "G12"),
-                          multiple = TRUE, options = list(`actions-box` = TRUE)),
-              
-              # Specialization Data Toggles
-              pickerInput("Specialization_Data_Toggles", strong("Specialization Data Toggles"), 
-                          choices = c("English" = "English", "Mathematics" = "Mathematics", 
-                                      "Science" = "Science", 
-                                      "Biological Sciences" = "Biological.Sciences", 
-                                      "Physical Sciences" = "Physical.Sciences"),
-                          multiple = TRUE, options = list(`actions-box` = TRUE)),
-              
-              # Infrastructure Data Toggles
-              pickerInput("EFD_Data_Toggles", strong("Infrastructure Data Toggles"), 
-                          choices = c("Number of Buildings" = "Buildings", 
-                                      "Instructional Rooms" = "Instructional.Rooms.2023.2024", 
-                                      "Classroom Requirement" = "Classroom.Requirement", 
-                                      "Estimated Classroom Shortage" = "Est.CS", 
-                                      "Buildable Space" = "Buidable_space", 
-                                      "Congestion Index" = "Congestion.Index", 
-                                      "Shifting" = "Shifting", 
-                                      "Ownership Type" = "OwnershipType", 
-                                      "Electricity Source" = "ElectricitySource", 
-                                      "Water Source" = "WaterSource", 
-                                      "For Major Repairs" = "Major.Repair.2023.2024", 
-                                      "School Building Priority Index" = "SBPI", 
-                                      "Total Seats" = "Total.Seats.2023.2024", 
-                                      "Total Seats Shortage" = "Total.Seats.Shortage.2023.2024"),
-                          multiple = TRUE, options = list(`actions-box` = TRUE))
-            ),
-            
-            layout_columns(
-              card(
-                card_header(strong("HROD Data Panel")),
-                dataTableOutput("HROD_Table")
-              ),
-              col_widths = c(12,12)
-            )
-          )
-        ),
-        
-        # --- Second Child: Third Level Dashboard ---
-        nav_panel(
-          title = "Third Level Dashboard",
-          icon = bs_icon("bar-chart-line"),
-          layout_sidebar(
-            sidebar = sidebar(
-              width = 300,
-              h6("Filters"),
-              pickerInput(
-                inputId = "StrandFilter",
-                label = "Select Strand:",
-                choices = c("STEM", "ABM", "HUMSS", "GAS", "TVL"), # example strands
-                multiple = TRUE,
-                options = list(`actions-box` = TRUE)
+          title = tags$b("School Information"),
+        layout_sidebar(
+          sidebar = sidebar(
+            width = 350,
+            h6("Data Toggles:"),
+            pickerInput(
+              inputId = "DataBuilder_HROD_Region",
+              label = "Select a Region:",
+              choices = sort(unique(uni$Region)),
+              selected = sort(unique(uni$Region)),
+              multiple = TRUE,
+              options = pickerOptions(
+                actionsBox = TRUE,
+                liveSearch = TRUE,
+                header = "Select Categories",
+                title = "No Category Selected",
+                selectedTextFormat = "count > 3",
+                dropupAuto = FALSE,
+                dropup = FALSE
               )
             ),
-            layout_columns(
-              card(
-                card_header(strong("Third Level Dashboard Output")),
-                plotOutput("ThirdLevelPlot") # placeholder for your viz
-              )
-            )
+            uiOutput("DataBuilder_HROD_SDO"),
+
+            pickerInput("School_Data_Toggles", strong("School Information Data Toggles"),
+                        choices = c("School Size Typology" = "School.Size.Typology",
+                                    "Curricular Offering" = "Modified.COC"),
+                        multiple = TRUE, options = list(`actions-box` = TRUE)),
+
+            pickerInput("Teaching_Data_Toggles", strong("Teaching Data Toggles"),
+                        choices = c("Total Teachers" = "TotalTeachers",
+                                    "Teacher Excess" = "Total.Excess",
+                                    "Teacher Shortage" = "Total.Shortage"),
+                        multiple = TRUE, options = list(`actions-box` = TRUE)),
+
+            pickerInput("NTP_Data_Toggles", strong("Non-teaching Data Toggles"),
+                        choices = c("COS" = "Outlier.Status",
+                                    "AOII Clustering Status" = "Clustering.Status"),
+                        multiple = TRUE, options = list(`actions-box` = TRUE)),
+
+            pickerInput("Enrolment_Data_Toggles", strong("Enrolment Data Toggles"),
+                        choices = c("Total Enrolment" = "TotalEnrolment", "Kinder" = "Kinder",
+                                    "Grade 1" = "G1", "Grade 2" = "G2", "Grade 3" = "G3",
+                                    "Grade 4" = "G4", "Grade 5" = "G5", "Grade 6" = "G6",
+                                    "Grade 7" = "G7", "Grade 8" = "G8",
+                                    "Grade 9" = "G9", "Grade 10" = "G10",
+                                    "Grade 11" = "G11", "Grade 12" = "G12"),
+                        multiple = TRUE, options = list(`actions-box` = TRUE)),
+
+            pickerInput("Specialization_Data_Toggles", strong("Specialization Data Toggles"),
+                        choices = c("English" = "English", "Mathematics" = "Mathematics",
+                                    "Science" = "Science",
+                                    "Biological Sciences" = "Biological.Sciences",
+                                    "Physical Sciences" = "Physical.Sciences"),
+                        multiple = TRUE, options = list(`actions-box` = TRUE)),
+
+            pickerInput("EFD_Data_Toggles", strong("Infrastructure Data Toggles"),
+                        choices = c("Number of Buildings" = "Buildings",
+                                    "Instructional Rooms" = "Instructional.Rooms.2023.2024",
+                                    "Classroom Requirement" = "Classroom.Requirement",
+                                    "Estimated Classroom Shortage" = "Est.CS",
+                                    "Buildable Space" = "Buidable_space",
+                                    "Congestion Index" = "Congestion.Index",
+                                    "Shifting" = "Shifting",
+                                    "Ownership Type" = "OwnershipType",
+                                    "Electricity Source" = "ElectricitySource",
+                                    "Water Source" = "WaterSource",
+                                    "For Major Repairs" = "Major.Repair.2023.2024",
+                                    "School Building Priority Index" = "SBPI",
+                                    "Total Seats" = "Total.Seats.2023.2024",
+                                    "Total Seats Shortage" = "Total.Seats.Shortage.2023.2024"),
+                        multiple = TRUE, options = list(`actions-box` = TRUE))
+          ),
+          layout_columns(
+            card(
+              card_header(strong("HROD Data Panel")),
+              dataTableOutput("HROD_Table")
+            ),
+            col_widths = c(12,12)
           )
         )
       ),
+
+      # --- Nav Panel 2: Third Level Dashboard ---
+      nav_panel(
+        title = tags$b("Third Level Dashboard"),
+        layout_sidebar(
+          sidebar = sidebar(
+            width = 350,
+            h6("Strand Filter:"),
+            pickerInput(
+              inputId = "ThirdLevel_Strands",
+              label = "Select Strand(s):",
+              choices = c(
+                "ADMINISTRATION",
+                "DEPED ATTACHED AGENCIES",
+                "FINANCE",
+                "HUMAN RESOURCE AND ORGANIZATIONAL DEVELOPMENT",
+                "LEARNING SYSTEM",
+                "LEGAL AND LEGISLATIVE AFFAIRS",
+                "OFFICE OF THE SECRETARY",
+                "OPERATIONS",
+                "PROCUREMENT",
+                "STRATEGIC MANAGEMENT",
+                "TEACHERS AND EDUCATION COUNCIL SECRETARIAT"
+              ),
+              selected = c(
+                "ADMINISTRATION",
+                "DEPED ATTACHED AGENCIES",
+                "FINANCE",
+                "HUMAN RESOURCE AND ORGANIZATIONAL DEVELOPMENT",
+                "LEARNING SYSTEM",
+                "LEGAL AND LEGISLATIVE AFFAIRS",
+                "OFFICE OF THE SECRETARY",
+                "OPERATIONS",
+                "PROCUREMENT",
+                "STRATEGIC MANAGEMENT",
+                "TEACHERS AND EDUCATION COUNCIL SECRETARIAT"
+              ),
+              multiple = TRUE,
+              options = pickerOptions(
+                actionsBox = TRUE,
+                liveSearch = TRUE,
+                header = "Select Strand(s)",
+                title = "No Strand Selected",
+                selectedTextFormat = "count > 3",
+                dropupAuto = FALSE,
+                dropup = FALSE,
+                container = "body"
+              ),
+              choicesOpt = list(
+                style = paste(
+                  "white-space: normal;",
+                  "word-wrap: break-word;",
+                  "overflow-wrap: break-word;",
+                  "max-width: 300px;",  # matches sidebar width
+                  "display: inline-block;"
+                ))
+            )),
+
+          layout_columns(
+            card(
+              card_header(strong("Third Level Officials")),
+              dataTableOutput("ThirdLevel_Table")
+            ),
+            col_widths = c(12,12)
+          )
+        )
+      )),
+
+      
       
       # --- Quick School Search ---
       nav_panel(
@@ -1662,7 +2021,18 @@ server <- function(input, output, session) {
                    marginwidth = "0")
           )
         )
-      ))
+      ),
+      
+      # ✅ Logout button shown as its own nav tab
+      nav_panel(
+        title = tagList(bs_icon("box-arrow-right"), "Log Out"),
+        shinyauthr::logoutUI(
+          id = "logout",
+          label = "Log Out",
+          icon = icon("sign-out-alt"),
+          class = "btn btn-danger")
+      )
+    )
   })
   
   # Reactive expression to generate the main panel content
@@ -2000,19 +2370,41 @@ server <- function(input, output, session) {
     filtered_division <- c(df[df$Region==input$cloud_dashboard_region_filter,"Division"])
     selectInput("cloud_Dashboard_SDO",HTML(paste0("Division ", em(style = "font-size: 0.8em;", "(for Legislative District data):"))), filtered_division, selected = filtered_division[1])})
   
-  output$resource_map_division<- renderUI({
-    filtered_division <- c(df[df$Region==input$resource_map_region,"Division"])
-    selectInput("Resource_SDO","Select a Division:", filtered_division, selected = filtered_division[1])})
+  # --- Division UI ---
+  output$resource_map_division <- renderUI({
+    filtered_division <- c(df[df$Region == input$resource_map_region, "Division"])
+    
+    selectInput(
+      "Resource_SDO",
+      "Select a Division:",
+      choices = filtered_division,
+      selected = filtered_division[1]
+    )
+  })
   
   output$explorer_division<- renderUI({
     filtered_division <- c(df[df$Region==input$explorer_region,"Division"])
     selectInput("Explorer_SDO","Select a Division:", filtered_division, selected = filtered_division[1])})
   
-  #For Legislative District:
-  
+  # --- Legislative District UI ---
   output$resource_map_legislative_district <- renderUI({
-    filtered_district <- c(df[which(df$Division == input$Resource_SDO), "Legislative.District"])
-    selectInput("Resource_LegDist","Select a Legislative District:", filtered_district, selected = filtered_district[1])})
+    if (is.null(input$Resource_SDO) || input$Resource_SDO == "Select Input") {
+      selectInput(
+        "Resource_LegDist",
+        "Select a Legislative District:",
+        choices = "Select Input",
+        selected = "Select Input"
+      )
+    } else {
+      filtered_district <- c(df[df$Division == input$Resource_SDO, "Legislative.District"])
+      selectInput(
+        "Resource_LegDist",
+        "Select a Legislative District:",
+        choices = filtered_district,
+        selected = filtered_district[1]
+      )
+    }
+  })
   
   # Reactive value to store uploaded data
   uploaded_data <- reactiveVal(NULL)
@@ -5784,10 +6176,42 @@ server <- function(input, output, session) {
             legend.position = "bottom", # Position legend at the bottom
             plot.title = element_text(hjust = 0.5)) # Center the plot title
     
-    # Convert ggplot to plotly, ensuring custom text is used for hover
-    ggplotly(p, tooltip = "text", source = "schoolcountplot_region") %>%
-      layout(hoverlabel = list(bgcolor = "white"),
-             margin = list(b = 100)) # Increase bottom margin for x-axis labels
+    #   # Build a small frame-based plotly animation that grows the bars from 0->full
+    #   # Create scaled frames for a smooth startup animation
+    #   n_frames <- 8
+    #   scales_seq <- seq(0, 1, length.out = n_frames)
+    #   
+    #   frames_df <- plot_data %>%
+    #     tidyr::crossing(frame_step = seq_along(scales_seq)) %>%
+    #     mutate(scale = scales_seq[frame_step],
+    #            Count_scaled = Count * scale,
+    #            hover_text = paste("Region: ", Region,
+    #                               "<br>School Type: ", Modified.COC,
+    #                               "<br>Count: ", scales::comma(Count)))
+    #   
+    #   # Use plot_ly with frames and stacked bars
+    #   p_plotly <- plot_ly(
+    #     data = frames_df,
+    #     x = ~factor(Modified.COC, levels = coc_levels),
+    #     y = ~Count_scaled,
+    #     color = ~Region,
+    #     frame = ~frame_step,
+    #     type = 'bar',
+    #     text = ~hover_text,
+    #     hoverinfo = 'text',
+    #     marker = list(line = list(width = 0.5, color = 'black'))
+    #   ) %>%
+    #     layout(barmode = 'stack',
+    #            hoverlabel = list(bgcolor = 'white'),
+    #            margin = list(b = 100),
+    #            xaxis = list(title = 'Modified Curricular Offering', tickangle = 45),
+    #            yaxis = list(title = 'Number of Schools'))
+    #   
+    #   # Auto-play the animation on render using a tiny JS hook
+    #   p_plotly <- htmlwidgets::onRender(p_plotly,
+    #                                     "function(el, x) {\n\n        // Small timeout to ensure plot is fully initialized\n        setTimeout(function(){\n          try{\n            Plotly.animate(el, null, {frame: {duration: 80, redraw: false}, transition: {duration: 0}, mode: 'immediate'});\n          }catch(e){\n            console.log('Animation error:', e);\n          }\n        }, 150);\n      }")
+    #   
+    #   p_plotly
   })
   
   output$SOSSS_DataTable <- DT::renderDT({
@@ -6147,9 +6571,7 @@ server <- function(input, output, session) {
     
     # --- Empty Data Handling ---
     if (nrow(current_filtered_data) == 0) {
-      return(ggplotly(ggplot() +
-                        annotate("text", x = 0.5, y = 0.5, label = "No data for selected regions/divisions") +
-                        theme_void()))
+      return(NULL) 
     }
     
     # Prepare the data for plotting
@@ -6995,36 +7417,6 @@ server <- function(input, output, session) {
       formatPercentage('Completion', digits = 1)
   })
   
-  output$SchoolBuilding_MasterPlan <- renderPlot({
-    # Ensure SBMaster is a data frame. If it's a reactive expression, use SBMaster()
-    mainreactreghist <- SBMaster 
-    
-    # Define a consistent dodge width for both bars and text
-    dodge_width <- 0.9 # Default for position_dodge is 0.9
-    
-    ggplot(mainreactreghist, aes(x = reorder(Region, Classrooms, FUN = sum), # Reorder by sum of classrooms for better overall ordering
-                                 y = Classrooms, 
-                                 fill = factor(Year, levels = c("2025","2026","2027","2028","2029","2030")))) +
-      geom_bar(stat = "identity", position = position_dodge(width = dodge_width), color = "black") + 
-      labs(
-        title = "School Building Master Plan", # Main plot title
-        x = "Region", 
-        y = "Number of Classrooms",
-        fill = "Year" # Legend title
-      ) +
-      scale_fill_discrete(guide = guide_legend(nrow = 1)) + 
-      theme_minimal() + # Use a clean theme
-      theme(
-        axis.text.x = element_text(angle = 45, hjust = 1), # Keep x-axis labels slanted
-        legend.position = "top",
-        legend.direction = "horizontal",
-        legend.box = "horizontal",# <--- Make the legend horizontal
-        legend.justification = "center", # <--- Center the legend items
-        legend.box.just = "center", # <--- Center the legend box if multiple legends exist
-        plot.title = element_text(hjust = 0.5) # Center the plot title
-      )
-  })
-  
   output$DataBuilder_HROD_SDO <- renderUI({
     
     divisions_vector <- uni %>% 
@@ -7062,7 +7454,7 @@ server <- function(input, output, session) {
     }
   })
   
-  output$HROD_Table <- DT::renderDT(server = FALSE, {
+  output$HROD_Table <- DT::renderDT(server = TRUE, {
     # Get all unique choices from the original dataset for comparison
     all_regions <- unique(uni$Region)
     all_divisions <- unique(uni$Division)
@@ -7098,6 +7490,7 @@ server <- function(input, output, session) {
       filter = 'top',
       options = list(
         scrollX = TRUE,
+        fixedColumns = list(leftColumns = 6), 
         pageLength = 10,
         columnDefs = list(list(className = 'dt-center', targets = "_all")),
         rownames = FALSE,
@@ -7117,6 +7510,52 @@ server <- function(input, output, session) {
           )
         )
       )
+    )
+  })
+  
+  filtered_third <- reactive({
+    df <- ThirdLevel %>%
+      filter(STRAND %in% input$ThirdLevel_Strands) %>%
+      mutate(
+        OFFICE = ifelse(is.na(OFFICE) | OFFICE == "", "-", OFFICE),
+        BUREAU.SERVICE = ifelse(is.na(BUREAU.SERVICE) | BUREAU.SERVICE == "", "-", BUREAU.SERVICE)
+      )
+    print(head(df))
+    df
+  })
+  
+  
+  output$ThirdLevel_Table <- DT::renderDT(server = TRUE, {
+    
+    
+    datatable(
+      filtered_third() %>%
+        select(
+          OFFICE,
+          BUREAU.SERVICE,
+          NAME,
+          POSITION,
+          DESIGNATION,
+          TELEPHONE.NUMBER,
+          DEPED.EMAIL
+        ),
+      extension = 'Buttons',
+      filter = 'top',
+      options = list(
+        scrollX = TRUE,
+        autoWidth = TRUE,
+        fixedColumns = list(leftColumns = 4),
+        pageLength = 10,
+        columnDefs = list(list(className = 'dt-center', targets = "_all")),
+        dom = 'Bfrtip',
+        buttons = list(
+          list(extend = "csv", exportOptions = list(modifier = list(page = "all"))),
+          list(extend = "excel", exportOptions = list(modifier = list(page = "all"))),
+          list(extend = "print", exportOptions = list(modifier = list(page = "all")))
+        )
+      )
+      
+      
     )
   })
   
@@ -7140,44 +7579,109 @@ server <- function(input, output, session) {
   })
   
   
-  observeEvent(input$TextRun, {
-    
-    Text <- input$text
-    
-    mainreact1 <- uni %>% arrange(Region) %>% arrange(Division) %>% filter(grepl(Text, as.character(School.Name), ignore.case = TRUE))  #arrange first by Division before filtering & make sure this is the same in row_selected
-    
-    values.comp <- paste(strong("SCHOOL INFORMATION"),"<br>School Name",mainreact1$School.Name,"<br>School ID:",mainreact1$SchoolID) %>% lapply(htmltools::HTML)
-    
-    values.df <- paste(mainreact1$School.Name %>% lapply(htmltools::HTML))
-    
-    leafletProxy("TextMapping") %>% clearMarkers() %>% clearMarkerClusters() %>% setView(lng = mainreact1$Longitude[1], lat = mainreact1$Latitude[1], zoom = 4.5) %>% 
-      addAwesomeMarkers(lng = mainreact1$Longitude, lat = mainreact1$Latitude,  icon = makeAwesomeIcon(icon = "education",library = "glyphicon",markerColor = "blue"), label = values.comp, labelOptions = labelOptions(noHide = F, textsize = "12px", direction = "top", fill = TRUE, style = list("border-color" = "rgba(0,0,0,0.5)")))
-    
-    df1 <- reactive({
-      
-      if (is.null(input$TextMapping_bounds)) {
-        mainreact1
-      } else {
-        bounds <- input$TextMapping_bounds
-        latRng <- range(bounds$north, bounds$south)
-        lngRng <- range(bounds$east, bounds$west)
-        
-        subset(mainreact1,
-               Latitude >= latRng[1] & Latitude <= latRng[2] & Longitude >= lngRng[1] & Longitude <= lngRng[2])
-      }
-    })
-    
-    output$TextTable <- DT::renderDT(server = FALSE, {datatable(df1() %>% select("Region","Division","Legislative.District","Municipality","School.Name") %>% rename("School" = School.Name), extension = 'Buttons', rownames = FALSE, options = list(scrollX = TRUE, pageLength = 10, columnDefs = list(list(className = 'dt-center', targets ="_all")), dom = 'lrtip'), filter = "top")})
+  # --- Initialize map only once ---
+  output$TextMapping <- renderLeaflet({
+    leaflet() %>%
+      setView(lng = 122, lat = 13, zoom = 5) %>%
+      addProviderTiles(providers$Esri.WorldImagery, group = "Satellite") %>%
+      addProviderTiles(providers$CartoDB.Positron, group = "Road Map") %>%
+      addMeasure(position = "topright",
+                 primaryLengthUnit = "kilometers",
+                 primaryAreaUnit = "sqmeters") %>%
+      addLayersControl(baseGroups = c("Satellite", "Road Map"))
   })
   
-  output$TextMapping <- renderLeaflet({
-    leaflet() %>% 
-      setView(lng = 122, lat = 13, zoom =5) %>%
-      addProviderTiles(providers$Esri.WorldImagery, group = "Satellite") %>% 
-      addProviderTiles(providers$CartoDB.Positron, group = "Road Map") %>% 
-      addMeasure(position = "topright", primaryLengthUnit = "kilometers", primaryAreaUnit = "sqmeters") %>% 
-      addLayersControl(
-        baseGroups = c("Satellite","Road Map"))
+  # --- Reactive controls for input and button ---
+  observe({
+    txt <- trimws(input$text)
+    
+    # Disable button if text is empty
+    shinyjs::toggleState("TextRun", condition = txt != "")
+    
+    # Show or hide warning message
+    output$text_warning <- renderText({
+      if (txt == "") {
+        "⚠ Please enter a school name before showing results."
+      } else {
+        ""
+      }
+    })
+  })
+  
+  
+  # --- Observe button click ---
+  observeEvent(input$TextRun, {
+    Text <- trimws(input$text)
+    
+    # Extra safety check (should not trigger because button is disabled when blank)
+    if (Text == "") return()
+    
+    # --- Filter data based on input ---
+    mainreact1 <- uni %>%
+      arrange(Region, Division) %>%
+      filter(grepl(Text, as.character(School.Name), ignore.case = TRUE))
+    
+    # --- Handle no matching results ---
+    if (nrow(mainreact1) == 0) {
+      output$text_warning <- renderText(paste0("⚠ No results found for '", Text, "'."))
+      leafletProxy("TextMapping") %>%
+        clearMarkers() %>%
+        clearMarkerClusters()
+      output$TextTable <- DT::renderDT(NULL)
+      return()
+    } else {
+      output$text_warning <- renderText("")  # clear any old warning
+    }
+    
+    # --- Create leaflet labels ---
+    values.comp <- paste(
+      strong("SCHOOL INFORMATION"),
+      "<br>School Name:", mainreact1$School.Name,
+      "<br>School ID:", mainreact1$SchoolID
+    ) %>% lapply(htmltools::HTML)
+    
+    # --- Update leaflet map ---
+    leafletProxy("TextMapping") %>%
+      clearMarkers() %>%
+      clearMarkerClusters() %>%
+      setView(lng = mainreact1$Longitude[1],
+              lat = mainreact1$Latitude[1],
+              zoom = 4.5) %>%
+      addAwesomeMarkers(
+        lng = mainreact1$Longitude,
+        lat = mainreact1$Latitude,
+        icon = makeAwesomeIcon(
+          icon = "education",
+          library = "glyphicon",
+          markerColor = "blue"
+        ),
+        label = values.comp,
+        labelOptions = labelOptions(
+          noHide = FALSE,
+          textsize = "12px",
+          direction = "top",
+          fill = TRUE,
+          style = list("border-color" = "rgba(0,0,0,0.5)")
+        )
+      )
+    
+    # --- Render DataTable ---
+    output$TextTable <- DT::renderDT(server = FALSE, {
+      datatable(
+        mainreact1 %>%
+          select("Region", "Division", "Legislative.District", "Municipality", "School.Name") %>%
+          rename("School" = "School.Name"),
+        extension = 'Buttons',
+        rownames = FALSE,
+        options = list(
+          scrollX = TRUE,
+          pageLength = 10,
+          columnDefs = list(list(className = 'dt-center', targets = "_all")),
+          dom = 'lrtip'
+        ),
+        filter = "top"
+      )
+    })
   })
   
   output$deped <- renderImage({
@@ -7230,8 +7734,6 @@ server <- function(input, output, session) {
          filetype = "image/png"
     )}, deleteFile = FALSE)
   
-  output$NationwideExcess <- DT::renderDT({datatable(Excess, options = list(scrollX = TRUE, pageLength = 50, columnDefs = list(list(className = 'dt-center', targets ="_all")), rownames = FALSE))})
-  
   
   output$ESEx <- renderValueBox({
     valueBox(strong("50,579"), subtitle = strong("Excess"), icon = icon("users"), color = "blue")
@@ -7267,9 +7769,6 @@ server <- function(input, output, session) {
   
   output$cos <- renderValueBox({
     valueBox("7,062", subtitle = "Outlier Schools", icon = icon("school"), color = "purple")
-  })
-  
-  output$COSRB <- DT::renderDT({datatable(dfz, rownames = FALSE, options = list(scrollX = TRUE, pageLength = 20, columnDefs = list(list(className = 'dt-left', targets ="_all"))))
   })
   
   output$otherdataselection <- renderUI({
@@ -7606,31 +8105,62 @@ server <- function(input, output, session) {
     
     
     output$AO2Mapping <- renderLeaflet({
-      p = colorFactor(palette = c("red","orange","green"),domain = c("No AO II and PDO I","With at least 1 AO II or PDO I","With AO II and PDO I"), ordered = T)
+      p = colorFactor(
+        palette = c("red","orange","green"),
+        domain = c("No AO II and PDO I","With at least 1 AO II or PDO I","With AO II and PDO I"),
+        ordered = TRUE
+      )
+      
       leaflet() %>%
-        setView(lng = 122, lat = 13, zoom =6) %>%
+        setView(lng = 122, lat = 13, zoom = 6) %>%
         addProviderTiles(providers$Esri.WorldImagery, group = "Satellite") %>% 
         addProviderTiles(providers$CartoDB.Positron, group = "Road Map") %>%  
         addMeasure(position = "topright", primaryLengthUnit = "kilometers", primaryAreaUnit = "sqmeters") %>% 
-        addLegend(position = "bottomright", title = "Legend", pal = p, values = c("No AO II and PDO I","With at least 1 AO II or PDO I","With AO II and PDO I")) %>% 
+        addLegend(
+          position = "bottomright",
+          title = "Legend",
+          pal = p,
+          values = c("No AO II and PDO I","With at least 1 AO II or PDO I","With AO II and PDO I")
+        ) %>% 
+        addLayersControl(baseGroups = c("Satellite","Road Map"))
+    })
+    
+    # --- Base map with static legend ---
+    output$CLMapping <- renderLeaflet({
+      # Legend domain + palette
+      domain <- c(
+        "Extreme (>2.0)", 
+        "Major (1.6-2.0)", 
+        "Minor (0.6-1.5)", 
+        "Mild (0-0.5)"
+      )
+      
+      pal <- colorFactor(
+        palette = c("red", "orange", "yellow", "green"),
+        domain = domain,
+        ordered = TRUE
+      )
+      
+      leaflet() %>%
+        setView(lng = 122, lat = 13, zoom = 6) %>%
+        addProviderTiles(providers$Esri.WorldImagery, group = "Satellite") %>% 
+        addProviderTiles(providers$CartoDB.Positron, group = "Road Map") %>%  
+        addMeasure(
+          position = "topright",
+          primaryLengthUnit = "kilometers",
+          primaryAreaUnit = "sqmeters"
+        ) %>% 
+        addLegend(
+          position = "bottomright",
+          title = "Legend",
+          pal = pal,
+          values = domain
+        ) %>% 
         addLayersControl(
           baseGroups = c("Satellite","Road Map")
         )
     })
     
-    output$CLMapping <- renderLeaflet({
-      domain = c("Extreme (>2.0)","Major (1.6-2.0)","Minor (0.6-1.5)","Mild (0-0.5)")
-      p = colorFactor(palette = c("red","orange","yellow","green"), levels = as.factor(domain), ordered = F)
-      leaflet() %>%
-        setView(lng = 122, lat = 13, zoom =6) %>%
-        addProviderTiles(providers$Esri.WorldImagery, group = "Satellite") %>% 
-        addProviderTiles(providers$CartoDB.Positron, group = "Road Map") %>%  
-        addMeasure(position = "topright", primaryLengthUnit = "kilometers", primaryAreaUnit = "sqmeters") %>% 
-        addLegend(position = "bottomright", title = "Legend", pal = p, values = c("Extreme (>2.0)","Major (1.6-2.0)","Minor (0.6-1.5)","Mild (0-0.5)")) %>% 
-        addLayersControl(
-          baseGroups = c("Satellite","Road Map")
-        )
-    })
     
     output$FacMapping <- renderLeaflet({
       leaflet() %>%
@@ -7679,36 +8209,36 @@ server <- function(input, output, session) {
           pal = p, 
           values = c("Not Congested","Moderately Congested","Severely Congested"))
     })
-   
+    
     
     #LMSTABLE 
-    output$LMSTable <- renderDataTable({
-      req(LMS, uni, buildablecsv)
-      
-      lms_data <- LMS %>%
-        filter(LMS == 1) %>%   # Step 1: LMS only
-        left_join(uni, by = c("School_ID" = "SchoolID")) %>%   # Step 2: lat/long
-       left_join(buildablecsv, by = c("School_ID" = "SCHOOL ID"))
- %>%  # Step 2: buildable remarks
-        filter(Region == input$resource_map_region) %>%       # Step 3
-        filter(Division == input$Resource_SDO) %>%            # Step 3
-        filter(LD == input$leg_district) %>%                  # Step 3
-        select(                                                # Step 4
-          `NAME OF SCHOOL`,
-          `Avaiability of Buildable Space (Y/N)`,
-          `OTHER REMARKS (Buildable Space)`
-        )
-      
-      datatable(
-        lms_data,
-        options = list(pageLength = 10, scrollX = TRUE, fixedColumns = list(leftColumns = 4)),
-        selection = "single",   #allow single row selection
-        extensions = c("FixedColumns") ,
-        callback = JS("window.dispatchEvent(new Event('resize'));")
-      )
-    })
+    # output$LMSTable <- renderDataTable({
+    #   req(LMS, uni, buildablecsv)
+    #   
+    #   lms_data <- LMS %>%
+    #     filter(LMS == 1) %>%   # Step 1: LMS only
+    #     left_join(uni, by = c("School_ID" = "SchoolID")) %>%   # Step 2: lat/long
+    #     left_join(buildablecsv, by = c(`Buildable_Space` = `Avaiability of Buildable Space (Y/N)`)) %>%  # Step 2: buildable remarks
+    #     filter(Region == input$resource_map_region) %>%       # Step 3
+    #     filter(Division == input$Resource_SDO) %>%            # Step 3
+    #     filter(LD == input$leg_district) %>%                  # Step 3
+    #     select(                                                # Step 4
+    #       `NAME OF SCHOOL`,
+    #       `Avaiability of Buildable Space (Y/N)`,
+    #       `OTHER REMARKS (Buildable Space)`
+    #     )
+    #   
+    #   datatable(
+    #     lms_data,
+    #     options = list(pageLength = 10, scrollX = TRUE, fixedColumns = list(leftColumns = 4)),
+    #     selection = "single",   #allow single row selection
+    #     extensions = c("FixedColumns") ,
+    #     callback = JS("window.dispatchEvent(new Event('resize'));")
+    #   )
+    # })
     
     # --- LMS Map (initialize once) ---
+    
     output$LMSMapping <- renderLeaflet({
       # Define palette once here, with explicit factor order
       pal <- colorFactor(
@@ -7735,93 +8265,129 @@ server <- function(input, output, session) {
         )
     })
     
-    # --- LMS Map (update markers when filters change) ---
-    observe({
-      req(buildablecsv)
-      
-      # Filter data based on user selections
-      lms_data <- buildablecsv %>%
-        filter(REGION == input$resource_map_region) %>%
-        filter(DIVISION == input$Resource_SDO) %>%
-        filter(`Avaiability of Buildable Space (Y/N)` %in% c("Y", "N"))
-      
-      # Same palette as above
-      pal <- colorFactor(
-        palette = c("green", "red"),
-        domain = factor(c("Y", "N"), levels = c("Y", "N"))
-      )
-      
-      # --- Zoom map when a row is selected ---
-      observeEvent(input$LMSTable_rows_selected, {
-        req(buildablecsv)
-        req(input$LMSTable_rows_selected)
-        
-        lms_data_zoom <- buildablecsv %>%
-          filter(REGION == input$resource_map_region) %>%
-          filter(DIVISION == input$Resource_SDO) %>%
-          filter(`Avaiability of Buildable Space (Y/N)` == "Y")
-        
-        selected_row <- input$LMSTable_rows_selected
-        school <- lms_data_zoom[selected_row, ]
-        
-        leafletProxy("LMSMapping") %>%
-          setView(lng = school$Longitude, lat = school$Latitude, zoom = 16)
-      })
-      
-      # Update markers only
-      leafletProxy("LMSMapping", data = lms_data) %>%
-        clearMarkers() %>%
-        addAwesomeMarkers(
-          lng = ~Longitude,
-          lat = ~Latitude,
-          popup = ~htmltools::HTML(paste0(
-            "<b>", `NAME OF SCHOOL`, "</b><br>",
-            "School ID: ", `SCHOOL ID`, "<br>",
-            "Municipality: ", `MUNICIPALITY/ LOCATION`, "<br>",
-            "Division: ", DIVISION, "<br>",
-            "Region: ", REGION, "<hr>",
-            "<b>LD:</b> ", LD, "<br>",
-            "<b>No. of Sites:</b> ", `NO. OF SITES`, "<br>",
-            "<b>Scope of Works:</b> ", `SCOPE OF WORKS`, "<br>",
-            "<b>Other Config:</b> ", `OTHER DESIGN CONFIGURATION`, "<br>",
-            "<b>Academic Classrooms:</b> ", `NO. OF ACADEMIC CLASSROOMS`, "<br>",
-            "<b>Workshops (2-CL):</b> ", `NO. OF WORKSHOP (equivalent to 2-CL)`, "<br>",
-            "<b>ICT Labs (2-CL):</b> ", `NO. OF ICT/COMPUTER LABORATORY (equivalent to 2-CL)`, "<br>",
-            "<b>Science Labs (2-CL):</b> ", `NO. OF SCIENCE LABORATORY (equivalent to 2-CL)`, "<br>",
-            "<b>AVR (2-CL):</b> ", `NO. OF AVR (equivalent to 2-CL)`, "<br>",
-            "<b>Home Econ (2-CL):</b> ", `NO. OF HOME ECONOMICS (equivalent to 2-CL)`, "<br>",
-            "<b>Total Classrooms:</b> ", `TOTAL CLASSROOMS`, "<br>",
-            "<b>With Demolition?:</b> ", `WITH DEMOLITION? YES/ NO`, "<br>",
-            "<b>With Site Improvement?:</b> ", `WITH SITE IMPROVEMENT? YES/ NO`, "<br>",
-            "<b>With Slope Protection?:</b> ", `WITH SLOPE PROTECTION? YES/NO`, "<br>",
-            "<b>Remarks:</b> ", `OTHER REMARKS`, "<br>",
-            "<b>Site Dev Plan?:</b> ", `With Site Development Plan?`, "<br>",
-            "<b>Other Proposals?:</b> ", `With proposal from OTHER SOURCES, including LGUs, NGOs, Private Sector etc)?`, "<br>",
-            "<b>Buildable Space:</b> ", `Avaiability of Buildable Space (Y/N)`, "<br>",
-            "<b>Remarks (Buildable):</b> ", `OTHER REMARKS (Buildable Space)`, "<br>",
-            "<b>Site Ownership:</b> ", `Site Ownership`, "<br>",
-            "<b>Remarks Ownership:</b> ", `OTHER REMARKS Site Ownership`, "<br>",
-            "<b>Accessibility:</b> ", `Viability / Accessibility (Y/N)`, "<br>",
-            "<b>Remarks Access:</b> ", `OTHER REMARKS Viability / Accessibility`, "<br>",
-            "<b>Operational Readiness:</b> ", `Operational Readiness (Y/N)`, "<br>",
-            "<b>Remarks OR:</b> ", `OTHER REMARKS Operational Readiness`, "<br>",
-            "<b>Implementability:</b> ", `Implementability of Proposed Scope (Y/N)`, "<br>",
-            "<b>Remarks Impl:</b> ", `OTHER REMARKS Implementability of Proposed Scope`, "<br>",
-            "<b>Geotechnical Testing:</b> ", `Geotechnical Testing (Y/N)`, "<br>",
-            "<b>Remarks Geotech:</b> ", `OTHER REMARKS Geotechnical Testing`
-          )),
-          icon = ~makeAwesomeIcon(
-            icon = "graduation-cap",
-            library = "fa",
-            markerColor = ifelse(`Avaiability of Buildable Space (Y/N)` == "Y", "green", "red")
-          ),
-          clusterOptions = markerClusterOptions(disableClusteringAtZoom = 15)
-        )
-      
-      
-    })
+    #LMSTABLE 
+    # output$LMSTable <- renderDataTable({
+    #   
+    #   lms_data <- LMS %>%
+    #     filter(LMS == 1) %>%   # Step 1: LMS only
+    #     left_join(uni %>% select(SchoolID,Latitude,Longitude), by = c("School_ID" = "SchoolID")) %>%   # Step 2: lat/long
+    #     left_join(buildablecsv %>% select(SCHOOL.ID,OTHER.REMARKS..Buildable.Space..), by = c("School_ID" = "SCHOOL.ID"))          # always filter Region
+    #   
+    #   # # Apply Division filter only if not "Select Input"
+    #   # if (!is.null(input$Resource_SDO) && input$Resource_SDO != "Select Input") {
+    #   #   lms_data <- lms_data %>% filter(Division == input$Resource_SDO)
+    #   # }
+    #   # 
+    #   # # Apply District filter only if not "Select Input"
+    #   # if (!is.null(input$Resource_LegDist) && input$Resource_LegDist != "Select Input") {
+    #   #   lms_data <- lms_data %>% filter(LD == input$Resource_LegDist)
+    #   # }
+    #   
+    #   # Final select
+    #   lms_data <- lms_data %>%
+    #     select(
+    #       School_Name,
+    #       Buildable_space,
+    #       OTHER.REMARKS..Buildable.Space..
+    #     )
+    #   
+    #   datatable(
+    #     lms_data,
+    #     options = list(pageLength = 10, scrollX = TRUE),
+    #     selection = "single",   # allow single row selection
+    #     extensions = c("FixedColumns"),
+    #     callback = JS("window.dispatchEvent(new Event('resize'));")
+    #   )
+    # })
     
-      
+    
+    # --- LMS Map (initialize once) ---
+    
+    
+    # --- LMS Map (update markers when filters change) ---
+    # observe({
+    #   req(buildablecsv)
+    # 
+    #   # Filter data based on user selections
+    #   lms_data <- lms_data
+    # 
+    #   # Same palette as above
+    #   pal <- colorFactor(
+    #     palette = c("green", "red"),
+    #     domain = factor(c("Y", "N"), levels = c("Y", "N"))
+    #   )
+    # 
+    #   # --- Zoom map when a row is selected ---
+    #   observeEvent(input$LMSTable_rows_selected, {
+    #     req(lms_data)
+    #     req(input$LMSTable_rows_selected)
+    # 
+    #     lms_data_zoom <- lms_data %>%
+    #       filter(REGION == input$resource_map_region) %>%
+    #       filter(DIVISION == input$Resource_SDO) %>%
+    #       filter(`Avaiability of Buildable Space (Y/N)` == "Y")
+    # 
+    #     selected_row <- input$LMSTable_rows_selected
+    #     school <- lms_data_zoom[selected_row, ]
+    # 
+    #     leafletProxy("LMSMapping") %>%
+    #       setView(lng = school$Longitude, lat = school$Latitude, zoom = 16)
+    #   })
+    # 
+    #   # Update markers only
+    #   leafletProxy("LMSMapping", data = lms_data) %>%
+    #     clearMarkers() %>%
+    #     addAwesomeMarkers(
+    #       lng = ~Longitude,
+    #       lat = ~Latitude,
+    #       popup = ~htmltools::HTML(paste0(
+    #         "<b>", `NAME OF SCHOOL`, "</b><br>",
+    #         "School ID: ", `SCHOOL ID`, "<br>",
+    #         "Municipality: ", `MUNICIPALITY/ LOCATION`, "<br>",
+    #         "Division: ", DIVISION, "<br>",
+    #         "Region: ", REGION, "<hr>",
+    #         "<b>LD:</b> ", LD, "<br>",
+    #         "<b>No. of Sites:</b> ", `NO. OF SITES`, "<br>",
+    #         "<b>Scope of Works:</b> ", `SCOPE OF WORKS`, "<br>",
+    #         "<b>Other Config:</b> ", `OTHER DESIGN CONFIGURATION`, "<br>",
+    #         "<b>Academic Classrooms:</b> ", `NO. OF ACADEMIC CLASSROOMS`, "<br>",
+    #         "<b>Workshops (2-CL):</b> ", `NO. OF WORKSHOP (equivalent to 2-CL)`, "<br>",
+    #         "<b>ICT Labs (2-CL):</b> ", `NO. OF ICT/COMPUTER LABORATORY (equivalent to 2-CL)`, "<br>",
+    #         "<b>Science Labs (2-CL):</b> ", `NO. OF SCIENCE LABORATORY (equivalent to 2-CL)`, "<br>",
+    #         "<b>AVR (2-CL):</b> ", `NO. OF AVR (equivalent to 2-CL)`, "<br>",
+    #         "<b>Home Econ (2-CL):</b> ", `NO. OF HOME ECONOMICS (equivalent to 2-CL)`, "<br>",
+    #         "<b>Total Classrooms:</b> ", `TOTAL CLASSROOMS`, "<br>",
+    #         "<b>With Demolition?:</b> ", `WITH DEMOLITION? YES/ NO`, "<br>",
+    #         "<b>With Site Improvement?:</b> ", `WITH SITE IMPROVEMENT? YES/ NO`, "<br>",
+    #         "<b>With Slope Protection?:</b> ", `WITH SLOPE PROTECTION? YES/NO`, "<br>",
+    #         "<b>Remarks:</b> ", `OTHER REMARKS`, "<br>",
+    #         "<b>Site Dev Plan?:</b> ", `With Site Development Plan?`, "<br>",
+    #         "<b>Other Proposals?:</b> ", `With proposal from OTHER SOURCES, including LGUs, NGOs, Private Sector etc)?`, "<br>",
+    #         "<b>Buildable Space:</b> ", `Avaiability of Buildable Space (Y/N)`, "<br>",
+    #         "<b>Remarks (Buildable):</b> ", `OTHER REMARKS (Buildable Space)`, "<br>",
+    #         "<b>Site Ownership:</b> ", `Site Ownership`, "<br>",
+    #         "<b>Remarks Ownership:</b> ", `OTHER REMARKS Site Ownership`, "<br>",
+    #         "<b>Accessibility:</b> ", `Viability / Accessibility (Y/N)`, "<br>",
+    #         "<b>Remarks Access:</b> ", `OTHER REMARKS Viability / Accessibility`, "<br>",
+    #         "<b>Operational Readiness:</b> ", `Operational Readiness (Y/N)`, "<br>",
+    #         "<b>Remarks OR:</b> ", `OTHER REMARKS Operational Readiness`, "<br>",
+    #         "<b>Implementability:</b> ", `Implementability of Proposed Scope (Y/N)`, "<br>",
+    #         "<b>Remarks Impl:</b> ", `OTHER REMARKS Implementability of Proposed Scope`, "<br>",
+    #         "<b>Geotechnical Testing:</b> ", `Geotechnical Testing (Y/N)`, "<br>",
+    #         "<b>Remarks Geotech:</b> ", `OTHER REMARKS Geotechnical Testing`
+    #       )),
+    #       icon = ~makeAwesomeIcon(
+    #         icon = "graduation-cap",
+    #         library = "fa",
+    #         markerColor = ifelse(`Avaiability of Buildable Space (Y/N)` == "Y", "green", "red")
+    #       ),
+    #       clusterOptions = markerClusterOptions(disableClusteringAtZoom = 15)
+    #     )
+    # 
+    # 
+    # })
+    
+    
     
     RegRCT <- input$resource_map_region
     SDORCT1 <- input$Resource_SDO
@@ -7840,7 +8406,6 @@ server <- function(input, output, session) {
     mainreactlevdiv <- df %>% filter(Region == RegRCT) %>% filter(Division == SDORCT1) %>% filter(Level == Lev)
     mainreactCR <- uni %>% filter(Region == RegRCT) %>% filter(Division == SDORCT1) %>% filter(Legislative.District == DistRCT1) %>% distinct(SchoolID, .keep_all = TRUE) %>% arrange(desc(SBPI))
     mainreactSHS <- df %>% filter(Region == RegRCT) %>% filter(Division == SDORCT1) %>% filter(Legislative.District == DistRCT1) %>% filter(Level == "SHS") %>% distinct(SchoolID, .keep_all = TRUE) #Remove the filter of Pilot 2 CLEA4
-    mainreactSHS_pilot <- mainreactSHS %>% filter(SchoolID %in% SHS_Pilot2) # Need to seperatee
     mainreactind <- ind %>% filter(Region == RegRCT)
     mainreactEFD <- EFDMP %>% 
       filter(!is.na(Old.Region), Old.Region != "") %>% 
@@ -7860,6 +8425,104 @@ server <- function(input, output, session) {
         ),
         levels = c("Before 2025", "2025-2030", "After 2030")
       ))
+    mainreactLMS <- LMS %>%
+      filter(LMS == 1) %>%   # Step 1: LMS only
+      left_join(uni %>% select(SchoolID,Latitude,Longitude), by = c("School_ID" = "SchoolID")) %>%   # Step 2: lat/long
+      left_join(buildablecsv %>% select(SCHOOL.ID,OTHER.REMARKS..Buildable.Space..), by = c("School_ID" = "SCHOOL.ID")) %>% 
+      filter(Region == RegRCT) %>% filter(Division == SDORCT1)
+    
+    values.LMS <- paste(
+      "School Name:",mainreactLMS$School_Name,
+      "<br>Division:", mainreactLMS$Division,
+      "<br>Leg. District:", mainreactLMS$Legislative_District,
+      "<br>Number of Classrooms:", mainreactLMS$Instructional_Rooms,
+      "<br>Classroom Requirement:", mainreactLMS$CL_Req,
+      "<br>Estimated Classroom Shortage:", mainreactLMS$Estimated_CL_Shortage,
+      "<br>Buildable Space:", ifelse(mainreactLMS$Buildable_space == 1, "Yes", "No")) %>% lapply(htmltools::HTML)
+    
+    
+    leafletProxy("LMSMapping") %>%
+      clearMarkers() %>%
+      clearMarkerClusters() %>%
+      setView(
+        lng = mainreactLMS$Longitude[1],
+        lat = mainreactLMS$Latitude[1],
+        zoom = 7
+      ) %>%
+      addAwesomeMarkers(
+        clusterOptions = markerClusterOptions(disableClusteringAtZoom = 12),
+        lng = mainreactLMS$Longitude,
+        lat = mainreactLMS$Latitude,
+        icon = makeAwesomeIcon(icon = "education", library = "glyphicon",
+                               markerColor = case_when(
+                                 mainreactLMS$Buildable_space == 0 ~ "red", # Corrected to '=='
+                                 mainreactLMS$Buildable_space == 1 ~ "green" # Corrected to '=='
+                               )),
+        label = values.LMS,
+        labelOptions = labelOptions(noHide = F, textsize = "12px", direction = "top")
+      )
+    
+    df1 <- reactive({
+      
+      if (is.null(input$LMSMapping_bounds)) {
+        mainreactLMS
+      } else {
+        bounds <- input$LMSMapping_bounds
+        latRng <- range(bounds$north, bounds$south)
+        lngRng <- range(bounds$east, bounds$west)
+        
+        subset(mainreactLMS,
+               Latitude >= latRng[1] & Latitude <= latRng[2] & Longitude >= lngRng[1] & Longitude <= lngRng[2])
+      }
+    })
+    
+    
+    output$LMSTable <- renderDataTable({
+      
+      # # Apply Division filter only if not "Select Input"
+      # if (!is.null(input$Resource_SDO) && input$Resource_SDO != "Select Input") {
+      #   df1() <- df1() %>% filter(Division == input$Resource_SDO)
+      # }
+      # 
+      # # Apply District filter only if not "Select Input"
+      # if (!is.null(input$Resource_LegDist) && input$Resource_LegDist != "Select Input") {
+      #   df1() <- df1() %>% filter(LD == input$Resource_LegDist)
+      # }
+      
+      # Final select
+      finalLMS <- df1() %>%
+        # 1. Convert Buildable_space from 1/0 to "Yes"/"No"
+        dplyr::mutate(
+          Buildable_space = dplyr::if_else(Buildable_space == 1, "Yes", "No")
+        ) %>%
+        # 2. Select the desired columns
+        dplyr::select(
+          School_Name,
+          Instructional_Rooms,
+          CL_Req,
+          Estimated_CL_Shortage,
+          Buildable_space
+        ) %>%
+        # 3. Rename columns for display
+        dplyr::rename(
+          "School Name" = School_Name,
+          "Classrooms" = Instructional_Rooms,
+          "Classroom Requirement" = CL_Req,
+          "Classroom Shortage" = Estimated_CL_Shortage,
+          "Buildable Space" = Buildable_space
+        )
+      
+      datatable(
+        finalLMS,
+        options = list(scrollX = TRUE, pageLength = 10, dom = 'Bfrtip',
+                       buttons = list('csv', 'excel', 'pdf', 'print'), columnDefs = list(list(className = 'dt-center', targets = "_all"))),
+        selection = "single",  # allow single row selection
+        extension = 'Buttons',
+        rownames = FALSE,
+        callback = JS("window.dispatchEvent(new Event('resize'));") # Final closing parenthesis was missing
+      )
+    })
+    
     
     NetShortage <- df %>% select(Region,Division,Level,TeacherShortage,TeacherExcess) %>%
       pivot_longer(cols = c(TeacherShortage, TeacherExcess), names_to = "Inventory", values_to = "Count") %>% mutate(Count=as.numeric(Count)) %>% na.omit(Count) %>% group_by(Region, Division,Level, Inventory) %>% summarize(Count = sum(Count)) %>% pivot_wider(names_from = "Inventory", values_from = "Count") %>% mutate(NetShortage=TeacherShortage-TeacherExcess) %>% mutate(NetShortage = ifelse(NetShortage < 0, 0, NetShortage))
@@ -7885,34 +8548,127 @@ server <- function(input, output, session) {
     
     values.ind <- paste(mainreactind$Company,"<br>Province:",mainreactind$Province) %>% lapply(htmltools::HTML)
     
-    leafletProxy("SHSMapping") %>% clearMarkers() %>% clearMarkerClusters() %>% setView(lng = mainreactSHS$Longitude[1], lat = mainreactSHS$Latitude[1], zoom = 7) %>%
-      addCircleMarkers(clusterOptions = markerClusterOptions(disableClusteringAtZoom = 15), lng = mainreactSHS$Longitude, lat = mainreactSHS$Latitude, radius= 6, fillOpacity = 1, fillColor = "orange", stroke = TRUE,label = values_industry, labelOptions = labelOptions(noHide = F, textsize = "12px", direction = "top", fill = TRUE, style = list("border-color" = "rgba(0,0,0,0.5)")), color = "black") %>% 
-      addAwesomeMarkers(clusterOptions = markerClusterOptions(disableClusteringAtZoom = 12), lng = mainreactind$Longitude, lat = mainreactind$Latitude, icon = makeAwesomeIcon(icon = "cog",library = "glyphicon", ,markerColor = case_when(mainreactind$Sector == "Manufacturing and Engineering" ~ "red", mainreactind$Sector == "Hospitality and Tourism" ~ "orange", mainreactind$Sector == "Professional/Private Services" ~ "violet", mainreactind$Sector == "Public Administration" ~ "green", mainreactind$Sector == "Business and Finance" ~ "blue",mainreactind$Sector == "Agriculture and Agri-business" ~ "magenta")), label = values.ind, labelOptions = labelOptions(noHide = F, textsize = "12px", direction = "top"))
+    leafletProxy("SHSMapping") %>%
+      clearMarkers() %>%
+      clearMarkerClusters() %>%
+      setView(
+        lng = mainreactSHS$Longitude[1],
+        lat = mainreactSHS$Latitude[1],
+        zoom = 7
+      ) %>%
+      
+      # --- SHS Schools (always orange university icons) ---
+      addAwesomeMarkers(
+        clusterOptions = markerClusterOptions(disableClusteringAtZoom = 15),
+        lng = mainreactSHS$Longitude,
+        lat = mainreactSHS$Latitude,
+        icon = makeAwesomeIcon(
+          icon = "university",
+          library = "fa",
+          markerColor = "orange"   
+        ),
+        label = values_industry,
+        labelOptions = labelOptions(
+          noHide = FALSE,
+          textsize = "12px",
+          direction = "top",
+          fill = TRUE,
+          style = list("border-color" = "rgba(0,0,0,0.5)")
+        )
+      ) %>%
+      
+      # --- Industry markers (cog icons, colored by sector) ---
+      addAwesomeMarkers(
+        clusterOptions = markerClusterOptions(disableClusteringAtZoom = 12),
+        lng = mainreactind$Longitude,
+        lat = mainreactind$Latitude,
+        icon = makeAwesomeIcon(
+          icon = "cog",
+          library = "fa",
+          markerColor = dplyr::case_when(
+            mainreactind$Sector == "Manufacturing and Engineering"     ~ "red",
+            mainreactind$Sector == "Hospitality and Tourism"           ~ "orange",
+            mainreactind$Sector == "Professional/Private Services"     ~ "purple",
+            mainreactind$Sector == "Public Administration"             ~ "green",
+            mainreactind$Sector == "Business and Finance"              ~ "blue",
+            mainreactind$Sector == "Agriculture and Agri-business"     ~ "pink",
+            TRUE                                                       ~ "gray"
+          )
+        ),
+        label = values.ind,
+        labelOptions = labelOptions(
+          noHide = FALSE,
+          textsize = "12px",
+          direction = "top"
+        )
+      )
     
-    leafletProxy("CLMapping") %>% clearMarkers() %>% clearMarkerClusters() %>%  setView(lng = mainreactCR$Longitude[1], lat = mainreactCR$Latitude[1], zoom = 7) %>% addCircleMarkers(clusterOptions = markerClusterOptions(), lng = mainreactCR$Longitude, lat = mainreactCR$Latitude, radius= 6, fillOpacity = 1, stroke = FALSE, popup = values_classrooom_shortage_popup, options = popupOptions(),label = values_classrooom_shortage, labelOptions = labelOptions(noHide = T, textsize = "12px", direction = "top", fill = TRUE, style = list("border-color" = "rgba(0,0,0,0.5)")),color = case_when(mainreactCR$SBPI <=1.0 & mainreactCR$SBPI > 0 ~ "green", mainreactCR$SBPI > 1.0 & mainreactCR$SBPI <=1.5 ~ "yellow", mainreactCR$SBPI > 1.5 & mainreactCR$SBPI<= 2.0 ~ "orange",  mainreactCR$SBPI > 2.0  ~ "red"))
+    # --- Update markers with leafletProxy ---
+    observe({
+      req(mainreactCR)
+      
+      icons <- awesomeIcons(
+        icon = "university",
+        library = "fa",
+        markerColor = case_when(
+          suppressWarnings(as.numeric(mainreactCR$SBPI)) > 0   & as.numeric(mainreactCR$SBPI) <= 0.5 ~ "green",   # Mild (0–0.5)
+          suppressWarnings(as.numeric(mainreactCR$SBPI)) > 0.5 & as.numeric(mainreactCR$SBPI) <= 1.5 ~ "yellow",  # Minor (0.6–1.5)
+          suppressWarnings(as.numeric(mainreactCR$SBPI)) > 1.5 & as.numeric(mainreactCR$SBPI) <= 2.0 ~ "orange",  # Major (1.6–2.0)
+          suppressWarnings(as.numeric(mainreactCR$SBPI)) > 2.0                                         ~ "red",     # Extreme (>2.0)
+          TRUE                                                                                        ~ "lightgray"
+        ),
+        iconColor = "white"
+      )
+      
+      leafletProxy("CLMapping") %>%
+        clearMarkers() %>%
+        clearMarkerClusters() %>%
+        setView(
+          lng = mainreactCR$Longitude[1],
+          lat = mainreactCR$Latitude[1],
+          zoom = 7
+        ) %>%
+        addAwesomeMarkers(
+          clusterOptions = markerClusterOptions(disableClusteringAtZoom = 15),
+          lng = mainreactCR$Longitude,
+          lat = mainreactCR$Latitude,
+          popup = values_classrooom_shortage_popup,
+          options = popupOptions(),
+          label = values_classrooom_shortage,
+          labelOptions = labelOptions(
+            noHide = FALSE,
+            textsize = "12px",
+            direction = "top"
+          ),
+          icon = icons
+        )
+    })
     
-    
-    leafletProxy("AO2Mapping") %>% clearMarkers() %>% clearMarkerClusters() %>%
+    leafletProxy("AO2Mapping") %>%
+      clearMarkers() %>%
+      clearMarkerClusters() %>%
       setView(lng = mainreactNTP$Longitude[1], lat = mainreactNTP$Latitude[1], zoom = 7) %>%
-      addCircleMarkers(
-        clusterOptions = markerClusterOptions(),
+      addAwesomeMarkers(
+        clusterOptions = markerClusterOptions(disableClusteringAtZoom = 15),
         lng = mainreactNTP$Longitude,
         lat = mainreactNTP$Latitude,
-        radius = 6,
-        fillOpacity = 1,
-        stroke = FALSE,
         popup = values.non_teaching_popup,
         options = popupOptions(),
         label = values.non_teaching,
-        labelOptions = labelOptions(noHide = TRUE, textsize = "12px", direction = "top"),
-        fillColor = case_when( # Changed from markerColor to fillColor
-          mainreactNTP$Clustering.Status %in% c("Dedicated","Clustered") & mainreactNTP$PDOI_Deployment == "With PDO I" ~ "green",
-          mainreactNTP$Clustering.Status %in% c("Dedicated","Clustered") & mainreactNTP$PDOI_Deployment == "Without PDO I" ~ "orange",
-          mainreactNTP$Clustering.Status == "None Deployed" & mainreactNTP$PDOI_Deployment == "With PDO I" ~ "orange",
-          mainreactNTP$Clustering.Status == "None Deployed" & mainreactNTP$PDOI_Deployment == "Without PDO I" ~ "red",
-          TRUE ~ "lightgray" # Default color
+        labelOptions = labelOptions(noHide = FALSE, textsize = "12px", direction = "top"),
+        icon = makeAwesomeIcon(
+          icon = "user",
+          library = "fa",
+          markerColor = case_when(
+            mainreactNTP$Clustering.Status %in% c("Dedicated","Clustered") & mainreactNTP$PDOI_Deployment == "With PDO I" ~ "green",
+            mainreactNTP$Clustering.Status %in% c("Dedicated","Clustered") & mainreactNTP$PDOI_Deployment == "Without PDO I" ~ "orange",
+            mainreactNTP$Clustering.Status == "None Deployed" & mainreactNTP$PDOI_Deployment == "With PDO I" ~ "orange",
+            mainreactNTP$Clustering.Status == "None Deployed" & mainreactNTP$PDOI_Deployment == "Without PDO I" ~ "red",
+            TRUE ~ "lightgray"
+          )
         )
       )
+    
     
     leafletProxy("TeacherShortage_Mapping") %>% clearMarkers() %>% clearMarkerClusters() %>% setView(lng = mainreact1$Longitude[1], lat = mainreact1$Latitude[1], zoom = 7) %>% 
       addAwesomeMarkers(clusterOptions = markerClusterOptions(disableClusteringAtZoom = 15), lng = mainreact1$Longitude, lat = mainreact1$Latitude, popup = values_teacher_shortage_popup, options = popupOptions(), label = values_teacher_shortage, labelOptions = labelOptions(noHide = F, textsize = "12px", direction = "top"), icon = makeAwesomeIcon(icon = "education", library = "glyphicon", markerColor = case_when(mainreact1$TeacherShortage > 0 ~ "red", mainreact1$TeacherExcess > 0 ~ "blue", (mainreact1$TeacherExcess == 0 & mainreact1$TeacherShortage == 0) ~ "green", is.na(mainreact1$TeacherShortage) ~ "gray")))
@@ -8191,6 +8947,37 @@ server <- function(input, output, session) {
                 rownames = FALSE,
                 options = list(scrollX = TRUE, pageLength = 10, columnDefs = list(list(className = 'dt-center', targets ="_all")), dom = 'Bfrtip', buttons = list('csv','excel','pdf','print')))
     })
+    
+  })
+  
+  observeEvent(input$LMSTable_rows_selected, {
+    
+    RegRCT <- input$resource_map_region
+    SDORCT1 <- input$Resource_SDO
+    
+    mainreactLMS <- LMS %>%
+      filter(LMS == 1) %>%   # Step 1: LMS only
+      left_join(uni %>% select(SchoolID,Latitude,Longitude), by = c("School_ID" = "SchoolID")) %>%   # Step 2: lat/long
+      left_join(buildablecsv %>% select(SCHOOL.ID,OTHER.REMARKS..Buildable.Space..), by = c("School_ID" = "SCHOOL.ID")) %>% 
+      filter(Region == RegRCT) %>% filter(Division == SDORCT1)
+    
+    df1 <- reactive({
+      
+      if (is.null(input$LMSMapping_bounds)) {
+        mainreactLMS
+      } else {
+        bounds <- input$LMSMapping_bounds
+        latRng <- range(bounds$north, bounds$south)
+        lngRng <- range(bounds$east, bounds$west)
+        
+        subset(mainreactLMS,
+               Latitude >= latRng[1] & Latitude <= latRng[2] & Longitude >= lngRng[1] & Longitude <= lngRng[2])
+      }
+    })
+    
+    row_selected = df1()[input$LMSTable_rows_selected,]
+    leafletProxy("LMSMapping") %>%
+      setView(lng = row_selected$Longitude, lat = row_selected$Latitude, zoom = 15)
     
   })
   
@@ -8478,116 +9265,103 @@ server <- function(input, output, session) {
     
   }, ignoreNULL = TRUE, ignoreInit = TRUE)
   
-  observeEvent(input$GMISRun, {
+  #plantilla position observe
+  observe({
+    req(input$RegionGMIS, input$SDOGMIS, input$PosSelGMIS)  # ensures all inputs exist
     
     dfGMIS <- read.csv("GMIS-FillingUpPerPosition-2025.csv")
     
     RegGMISRCT <- input$RegionGMIS
     SDOGMISRCT <- input$SDOGMIS
-    PosCatGMISRCT <- input$PosCatGMIS
     PosSelGMISRCT <- input$PosSelGMIS
     
-    # 1. Corrected: Filter only. Keep all columns.
-    GMISDiv <- dfGMIS %>% 
-      filter(GMIS.Region %in% RegGMISRCT) %>% 
-      filter(Position %in% PosSelGMISRCT) %>% 
-      filter(GMIS.Division %in% SDOGMISRCT) %>% 
-      group_by(Position) %>% 
-      summarise(Filled = sum(Total.Filled), Unfilled = sum(Total.Unfilled, na.rm = TRUE)) %>% 
-      pivot_longer(cols = c("Filled","Unfilled"), names_to = "Status", values_to = "Count")
+    # 1. Filter and transform
+    GMISDiv <- dfGMIS %>%
+      filter(GMIS.Region %in% RegGMISRCT) %>%
+      filter(Position %in% PosSelGMISRCT) %>%
+      filter(GMIS.Division %in% SDOGMISRCT) %>%
+      group_by(Position) %>%
+      summarise(
+        Filled = sum(Total.Filled),
+        Unfilled = sum(Total.Unfilled, na.rm = TRUE)
+      ) %>%
+      pivot_longer(cols = c("Filled", "Unfilled"), names_to = "Status", values_to = "Count")
     
-    # %>% 
-    #   mutate(Filling.Up.Rate = round(Filled/Authorized, digits = 4)*100)
-    
-    # This part is for a separate data table and can remain as-is.
-    # It correctly performs its own summarization on the filtered GMISDiv.
-    # GMISreactFinalDiv <- GMISDiv %>% 
-    #   group_by(GMIS.Region,GMIS.Division,Position) %>% 
-    #   summarise(Filled = sum(Total.Filled), 
-    #             Authorized = sum(Total.Authorized)) |> 
-    #   mutate(Filling.Up.Rate = round(Filled/Authorized, digits = 4)*100)
-    # 
-    # GMISreactFinalDiv <- GMISreactFinalDiv |> 
-    #   mutate(Filling.Up.Rate = sprintf("%.2f", `Filling.Up.Rate`)) %>% 
-    #   rename("Division" = GMIS.Division, "Filling Up Rate" = Filling.Up.Rate)
-    
+    # --- Plot ---
     output$GMISTable <- renderPlotly({
-      
-      # 2. Corrected: Summarize the data for the plot here.
-      # It now works because GMISDiv still contains GMIS.Division.
-      plot_data_stacked <- GMISDiv 
+      plot_data_stacked <- GMISDiv
       plot_data_totals <- plot_data_stacked %>%
         group_by(Position) %>%
         summarise(TotalCount = sum(Count))
+      
       category_colors <- c("Filled" = "blue", "Unfilled" = "red")
       
-      
-      # The rest of the plot code remains the same.
-      p <- ggplot(plot_data_stacked, aes(x = factor(Position), y = Count, fill = factor(Status, levels = c("Unfilled", "Filled")),
-                                         text = paste("Position: ", Position,
-                                                      "<br>Category: ", Status,
-                                                      "<br>Total", Count))) +
+      p <- ggplot(plot_data_stacked, aes(
+        x = factor(Position),
+        y = Count,
+        fill = factor(Status, levels = c("Unfilled", "Filled")),
+        text = paste("Position: ", Position,
+                     "<br>Category: ", Status,
+                     "<br>Total", Count)
+      )) +
         geom_bar(stat = "identity", position = "stack") +
-        
-        # Add the text layer for the totals on top of the bars
-        geom_text(data = plot_data_totals,
-                  aes(x = Position, y = TotalCount * 1.05, label = scales::comma(TotalCount)), # Modified line
-                  inherit.aes = FALSE,
-                  size = 3.5,
-                  color = "black") +
-        
+        geom_text(
+          data = plot_data_totals,
+          aes(x = Position, y = TotalCount * 1.05, label = scales::comma(TotalCount)),
+          inherit.aes = FALSE,
+          size = 3.5,
+          color = "black"
+        ) +
         labs(x = "Position", y = "Count") +
         scale_y_continuous(labels = scales::comma) +
         scale_fill_manual(name = "Legend", values = category_colors) +
         theme_minimal() +
         theme(legend.position = "bottom")
       
-      ggplotly(p, tooltip = "text", source = "stackedBarPlot") %>% 
+      ggplotly(p, tooltip = "text", source = "stackedBarPlot") %>%
         layout(hoverlabel = list(bgcolor = "white"))
     })
     
-    # Assuming the above code for creating GMISDiv is already in your server function
-    # and `GMISDiv` is a reactive expression. If it's not a reactive, you may need to
-    # make it one or define it inside the render function.
-    
+    # --- DataTable ---
     output$GMISTable1 <- renderDataTable({
-      
-      GMISDiv2 <- dfGMIS %>% 
-        filter(GMIS.Region %in% RegGMISRCT) %>% 
-        filter(Position %in% PosSelGMISRCT) %>% 
-        filter(GMIS.Division %in% SDOGMISRCT) %>% 
-        group_by(GMIS.Region, GMIS.Division, Position) %>% 
+      GMISDiv2 <- dfGMIS %>%
+        filter(GMIS.Region %in% RegGMISRCT) %>%
+        filter(Position %in% PosSelGMISRCT) %>%
+        filter(GMIS.Division %in% SDOGMISRCT) %>%
+        group_by(GMIS.Region, GMIS.Division, Position) %>%
         summarise(
-          Filled = sum(Total.Filled), 
+          Filled = sum(Total.Filled),
           Unfilled = sum(Total.Unfilled, na.rm = TRUE),
-          Authorized = sum(Total.Authorized) # Corrected: Add the Authorized column
-        ) %>% 
+          Authorized = sum(Total.Authorized)
+        ) %>%
         mutate(Filling.Up.Rate = round(Filled / Authorized, digits = 4) * 100) %>%
         mutate(Filling.Up.Rate = sprintf("%.2f", `Filling.Up.Rate`)) %>%
         rename("Division" = GMIS.Division, "Filling Up Rate" = `Filling.Up.Rate`)
       
-      # Ensure the data is not empty before rendering
-      req(GMISDiv2) 
+      req(GMISDiv2)
       
-      # The GMISDiv is already in the long format, so we can directly pass it to renderDataTable.
-      # We use the DT package functions to create a well-formatted and interactive table.
       DT::datatable(
-          GMISDiv2, # Adds filter boxes to the top of each column
+        GMISDiv2, # Adds filter boxes to the top of each column
+        filter = "top",
+        extensions = "FixedHeader",
+        options = list(
+          fixedHeader = list(
+            header = TRUE,
+            footer = FALSE),
+          GMISDiv2,
           filter = "top",
           extensions = "FixedHeader",
           options = list(
-            fixedHeader = list(
-              header = TRUE,
-              footer = FALSE),
+            fixedHeader = list(header = TRUE, footer = FALSE),
             scrollY = "300px",
             scrollCollapse = TRUE,
             columnDefs = list(list(className = 'dt-center', targets = '_all')),
             rownames = FALSE
           )
-      )
+        ))
     })
-    
   })
+  
   
   observeEvent(input$SHSListTable_rows_selected, {
     
@@ -10618,31 +11392,35 @@ server <- function(input, output, session) {
   })
   
   output$regprof_DT <- DT::renderDT({
+    data_to_display <- filtered_school_data_region() %>% 
+      select(Region, Division, Legislative.District, SchoolID, School.Name, School.Type, School.Size.Typology, Modified.COC, TotalEnrolment, Clustering.Status, PDOI_Deployment) %>% 
+      rename("Modified Curricular Offering" = Modified.COC)
     
-    data_to_display <- filtered_school_data_region() %>% select(Region, Division, Legislative.District, SchoolID, School.Name, School.Type, School.Size.Typology, Modified.COC, TotalEnrolment, Clustering.Status, PDOI_Deployment) %>% rename("Modified Curricular Offering" = Modified.COC)
-    
-    # You might want to add a check for NULL or empty data if filtered_school_data_division()
-    # could return such states and you want to display a message or an empty table.
     if (is.null(data_to_display) || nrow(data_to_display) == 0) {
       return(DT::datatable(
         data.frame("Message" = "No data available based on current selection."),
-        options = list(dom = 't',
-                       scrollX = TRUE,
-                       fixedColumns = list(leftColumns = 5)), # 't' hides all controls, showing only the table body
+        options = list(dom = 't', scrollX = TRUE, fixedColumns = list(leftColumns = 5)),
         rownames = FALSE
       ))
     }
     
     DT::datatable(
       data_to_display,
-      extensions = c("FixedHeader", "FixedColumns"),
+      extensions = c("FixedHeader", "FixedColumns", "Buttons"),
       options = list(
         pageLength = 10, 
         scrollX = TRUE,
         scrollY = 400,
         autoWidth = TRUE,
         fixedHeader = TRUE,
-        fixedColumns = list(leftColumns = 5)),
+        fixedColumns = list(leftColumns = 5),
+        dom = 'Bfrtip',
+        buttons = list(
+          list(extend = "csv", exportOptions = list(modifier = list(page = "all"))),
+          list(extend = "excel", exportOptions = list(modifier = list(page = "all"))),
+          list(extend = "print", exportOptions = list(modifier = list(page = "all")))
+        )
+      ),
       filter = 'top',
       selection = 'multiple',
       rownames = FALSE
@@ -10650,40 +11428,51 @@ server <- function(input, output, session) {
   })
   
   output$regprof_DT_CL <- DT::renderDT({
-    
     data_to_display <- filtered_LMS_region() %>%
       mutate(across(13:17, ~ case_when(
         . == 0 ~ "No",
         TRUE ~ "Yes"
-      ))) %>% select(Region, Division, Legislative_District, School_ID, School_Name, Total_Enrollment, Instructional_Rooms, CL_Req, Estimated_CL_Shortage, With_Excess, Without_Shortage,Buildable_space,LMS,GIDCA) %>% rename("Classroom Requirement" = CL_Req,"Estimated Classroom Shortage" = Estimated_CL_Shortage,"Schools with Excess Classrooms" = With_Excess,"Schools without Classroom Shortage" = Without_Shortage,"Schools with Buildable Space" = Buildable_space)
+      ))) %>% 
+      select(Region, Division, Legislative_District, School_ID, School_Name, Total_Enrollment, Instructional_Rooms, CL_Req, Estimated_CL_Shortage, With_Excess, Without_Shortage, Buildable_space, LMS, GIDCA) %>% 
+      rename(
+        "Classroom Requirement" = CL_Req,
+        "Estimated Classroom Shortage" = Estimated_CL_Shortage,
+        "Schools with Excess Classrooms" = With_Excess,
+        "Schools without Classroom Shortage" = Without_Shortage,
+        "Schools with Buildable Space" = Buildable_space
+      )
     
-    # You might want to add a check for NULL or empty data if filtered_school_data_division()
-    # could return such states and you want to display a message or an empty table.
     if (is.null(data_to_display) || nrow(data_to_display) == 0) {
       return(DT::datatable(
         data.frame("Message" = "No data available based on current selection."),
-        options = list(dom = 't',
-                       scrollX = TRUE,
-                       fixedColumns = list(leftColumns = 5)), # 't' hides all controls, showing only the table body
+        options = list(dom = 't', scrollX = TRUE, fixedColumns = list(leftColumns = 5)),
         rownames = FALSE
       ))
     }
     
     DT::datatable(
       data_to_display,
-      extensions = c("FixedHeader", "FixedColumns"),
+      extensions = c("FixedHeader", "FixedColumns", "Buttons"),
       options = list(
         pageLength = 10, 
         scrollX = TRUE,
         scrollY = 400,
         autoWidth = TRUE,
         fixedHeader = TRUE,
-        fixedColumns = list(leftColumns = 5)),
+        fixedColumns = list(leftColumns = 5),
+        dom = 'Bfrtip',
+        buttons = list(
+          list(extend = "csv", exportOptions = list(modifier = list(page = "all"))),
+          list(extend = "excel", exportOptions = list(modifier = list(page = "all"))),
+          list(extend = "print", exportOptions = list(modifier = list(page = "all")))
+        )
+      ),
       filter = 'top',
       selection = 'multiple',
       rownames = FALSE
     )
   })
+  
   filtered_cloud_region <- reactive({
     req(cloud)
     
