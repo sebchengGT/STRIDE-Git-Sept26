@@ -104,7 +104,7 @@ ui <- fluidPage(
   ),
   
   
-  
+
   
   # tags$head(
   #   tags$style(HTML("
@@ -1600,6 +1600,106 @@ server <- function(input, output, session) {
             )
           ))),
       # --- Second Top-Level Tab: Data Explorer --
+  #     tags$head(
+  #       tags$style(HTML("
+  #   /* ===== GENERAL SCROLL FIX ===== */
+  #   .bslib-sidebar, 
+  #   .bslib-sidebar-content, 
+  #   .sidebar, 
+  #   .bslib-card {
+  #     overflow-x: hidden !important;
+  #   }
+  # 
+  #   /* ===== PICKER INPUT DROPDOWNS (sidebar only) ===== */
+  #   .bslib-sidebar .bootstrap-select,
+  #   .bslib-sidebar .dropdown-menu {
+  #     max-width: 100% !important;
+  #     width: 100% !important;
+  #   }
+  # 
+  #   /* Fix dropdowns expanding outside sidebar */
+  #   .bslib-sidebar .dropdown-menu.open {
+  #     left: 0 !important;
+  #     right: 0 !important;
+  #     width: 100% !important;
+  #     overflow-x: hidden !important;
+  #     white-space: normal !important; /* allow text wrapping */
+  #     word-wrap: break-word !important;
+  #   }
+  # 
+  #   /* Allow long option labels to wrap to next line */
+  #   .bootstrap-select .dropdown-menu li a span.text {
+  #     white-space: normal !important;
+  #     word-break: break-word !important;
+  #     display: inline-block !important;
+  #   }
+  # 
+  #   /* Prevent layout_sidebar from causing scrollbars */
+  #   .bslib-layout-sidebar {
+  #     overflow-x: hidden !important;
+  #   }
+  # 
+  #   /* ===== NAVBAR SPACING FIX ===== */
+  #   .navbar-nav, .bslib-navbar-nav {
+  #     display: flex !important;
+  #     align-items: center !important;
+  #     gap: 10px !important; /* reduce space between nav items */
+  #   }
+  # 
+  #   /* Ensure no extra right spacing between nav menus */
+  #   .navbar-nav > li, .bslib-navbar-nav > li {
+  #     margin-right: 0 !important;
+  #     padding-right: 0 !important;
+  #   }
+  # 
+  #   /* ===== NAVBAR DROPDOWN FIX ===== */
+  #   .navbar .dropdown-menu,
+  #   .bslib-navbar .dropdown-menu {
+  #     width: auto !important;
+  #     min-width: 220px !important;
+  #     text-align: left !important;
+  #     white-space: nowrap !important;
+  #     word-wrap: normal !important;
+  #     border-radius: 6px !important;
+  #     box-shadow: 0 4px 10px rgba(0,0,0,0.1) !important;
+  #     margin-top: 4px !important; /* reduce dropdown gap */
+  #     margin-bottom: 4px !important;
+  #   }
+  # 
+  #   /* Adjust Data Explorer dropdown items */
+  #   .navbar .dropdown-menu > li > a,
+  #   .bslib-navbar .dropdown-menu > li > a {
+  #     padding: 8px 14px !important;
+  #     font-weight: 600 !important;
+  #     display: block !important;
+  #   }
+  # 
+  #   /* Hover effect */
+  #   .navbar .dropdown-menu > li > a:hover,
+  #   .bslib-navbar .dropdown-menu > li > a:hover {
+  #     background-color: #2c3895 !important;
+  #     color: white !important;
+  #   }
+  # 
+  #   /* ===== THIRD LEVEL DASHBOARD DROPDOWN FIX ===== */
+  #   .navbar .dropdown-menu li a,
+  #   .bslib-navbar .dropdown-menu li a {
+  #     white-space: normal !important;
+  #     word-break: break-word !important;
+  #     line-height: 1.2em !important;
+  #   }
+  # 
+  #   /* Keeps dropdown text readable without overlap */
+  #   .navbar .dropdown-menu li,
+  #   .bslib-navbar .dropdown-menu li {
+  #     padding-top: 4px !important;
+  #     padding-bottom: 4px !important;
+  #   }
+  # "))
+  #     )
+  #     ,
+      
+      nav_panel(
   tags$head(
     tags$style(HTML("
      /* ===== Remove visible scrollbar completely from sidebar ===== */
@@ -1886,7 +1986,7 @@ server <- function(input, output, session) {
             hr(),
             
             # Radio Buttons for resource types
-            card(
+            card(id = "resource_type_card",
               card_header(tags$b("Resource Types")),
               radioButtons(
                 inputId = "resource_type_selection",
