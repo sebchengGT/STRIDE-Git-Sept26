@@ -1909,7 +1909,7 @@ observeEvent(input$show_curricular_graphs, {
             hr(),
             
             # Radio Buttons for resource types
-            card(
+            card(id = "resource_type_card",
               card_header(tags$b("Resource Types")),
               radioButtons(
                 inputId = "resource_type_selection",
