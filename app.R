@@ -29,7 +29,7 @@ library(shinyWidgets)
 
 # HROD Data Upload
 df <- read_parquet("School-Level-v2.parquet") # per Level Data
-uni <- read_parquet("School-Unique-v2.parquet") # School-level Data
+uni <- read_parquet("School-Unique-v2.parquet") # School-level Data 
 IndALL <- read_parquet("IndDistance.ALL2.parquet") # Industry Distances
 ind <- read_parquet("SHS-Industry.parquet") # Industry Coordinates
 SDO <- read_parquet("SDOFill.parquet") # SDO and Regional Filling-up Rate
@@ -144,12 +144,12 @@ ui <- fluidPage(
   
   shinyjs::hidden(
     div(class = "dashboard-container",
-      uiOutput("STRIDE2")  # your dashboard content
-  ),
-  div(
+        uiOutput("STRIDE2")  # your dashboard content
+    ),
+    div(
       id = "mgmt_content",
       uiOutput("STRIDE2"))),
-    
+  
   
   
   
@@ -218,16 +218,16 @@ server <- function(input, output, session) {
   })
   
   # --- Toggle visibility for Curricular Offering graphs ---
-observeEvent(input$show_curricular_graphs, {
-  if (input$show_curricular_graphs %% 2 == 1) {
-    shinyjs::show("curricular_graphs")
-    updateActionButton(session, "show_curricular_graphs", label = "Hide Graphs")
-  } else {
-    shinyjs::hide("curricular_graphs")
-    updateActionButton(session, "show_curricular_graphs", label = "Show Graphs")
-  }
-})
-
+  observeEvent(input$show_curricular_graphs, {
+    if (input$show_curricular_graphs %% 2 == 1) {
+      shinyjs::show("curricular_graphs")
+      updateActionButton(session, "show_curricular_graphs", label = "Hide Graphs")
+    } else {
+      shinyjs::hide("curricular_graphs")
+      updateActionButton(session, "show_curricular_graphs", label = "Show Graphs")
+    }
+  })
+  
   # --- School Size Typology Bar Chart ---
   output$School_Size_Typology_Bar <- renderPlotly({
     data <- data.frame(
@@ -1700,154 +1700,231 @@ observeEvent(input$show_curricular_graphs, {
   #     ,
       
       nav_panel(
+  tags$head(
+    tags$style(HTML("
+     /* ===== Remove visible scrollbar completely from sidebar ===== */
+
+  /* Main sidebar container */
+  .bslib-sidebar, 
+  .bslib-layout-sidebar,
+  .sidebar {
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+    scrollbar-width: none !important; 
+  }
+
+  /* Hide scrollbar for WebKit browsers */
+  .bslib-sidebar::-webkit-scrollbar,
+  .bslib-layout-sidebar::-webkit-scrollbar,
+  .sidebar::-webkit-scrollbar {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
+  }
+
+  /* ==== Prevent horizontal scroll globally in all picker dropdowns ==== */
+  .bootstrap-select .dropdown-menu {
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow-x: hidden !important;
+  }
+
+  .bootstrap-select .dropdown-menu.inner {
+    display: block !important;
+    max-height: 250px !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    white-space: normal !important;
+    word-wrap: break-word !important;
+    word-break: break-word !important;
+  }
+
+  .bootstrap-select .dropdown-menu li a span.text {
+    display: block !important;
+    white-space: normal !important;
+    word-break: break-word !important;
+    line-height: 1.2em !important;
+    max-width: 100% !important;
+  }
+
+  .bootstrap-select .dropdown-menu li a {
+    padding: 6px 10px !important;
+  }
+
+  /* Hide horizontal scrollbar on WebKit browsers */
+  .bootstrap-select .dropdown-menu.inner::-webkit-scrollbar {
+    height: 0 !important;
+  }
+
+  .bootstrap-select .dropdown-menu li {
+    white-space: normal !important;
+  }
+  /* ==== Prevent white space from appearing when user over-scrolls ==== */
+.bootstrap-select .dropdown-menu.inner {
+  overscroll-behavior: contain !important;  /* prevent bounce/white space */
+  background-color: white !important;       /* Keep background consistent */
+}
+
+.bootstrap-select .dropdown-menu {
+  overscroll-behavior: contain !important;
+  background-color: white !important;
+}
+  "))
+  ),
+  
+      nav_menu(
         title = tags$b("Data Explorer"),  # Dropdown menu
         icon = bs_icon("table"),
-        # 
-        # # --- Nav Panel 1: School Information ---
-        # nav_panel(
-        #   title = tags$b("School Information"),
-          layout_sidebar(
-            sidebar = sidebar(
-              width = 350,
-              h6("Data Toggles:"),
-              pickerInput(
-                inputId = "DataBuilder_HROD_Region",
-                label = "Select a Region:",
-                choices = sort(unique(uni$Region)),
-                selected = sort(unique(uni$Region)),
-                multiple = TRUE,
-                options = pickerOptions(
-                  actionsBox = TRUE,
-                  liveSearch = TRUE,
-                  header = "Select Categories",
-                  title = "No Category Selected",
-                  selectedTextFormat = "count > 3",
-                  dropupAuto = FALSE,
-                  dropup = FALSE
-                )
-              ),
-              uiOutput("DataBuilder_HROD_SDO"),
-              
-              pickerInput("School_Data_Toggles", strong("School Information Data Toggles"), 
-                          choices = c("School Size Typology" = "School.Size.Typology", 
-                                      "Curricular Offering" = "Modified.COC"),
-                          multiple = TRUE, options = list(`actions-box` = TRUE)),
-              
-              pickerInput("Teaching_Data_Toggles", strong("Teaching Data Toggles"), 
-                          choices = c("Total Teachers" = "TotalTeachers", 
-                                      "Teacher Excess" = "Total.Excess", 
-                                      "Teacher Shortage" = "Total.Shortage"),
-                          multiple = TRUE, options = list(`actions-box` = TRUE)),
-              
-              pickerInput("NTP_Data_Toggles", strong("Non-teaching Data Toggles"), 
-                          choices = c("COS" = "Outlier.Status", 
-                                      "AOII Clustering Status" = "Clustering.Status"),
-                          multiple = TRUE, options = list(`actions-box` = TRUE)),
-              
-              pickerInput("Enrolment_Data_Toggles", strong("Enrolment Data Toggles"), 
-                          choices = c("Total Enrolment" = "TotalEnrolment", "Kinder" = "Kinder", 
-                                      "Grade 1" = "G1", "Grade 2" = "G2", "Grade 3" = "G3", 
-                                      "Grade 4" = "G4", "Grade 5" = "G5", "Grade 6" = "G6", 
-                                      "Grade 7" = "G7", "Grade 8" = "G8", 
-                                      "Grade 9" = "G9", "Grade 10" = "G10", 
-                                      "Grade 11" = "G11", "Grade 12" = "G12"),
-                          multiple = TRUE, options = list(`actions-box` = TRUE)),
-              
-              pickerInput("Specialization_Data_Toggles", strong("Specialization Data Toggles"), 
-                          choices = c("English" = "English", "Mathematics" = "Mathematics", 
-                                      "Science" = "Science", 
-                                      "Biological Sciences" = "Biological.Sciences", 
-                                      "Physical Sciences" = "Physical.Sciences"),
-                          multiple = TRUE, options = list(`actions-box` = TRUE)),
-              
-              pickerInput("EFD_Data_Toggles", strong("Infrastructure Data Toggles"), 
-                          choices = c("Number of Buildings" = "Buildings", 
-                                      "Instructional Rooms" = "Instructional.Rooms.2023.2024", 
-                                      "Classroom Requirement" = "Classroom.Requirement", 
-                                      "Estimated Classroom Shortage" = "Est.CS", 
-                                      "Buildable Space" = "Buidable_space", 
-                                      "Congestion Index" = "Congestion.Index", 
-                                      "Shifting" = "Shifting", 
-                                      "Ownership Type" = "OwnershipType", 
-                                      "Electricity Source" = "ElectricitySource", 
-                                      "Water Source" = "WaterSource", 
-                                      "For Major Repairs" = "Major.Repair.2023.2024", 
-                                      "School Building Priority Index" = "SBPI", 
-                                      "Total Seats" = "Total.Seats.2023.2024", 
-                                      "Total Seats Shortage" = "Total.Seats.Shortage.2023.2024"),
-                          multiple = TRUE, options = list(`actions-box` = TRUE))
+
+        # --- Nav Panel 1: School Information ---
+        nav_panel(
+          title = tags$b("School Information"),
+        layout_sidebar(
+          sidebar = sidebar(
+            width = 350,
+            h6("Data Toggles:"),
+            pickerInput(
+              inputId = "DataBuilder_HROD_Region",
+              label = "Select a Region:",
+              choices = sort(unique(uni$Region)),
+              selected = sort(unique(uni$Region)),
+              multiple = TRUE,
+              options = pickerOptions(
+                actionsBox = TRUE,
+                liveSearch = TRUE,
+                header = "Select Categories",
+                title = "No Category Selected",
+                selectedTextFormat = "count > 3",
+                dropupAuto = FALSE,
+                dropup = FALSE
+              )
             ),
-            layout_columns(
-              card(
-                card_header(strong("HROD Data Panel")),
-                dataTableOutput("HROD_Table")
-              ),
-              col_widths = c(12,12)
-            )
+            uiOutput("DataBuilder_HROD_SDO"),
+
+            pickerInput("School_Data_Toggles", strong("School Information Data Toggles"),
+                        choices = c("School Size Typology" = "School.Size.Typology",
+                                    "Curricular Offering" = "Modified.COC"),
+                        multiple = TRUE, options = list(`actions-box` = TRUE)),
+
+            pickerInput("Teaching_Data_Toggles", strong("Teaching Data Toggles"),
+                        choices = c("Total Teachers" = "TotalTeachers",
+                                    "Teacher Excess" = "Total.Excess",
+                                    "Teacher Shortage" = "Total.Shortage"),
+                        multiple = TRUE, options = list(`actions-box` = TRUE)),
+
+            pickerInput("NTP_Data_Toggles", strong("Non-teaching Data Toggles"),
+                        choices = c("COS" = "Outlier.Status",
+                                    "AOII Clustering Status" = "Clustering.Status"),
+                        multiple = TRUE, options = list(`actions-box` = TRUE)),
+
+            pickerInput("Enrolment_Data_Toggles", strong("Enrolment Data Toggles"),
+                        choices = c("Total Enrolment" = "TotalEnrolment", "Kinder" = "Kinder",
+                                    "Grade 1" = "G1", "Grade 2" = "G2", "Grade 3" = "G3",
+                                    "Grade 4" = "G4", "Grade 5" = "G5", "Grade 6" = "G6",
+                                    "Grade 7" = "G7", "Grade 8" = "G8",
+                                    "Grade 9" = "G9", "Grade 10" = "G10",
+                                    "Grade 11" = "G11", "Grade 12" = "G12"),
+                        multiple = TRUE, options = list(`actions-box` = TRUE)),
+
+            pickerInput("Specialization_Data_Toggles", strong("Specialization Data Toggles"),
+                        choices = c("English" = "English", "Mathematics" = "Mathematics",
+                                    "Science" = "Science",
+                                    "Biological Sciences" = "Biological.Sciences",
+                                    "Physical Sciences" = "Physical.Sciences"),
+                        multiple = TRUE, options = list(`actions-box` = TRUE)),
+
+            pickerInput("EFD_Data_Toggles", strong("Infrastructure Data Toggles"),
+                        choices = c("Number of Buildings" = "Buildings",
+                                    "Instructional Rooms" = "Instructional.Rooms.2023.2024",
+                                    "Classroom Requirement" = "Classroom.Requirement",
+                                    "Estimated Classroom Shortage" = "Est.CS",
+                                    "Buildable Space" = "Buidable_space",
+                                    "Congestion Index" = "Congestion.Index",
+                                    "Shifting" = "Shifting",
+                                    "Ownership Type" = "OwnershipType",
+                                    "Electricity Source" = "ElectricitySource",
+                                    "Water Source" = "WaterSource",
+                                    "For Major Repairs" = "Major.Repair.2023.2024",
+                                    "School Building Priority Index" = "SBPI",
+                                    "Total Seats" = "Total.Seats.2023.2024",
+                                    "Total Seats Shortage" = "Total.Seats.Shortage.2023.2024"),
+                        multiple = TRUE, options = list(`actions-box` = TRUE))
+          ),
+          layout_columns(
+            card(
+              card_header(strong("HROD Data Panel")),
+              dataTableOutput("HROD_Table")
+            ),
+            col_widths = c(12,12)
           )
-        ),
-        # 
-        # # --- Nav Panel 2: Third Level Dashboard ---
-        # nav_panel(
-        #   title = tags$b("Third Level Dashboard"),
-        #   layout_sidebar(
-        #     sidebar = sidebar(
-        #       width = 350, 
-        #       h6("Strand Filter:"),
-        #       pickerInput(
-        #         inputId = "ThirdLevel_Strands",
-        #         label = "Select Strand(s):",
-        #         choices = c(
-        #           "ADMINISTRATION",
-        #           "DEPED ATTACHED AGENCIES",
-        #           "FINANCE",
-        #           "HUMAN RESOURCE AND ORGANIZATIONAL DEVELOPMENT",
-        #           "LEARNING SYSTEM",
-        #           "LEGAL AND LEGISLATIVE AFFAIRS",
-        #           "OFFICE OF THE SECRETARY",
-        #           "OPERATIONS",
-        #           "PROCUREMENT",
-        #           "STRATEGIC MANAGEMENT",
-        #           "TEACHERS AND EDUCATION COUNCIL SECRETARIAT"
-        #         ),
-        #         selected = c(
-        #           "ADMINISTRATION",
-        #           "DEPED ATTACHED AGENCIES",
-        #           "FINANCE",
-        #           "HUMAN RESOURCE AND ORGANIZATIONAL DEVELOPMENT",
-        #           "LEARNING SYSTEM",
-        #           "LEGAL AND LEGISLATIVE AFFAIRS",
-        #           "OFFICE OF THE SECRETARY",
-        #           "OPERATIONS",
-        #           "PROCUREMENT",
-        #           "STRATEGIC MANAGEMENT",
-        #           "TEACHERS AND EDUCATION COUNCIL SECRETARIAT"
-        #         ),
-        #         multiple = TRUE,
-        #         options = pickerOptions(
-        #           actionsBox = TRUE,
-        #           liveSearch = TRUE,
-        #           header = "Select Strand(s)",
-        #           title = "No Strand Selected",
-        #           selectedTextFormat = "count > 3",
-        #           dropupAuto = FALSE,
-        #           dropup = FALSE
-        #         )
-        #       )
-        #     ),
-        #     
-        #     layout_columns(
-        #       card(
-        #         card_header(strong("Third Level Officials")),
-        #         dataTableOutput("ThirdLevel_Table")
-        #       ),
-        #       col_widths = c(12,12)
-        #     )
-        #   )
-        # )),
+        )
+      ),
+
+      # --- Nav Panel 2: Third Level Dashboard ---
+      nav_panel(
+        title = tags$b("Third Level Dashboard"),
+        layout_sidebar(
+          sidebar = sidebar(
+            width = 350,
+            h6("Strand Filter:"),
+            pickerInput(
+              inputId = "ThirdLevel_Strands",
+              label = "Select Strand(s):",
+              choices = c(
+                "ADMINISTRATION",
+                "DEPED ATTACHED AGENCIES",
+                "FINANCE",
+                "HUMAN RESOURCE AND ORGANIZATIONAL DEVELOPMENT",
+                "LEARNING SYSTEM",
+                "LEGAL AND LEGISLATIVE AFFAIRS",
+                "OFFICE OF THE SECRETARY",
+                "OPERATIONS",
+                "PROCUREMENT",
+                "STRATEGIC MANAGEMENT",
+                "TEACHERS AND EDUCATION COUNCIL SECRETARIAT"
+              ),
+              selected = c(
+                "ADMINISTRATION",
+                "DEPED ATTACHED AGENCIES",
+                "FINANCE",
+                "HUMAN RESOURCE AND ORGANIZATIONAL DEVELOPMENT",
+                "LEARNING SYSTEM",
+                "LEGAL AND LEGISLATIVE AFFAIRS",
+                "OFFICE OF THE SECRETARY",
+                "OPERATIONS",
+                "PROCUREMENT",
+                "STRATEGIC MANAGEMENT",
+                "TEACHERS AND EDUCATION COUNCIL SECRETARIAT"
+              ),
+              multiple = TRUE,
+              options = pickerOptions(
+                actionsBox = TRUE,
+                liveSearch = TRUE,
+                header = "Select Strand(s)",
+                title = "No Strand Selected",
+                selectedTextFormat = "count > 3",
+                dropupAuto = FALSE,
+                dropup = FALSE,
+             
+              ),
+              choicesOpt = list(
+                style = "white-space: normal; word-break: break-word; overflow-wrap: break-word;"
+              )
+              
+            )),
+
+          layout_columns(
+            card(
+              card_header(strong("Third Level Officials")),
+              dataTableOutput("ThirdLevel_Table")
+            ),
+            col_widths = c(12,12)
+          )
+        )
+      )),
+
       
-        
-   
+      
       # --- Quick School Search ---
       nav_panel(
         title = tags$b("Quick School Search"),
@@ -6117,42 +6194,42 @@ observeEvent(input$show_curricular_graphs, {
             legend.position = "bottom", # Position legend at the bottom
             plot.title = element_text(hjust = 0.5)) # Center the plot title
     
-  #   # Build a small frame-based plotly animation that grows the bars from 0->full
-  #   # Create scaled frames for a smooth startup animation
-  #   n_frames <- 8
-  #   scales_seq <- seq(0, 1, length.out = n_frames)
-  #   
-  #   frames_df <- plot_data %>%
-  #     tidyr::crossing(frame_step = seq_along(scales_seq)) %>%
-  #     mutate(scale = scales_seq[frame_step],
-  #            Count_scaled = Count * scale,
-  #            hover_text = paste("Region: ", Region,
-  #                               "<br>School Type: ", Modified.COC,
-  #                               "<br>Count: ", scales::comma(Count)))
-  #   
-  #   # Use plot_ly with frames and stacked bars
-  #   p_plotly <- plot_ly(
-  #     data = frames_df,
-  #     x = ~factor(Modified.COC, levels = coc_levels),
-  #     y = ~Count_scaled,
-  #     color = ~Region,
-  #     frame = ~frame_step,
-  #     type = 'bar',
-  #     text = ~hover_text,
-  #     hoverinfo = 'text',
-  #     marker = list(line = list(width = 0.5, color = 'black'))
-  #   ) %>%
-  #     layout(barmode = 'stack',
-  #            hoverlabel = list(bgcolor = 'white'),
-  #            margin = list(b = 100),
-  #            xaxis = list(title = 'Modified Curricular Offering', tickangle = 45),
-  #            yaxis = list(title = 'Number of Schools'))
-  #   
-  #   # Auto-play the animation on render using a tiny JS hook
-  #   p_plotly <- htmlwidgets::onRender(p_plotly,
-  #                                     "function(el, x) {\n\n        // Small timeout to ensure plot is fully initialized\n        setTimeout(function(){\n          try{\n            Plotly.animate(el, null, {frame: {duration: 80, redraw: false}, transition: {duration: 0}, mode: 'immediate'});\n          }catch(e){\n            console.log('Animation error:', e);\n          }\n        }, 150);\n      }")
-  #   
-  #   p_plotly
+    #   # Build a small frame-based plotly animation that grows the bars from 0->full
+    #   # Create scaled frames for a smooth startup animation
+    #   n_frames <- 8
+    #   scales_seq <- seq(0, 1, length.out = n_frames)
+    #   
+    #   frames_df <- plot_data %>%
+    #     tidyr::crossing(frame_step = seq_along(scales_seq)) %>%
+    #     mutate(scale = scales_seq[frame_step],
+    #            Count_scaled = Count * scale,
+    #            hover_text = paste("Region: ", Region,
+    #                               "<br>School Type: ", Modified.COC,
+    #                               "<br>Count: ", scales::comma(Count)))
+    #   
+    #   # Use plot_ly with frames and stacked bars
+    #   p_plotly <- plot_ly(
+    #     data = frames_df,
+    #     x = ~factor(Modified.COC, levels = coc_levels),
+    #     y = ~Count_scaled,
+    #     color = ~Region,
+    #     frame = ~frame_step,
+    #     type = 'bar',
+    #     text = ~hover_text,
+    #     hoverinfo = 'text',
+    #     marker = list(line = list(width = 0.5, color = 'black'))
+    #   ) %>%
+    #     layout(barmode = 'stack',
+    #            hoverlabel = list(bgcolor = 'white'),
+    #            margin = list(b = 100),
+    #            xaxis = list(title = 'Modified Curricular Offering', tickangle = 45),
+    #            yaxis = list(title = 'Number of Schools'))
+    #   
+    #   # Auto-play the animation on render using a tiny JS hook
+    #   p_plotly <- htmlwidgets::onRender(p_plotly,
+    #                                     "function(el, x) {\n\n        // Small timeout to ensure plot is fully initialized\n        setTimeout(function(){\n          try{\n            Plotly.animate(el, null, {frame: {duration: 80, redraw: false}, transition: {duration: 0}, mode: 'immediate'});\n          }catch(e){\n            console.log('Animation error:', e);\n          }\n        }, 150);\n      }")
+    #   
+    #   p_plotly
   })
   
   output$SOSSS_DataTable <- DT::renderDT({
@@ -7456,14 +7533,21 @@ observeEvent(input$show_curricular_graphs, {
   
   filtered_third <- reactive({
     df <- ThirdLevel %>%
-      filter(STRAND %in% input$ThirdLevel_Strands)
+      filter(STRAND %in% input$ThirdLevel_Strands) %>%
+      mutate(across(
+        c(STRAND, BUREAU.SERVICE, OFFICE, NAME, POSITION, DESIGNATION, TELEPHONE.NUMBER, DEPED.EMAIL),
+        ~ ifelse(is.na(.) | . == "", "-", .)
+      ))
+    
     print(head(df))
     df
   })
   
+  
+  
   output$ThirdLevel_Table <- DT::renderDT(server = TRUE, {
     
-
+    
     datatable(
       filtered_third() %>%
         select(
@@ -7491,7 +7575,7 @@ observeEvent(input$show_curricular_graphs, {
         )
       )
       
-
+      
     )
   })
   
@@ -7515,7 +7599,7 @@ observeEvent(input$show_curricular_graphs, {
   })
   
   
-  # --- Initialize map only once ---
+  # --- Initialize map once ---
   output$TextMapping <- renderLeaflet({
     leaflet() %>%
       setView(lng = 122, lat = 13, zoom = 5) %>%
@@ -7527,98 +7611,65 @@ observeEvent(input$show_curricular_graphs, {
       addLayersControl(baseGroups = c("Satellite", "Road Map"))
   })
   
-  # --- Reactive controls for input and button ---
+  # --- Shared reactive for filtered data ---
+  mainreact1 <- reactiveVal(NULL)
+  
+  # --- Enable or disable button based on input ---
   observe({
     txt <- trimws(input$text)
-    
-    # Disable button if text is empty
     shinyjs::toggleState("TextRun", condition = txt != "")
-    
-    # Show or hide warning message
-    output$text_warning <- renderText({
-      if (txt == "") {
-        "⚠ Please enter a school name before showing results."
-      } else {
-        ""
-      }
-    })
   })
   
-  
-  # --- Observe button click ---
+  # --- When Show Selection is clicked ---
   observeEvent(input$TextRun, {
     Text <- trimws(input$text)
-    
-    # Extra safety check (should not trigger because button is disabled when blank)
     if (Text == "") return()
     
-    # --- Filter data based on input ---
-    mainreact1 <- uni %>%
+    filtered_data <- uni %>%
       arrange(Region, Division) %>%
       filter(grepl(Text, as.character(School.Name), ignore.case = TRUE))
     
-    # --- Handle no matching results ---
-    if (nrow(mainreact1) == 0) {
-      output$text_warning <- renderText(paste0("⚠ No results found for '", Text, "'."))
-      leafletProxy("TextMapping") %>%
-        clearMarkers() %>%
-        clearMarkerClusters()
+    mainreact1(filtered_data)
+    
+    if (nrow(filtered_data) == 0) {
+      leafletProxy("TextMapping") %>% clearMarkers() %>% clearMarkerClusters()
       output$TextTable <- DT::renderDT(NULL)
       return()
-    } else {
-      output$text_warning <- renderText("")  # clear any old warning
     }
     
-    # --- Create leaflet labels ---
+    # Map markers
     values.comp <- paste(
       strong("SCHOOL INFORMATION"),
-      "<br>School Name:", mainreact1$School.Name,
-      "<br>School ID:", mainreact1$SchoolID
+      "<br>School Name:", filtered_data$School.Name,
+      "<br>School ID:", filtered_data$SchoolID
     ) %>% lapply(htmltools::HTML)
     
-    # --- Update leaflet map ---
     leafletProxy("TextMapping") %>%
       clearMarkers() %>%
       clearMarkerClusters() %>%
-      setView(lng = mainreact1$Longitude[1],
-              lat = mainreact1$Latitude[1],
-              zoom = 4.5) %>%
+      setView(lng = filtered_data$Longitude[1],
+              lat = filtered_data$Latitude[1],
+              zoom = 8) %>%
       addAwesomeMarkers(
-        lng = mainreact1$Longitude,
-        lat = mainreact1$Latitude,
-        icon = makeAwesomeIcon(
-          icon = "education",
-          library = "glyphicon",
-          markerColor = "blue"
-        ),
+        lng = filtered_data$Longitude,
+        lat = filtered_data$Latitude,
+        icon = makeAwesomeIcon(icon = "education", library = "glyphicon", markerColor = "blue"),
         label = values.comp,
-        labelOptions = labelOptions(
-          noHide = FALSE,
-          textsize = "12px",
-          direction = "top",
-          fill = TRUE,
-          style = list("border-color" = "rgba(0,0,0,0.5)")
-        )
+        labelOptions = labelOptions(textsize = "12px", direction = "top")
       )
     
-    # --- Render DataTable ---
-    output$TextTable <- DT::renderDT(server = FALSE, {
+    # DataTable
+    output$TextTable <- DT::renderDT({
       datatable(
-        mainreact1 %>%
+        filtered_data %>%
           select("Region", "Division", "Legislative.District", "Municipality", "School.Name") %>%
           rename("School" = "School.Name"),
-        extension = 'Buttons',
-        rownames = FALSE,
-        options = list(
-          scrollX = TRUE,
-          pageLength = 10,
-          columnDefs = list(list(className = 'dt-center', targets = "_all")),
-          dom = 'lrtip'
-        ),
-        filter = "top"
+        options = list(scrollX = TRUE, pageLength = 10),
+        selection = "single"
       )
     })
   })
+  
   
   output$deped <- renderImage({
     list(src="deped.png", width= "100%",
@@ -8390,10 +8441,10 @@ observeEvent(input$show_curricular_graphs, {
         lng = mainreactLMS$Longitude,
         lat = mainreactLMS$Latitude,
         icon = makeAwesomeIcon(icon = "education", library = "glyphicon",
-        markerColor = case_when(
-          mainreactLMS$Buildable_space == 0 ~ "red", # Corrected to '=='
-          mainreactLMS$Buildable_space == 1 ~ "green" # Corrected to '=='
-        )),
+                               markerColor = case_when(
+                                 mainreactLMS$Buildable_space == 0 ~ "red", # Corrected to '=='
+                                 mainreactLMS$Buildable_space == 1 ~ "green" # Corrected to '=='
+                               )),
         label = values.LMS,
         labelOptions = labelOptions(noHide = F, textsize = "12px", direction = "top")
       )
@@ -8604,7 +8655,7 @@ observeEvent(input$show_curricular_graphs, {
           )
         )
       )
-
+    
     
     leafletProxy("TeacherShortage_Mapping") %>% clearMarkers() %>% clearMarkerClusters() %>% setView(lng = mainreact1$Longitude[1], lat = mainreact1$Latitude[1], zoom = 7) %>% 
       addAwesomeMarkers(clusterOptions = markerClusterOptions(disableClusteringAtZoom = 15), lng = mainreact1$Longitude, lat = mainreact1$Latitude, popup = values_teacher_shortage_popup, options = popupOptions(), label = values_teacher_shortage, labelOptions = labelOptions(noHide = F, textsize = "12px", direction = "top"), icon = makeAwesomeIcon(icon = "education", library = "glyphicon", markerColor = case_when(mainreact1$TeacherShortage > 0 ~ "red", mainreact1$TeacherExcess > 0 ~ "blue", (mainreact1$TeacherExcess == 0 & mainreact1$TeacherShortage == 0) ~ "green", is.na(mainreact1$TeacherShortage) ~ "gray")))
@@ -8886,133 +8937,114 @@ observeEvent(input$show_curricular_graphs, {
     
   })
   
-  observeEvent(input$LMSTable_rows_selected, {
-    
-    RegRCT <- input$resource_map_region
-    SDORCT1 <- input$Resource_SDO
-    
-    mainreactLMS <- LMS %>%
-      filter(LMS == 1) %>%   # Step 1: LMS only
-      left_join(uni %>% select(SchoolID,Latitude,Longitude), by = c("School_ID" = "SchoolID")) %>%   # Step 2: lat/long
-      left_join(buildablecsv %>% select(SCHOOL.ID,OTHER.REMARKS..Buildable.Space..), by = c("School_ID" = "SCHOOL.ID")) %>% 
-      filter(Region == RegRCT) %>% filter(Division == SDORCT1)
-    
-    df1 <- reactive({
-      
-      if (is.null(input$LMSMapping_bounds)) {
-        mainreactLMS
-      } else {
-        bounds <- input$LMSMapping_bounds
-        latRng <- range(bounds$north, bounds$south)
-        lngRng <- range(bounds$east, bounds$west)
-        
-        subset(mainreactLMS,
-               Latitude >= latRng[1] & Latitude <= latRng[2] & Longitude >= lngRng[1] & Longitude <= lngRng[2])
-      }
-    })
-    
-    row_selected = df1()[input$LMSTable_rows_selected,]
-    leafletProxy("LMSMapping") %>%
-      setView(lng = row_selected$Longitude, lat = row_selected$Latitude, zoom = 15)
-    
-  })
-  
+  # --- When a row in the table is clicked ---
   observeEvent(input$TextTable_rows_selected, {
+    filtered_data <- mainreact1()
+    req(filtered_data)
     
-    Text <- input$text
+    row_selected <- filtered_data[input$TextTable_rows_selected, ]
+    req(nrow(row_selected) > 0)
     
-    mainreact1 <- uni %>% arrange(Division) %>% filter(grepl(Text, as.character(School.Name), ignore.case = TRUE))
-    
-    df1 <- reactive({
-      
-      if (is.null(input$TextMapping_bounds)) {
-        mainreact1
-      } else {
-        bounds <- input$TextMapping_bounds
-        latRng <- range(bounds$north, bounds$south)
-        lngRng <- range(bounds$east, bounds$west)
-        
-        subset(mainreact1,
-               Latitude >= latRng[1] & Latitude <= latRng[2] & Longitude >= lngRng[1] & Longitude <= lngRng[2])
-      }
-    })
-    
-    row_selected = df1()[input$TextTable_rows_selected,]
+    # Update map to selected row
     leafletProxy("TextMapping") %>%
       setView(lng = row_selected$Longitude, lat = row_selected$Latitude, zoom = 15)
     
-    rowselected_table1 <- row_selected %>% select(Region,Province,Municipality,Division,District,Barangay,Street.Address,SchoolID,School.Name,School.Head.Name,SH.Position,Implementing.Unit,Modified.COC,Latitude,Longitude) %>% rename("Modified Curricular Offering" = Modified.COC, "School ID" = SchoolID, "School Name" = School.Name, "Street Address" = Street.Address, "Implementing Unit" = Implementing.Unit, "School Head" = School.Head.Name,"School Head Position" = SH.Position) %>% mutate(dplyr::across(tidyr::everything(), as.character)) %>% pivot_longer(
-      cols = everything(),    # Pivot all columns selected in details_to_pivot
-      names_to = "Basic Info",     # Name of the new column holding the original column names
-      values_to = "Data")     # Name of the new column holding the original values
+    # === Generate detailed tables ===
+    rowselected_table1 <- row_selected %>% select(
+      Region, Province, Municipality, Division, District, Barangay, Street.Address,
+      SchoolID, School.Name, School.Head.Name, SH.Position, Implementing.Unit,
+      Modified.COC, Latitude, Longitude
+    ) %>%
+      rename(
+        "Modified Curricular Offering" = Modified.COC,
+        "School ID" = SchoolID,
+        "School Name" = School.Name,
+        "Street Address" = Street.Address,
+        "Implementing Unit" = Implementing.Unit,
+        "School Head" = School.Head.Name,
+        "School Head Position" = SH.Position
+      ) %>%
+      mutate(across(everything(), as.character)) %>%
+      pivot_longer(cols = everything(),
+                   names_to = "Basic Info",
+                   values_to = "Data")
     
-    rowselected_table2 <- row_selected %>% select(ES.Excess,ES.Shortage,JHS.Excess,JHS.Shortage,SHS.Excess,SHS.Shortage,ES.Teachers,JHS.Teachers,SHS.Teachers,ES.Enrolment,JHS.Enrolment,SHS.Enrolment,School.Size.Typology,Clustering.Status,Outlier.Status) %>% rename("ES Teachers"=ES.Teachers,"JHS Teachers"=JHS.Teachers,"SHS Teachers"=SHS.Teachers, "ES Enrolment" = ES.Enrolment, "JHS Enrolment" = JHS.Enrolment, "SHS Enrolment" = SHS.Enrolment, "School Size Typology" = School.Size.Typology, "AO II Deployment" = Clustering.Status,"COS Deployment" = Outlier.Status, "ES Shortage" = ES.Shortage,"ES Excess" = ES.Excess,"JHS Shortage" = JHS.Shortage,"JHS Excess" = JHS.Excess,"SHS Shortage" = SHS.Shortage,"SHS Excess" = SHS.Excess) %>% mutate(dplyr::across(tidyr::everything(), as.character)) %>% pivot_longer(
-      cols = everything(),    # Pivot all columns selected in details_to_pivot
-      names_to = "HR Data",     # Name of the new column holding the original column names
-      values_to = "Data")     # Name of the new column holding the original values
+    rowselected_table2 <- row_selected %>% select(
+      ES.Excess, ES.Shortage, JHS.Excess, JHS.Shortage, SHS.Excess, SHS.Shortage,
+      ES.Teachers, JHS.Teachers, SHS.Teachers,
+      ES.Enrolment, JHS.Enrolment, SHS.Enrolment,
+      School.Size.Typology, Clustering.Status, Outlier.Status
+    ) %>%
+      rename(
+        "ES Teachers" = ES.Teachers,
+        "JHS Teachers" = JHS.Teachers,
+        "SHS Teachers" = SHS.Teachers,
+        "ES Enrolment" = ES.Enrolment,
+        "JHS Enrolment" = JHS.Enrolment,
+        "SHS Enrolment" = SHS.Enrolment,
+        "School Size Typology" = School.Size.Typology,
+        "AO II Deployment" = Clustering.Status,
+        "COS Deployment" = Outlier.Status,
+        "ES Shortage" = ES.Shortage,
+        "ES Excess" = ES.Excess,
+        "JHS Shortage" = JHS.Shortage,
+        "JHS Excess" = JHS.Excess,
+        "SHS Shortage" = SHS.Shortage,
+        "SHS Excess" = SHS.Excess
+      ) %>%
+      mutate(across(everything(), as.character)) %>%
+      pivot_longer(cols = everything(),
+                   names_to = "HR Data",
+                   values_to = "Data")
     
-    rowselected_table3 <- row_selected %>% select(Buildings,Instructional.Rooms.2023.2024,Classroom.Requirement,Est.CS,Buidable_space,Major.Repair.2023.2024,SBPI,Shifting,OwnershipType,ElectricitySource,WaterSource,Total.Seats.2023.2024,Total.Seats.Shortage.2023.2024) %>% rename("With Buildable Space" = Buidable_space,"Number of Instructional Rooms" = Instructional.Rooms.2023.2024,"Classroom Requirement" = Classroom.Requirement,"Ownership Type" = OwnershipType,"Source of Electricity" = ElectricitySource,"Source of Water" = WaterSource,"Estimated Classroom Shortage"= Est.CS,"School Building Priority Index" = SBPI,"For Major Repairs"= Major.Repair.2023.2024,"Total Seats"=Total.Seats.2023.2024,"Total Seats Shortage"=Total.Seats.Shortage.2023.2024, "Number of Buildings"=Buildings) %>% mutate(dplyr::across(tidyr::everything(), as.character)) %>% pivot_longer(
-      cols = everything(),    # Pivot all columns selected in details_to_pivot
-      names_to = "Classroom Data",     # Name of the new column holding the original column names
-      values_to = "Data")     # Name of the new column holding the original values
+    rowselected_table3 <- row_selected %>% select(
+      Buildings, Instructional.Rooms.2023.2024, Classroom.Requirement,
+      Est.CS, Buidable_space, Major.Repair.2023.2024, SBPI,
+      Shifting, OwnershipType, ElectricitySource, WaterSource,
+      Total.Seats.2023.2024, Total.Seats.Shortage.2023.2024
+    ) %>%
+      rename(
+        "With Buildable Space" = Buidable_space,
+        "Number of Instructional Rooms" = Instructional.Rooms.2023.2024,
+        "Classroom Requirement" = Classroom.Requirement,
+        "Ownership Type" = OwnershipType,
+        "Source of Electricity" = ElectricitySource,
+        "Source of Water" = WaterSource,
+        "Estimated Classroom Shortage" = Est.CS,
+        "School Building Priority Index" = SBPI,
+        "For Major Repairs" = Major.Repair.2023.2024,
+        "Total Seats" = Total.Seats.2023.2024,
+        "Total Seats Shortage" = Total.Seats.Shortage.2023.2024,
+        "Number of Buildings" = Buildings
+      ) %>%
+      mutate(across(everything(), as.character)) %>%
+      pivot_longer(cols = everything(),
+                   names_to = "Classroom Data",
+                   values_to = "Data")
     
+    rowselected_table5 <- row_selected %>% select(
+      English, Mathematics, Science, Biological.Sciences, Physical.Sciences,
+      General.Ed, Araling.Panlipunan, TLE, MAPEH, Filipino, ESP,
+      Agriculture, ECE, SPED
+    ) %>%
+      rename(
+        "Biological Sciences" = Biological.Sciences,
+        "Physical Sciences" = Physical.Sciences,
+        "General Education" = General.Ed,
+        "Araling Panlipunan" = Araling.Panlipunan,
+        "Early Childhood Education" = ECE
+      ) %>%
+      mutate(across(everything(), as.character)) %>%
+      pivot_longer(cols = everything(),
+                   names_to = "Specialization Data",
+                   values_to = "Data")
     
-    rowselected_table4 <- row_selected %>% select(SHA.2021.Index,Travel..Cost,Travel.Time,No.Piped.Water,No.Grid.Electricity,No.Internet,Conflict,TLS) %>% rename("HI 2021" = SHA.2021.Index,"Travel Cost" = Travel..Cost,"Travel Time" = Travel.Time,"No Access to Piped Water" = No.Piped.Water,"No Access to Grid Electricity"= No.Grid.Electricity,"No Access to Internet" = No.Internet,"Incidence of Conflict" = Conflict,"Existence of Temporary Learning Spaces"= TLS) %>% mutate(dplyr::across(tidyr::everything(), as.character)) %>% pivot_longer(
-      cols = everything(),    # Pivot all columns selected in details_to_pivot
-      names_to = "Other Data",     # Name of the new column holding the original column names
-      values_to = "Data")     # Name of the new column holding the original values
-    
-    rowselected_table5 <- row_selected %>% select(English,Mathematics,Science,Biological.Sciences,Physical.Sciences,General.Ed,Araling.Panlipunan,TLE,MAPEH,Filipino,ESP,Agriculture,ECE,SPED) %>% rename("Biological Sciences" = Biological.Sciences,"Physical Sciences" = Physical.Sciences,"General Education" = General.Ed,"Araling Panlipunan" = Araling.Panlipunan,"Early Chilhood Education" = ECE) %>% mutate(dplyr::across(tidyr::everything(), as.character)) %>% pivot_longer(
-      cols = everything(),    # Pivot all columns selected in details_to_pivot
-      names_to = "Other Data",     # Name of the new column holding the original column names
-      values_to = "Data")     # Name of the new column holding the original values
-    
-    output$schooldetails <- renderTable({
-      # Pass the pivoted data frame directly
-      rowselected_table1
-    },
-    rownames = FALSE, # Don't show automatic row names
-    colnames = TRUE,  # Show column names (Field, Value)
-    hover = TRUE,     # Add hover effect to rows (optional styling)
-    bordered = TRUE)
-    
-    output$schooldetails2 <- renderTable({
-      # Pass the pivoted data frame directly
-      rowselected_table2
-    },
-    rownames = FALSE, # Don't show automatic row names
-    colnames = TRUE,  # Show column names (Field, Value)
-    hover = TRUE,     # Add hover effect to rows (optional styling)
-    bordered = TRUE)
-    
-    output$schooldetails3 <- renderTable({
-      # Pass the pivoted data frame directly
-      rowselected_table3
-    },
-    rownames = FALSE, # Don't show automatic row names
-    colnames = TRUE,  # Show column names (Field, Value)
-    hover = TRUE,     # Add hover effect to rows (optional styling)
-    bordered = TRUE)
-    
-    output$schooldetails4 <- renderTable({
-      # Pass the pivoted data frame directly
-      rowselected_table4
-    },
-    rownames = FALSE, # Don't show automatic row names
-    colnames = TRUE,  # Show column names (Field, Value)
-    hover = TRUE,     # Add hover effect to rows (optional styling)
-    bordered = TRUE)
-    
-    output$schooldetails5 <- renderTable({
-      # Pass the pivoted data frame directly
-      rowselected_table5
-    },
-    rownames = FALSE, # Don't show automatic row names
-    colnames = TRUE,  # Show column names (Field, Value)
-    hover = TRUE,     # Add hover effect to rows (optional styling)
-    bordered = TRUE)
-    
-  })# Add borders to the table (optional styling)
+    # === Render tables ===
+    output$schooldetails <- renderTable(rowselected_table1, bordered = TRUE)
+    output$schooldetails2 <- renderTable(rowselected_table2, bordered = TRUE)
+    output$schooldetails3 <- renderTable(rowselected_table3, bordered = TRUE)
+    output$schooldetails5 <- renderTable(rowselected_table5, bordered = TRUE)
+  })
   
   observeEvent(input$CongestTable_rows_selected, {
     
@@ -9284,20 +9316,20 @@ observeEvent(input$show_curricular_graphs, {
           fixedHeader = list(
             header = TRUE,
             footer = FALSE),
-        GMISDiv2,
-        filter = "top",
-        extensions = "FixedHeader",
-        options = list(
-          fixedHeader = list(header = TRUE, footer = FALSE),
-          scrollY = "300px",
-          scrollCollapse = TRUE,
-          columnDefs = list(list(className = 'dt-center', targets = '_all')),
-          rownames = FALSE
-        )
-      ))
+          GMISDiv2,
+          filter = "top",
+          extensions = "FixedHeader",
+          options = list(
+            fixedHeader = list(header = TRUE, footer = FALSE),
+            scrollY = "300px",
+            scrollCollapse = TRUE,
+            columnDefs = list(list(className = 'dt-center', targets = '_all')),
+            rownames = FALSE
+          )
+        ))
     })
   })
-      
+  
   
   observeEvent(input$SHSListTable_rows_selected, {
     
