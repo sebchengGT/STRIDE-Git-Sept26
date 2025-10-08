@@ -59,7 +59,7 @@ cloud_v2 <- read_parquet("Cloud_Consolidated_v2.parquet")
 cloud_v3 <- read_parquet("Cloud_Consolidated_v3.parquet")
 
 #Data Explorer 
-ThirdLevel <- read.csv("2025-Third Level Officials DepEd.csv", stringsAsFactors = FALSE)
+ThirdLevel <- read.csv("2025-Third Level Officials DepEd-cleaned.csv", stringsAsFactors = FALSE)
 
 
 user_base <- tibble::tibble(
@@ -1771,30 +1771,30 @@ server <- function(input, output, session) {
               inputId = "ThirdLevel_Strands",
               label = "Select Strand(s):",
               choices = c(
-                "ADMINISTRATION",
-                "DEPED ATTACHED AGENCIES",
-                "FINANCE",
-                "HUMAN RESOURCE AND ORGANIZATIONAL DEVELOPMENT",
-                "LEARNING SYSTEM",
-                "LEGAL AND LEGISLATIVE AFFAIRS",
-                "OFFICE OF THE SECRETARY",
-                "OPERATIONS",
-                "PROCUREMENT",
-                "STRATEGIC MANAGEMENT",
-                "TEACHERS AND EDUCATION COUNCIL SECRETARIAT"
+                "Administration",
+                "Deped Attached Agencies",
+                "Finance",
+                "Human Resource And Organizational Development",
+                "Learning System",
+                "Legal And Legislative Affairs",
+                "Office Of The Secretary",
+                "Operations",
+                "Procurement",
+                "Strategic Management",
+                "Teachers And Education Council Secretariat"
               ),
               selected = c(
-                "ADMINISTRATION",
-                "DEPED ATTACHED AGENCIES",
-                "FINANCE",
-                "HUMAN RESOURCE AND ORGANIZATIONAL DEVELOPMENT",
-                "LEARNING SYSTEM",
-                "LEGAL AND LEGISLATIVE AFFAIRS",
-                "OFFICE OF THE SECRETARY",
-                "OPERATIONS",
-                "PROCUREMENT",
-                "STRATEGIC MANAGEMENT",
-                "TEACHERS AND EDUCATION COUNCIL SECRETARIAT"
+                "Administration",
+                "Deped Attached Agencies",
+                "Finance",
+                "Human Resource And Organizational Development",
+                "Learning System",
+                "Legal And Legislative Affairs",
+                "Office Of The Secretary",
+                "Operations",
+                "Procurement",
+                "Strategic Management",
+                "Teachers And Education Council Secretariat"
               ),
               multiple = TRUE,
               options = pickerOptions(
@@ -7451,6 +7451,7 @@ server <- function(input, output, session) {
     datatable(
       filtered_third() %>%
         select(
+          STRAND,
           OFFICE,
           BUREAU.SERVICE,
           NAME,
@@ -7464,7 +7465,7 @@ server <- function(input, output, session) {
       options = list(
         scrollX = TRUE,
         autoWidth = TRUE,
-        fixedColumns = list(leftColumns = 4),
+        fixedColumns = list(leftColumns = 5),
         pageLength = 10,
         columnDefs = list(list(className = 'dt-center', targets = "_all")),
         dom = 'Bfrtip',
@@ -8837,114 +8838,114 @@ server <- function(input, output, session) {
     
   })
   
-  # --- When a row in the table is clicked ---
-  observeEvent(input$TextTable_rows_selected, {
-    filtered_data <- mainreact1()
-    req(filtered_data)
-    
-    row_selected <- filtered_data[input$TextTable_rows_selected, ]
-    req(nrow(row_selected) > 0)
-    
-    # Update map to selected row
-    leafletProxy("TextMapping") %>%
-      setView(lng = row_selected$Longitude, lat = row_selected$Latitude, zoom = 15)
-    
-    # === Generate detailed tables ===
-    rowselected_table1 <- row_selected %>% select(
-      Region, Province, Municipality, Division, District, Barangay, Street.Address,
-      SchoolID, School.Name, School.Head.Name, SH.Position, Implementing.Unit,
-      Modified.COC, Latitude, Longitude
+ # --- When a row in the table is clicked ---
+observeEvent(input$TextTable_rows_selected, {
+  filtered_data <- mainreact1()
+  req(filtered_data)
+
+  row_selected <- filtered_data[input$TextTable_rows_selected, ]
+  req(nrow(row_selected) > 0)
+
+  # Update map to selected row
+  leafletProxy("TextMapping") %>%
+    setView(lng = row_selected$Longitude, lat = row_selected$Latitude, zoom = 15)
+
+  # === Generate detailed tables ===
+  rowselected_table1 <- row_selected %>% select(
+    Region, Province, Municipality, Division, District, Barangay, Street.Address,
+    SchoolID, School.Name, School.Head.Name, SH.Position, Implementing.Unit,
+    Modified.COC, Latitude, Longitude
+  ) %>%
+    rename(
+      "Modified Curricular Offering" = Modified.COC,
+      "School ID" = SchoolID,
+      "School Name" = School.Name,
+      "Street Address" = Street.Address,
+      "Implementing Unit" = Implementing.Unit,
+      "School Head" = School.Head.Name,
+      "School Head Position" = SH.Position
     ) %>%
-      rename(
-        "Modified Curricular Offering" = Modified.COC,
-        "School ID" = SchoolID,
-        "School Name" = School.Name,
-        "Street Address" = Street.Address,
-        "Implementing Unit" = Implementing.Unit,
-        "School Head" = School.Head.Name,
-        "School Head Position" = SH.Position
-      ) %>%
-      mutate(across(everything(), as.character)) %>%
-      pivot_longer(cols = everything(),
-                   names_to = "Basic Info",
-                   values_to = "Data")
-    
-    rowselected_table2 <- row_selected %>% select(
-      ES.Excess, ES.Shortage, JHS.Excess, JHS.Shortage, SHS.Excess, SHS.Shortage,
-      ES.Teachers, JHS.Teachers, SHS.Teachers,
-      ES.Enrolment, JHS.Enrolment, SHS.Enrolment,
-      School.Size.Typology, Clustering.Status, Outlier.Status
+    mutate(across(everything(), as.character)) %>%
+    pivot_longer(cols = everything(),
+                 names_to = "Basic Info",
+                 values_to = "Data")
+
+  rowselected_table2 <- row_selected %>% select(
+    ES.Excess, ES.Shortage, JHS.Excess, JHS.Shortage, SHS.Excess, SHS.Shortage,
+    ES.Teachers, JHS.Teachers, SHS.Teachers,
+    ES.Enrolment, JHS.Enrolment, SHS.Enrolment,
+    School.Size.Typology, Clustering.Status, Outlier.Status
+  ) %>%
+    rename(
+      "ES Teachers" = ES.Teachers,
+      "JHS Teachers" = JHS.Teachers,
+      "SHS Teachers" = SHS.Teachers,
+      "ES Enrolment" = ES.Enrolment,
+      "JHS Enrolment" = JHS.Enrolment,
+      "SHS Enrolment" = SHS.Enrolment,
+      "School Size Typology" = School.Size.Typology,
+      "AO II Deployment" = Clustering.Status,
+      "COS Deployment" = Outlier.Status,
+      "ES Shortage" = ES.Shortage,
+      "ES Excess" = ES.Excess,
+      "JHS Shortage" = JHS.Shortage,
+      "JHS Excess" = JHS.Excess,
+      "SHS Shortage" = SHS.Shortage,
+      "SHS Excess" = SHS.Excess
     ) %>%
-      rename(
-        "ES Teachers" = ES.Teachers,
-        "JHS Teachers" = JHS.Teachers,
-        "SHS Teachers" = SHS.Teachers,
-        "ES Enrolment" = ES.Enrolment,
-        "JHS Enrolment" = JHS.Enrolment,
-        "SHS Enrolment" = SHS.Enrolment,
-        "School Size Typology" = School.Size.Typology,
-        "AO II Deployment" = Clustering.Status,
-        "COS Deployment" = Outlier.Status,
-        "ES Shortage" = ES.Shortage,
-        "ES Excess" = ES.Excess,
-        "JHS Shortage" = JHS.Shortage,
-        "JHS Excess" = JHS.Excess,
-        "SHS Shortage" = SHS.Shortage,
-        "SHS Excess" = SHS.Excess
-      ) %>%
-      mutate(across(everything(), as.character)) %>%
-      pivot_longer(cols = everything(),
-                   names_to = "HR Data",
-                   values_to = "Data")
-    
-    rowselected_table3 <- row_selected %>% select(
-      Buildings, Instructional.Rooms.2023.2024, Classroom.Requirement,
-      Est.CS, Buidable_space, Major.Repair.2023.2024, SBPI,
-      Shifting, OwnershipType, ElectricitySource, WaterSource,
-      Total.Seats.2023.2024, Total.Seats.Shortage.2023.2024
+    mutate(across(everything(), as.character)) %>%
+    pivot_longer(cols = everything(),
+                 names_to = "HR Data",
+                 values_to = "Data")
+
+  rowselected_table3 <- row_selected %>% select(
+    Buildings, Instructional.Rooms.2023.2024, Classroom.Requirement,
+    Est.CS, Buidable_space, Major.Repair.2023.2024, SBPI,
+    Shifting, OwnershipType, ElectricitySource, WaterSource,
+    Total.Seats.2023.2024, Total.Seats.Shortage.2023.2024
+  ) %>%
+    rename(
+      "With Buildable Space" = Buidable_space,
+      "Number of Instructional Rooms" = Instructional.Rooms.2023.2024,
+      "Classroom Requirement" = Classroom.Requirement,
+      "Ownership Type" = OwnershipType,
+      "Source of Electricity" = ElectricitySource,
+      "Source of Water" = WaterSource,
+      "Estimated Classroom Shortage" = Est.CS,
+      "School Building Priority Index" = SBPI,
+      "For Major Repairs" = Major.Repair.2023.2024,
+      "Total Seats" = Total.Seats.2023.2024,
+      "Total Seats Shortage" = Total.Seats.Shortage.2023.2024,
+      "Number of Buildings" = Buildings
     ) %>%
-      rename(
-        "With Buildable Space" = Buidable_space,
-        "Number of Instructional Rooms" = Instructional.Rooms.2023.2024,
-        "Classroom Requirement" = Classroom.Requirement,
-        "Ownership Type" = OwnershipType,
-        "Source of Electricity" = ElectricitySource,
-        "Source of Water" = WaterSource,
-        "Estimated Classroom Shortage" = Est.CS,
-        "School Building Priority Index" = SBPI,
-        "For Major Repairs" = Major.Repair.2023.2024,
-        "Total Seats" = Total.Seats.2023.2024,
-        "Total Seats Shortage" = Total.Seats.Shortage.2023.2024,
-        "Number of Buildings" = Buildings
-      ) %>%
-      mutate(across(everything(), as.character)) %>%
-      pivot_longer(cols = everything(),
-                   names_to = "Classroom Data",
-                   values_to = "Data")
-    
-    rowselected_table5 <- row_selected %>% select(
-      English, Mathematics, Science, Biological.Sciences, Physical.Sciences,
-      General.Ed, Araling.Panlipunan, TLE, MAPEH, Filipino, ESP,
-      Agriculture, ECE, SPED
+    mutate(across(everything(), as.character)) %>%
+    pivot_longer(cols = everything(),
+                 names_to = "Classroom Data",
+                 values_to = "Data")
+
+  rowselected_table5 <- row_selected %>% select(
+    English, Mathematics, Science, Biological.Sciences, Physical.Sciences,
+    General.Ed, Araling.Panlipunan, TLE, MAPEH, Filipino, ESP,
+    Agriculture, ECE, SPED
+  ) %>%
+    rename(
+      "Biological Sciences" = Biological.Sciences,
+      "Physical Sciences" = Physical.Sciences,
+      "General Education" = General.Ed,
+      "Araling Panlipunan" = Araling.Panlipunan,
+      "Early Childhood Education" = ECE
     ) %>%
-      rename(
-        "Biological Sciences" = Biological.Sciences,
-        "Physical Sciences" = Physical.Sciences,
-        "General Education" = General.Ed,
-        "Araling Panlipunan" = Araling.Panlipunan,
-        "Early Childhood Education" = ECE
-      ) %>%
-      mutate(across(everything(), as.character)) %>%
-      pivot_longer(cols = everything(),
-                   names_to = "Specialization Data",
-                   values_to = "Data")
-    
-    # === Render tables ===
-    output$schooldetails <- renderTable(rowselected_table1, bordered = TRUE)
-    output$schooldetails2 <- renderTable(rowselected_table2, bordered = TRUE)
-    output$schooldetails3 <- renderTable(rowselected_table3, bordered = TRUE)
-    output$schooldetails5 <- renderTable(rowselected_table5, bordered = TRUE)
-  })
+    mutate(across(everything(), as.character)) %>%
+    pivot_longer(cols = everything(),
+                 names_to = "Specialization Data",
+                 values_to = "Data")
+
+  # === Render tables ===
+  output$schooldetails <- renderTable(rowselected_table1, bordered = TRUE)
+  output$schooldetails2 <- renderTable(rowselected_table2, bordered = TRUE)
+  output$schooldetails3 <- renderTable(rowselected_table3, bordered = TRUE)
+  output$schooldetails5 <- renderTable(rowselected_table5, bordered = TRUE)
+})
   
   observeEvent(input$CongestTable_rows_selected, {
     
