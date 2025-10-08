@@ -92,7 +92,7 @@ body.dashboard-bg {
   text-align: center;
   position: sticky;
   top: 0;
-  z-index: 1000;
+  z-index: 9999 !important;
 }
 
 .app-header h2 {
@@ -128,6 +128,7 @@ body.dashboard-bg {
   width: 100%;
   border-top: 1px solid #ccc;
   font-size: 0.9em;
+  z-index: 9999 !important;
 }
 
 /* ==== CUSTOM CARDS ==== */
@@ -257,6 +258,7 @@ body.dashboard-bg {
 .accordion .accordion-button:not(.collapsed) {
     box-shadow: none;
     font-weight: bolder;
+    font-size: 20px;
     background-color: #eee567;
 }
 
@@ -269,6 +271,11 @@ body.dashboard-bg {
 
 .card-header b {
   text-align: left;
+}
+
+.card-header:first-child {
+    font-size: 20px;
+    border-radius: var(--bs-card-inner-border-radius) var(--bs-card-inner-border-radius) 0 0;
 }
 
 #curricular_graphs {
@@ -284,6 +291,7 @@ body.dashboard-bg {
     margin: 0;
     font-size: 40px;
     text-shadow: 5px 4px 2px #000000;
+    
 }
 
 .app-header p {
@@ -354,8 +362,8 @@ body.dashboard-bg {
 /* Make the text titles (e.g., "Purely ES", "Small", etc.) bold */
 .bslib-value-box .value-box-title {
   font-weight: 900 !important;
-  font-size: 1.2rem !important;   /* increase title size */
-  color: #002D62 !important;      /* DepEd blue */
+  font-size: 30px !important;   /* increase title size */
+  color: #black !important;      /* DepEd blue */
   text-transform: none;           /* keep normal case */
   letter-spacing: 0.3px;
 }
@@ -372,6 +380,52 @@ body.dashboard-bg {
 .bslib-value-box .value-box-value {
   text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
 }
+
+/* ==== SCHOOL DETAILS CARDS STYLING ==== */
+
+/* Center all card headers under the Quick School Search section */
+#schooldetails, 
+#schooldetails2, 
+#schooldetails3, 
+#schooldetails5 {
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* ==== CENTER TABLE CONTENTS INSIDE SCHOOL DETAILS CARDS ==== */
+
+/* Center all table headers and cells */
+#schooldetails th, #schooldetails td,
+#schooldetails2 th, #schooldetails2 td,
+#schooldetails3 th, #schooldetails3 td,
+#schooldetails5 th, #schooldetails5 td {
+  text-align: center !important;
+  vertical-align: middle !important;
+}
+
+/* Optional: make headers stand out */
+#schooldetails th,
+#schooldetails2 th,
+#schooldetails3 th,
+#schooldetails5 th {
+  font-weight: 900;
+  background-color: #002D62;
+  color: #ffffff;
+}
+
+/* Optional: zebra rows for readability */
+#schooldetails tr:nth-child(even),
+#schooldetails2 tr:nth-child(even),
+#schooldetails3 tr:nth-child(even),
+#schooldetails5 tr:nth-child(even) {
+  background-color: #f9f9f9;
+}
+
+
+
+
+
+
 
 
   
