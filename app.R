@@ -7499,7 +7499,7 @@ server <- function(input, output, session) {
   })
   
   
-  # --- Initialize map only once ---
+  # --- Initialize map once ---
   output$TextMapping <- renderLeaflet({
     leaflet() %>%
       setView(lng = 122, lat = 13, zoom = 5) %>%
@@ -7511,98 +7511,65 @@ server <- function(input, output, session) {
       addLayersControl(baseGroups = c("Satellite", "Road Map"))
   })
   
-  # --- Reactive controls for input and button ---
+  # --- Shared reactive for filtered data ---
+  mainreact1 <- reactiveVal(NULL)
+  
+  # --- Enable or disable button based on input ---
   observe({
     txt <- trimws(input$text)
-    
-    # Disable button if text is empty
     shinyjs::toggleState("TextRun", condition = txt != "")
-    
-    # Show or hide warning message
-    output$text_warning <- renderText({
-      if (txt == "") {
-        "⚠ Please enter a school name before showing results."
-      } else {
-        ""
-      }
-    })
   })
   
-  
-  # --- Observe button click ---
+  # --- When Show Selection is clicked ---
   observeEvent(input$TextRun, {
     Text <- trimws(input$text)
-    
-    # Extra safety check (should not trigger because button is disabled when blank)
     if (Text == "") return()
     
-    # --- Filter data based on input ---
-    mainreact1 <- uni %>%
+    filtered_data <- uni %>%
       arrange(Region, Division) %>%
       filter(grepl(Text, as.character(School.Name), ignore.case = TRUE))
     
-    # --- Handle no matching results ---
-    if (nrow(mainreact1) == 0) {
-      output$text_warning <- renderText(paste0("⚠ No results found for '", Text, "'."))
-      leafletProxy("TextMapping") %>%
-        clearMarkers() %>%
-        clearMarkerClusters()
+    mainreact1(filtered_data)
+    
+    if (nrow(filtered_data) == 0) {
+      leafletProxy("TextMapping") %>% clearMarkers() %>% clearMarkerClusters()
       output$TextTable <- DT::renderDT(NULL)
       return()
-    } else {
-      output$text_warning <- renderText("")  # clear any old warning
     }
     
-    # --- Create leaflet labels ---
+    # Map markers
     values.comp <- paste(
       strong("SCHOOL INFORMATION"),
-      "<br>School Name:", mainreact1$School.Name,
-      "<br>School ID:", mainreact1$SchoolID
+      "<br>School Name:", filtered_data$School.Name,
+      "<br>School ID:", filtered_data$SchoolID
     ) %>% lapply(htmltools::HTML)
     
-    # --- Update leaflet map ---
     leafletProxy("TextMapping") %>%
       clearMarkers() %>%
       clearMarkerClusters() %>%
-      setView(lng = mainreact1$Longitude[1],
-              lat = mainreact1$Latitude[1],
-              zoom = 4.5) %>%
+      setView(lng = filtered_data$Longitude[1],
+              lat = filtered_data$Latitude[1],
+              zoom = 8) %>%
       addAwesomeMarkers(
-        lng = mainreact1$Longitude,
-        lat = mainreact1$Latitude,
-        icon = makeAwesomeIcon(
-          icon = "education",
-          library = "glyphicon",
-          markerColor = "blue"
-        ),
+        lng = filtered_data$Longitude,
+        lat = filtered_data$Latitude,
+        icon = makeAwesomeIcon(icon = "education", library = "glyphicon", markerColor = "blue"),
         label = values.comp,
-        labelOptions = labelOptions(
-          noHide = FALSE,
-          textsize = "12px",
-          direction = "top",
-          fill = TRUE,
-          style = list("border-color" = "rgba(0,0,0,0.5)")
-        )
+        labelOptions = labelOptions(textsize = "12px", direction = "top")
       )
     
-    # --- Render DataTable ---
-    output$TextTable <- DT::renderDT(server = FALSE, {
+    # DataTable
+    output$TextTable <- DT::renderDT({
       datatable(
-        mainreact1 %>%
+        filtered_data %>%
           select("Region", "Division", "Legislative.District", "Municipality", "School.Name") %>%
           rename("School" = "School.Name"),
-        extension = 'Buttons',
-        rownames = FALSE,
-        options = list(
-          scrollX = TRUE,
-          pageLength = 10,
-          columnDefs = list(list(className = 'dt-center', targets = "_all")),
-          dom = 'lrtip'
-        ),
-        filter = "top"
+        options = list(scrollX = TRUE, pageLength = 10),
+        selection = "single"
       )
     })
   })
+  
   
   output$deped <- renderImage({
     list(src="deped.png", width= "100%",
@@ -8870,133 +8837,114 @@ server <- function(input, output, session) {
     
   })
   
-  observeEvent(input$LMSTable_rows_selected, {
-    
-    RegRCT <- input$resource_map_region
-    SDORCT1 <- input$Resource_SDO
-    
-    mainreactLMS <- LMS %>%
-      filter(LMS == 1) %>%   # Step 1: LMS only
-      left_join(uni %>% select(SchoolID,Latitude,Longitude), by = c("School_ID" = "SchoolID")) %>%   # Step 2: lat/long
-      left_join(buildablecsv %>% select(SCHOOL.ID,OTHER.REMARKS..Buildable.Space..), by = c("School_ID" = "SCHOOL.ID")) %>% 
-      filter(Region == RegRCT) %>% filter(Division == SDORCT1)
-    
-    df1 <- reactive({
-      
-      if (is.null(input$LMSMapping_bounds)) {
-        mainreactLMS
-      } else {
-        bounds <- input$LMSMapping_bounds
-        latRng <- range(bounds$north, bounds$south)
-        lngRng <- range(bounds$east, bounds$west)
-        
-        subset(mainreactLMS,
-               Latitude >= latRng[1] & Latitude <= latRng[2] & Longitude >= lngRng[1] & Longitude <= lngRng[2])
-      }
-    })
-    
-    row_selected = df1()[input$LMSTable_rows_selected,]
-    leafletProxy("LMSMapping") %>%
-      setView(lng = row_selected$Longitude, lat = row_selected$Latitude, zoom = 15)
-    
-  })
-  
+  # --- When a row in the table is clicked ---
   observeEvent(input$TextTable_rows_selected, {
+    filtered_data <- mainreact1()
+    req(filtered_data)
     
-    Text <- input$text
+    row_selected <- filtered_data[input$TextTable_rows_selected, ]
+    req(nrow(row_selected) > 0)
     
-    mainreact1 <- uni %>% arrange(Division) %>% filter(grepl(Text, as.character(School.Name), ignore.case = TRUE))
-    
-    df1 <- reactive({
-      
-      if (is.null(input$TextMapping_bounds)) {
-        mainreact1
-      } else {
-        bounds <- input$TextMapping_bounds
-        latRng <- range(bounds$north, bounds$south)
-        lngRng <- range(bounds$east, bounds$west)
-        
-        subset(mainreact1,
-               Latitude >= latRng[1] & Latitude <= latRng[2] & Longitude >= lngRng[1] & Longitude <= lngRng[2])
-      }
-    })
-    
-    row_selected = df1()[input$TextTable_rows_selected,]
+    # Update map to selected row
     leafletProxy("TextMapping") %>%
       setView(lng = row_selected$Longitude, lat = row_selected$Latitude, zoom = 15)
     
-    rowselected_table1 <- row_selected %>% select(Region,Province,Municipality,Division,District,Barangay,Street.Address,SchoolID,School.Name,School.Head.Name,SH.Position,Implementing.Unit,Modified.COC,Latitude,Longitude) %>% rename("Modified Curricular Offering" = Modified.COC, "School ID" = SchoolID, "School Name" = School.Name, "Street Address" = Street.Address, "Implementing Unit" = Implementing.Unit, "School Head" = School.Head.Name,"School Head Position" = SH.Position) %>% mutate(dplyr::across(tidyr::everything(), as.character)) %>% pivot_longer(
-      cols = everything(),    # Pivot all columns selected in details_to_pivot
-      names_to = "Basic Info",     # Name of the new column holding the original column names
-      values_to = "Data")     # Name of the new column holding the original values
+    # === Generate detailed tables ===
+    rowselected_table1 <- row_selected %>% select(
+      Region, Province, Municipality, Division, District, Barangay, Street.Address,
+      SchoolID, School.Name, School.Head.Name, SH.Position, Implementing.Unit,
+      Modified.COC, Latitude, Longitude
+    ) %>%
+      rename(
+        "Modified Curricular Offering" = Modified.COC,
+        "School ID" = SchoolID,
+        "School Name" = School.Name,
+        "Street Address" = Street.Address,
+        "Implementing Unit" = Implementing.Unit,
+        "School Head" = School.Head.Name,
+        "School Head Position" = SH.Position
+      ) %>%
+      mutate(across(everything(), as.character)) %>%
+      pivot_longer(cols = everything(),
+                   names_to = "Basic Info",
+                   values_to = "Data")
     
-    rowselected_table2 <- row_selected %>% select(ES.Excess,ES.Shortage,JHS.Excess,JHS.Shortage,SHS.Excess,SHS.Shortage,ES.Teachers,JHS.Teachers,SHS.Teachers,ES.Enrolment,JHS.Enrolment,SHS.Enrolment,School.Size.Typology,Clustering.Status,Outlier.Status) %>% rename("ES Teachers"=ES.Teachers,"JHS Teachers"=JHS.Teachers,"SHS Teachers"=SHS.Teachers, "ES Enrolment" = ES.Enrolment, "JHS Enrolment" = JHS.Enrolment, "SHS Enrolment" = SHS.Enrolment, "School Size Typology" = School.Size.Typology, "AO II Deployment" = Clustering.Status,"COS Deployment" = Outlier.Status, "ES Shortage" = ES.Shortage,"ES Excess" = ES.Excess,"JHS Shortage" = JHS.Shortage,"JHS Excess" = JHS.Excess,"SHS Shortage" = SHS.Shortage,"SHS Excess" = SHS.Excess) %>% mutate(dplyr::across(tidyr::everything(), as.character)) %>% pivot_longer(
-      cols = everything(),    # Pivot all columns selected in details_to_pivot
-      names_to = "HR Data",     # Name of the new column holding the original column names
-      values_to = "Data")     # Name of the new column holding the original values
+    rowselected_table2 <- row_selected %>% select(
+      ES.Excess, ES.Shortage, JHS.Excess, JHS.Shortage, SHS.Excess, SHS.Shortage,
+      ES.Teachers, JHS.Teachers, SHS.Teachers,
+      ES.Enrolment, JHS.Enrolment, SHS.Enrolment,
+      School.Size.Typology, Clustering.Status, Outlier.Status
+    ) %>%
+      rename(
+        "ES Teachers" = ES.Teachers,
+        "JHS Teachers" = JHS.Teachers,
+        "SHS Teachers" = SHS.Teachers,
+        "ES Enrolment" = ES.Enrolment,
+        "JHS Enrolment" = JHS.Enrolment,
+        "SHS Enrolment" = SHS.Enrolment,
+        "School Size Typology" = School.Size.Typology,
+        "AO II Deployment" = Clustering.Status,
+        "COS Deployment" = Outlier.Status,
+        "ES Shortage" = ES.Shortage,
+        "ES Excess" = ES.Excess,
+        "JHS Shortage" = JHS.Shortage,
+        "JHS Excess" = JHS.Excess,
+        "SHS Shortage" = SHS.Shortage,
+        "SHS Excess" = SHS.Excess
+      ) %>%
+      mutate(across(everything(), as.character)) %>%
+      pivot_longer(cols = everything(),
+                   names_to = "HR Data",
+                   values_to = "Data")
     
-    rowselected_table3 <- row_selected %>% select(Buildings,Instructional.Rooms.2023.2024,Classroom.Requirement,Est.CS,Buidable_space,Major.Repair.2023.2024,SBPI,Shifting,OwnershipType,ElectricitySource,WaterSource,Total.Seats.2023.2024,Total.Seats.Shortage.2023.2024) %>% rename("With Buildable Space" = Buidable_space,"Number of Instructional Rooms" = Instructional.Rooms.2023.2024,"Classroom Requirement" = Classroom.Requirement,"Ownership Type" = OwnershipType,"Source of Electricity" = ElectricitySource,"Source of Water" = WaterSource,"Estimated Classroom Shortage"= Est.CS,"School Building Priority Index" = SBPI,"For Major Repairs"= Major.Repair.2023.2024,"Total Seats"=Total.Seats.2023.2024,"Total Seats Shortage"=Total.Seats.Shortage.2023.2024, "Number of Buildings"=Buildings) %>% mutate(dplyr::across(tidyr::everything(), as.character)) %>% pivot_longer(
-      cols = everything(),    # Pivot all columns selected in details_to_pivot
-      names_to = "Classroom Data",     # Name of the new column holding the original column names
-      values_to = "Data")     # Name of the new column holding the original values
+    rowselected_table3 <- row_selected %>% select(
+      Buildings, Instructional.Rooms.2023.2024, Classroom.Requirement,
+      Est.CS, Buidable_space, Major.Repair.2023.2024, SBPI,
+      Shifting, OwnershipType, ElectricitySource, WaterSource,
+      Total.Seats.2023.2024, Total.Seats.Shortage.2023.2024
+    ) %>%
+      rename(
+        "With Buildable Space" = Buidable_space,
+        "Number of Instructional Rooms" = Instructional.Rooms.2023.2024,
+        "Classroom Requirement" = Classroom.Requirement,
+        "Ownership Type" = OwnershipType,
+        "Source of Electricity" = ElectricitySource,
+        "Source of Water" = WaterSource,
+        "Estimated Classroom Shortage" = Est.CS,
+        "School Building Priority Index" = SBPI,
+        "For Major Repairs" = Major.Repair.2023.2024,
+        "Total Seats" = Total.Seats.2023.2024,
+        "Total Seats Shortage" = Total.Seats.Shortage.2023.2024,
+        "Number of Buildings" = Buildings
+      ) %>%
+      mutate(across(everything(), as.character)) %>%
+      pivot_longer(cols = everything(),
+                   names_to = "Classroom Data",
+                   values_to = "Data")
     
+    rowselected_table5 <- row_selected %>% select(
+      English, Mathematics, Science, Biological.Sciences, Physical.Sciences,
+      General.Ed, Araling.Panlipunan, TLE, MAPEH, Filipino, ESP,
+      Agriculture, ECE, SPED
+    ) %>%
+      rename(
+        "Biological Sciences" = Biological.Sciences,
+        "Physical Sciences" = Physical.Sciences,
+        "General Education" = General.Ed,
+        "Araling Panlipunan" = Araling.Panlipunan,
+        "Early Childhood Education" = ECE
+      ) %>%
+      mutate(across(everything(), as.character)) %>%
+      pivot_longer(cols = everything(),
+                   names_to = "Specialization Data",
+                   values_to = "Data")
     
-    rowselected_table4 <- row_selected %>% select(SHA.2021.Index,Travel..Cost,Travel.Time,No.Piped.Water,No.Grid.Electricity,No.Internet,Conflict,TLS) %>% rename("HI 2021" = SHA.2021.Index,"Travel Cost" = Travel..Cost,"Travel Time" = Travel.Time,"No Access to Piped Water" = No.Piped.Water,"No Access to Grid Electricity"= No.Grid.Electricity,"No Access to Internet" = No.Internet,"Incidence of Conflict" = Conflict,"Existence of Temporary Learning Spaces"= TLS) %>% mutate(dplyr::across(tidyr::everything(), as.character)) %>% pivot_longer(
-      cols = everything(),    # Pivot all columns selected in details_to_pivot
-      names_to = "Other Data",     # Name of the new column holding the original column names
-      values_to = "Data")     # Name of the new column holding the original values
-    
-    rowselected_table5 <- row_selected %>% select(English,Mathematics,Science,Biological.Sciences,Physical.Sciences,General.Ed,Araling.Panlipunan,TLE,MAPEH,Filipino,ESP,Agriculture,ECE,SPED) %>% rename("Biological Sciences" = Biological.Sciences,"Physical Sciences" = Physical.Sciences,"General Education" = General.Ed,"Araling Panlipunan" = Araling.Panlipunan,"Early Chilhood Education" = ECE) %>% mutate(dplyr::across(tidyr::everything(), as.character)) %>% pivot_longer(
-      cols = everything(),    # Pivot all columns selected in details_to_pivot
-      names_to = "Other Data",     # Name of the new column holding the original column names
-      values_to = "Data")     # Name of the new column holding the original values
-    
-    output$schooldetails <- renderTable({
-      # Pass the pivoted data frame directly
-      rowselected_table1
-    },
-    rownames = FALSE, # Don't show automatic row names
-    colnames = TRUE,  # Show column names (Field, Value)
-    hover = TRUE,     # Add hover effect to rows (optional styling)
-    bordered = TRUE)
-    
-    output$schooldetails2 <- renderTable({
-      # Pass the pivoted data frame directly
-      rowselected_table2
-    },
-    rownames = FALSE, # Don't show automatic row names
-    colnames = TRUE,  # Show column names (Field, Value)
-    hover = TRUE,     # Add hover effect to rows (optional styling)
-    bordered = TRUE)
-    
-    output$schooldetails3 <- renderTable({
-      # Pass the pivoted data frame directly
-      rowselected_table3
-    },
-    rownames = FALSE, # Don't show automatic row names
-    colnames = TRUE,  # Show column names (Field, Value)
-    hover = TRUE,     # Add hover effect to rows (optional styling)
-    bordered = TRUE)
-    
-    output$schooldetails4 <- renderTable({
-      # Pass the pivoted data frame directly
-      rowselected_table4
-    },
-    rownames = FALSE, # Don't show automatic row names
-    colnames = TRUE,  # Show column names (Field, Value)
-    hover = TRUE,     # Add hover effect to rows (optional styling)
-    bordered = TRUE)
-    
-    output$schooldetails5 <- renderTable({
-      # Pass the pivoted data frame directly
-      rowselected_table5
-    },
-    rownames = FALSE, # Don't show automatic row names
-    colnames = TRUE,  # Show column names (Field, Value)
-    hover = TRUE,     # Add hover effect to rows (optional styling)
-    bordered = TRUE)
-    
-  })# Add borders to the table (optional styling)
+    # === Render tables ===
+    output$schooldetails <- renderTable(rowselected_table1, bordered = TRUE)
+    output$schooldetails2 <- renderTable(rowselected_table2, bordered = TRUE)
+    output$schooldetails3 <- renderTable(rowselected_table3, bordered = TRUE)
+    output$schooldetails5 <- renderTable(rowselected_table5, bordered = TRUE)
+  })
   
   observeEvent(input$CongestTable_rows_selected, {
     
