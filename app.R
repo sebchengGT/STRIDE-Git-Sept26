@@ -1965,14 +1965,14 @@ observeEvent(input$show_curricular_graphs, {
       ),
       
       # ✅ Logout button shown as its own nav tab
-      nav_panel(
-        title = tagList(bs_icon("box-arrow-right"), "Log Out"),
-        shinyauthr::logoutUI(
-          id = "logout",
-          label = "Log Out",
-          icon = icon("sign-out-alt"),
-          class = "btn btn-danger")
-      )
+      # nav_panel(
+      #   title = tagList(bs_icon("box-arrow-right"), "Log Out"),
+      #   shinyauthr::logoutUI(
+      #     id = "logout",
+      #     label = "Log Out",
+      #     icon = icon("sign-out-alt"),
+      #     class = "btn btn-danger")
+      # )
     )
   })
   
