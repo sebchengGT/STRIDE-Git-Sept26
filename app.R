@@ -1786,65 +1786,65 @@ observeEvent(input$show_curricular_graphs, {
             )
           )
         ),
-        # 
-        # # --- Nav Panel 2: Third Level Dashboard ---
-        # nav_panel(
-        #   title = tags$b("Third Level Dashboard"),
-        #   layout_sidebar(
-        #     sidebar = sidebar(
-        #       width = 350, 
-        #       h6("Strand Filter:"),
-        #       pickerInput(
-        #         inputId = "ThirdLevel_Strands",
-        #         label = "Select Strand(s):",
-        #         choices = c(
-        #           "ADMINISTRATION",
-        #           "DEPED ATTACHED AGENCIES",
-        #           "FINANCE",
-        #           "HUMAN RESOURCE AND ORGANIZATIONAL DEVELOPMENT",
-        #           "LEARNING SYSTEM",
-        #           "LEGAL AND LEGISLATIVE AFFAIRS",
-        #           "OFFICE OF THE SECRETARY",
-        #           "OPERATIONS",
-        #           "PROCUREMENT",
-        #           "STRATEGIC MANAGEMENT",
-        #           "TEACHERS AND EDUCATION COUNCIL SECRETARIAT"
-        #         ),
-        #         selected = c(
-        #           "ADMINISTRATION",
-        #           "DEPED ATTACHED AGENCIES",
-        #           "FINANCE",
-        #           "HUMAN RESOURCE AND ORGANIZATIONAL DEVELOPMENT",
-        #           "LEARNING SYSTEM",
-        #           "LEGAL AND LEGISLATIVE AFFAIRS",
-        #           "OFFICE OF THE SECRETARY",
-        #           "OPERATIONS",
-        #           "PROCUREMENT",
-        #           "STRATEGIC MANAGEMENT",
-        #           "TEACHERS AND EDUCATION COUNCIL SECRETARIAT"
-        #         ),
-        #         multiple = TRUE,
-        #         options = pickerOptions(
-        #           actionsBox = TRUE,
-        #           liveSearch = TRUE,
-        #           header = "Select Strand(s)",
-        #           title = "No Strand Selected",
-        #           selectedTextFormat = "count > 3",
-        #           dropupAuto = FALSE,
-        #           dropup = FALSE
-        #         )
-        #       )
-        #     ),
-        #     
-        #     layout_columns(
-        #       card(
-        #         card_header(strong("Third Level Officials")),
-        #         dataTableOutput("ThirdLevel_Table")
-        #       ),
-        #       col_widths = c(12,12)
-        #     )
-        #   )
-        # )),
+# 
+#         # --- Nav Panel 2: Third Level Dashboard ---
+#         nav_panel(
+#           title = tags$b("Third Level Dashboard"),
+#           layout_sidebar(
+#             sidebar = sidebar(
+#               width = 350,
+#               h6("Strand Filter:"),
+#               pickerInput(
+#                 inputId = "ThirdLevel_Strands",
+#                 label = "Select Strand(s):",
+#                 choices = c(
+#                   "ADMINISTRATION",
+#                   "DEPED ATTACHED AGENCIES",
+#                   "FINANCE",
+#                   "HUMAN RESOURCE AND ORGANIZATIONAL DEVELOPMENT",
+#                   "LEARNING SYSTEM",
+#                   "LEGAL AND LEGISLATIVE AFFAIRS",
+#                   "OFFICE OF THE SECRETARY",
+#                   "OPERATIONS",
+#                   "PROCUREMENT",
+#                   "STRATEGIC MANAGEMENT",
+#                   "TEACHERS AND EDUCATION COUNCIL SECRETARIAT"
+#                 ),
+#                 selected = c(
+#                   "ADMINISTRATION",
+#                   "DEPED ATTACHED AGENCIES",
+#                   "FINANCE",
+#                   "HUMAN RESOURCE AND ORGANIZATIONAL DEVELOPMENT",
+#                   "LEARNING SYSTEM",
+#                   "LEGAL AND LEGISLATIVE AFFAIRS",
+#                   "OFFICE OF THE SECRETARY",
+#                   "OPERATIONS",
+#                   "PROCUREMENT",
+#                   "STRATEGIC MANAGEMENT",
+#                   "TEACHERS AND EDUCATION COUNCIL SECRETARIAT"
+#                 ),
+#                 multiple = TRUE,
+#                 options = pickerOptions(
+#                   actionsBox = TRUE,
+#                   liveSearch = TRUE,
+#                   header = "Select Strand(s)",
+#                   title = "No Strand Selected",
+#                   selectedTextFormat = "count > 3",
+#                   dropupAuto = FALSE,
+#                   dropup = FALSE
+#                 )
+#               )
+#             ),
+# 
+#             layout_columns(
+#               card(
+#                 card_header(strong("Third Level Officials")),
+#                 dataTableOutput("ThirdLevel_Table")
+#               ),
+#               col_widths = c(12,12)
+#             )
+#           )
+#         )),
       
         
    
@@ -7602,10 +7602,28 @@ observeEvent(input$show_curricular_graphs, {
         )
       )
     
+    mainreact1 <- uni %>%
+      arrange(Region, Division) %>%
+      filter(grepl(Text, as.character(School.Name), ignore.case = TRUE))
+    
+    df1 <- reactive({
+      
+      if (is.null(input$TextMapping_bounds)) {
+        mainreact1
+      } else {
+        bounds <- input$TextMapping_bounds
+        latRng <- range(bounds$north, bounds$south)
+        lngRng <- range(bounds$east, bounds$west)
+        
+        subset(mainreact1,
+               Latitude >= latRng[1] & Latitude <= latRng[2] & Longitude >= lngRng[1] & Longitude <= lngRng[2])
+      }
+    })
+    
     # --- Render DataTable ---
     output$TextTable <- DT::renderDT(server = FALSE, {
       datatable(
-        mainreact1 %>%
+        df1() %>%
           select("Region", "Division", "Legislative.District", "Municipality", "School.Name") %>%
           rename("School" = "School.Name"),
         extension = 'Buttons',
@@ -8922,7 +8940,9 @@ observeEvent(input$show_curricular_graphs, {
     
     Text <- input$text
     
-    mainreact1 <- uni %>% arrange(Division) %>% filter(grepl(Text, as.character(School.Name), ignore.case = TRUE))
+    mainreact1 <- uni %>%
+      arrange(Region, Division) %>%
+      filter(grepl(Text, as.character(School.Name), ignore.case = TRUE))
     
     df1 <- reactive({
       
