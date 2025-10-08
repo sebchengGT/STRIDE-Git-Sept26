@@ -59,7 +59,7 @@ cloud_v2 <- read_parquet("Cloud_Consolidated_v2.parquet")
 cloud_v3 <- read_parquet("Cloud_Consolidated_v3.parquet")
 
 #Data Explorer 
-ThirdLevel <- read.csv("2025-Third Level Officials DepEd.csv", stringsAsFactors = FALSE)
+ThirdLevel <- read.csv("2025-Third Level Officials DepEd-cleaned.csv", stringsAsFactors = FALSE)
 
 
 user_base <- tibble::tibble(
@@ -104,7 +104,7 @@ ui <- fluidPage(
   ),
   
   
-
+  
   
   # tags$head(
   #   tags$style(HTML("
@@ -1909,7 +1909,7 @@ observeEvent(input$show_curricular_graphs, {
             hr(),
             
             # Radio Buttons for resource types
-            card(id = "resource_type_card",
+            card(
               card_header(tags$b("Resource Types")),
               radioButtons(
                 inputId = "resource_type_selection",
@@ -7467,6 +7467,7 @@ observeEvent(input$show_curricular_graphs, {
     datatable(
       filtered_third() %>%
         select(
+          STRAND,
           OFFICE,
           BUREAU.SERVICE,
           NAME,
@@ -7480,7 +7481,7 @@ observeEvent(input$show_curricular_graphs, {
       options = list(
         scrollX = TRUE,
         autoWidth = TRUE,
-        fixedColumns = list(leftColumns = 4),
+        fixedColumns = list(leftColumns = 5),
         pageLength = 10,
         columnDefs = list(list(className = 'dt-center', targets = "_all")),
         dom = 'Bfrtip',
