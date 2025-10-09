@@ -64,8 +64,8 @@ ThirdLevel <- read.csv("2025-Third Level Officials DepEd-cleaned.csv", stringsAs
 
 user_base <- tibble::tibble(
   user = c("iamdeped", "depedadmin"),
-  password = c("deped123", "admin123"), # In a real app, use hashed passwords
-  password_hash = sapply(c("deped123", "admin123"), sodium::password_store), # Hashed passwords
+  password = c("deped123", "stride123"), # In a real app, use hashed passwords
+  password_hash = sapply(c("deped123", "stride123"), sodium::password_store), # Hashed passwords
   permissions = c("admin", "standard"),
   name = c("User One", "User Two")
 )
@@ -2132,17 +2132,6 @@ observeEvent(input$show_curricular_graphs, {
                 ),
                 plotlyOutput("Classroom_Shortage_Region_Graph2")
               ),
-              col_widths = c(12)
-            )
-          ),
-          
-          hr(),
-          #  Panel: Classroom Shortage Summary
-          accordion_panel(
-            title = "Classroom Shortage Summary",
-            icon = bsicons::bs_icon("exclamation-triangle"),
-            layout_column_wrap(
-              width = 1/3,
               card(
                 card_header(strong("Regional Classroom Shortage")),
                 valueBoxOutput("ROCRShort")
@@ -2151,10 +2140,11 @@ observeEvent(input$show_curricular_graphs, {
                 card_header(strong("Division Classroom Shortage")),
                 valueBoxOutput("SDOCRShort")
               ),
-              card(
-                card_header(strong("District Classroom Shortage")),
-                valueBoxOutput("DistCRShort")
-              )
+              #card(
+               # card_header(strong("District Classroom Shortage")),
+                #valueBoxOutput("DistCRShort")
+              #),
+              col_widths = c(12,6,6)
             )
           )
         ),
@@ -2165,7 +2155,7 @@ observeEvent(input$show_curricular_graphs, {
         layout_columns(
           card(
             full_screen = TRUE,
-            card_header(strong("School Building Priority Index")),
+            card_header(strong("Classroom Shortage")),
             dataTableOutput("CLTable")
           ),
           card(
@@ -2326,18 +2316,6 @@ observeEvent(input$show_curricular_graphs, {
                 ),
                 plotlyOutput("LMS_Nation_Graph2")
               ),
-              col_widths = c(12)
-            )
-          ),
-          
-        
-          hr(),
-          
-          # 2️⃣ Panel: Regional and Division Totals
-          accordion_panel(
-            title = "Regional and Division Totals",
-            icon = bsicons::bs_icon("geo-alt"),
-            layout_columns(
               card(
                 card_header(strong("Total Last Mile Schools by Region")),
                 valueBoxOutput("LMS_Total_Region")
@@ -2346,7 +2324,7 @@ observeEvent(input$show_curricular_graphs, {
                 card_header(strong("Total Last Mile Schools by Division")),
                 valueBoxOutput("LMS_Total_Division")
               ),
-              col_widths = c(6, 6)
+              col_widths = c(12,6,6)
             )
           )
         ),
@@ -6407,82 +6385,6 @@ observeEvent(input$show_curricular_graphs, {
              margin = list(b = 100)) # Increase bottom margin for x-axis labels
   })
   
-  output$LMS_Nation_Graph2 <- renderPlotly({
-    # Use the reactive filtered data
-    current_filtered_data <- filtered_LMS_region() %>% 
-      rename(
-        "With Buildable Space" = Buildable_space,
-        "With Excess Classrooms" = With_Excess,
-        "Without Classroom Shortage" = Without_Shortage,
-        "Last Mile Schools" = LMS,
-        "GIDCA" = GIDCA,
-        "With Shortage" = With_Shortage
-      ) %>%
-      pivot_longer(13:18, names_to = "Type", values_to = "Count")
-    
-    # --- Empty Data Handling ---
-    if (nrow(current_filtered_data) == 0) {
-      return(ggplotly(
-        ggplot() +
-          annotate("text", x = 0.5, y = 0.5, label = "No data for selected regions/divisions") +
-          theme_void()
-      ))
-    }
-    
-    # --- ✅ Focus only on "Last Mile Schools" and aggregate all regions (National total) ---
-    plot_data <- current_filtered_data %>%
-      filter(Type == "Last Mile Schools") %>%  # Only keep LMS
-      group_by(Region, Type) %>%
-      summarise(
-        Count = sum(as.numeric(Count), na.rm = TRUE),
-        .groups = "drop"
-      )
-    
-    # Compute national total
-    national_total <- plot_data %>%
-      summarise(TotalCount = sum(Count, na.rm = TRUE)) %>%
-      pull(TotalCount)
-    
-    # --- ✅ Create the plot ---
-    p <- ggplot(plot_data,
-                aes(
-                  x = reorder(Region, -Count),
-                  y = Count,
-                  fill = Region,
-                  text = paste(
-                    "Region:", Region,
-                    "<br>Count:", scales::comma(Count)
-                  )
-                )) +
-      geom_bar(stat = "identity", color = "black", size = 0.25) +
-      geom_hline(yintercept = 0, color = "black") +
-      geom_text(
-        aes(x = Region, y = Count * 1.05, label = scales::comma(Count)),
-        size = 3.5,
-        color = "black"
-      ) +
-      labs(
-        title = paste0("Last Mile Schools by Region (n = ", scales::comma(national_total), ")"),
-        x = "Region",
-        y = "Number of Last Mile Schools",
-        fill = "Region"
-      ) +
-      scale_y_continuous(labels = scales::comma) +
-      theme_minimal() +
-      theme(
-        axis.text.x = element_text(size = 10, angle = 45, hjust = 1),
-        legend.position = "none",
-        plot.title = element_text(hjust = 0.5, face = "bold", size = 14)
-      )
-    
-    # Convert ggplot to plotly
-    ggplotly(p, tooltip = "text") %>%
-      layout(
-        hoverlabel = list(bgcolor = "white"),
-        margin = list(b = 100)
-      ) %>%
-      style(hoverinfo = "text")
-  })
   output$LMS_Nation_Graph <- renderPlotly({
     # Use the reactive filtered data
     # Correct the column selection: pivot columns 13-17 without excluding any.
@@ -6635,7 +6537,6 @@ observeEvent(input$show_curricular_graphs, {
         color = "black"
       ) +
       labs(
-        title = paste0("Regional Breakdown of Last Mile Schools\n(n = ", scales::comma(national_total), ")"),
         x = "Region",
         y = "Number of Last Mile Schools",
         fill = "Region"
@@ -8362,14 +8263,12 @@ observeEvent(input$show_curricular_graphs, {
     output$CLMapping <- renderLeaflet({
       # Legend domain + palette
       domain <- c(
-        "Extreme (>2.0)", 
-        "Major (1.6-2.0)", 
-        "Minor (0.6-1.5)", 
-        "Mild (0-0.5)"
+        "With Classroom Shortage", 
+        "Without Classroom Shortage"
       )
       
       pal <- colorFactor(
-        palette = c("red", "orange", "purple", "green"),
+        palette = c("red","green"),
         domain = domain,
         ordered = TRUE
       )
@@ -8473,11 +8372,9 @@ observeEvent(input$show_curricular_graphs, {
     # --- LMS Map (initialize once) ---
     
     output$LMSMapping <- renderLeaflet({
-      # Define palette once here, with explicit factor order
-      pal <- colorFactor(
-        palette = c("green", "red"),
-        domain = factor(c("Y", "N"), levels = c("Y", "N"))
-      )
+      # NOTE: We no longer use colorFactor() as the colors are determined 
+      # by case_when in the proxy, which handles the logic. 
+      # We just need to define the map structure and the legend colors/labels.
       
       leaflet() %>%
         addProviderTiles(providers$Esri.WorldImagery, group = "Satellite") %>%
@@ -8489,12 +8386,17 @@ observeEvent(input$show_curricular_graphs, {
         ) %>%
         addLegend(
           position = "bottomright",
-          title = "Buildable Space",
-          pal = pal,
-          values = factor(c("Y", "N"), levels = c("Y", "N")),
-          labFormat = labelFormat(transform = function(x) {
-            ifelse(x == "Y", "With Buildable Space", "No Buildable Space")
-          })
+          title = "Last Mile Schools Status",
+          
+          # 1. Define the colors (must match the case_when output in leafletProxy)
+          colors = c("red", "green", "gray"),
+          
+          # 2. Define the labels (must describe the conditions that result in those colors)
+          labels = c(
+            "With Shortage + Without Buildable Space", 
+            "With Shortage + With Buildable Space", 
+            "Without Shortage + No Buildable Space"
+          )
         )
     })
     
@@ -8663,6 +8565,20 @@ observeEvent(input$show_curricular_graphs, {
       left_join(uni %>% select(SchoolID,Latitude,Longitude), by = c("School_ID" = "SchoolID")) %>%   # Step 2: lat/long
       left_join(buildablecsv %>% select(SCHOOL.ID,OTHER.REMARKS..Buildable.Space..), by = c("School_ID" = "SCHOOL.ID")) %>% 
       filter(Region == RegRCT) %>% filter(Division == SDORCT1)
+    mainreactLMSreg <- LMS %>%
+      filter(LMS == 1) %>%   # Step 1: LMS only
+      left_join(uni %>% select(SchoolID,Latitude,Longitude), by = c("School_ID" = "SchoolID")) %>%   # Step 2: lat/long
+      left_join(buildablecsv %>% select(SCHOOL.ID,OTHER.REMARKS..Buildable.Space..), by = c("School_ID" = "SCHOOL.ID")) %>% 
+      filter(Region == RegRCT)
+    mainreactLMSdiv <- LMS %>%
+      filter(LMS == 1) %>%   # Step 1: LMS only
+      left_join(uni %>% select(SchoolID,Latitude,Longitude), by = c("School_ID" = "SchoolID")) %>%   # Step 2: lat/long
+      left_join(buildablecsv %>% select(SCHOOL.ID,OTHER.REMARKS..Buildable.Space..), by = c("School_ID" = "SCHOOL.ID")) %>% 
+      filter(Region == RegRCT) %>% filter(Division == SDORCT1)
+    mainreactCRreg <- LMS %>% 
+      filter(Region == RegRCT)
+    mainreactCRdiv <- LMS %>% 
+      filter(Region == RegRCT) %>% filter(Division == SDORCT1)
     
     values.LMS <- paste(
       "School Name:",mainreactLMS$School_Name,
@@ -8688,8 +8604,9 @@ observeEvent(input$show_curricular_graphs, {
         lat = mainreactLMS$Latitude,
         icon = makeAwesomeIcon(icon = "education", library = "glyphicon",
         markerColor = case_when(
+          (mainreactLMS$Buildable_space == 0 & mainreactLMS$Estimated_CL_Shortage == 0) ~ "gray",
           mainreactLMS$Buildable_space == 0 ~ "red", # Corrected to '=='
-          mainreactLMS$Buildable_space == 1 ~ "green" # Corrected to '=='
+          mainreactLMS$Buildable_space == 1 ~ "green", # Corrected to '=='
         )),
         label = values.LMS,
         labelOptions = labelOptions(noHide = F, textsize = "12px", direction = "top")
@@ -8710,7 +8627,7 @@ observeEvent(input$show_curricular_graphs, {
     })
     
     
-    output$LMSTable <- renderDataTable({
+    output$LMSTable <- renderDT(server = FALSE, {
       
       # # Apply Division filter only if not "Select Input"
       # if (!is.null(input$Resource_SDO) && input$Resource_SDO != "Select Input") {
@@ -8731,16 +8648,16 @@ observeEvent(input$show_curricular_graphs, {
         # 2. Select the desired columns
         dplyr::select(
           School_Name,
+          Total_Enrollment,
           Instructional_Rooms,
-          CL_Req,
           Estimated_CL_Shortage,
           Buildable_space
         ) %>%
         # 3. Rename columns for display
         dplyr::rename(
           "School Name" = School_Name,
-          "Classrooms" = Instructional_Rooms,
-          "Classroom Requirement" = CL_Req,
+          "Total Enrolment" = Total_Enrollment,,
+          "Classrooms Inventory" = Instructional_Rooms,
           "Classroom Shortage" = Estimated_CL_Shortage,
           "Buildable Space" = Buildable_space
         )
@@ -8770,7 +8687,7 @@ observeEvent(input$show_curricular_graphs, {
     
     values.non_teaching_popup <- paste(strong("SCHOOL INFORMATION"),"<br>School Name:",mainreactNTP$School.Name,"<br>School ID:",mainreactNTP$SchoolID,"<br>Enrolment Size:",mainreactNTP$TotalEnrolment,"<br>","<br>",strong("TEACHING PERSONNEL DATA"),"<br>Teacher Inventory:", mainreactNTP$TotalTeachers,"<br>Teacher Excess:", mainreactNTP$TeacherExcess,"<br>Teacher Shortage:", mainreactNTP$TeacherShortage,"<br>","<br>",strong("NON-TEACHING PERSONNEL DATA"),"<br>Plantilla Number of AOII:", mainreactNTP$Plantilla.Number,"<br>Clustering Status:", mainreactNTP$Clustering.Status,"<br>PDO I Deployment:", mainreactNTP$PDOI_Deployment) %>% lapply(htmltools::HTML)
     
-    values_classrooom_shortage <- paste(mainreactCR$School.Name,"<br>Classroom Shortage:", mainreactCR$Est.CS, "<br>School Building Priority Index:", mainreactCR$SBPI) %>% lapply(htmltools::HTML)
+    values_classrooom_shortage <- paste(mainreactCR$School.Name,"<br>Total Enrolment:",mainreactCR$Enrolment.2023.2024 ,"<br>Classroom Inventory:", mainreactCR$Instructional.Rooms.2023.2024, "<br>Classroom Shortage:", mainreactCR$Est.CS) %>% lapply(htmltools::HTML)
     
     values_classrooom_shortage_popup <- paste(strong("SCHOOL INFORMATION"),"<br>School Name:",mainreactCR$School.Name,"<br>School ID:",mainreactCR$SchoolID,"<br>Enrolment Size:",mainreactCR$TotalEnrolment,"<br>","<br>",strong("CLASSROOM DATA"),"<br>Estimate Classroom Shortage:", mainreactCR$Est.CS,"<br>Type of Ownership:", mainreactCR$OwnershipType,"<br>Shifting:", mainreactCR$Shifting,"<br>Electricity Source:", mainreactCR$ElectricitySource,"<br>Water Source:", mainreactCR$WaterSource) %>% lapply(htmltools::HTML)
     
@@ -8844,11 +8761,8 @@ observeEvent(input$show_curricular_graphs, {
         icon = "university",
         library = "fa",
         markerColor = case_when(
-          suppressWarnings(as.numeric(mainreactCR$SBPI)) > 0   & as.numeric(mainreactCR$SBPI) <= 0.5 ~ "green",   # Mild (0–0.5)
-          suppressWarnings(as.numeric(mainreactCR$SBPI)) > 0.5 & as.numeric(mainreactCR$SBPI) <= 1.5 ~ "purple",  # Minor (0.6–1.5)
-          suppressWarnings(as.numeric(mainreactCR$SBPI)) > 1.5 & as.numeric(mainreactCR$SBPI) <= 2.0 ~ "orange",  # Major (1.6–2.0)
-          suppressWarnings(as.numeric(mainreactCR$SBPI)) > 2.0                                         ~ "red",     # Extreme (>2.0)
-          TRUE                                                                                        ~ "lightgray"
+          suppressWarnings(as.numeric(mainreactCR$Est.CS)) > 0 ~ "red",
+          TRUE ~ "green"
         ),
         iconColor = "white"
       )
@@ -9018,43 +8932,39 @@ observeEvent(input$show_curricular_graphs, {
     })
     
     output$ROCRShort <- renderValueBox({
-      valueBox(tags$p(strong(sum(mainreactunireg$Est.CS, na.rm = TRUE)), style = "font-family: Poppins; font-size: 20px; color: #111111; text-align: center;"), subtitle = NULL)
+      valueBox(tags$p(strong(sum(mainreactCRreg$Estimated_CL_Shortage, na.rm = TRUE)), style = "font-family: Poppins; font-size: 20px; color: #111111; text-align: center;"), subtitle = NULL)
     })
     
     output$SDOCRShort <- renderValueBox({
-      valueBox(tags$p(strong(sum(mainreactunidiv$Est.CS, na.rm = TRUE)), style = "font-family: Poppins; font-size: 20px; color: #111111; text-align: center;"), subtitle = NULL)
+      valueBox(tags$p(strong(sum(mainreactCRdiv$Estimated_CL_Shortage, na.rm = TRUE)), style = "font-family: Poppins; font-size: 20px; color: #111111; text-align: center;"), subtitle = NULL)
     })
     
-    output$DistCRShort <- renderValueBox({
-      valueBox(tags$p(strong(sum(mainreactNTP$Est.CS, na.rm = TRUE)), style = "font-family: Poppins; font-size: 20px; color: #111111; text-align: center;"), subtitle = NULL)
-    })
+    #output$DistCRShort <- renderValueBox({
+      #valueBox(tags$p(strong(sum(mainreactNTP$Est.CS, na.rm = TRUE)), style = "font-family: Poppins; font-size: 20px; color: #111111; text-align: center;"), subtitle = NULL)
+    #})
     
     # --- Total Last Mile Schools by Region ---
     output$LMS_Total_Region <- renderValueBox({
-      total_region_lms <- sum(mainreactunireg$LMS, na.rm = TRUE)  # <-- adjust dataset/column name if needed
+      total_region_lms <- nrow(mainreactLMSreg)  # <-- adjust dataset/column name if needed
       
       valueBox(
         tags$p(
           strong(scales::comma(total_region_lms)),
-          style = "font-family: Poppins; font-size: 20px; color: #111111; text-align: center;"
-        ),
-        subtitle = tags$p("Total LMS (Region Level)", 
-                          style = "font-family: Poppins; font-size: 14px; text-align: center; color: #555555;")
+          style = "font-family: Poppins; font-size: 20px; color: #111111; text-align: center;"),
+        subtitle = NULL
       )
     })
     
     
     # --- Total Last Mile Schools by Division ---
     output$LMS_Total_Division <- renderValueBox({
-      total_division_lms <- sum(mainreactunidiv$LMS, na.rm = TRUE)  # <-- adjust dataset/column name if needed
+      total_division_lms <-   nrow(mainreactLMSdiv)  # <-- adjust dataset/column name if needed
       
       valueBox(
         tags$p(
           strong(scales::comma(total_division_lms)),
-          style = "font-family: Poppins; font-size: 20px; color: #111111; text-align: center;"
-        ),
-        subtitle = tags$p("Total LMS (Division Level)", 
-                          style = "font-family: Poppins; font-size: 14px; text-align: center; color: #555555;")
+          style = "font-family: Poppins; font-size: 20px; color: #111111; text-align: center;"),
+        subtitle = NULL
       )
     })
     
@@ -9073,7 +8983,7 @@ observeEvent(input$show_curricular_graphs, {
       }
     })
     
-    output$CLTable <- DT::renderDT(dfreact_CL() %>% select("School.Name","SBPI","Instructional.Rooms.2023.2024","Classroom.Requirement","Est.CS","Buidable_space") %>% rename("School" = School.Name, "School Building Priority Index" = SBPI, "Classroom Inventory" = Instructional.Rooms.2023.2024, "Classroom Requirement" = Classroom.Requirement, "Estimate Classroom Shortage" = Est.CS, "Buildable Space" = Buidable_space), filter = 'top', options = list(scrollX = TRUE,scrollY= "300px", columnDefs = list(list(className = 'dt-center', targets ="_all")), rownames = FALSE, dom = 'Bfrtip', buttons = list('csv','excel','pdf','print')))
+    output$CLTable <- DT::renderDT(server = FALSE, {datatable(dfreact_CL() %>% select("School.Name","Enrolment.2023.2024","Instructional.Rooms.2023.2024","Est.CS","Buidable_space") %>% rename("School" = School.Name, "Total Enrolment" = Enrolment.2023.2024, "Classroom Inventory" = Instructional.Rooms.2023.2024, "Estimate Classroom Shortage" = Est.CS, "Buildable Space" = Buidable_space), filter = 'top', options = list(scrollX = TRUE,scrollY= "300px", columnDefs = list(list(className = 'dt-center', targets ="_all")), rownames = FALSE, dom = 'Bfrtip', buttons = list('csv','excel','pdf','print')))})
     
     dfreact_SHS <- reactive({
       
@@ -11698,9 +11608,8 @@ observeEvent(input$show_curricular_graphs, {
         . == 0 ~ "No",
         TRUE ~ "Yes"
       ))) %>% 
-      select(Region, Division, Legislative_District, School_ID, School_Name, Total_Enrollment, Instructional_Rooms, CL_Req, Estimated_CL_Shortage, With_Excess, Without_Shortage, Buildable_space, LMS, GIDCA) %>% 
+      select(Region, Division, Legislative_District, School_ID, School_Name, Total_Enrollment, Instructional_Rooms, Estimated_CL_Shortage, With_Excess, Without_Shortage, Buildable_space, LMS, GIDCA) %>% 
       rename(
-        "Classroom Requirement" = CL_Req,
         "Estimated Classroom Shortage" = Estimated_CL_Shortage,
         "Schools with Excess Classrooms" = With_Excess,
         "Schools without Classroom Shortage" = Without_Shortage,
