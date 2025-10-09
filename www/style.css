@@ -342,20 +342,33 @@ body.dashboard-bg {
   box-shadow: 0 4px 8px rgba(0,0,0,0.15);
 }
 
-#resource_type_card .card-header {
+/* ==== FIX: RESOURCE TYPE RADIO BUTTON ALIGNMENT ==== */
+#resource_type_selection {
   text-align: left !important;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start !important;
+  justify-content: flex-start !important;
   padding-left: 15px;
 }
 
-#resource_type_card .shiny-options-group {
-  text-align: left;
-  padding-left: 15px;
+/* Make sure each radio button stacks neatly left */
+#resource_type_selection .shiny-options-group {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start !important;
+  gap: 6px; /* adds small spacing between items */
 }
 
-#resource_type_card label {
+/* Align labels and text cleanly */
+#resource_type_selection .radio label,
+#resource_type_selection label,
+#resource_type_selection span {
+  text-align: left !important;
   font-weight: 600;
-  color: #002D62;
+  color: #002D62; /* optional – DepEd blue */
 }
+
 
 /* ==== NATIONAL STATISTICS VALUE BOX TITLES & VALUES ==== */
 
