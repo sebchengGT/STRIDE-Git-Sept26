@@ -91,16 +91,32 @@ ui <- fluidPage(
   
   tags$div(
     class = "app-header",
-    style = "display: flex; align-items: center; gap: 15px; justify-content: center;",
+    style = "
+    display: flex;
+    align-items: center;        /* vertically center all items */
+    justify-content: center;    /* center horizontally */
+    gap: 25px;                  /* space between logo, text, logo */
+    flex-wrap: nowrap;          /* keep them in one line */
+    padding: 10px 0;
+  ",
     
-    # Logo
-    tags$img(src = "logo3.png", height = "100px"),
+    # Left logo
+    tags$img(src = "logo3.png", height = "90px"),
     
-    # Text beside the logo
     tags$div(
+      style = "
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+    ",
       h2("DepEd STRIDE Dashboard"),
       p("Strategic Inventory for Deployment Efficiency")
-    )
+    ),
+    
+    # Right logo
+    tags$img(src = "HROD LOGO.jpg", height = "90px")
   ),
   
   
@@ -150,13 +166,36 @@ ui <- fluidPage(
       id = "mgmt_content",
       uiOutput("STRIDE2"))),
     
-  
-  
-  
-  
   tags$footer(
     class = "app-footer",
     tags$p("© Based on GMIS (April 2025) and eBEIS (SY 2024–2025)")))
+
+div(
+  id = "loading_screen",
+  style = "
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background-color: rgba(0, 45, 98, 0.95);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 99999;
+    color: white;
+    font-family: 'Poppins', sans-serif;
+    font-size: 28px;
+    flex-direction: column;
+    text-align: center;
+  ",
+  tags$div(
+    tags$img(src = "logo3.png", height = "100px", style = "margin-bottom:20px;"),
+    tags$div("Loading STRIDE Dashboard..."),
+    tags$div(
+      class = "spinner-border text-light",
+      role = "status",
+      style = "width: 3rem; height: 3rem; margin-top: 20px;"
+    )
+  )
+)
 
 
 
@@ -278,8 +317,13 @@ observeEvent(input$show_curricular_graphs, {
   observe({
     auth_status <- credentials()$user_auth
     if (auth_status) {
+      # shinyjs::show("loading_screen")
+      # shinyjs::delay(2000, {
+      #   shinyjs::hide("loading_screen")
       # User is authenticated. Let's get their details.
       user_info <- credentials()$info
+      # Show loading screen when login is successful
+      
       # This is a tibble with the user's row
       
       # Ensure user_info is available and has the username
@@ -304,8 +348,10 @@ observeEvent(input$show_curricular_graphs, {
             shinyjs::hide("main_content")
             # output$generic_secure_data <- renderPrint({"Generic secure data for other users..."})
           }}}
+      # })
     } else {
       # User is NOT authenticated (e.g., after logout or initially)
+      # shinyjs::hide("loading_screen")
       shinyjs::show(selector = "#login")
       shinyjs::show("StrideLogo")
       shinyjs::hide("main_content")
@@ -1600,104 +1646,219 @@ observeEvent(input$show_curricular_graphs, {
             )
           ))),
       # --- Second Top-Level Tab: Data Explorer --
-  #     tags$head(
-  #       tags$style(HTML("
-  #   /* ===== GENERAL SCROLL FIX ===== */
-  #   .bslib-sidebar, 
-  #   .bslib-sidebar-content, 
-  #   .sidebar, 
-  #   .bslib-card {
-  #     overflow-x: hidden !important;
-  #   }
-  # 
-  #   /* ===== PICKER INPUT DROPDOWNS (sidebar only) ===== */
-  #   .bslib-sidebar .bootstrap-select,
-  #   .bslib-sidebar .dropdown-menu {
-  #     max-width: 100% !important;
-  #     width: 100% !important;
-  #   }
-  # 
-  #   /* Fix dropdowns expanding outside sidebar */
-  #   .bslib-sidebar .dropdown-menu.open {
-  #     left: 0 !important;
-  #     right: 0 !important;
-  #     width: 100% !important;
-  #     overflow-x: hidden !important;
-  #     white-space: normal !important; /* allow text wrapping */
-  #     word-wrap: break-word !important;
-  #   }
-  # 
-  #   /* Allow long option labels to wrap to next line */
-  #   .bootstrap-select .dropdown-menu li a span.text {
-  #     white-space: normal !important;
-  #     word-break: break-word !important;
-  #     display: inline-block !important;
-  #   }
-  # 
-  #   /* Prevent layout_sidebar from causing scrollbars */
-  #   .bslib-layout-sidebar {
-  #     overflow-x: hidden !important;
-  #   }
-  # 
-  #   /* ===== NAVBAR SPACING FIX ===== */
-  #   .navbar-nav, .bslib-navbar-nav {
-  #     display: flex !important;
-  #     align-items: center !important;
-  #     gap: 10px !important; /* reduce space between nav items */
-  #   }
-  # 
-  #   /* Ensure no extra right spacing between nav menus */
-  #   .navbar-nav > li, .bslib-navbar-nav > li {
-  #     margin-right: 0 !important;
-  #     padding-right: 0 !important;
-  #   }
-  # 
-  #   /* ===== NAVBAR DROPDOWN FIX ===== */
-  #   .navbar .dropdown-menu,
-  #   .bslib-navbar .dropdown-menu {
-  #     width: auto !important;
-  #     min-width: 220px !important;
-  #     text-align: left !important;
-  #     white-space: nowrap !important;
-  #     word-wrap: normal !important;
-  #     border-radius: 6px !important;
-  #     box-shadow: 0 4px 10px rgba(0,0,0,0.1) !important;
-  #     margin-top: 4px !important; /* reduce dropdown gap */
-  #     margin-bottom: 4px !important;
-  #   }
-  # 
-  #   /* Adjust Data Explorer dropdown items */
-  #   .navbar .dropdown-menu > li > a,
-  #   .bslib-navbar .dropdown-menu > li > a {
-  #     padding: 8px 14px !important;
-  #     font-weight: 600 !important;
-  #     display: block !important;
-  #   }
-  # 
-  #   /* Hover effect */
-  #   .navbar .dropdown-menu > li > a:hover,
-  #   .bslib-navbar .dropdown-menu > li > a:hover {
-  #     background-color: #2c3895 !important;
-  #     color: white !important;
-  #   }
-  # 
-  #   /* ===== THIRD LEVEL DASHBOARD DROPDOWN FIX ===== */
-  #   .navbar .dropdown-menu li a,
-  #   .bslib-navbar .dropdown-menu li a {
-  #     white-space: normal !important;
-  #     word-break: break-word !important;
-  #     line-height: 1.2em !important;
-  #   }
-  # 
-  #   /* Keeps dropdown text readable without overlap */
-  #   .navbar .dropdown-menu li,
-  #   .bslib-navbar .dropdown-menu li {
-  #     padding-top: 4px !important;
-  #     padding-bottom: 4px !important;
-  #   }
-  # "))
-  #     )
-  #     ,
+      tags$head(
+        tags$style(HTML("
+
+    /* Allow long option labels to wrap to next line /
+    .bootstrap-select .dropdown-menu li a span.text {
+      white-space: normal !important;
+      word-break: break-word !important;
+      display: inline-block !important;
+    }
+
+    / ===== NAVBAR DROPDOWN FIX ===== /
+    .navbar .dropdown-menu,
+    .bslib-navbar .dropdown-menu {
+      width: auto !important;
+      min-width: 220px !important;
+      text-align: left !important;
+      white-space: nowrap !important;
+      word-wrap: normal !important;
+      border-radius: 6px !important;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1) !important;
+      margin-top: 4px !important; / reduce dropdown gap /
+      margin-bottom: 4px !important;
+    }
+  
+    / Hover effect */
+    .navbar .dropdown-menu > li > a:hover,
+    .bslib-navbar .dropdown-menu > li > a:hover {
+      background-color: #2c3895 !important;
+      color: white !important;
+    }
+   
+  "))
+      )
+      ,
+
+      nav_menu(
+        title = tags$b("Data Explorer"),  # Dropdown menu
+        icon = bs_icon("table"),
+
+        # --- Nav Panel 1: School Information ---
+        nav_panel(
+          title = tags$b("School Information"),
+          layout_sidebar(
+            sidebar = sidebar(
+              width = 350,
+              h6("Data Toggles:"),
+              pickerInput(
+                inputId = "DataBuilder_HROD_Region",
+                label = "Select a Region:",
+                choices = sort(unique(uni$Region)),
+                selected = sort(unique(uni$Region)),
+                multiple = TRUE,
+                options = pickerOptions(
+                  actionsBox = TRUE,
+                  liveSearch = TRUE,
+                  header = "Select Categories",
+                  title = "No Category Selected",
+                  selectedTextFormat = "count > 3",
+                  dropupAuto = FALSE,
+                  dropup = FALSE
+                )
+              ),
+              uiOutput("DataBuilder_HROD_SDO"),
+              
+              pickerInput("School_Data_Toggles", strong("School Information Data Toggles"), 
+                          choices = c("School Size Typology" = "School.Size.Typology", 
+                                      "Curricular Offering" = "Modified.COC"),
+                          multiple = TRUE, options = list(`actions-box` = TRUE)),
+              
+              pickerInput("Teaching_Data_Toggles", strong("Teaching Data Toggles"), 
+                          choices = c("Total Teachers" = "TotalTeachers", 
+                                      "Teacher Excess" = "Total.Excess", 
+                                      "Teacher Shortage" = "Total.Shortage"),
+                          multiple = TRUE, options = list(`actions-box` = TRUE)),
+              
+              pickerInput("NTP_Data_Toggles", strong("Non-teaching Data Toggles"), 
+                          choices = c("COS" = "Outlier.Status", 
+                                      "AOII Clustering Status" = "Clustering.Status"),
+                          multiple = TRUE, options = list(`actions-box` = TRUE)),
+              
+              pickerInput("Enrolment_Data_Toggles", strong("Enrolment Data Toggles"), 
+                          choices = c("Total Enrolment" = "TotalEnrolment", "Kinder" = "Kinder", 
+                                      "Grade 1" = "G1", "Grade 2" = "G2", "Grade 3" = "G3", 
+                                      "Grade 4" = "G4", "Grade 5" = "G5", "Grade 6" = "G6", 
+                                      "Grade 7" = "G7", "Grade 8" = "G8", 
+                                      "Grade 9" = "G9", "Grade 10" = "G10", 
+                                      "Grade 11" = "G11", "Grade 12" = "G12"),
+                          multiple = TRUE, options = list(`actions-box` = TRUE)),
+              
+              pickerInput("Specialization_Data_Toggles", strong("Specialization Data Toggles"), 
+                          choices = c("English" = "English", "Mathematics" = "Mathematics", 
+                                      "Science" = "Science", 
+                                      "Biological Sciences" = "Biological.Sciences", 
+                                      "Physical Sciences" = "Physical.Sciences"),
+                          multiple = TRUE, options = list(`actions-box` = TRUE)),
+              
+              pickerInput("EFD_Data_Toggles", strong("Infrastructure Data Toggles"), 
+                          choices = c("Number of Buildings" = "Buildings", 
+                                      "Instructional Rooms" = "Instructional.Rooms.2023.2024", 
+                                      "Classroom Requirement" = "Classroom.Requirement", 
+                                      "Estimated Classroom Shortage" = "Est.CS", 
+                                      "Buildable Space" = "Buidable_space", 
+                                      "Congestion Index" = "Congestion.Index", 
+                                      "Shifting" = "Shifting", 
+                                      "Ownership Type" = "OwnershipType", 
+                                      "Electricity Source" = "ElectricitySource", 
+                                      "Water Source" = "WaterSource", 
+                                      "For Major Repairs" = "Major.Repair.2023.2024", 
+                                      "School Building Priority Index" = "SBPI", 
+                                      "Total Seats" = "Total.Seats.2023.2024", 
+                                      "Total Seats Shortage" = "Total.Seats.Shortage.2023.2024"),
+                          multiple = TRUE, options = list(`actions-box` = TRUE))
+            ),
+            layout_columns(
+              card(
+                card_header(strong("HROD Data Panel")),
+                dataTableOutput("HROD_Table")
+              ),
+              col_widths = c(12,12)
+            )
+          )
+        ),
+  # --- Nav Panel 2: Third Level Dashboard ---
+  nav_panel(
+    title = tags$b("Third Level Dashboard"),
+    layout_sidebar(
+      sidebar = sidebar(
+        width = 350,
+        h6("Strand Filter:"),
+        pickerInput(
+          inputId = "ThirdLevel_Strands",
+          label = "Select Strand(s):",
+          choices = c(
+            "Administration",
+            "Deped Attached Agencies",
+            "Finance",
+            "Human Resource And Organizational Development",
+            "Learning System",
+            "Legal And Legislative Affairs",
+            "Office Of The Secretary",
+            "Operations",
+            "Procurement",
+            "Strategic Management",
+            "Teachers And Education Council Secretariat"
+          ),
+          selected = c(
+            "Administration",
+            "Deped Attached Agencies",
+            "Finance",
+            "Human Resource And Organizational Development",
+            "Learning System",
+            "Legal And Legislative Affairs",
+            "Office Of The Secretary",
+
+"Operations",
+            "Procurement",
+            "Strategic Management",
+            "Teachers And Education Council Secretariat"
+          ),
+          multiple = TRUE,
+          options = pickerOptions(
+            actionsBox = TRUE,
+            liveSearch = TRUE,
+            header = "Select Strand(s)",
+            title = "No Strand Selected",
+            selectedTextFormat = "count > 3",
+            dropupAuto = FALSE,
+            dropup = FALSE,
+            
+          ),
+          choicesOpt = list(
+            style = "white-space: normal; word-break: break-word; overflow-wrap: break-word;"
+          )
+          
+        )),
+      
+      layout_columns(
+        card(
+          full_screen = TRUE,
+          style = "
+      width: 100%;
+      max-height: 85vh;      /* responsive height based on viewport /
+      overflow-y: auto;      / enables scroll inside card /
+      margin-bottom: 20px;   / prevents footer overlap /
+    ",
+          card_header(
+            strong("HROD Data Panel"),
+            style = "
+        font-size: 22px;
+        padding: 15px 20px;
+        text-align: center;
+        background-color: #f8f9fa;
+        border-bottom: 2px solid #dee2e6;
+      "
+          ),
+          card_body(
+            div(
+              style = "
+          padding: 10px;
+          overflow-x: auto;
+          height: calc(85vh - 80px); / keep table visible within card */
+        ",
+              dataTableOutput("ThirdLevel_Table")
+            )
+          )
+        ),
+        col_widths = c(12)
+      )
+    )
+    )
+  ),
+
+
       
       nav_panel(
         title = tags$b("Data Explorer"),  # Dropdown menu

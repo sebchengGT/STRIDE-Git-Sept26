@@ -375,7 +375,7 @@ body.dashboard-bg {
 /* Make the text titles (e.g., "Purely ES", "Small", etc.) bold */
 .bslib-value-box .value-box-title {
   font-weight: 900 !important;
-  font-size: 30px !important;   /* increase title size */
+  font-size: 22px !important;   /* increase title size */
   color: #black !important;      /* DepEd blue */
   text-transform: none;           /* keep normal case */
   letter-spacing: 0.3px;
@@ -384,7 +384,7 @@ body.dashboard-bg {
 /* Make the numbers (e.g., 35,036) bold too */
 .bslib-value-box .value-box-value {
   font-weight: 900 !important;
-  font-size: 1.5rem !important;
+  font-size: 25px !important;
   color: #004c99 !important;
 }
 
@@ -393,6 +393,12 @@ body.dashboard-bg {
 .bslib-value-box .value-box-value {
   text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
 }
+
+.card:has(#schooldetails)    .card-header { background: #004c99; color: #ffffff } /* Basic Info */
+.card:has(#schooldetails2)   .card-header { background: #009e5d; color: #ffffff } /* HR Data */
+.card:has(#schooldetails3)   .card-header { background: #f4c542; color: #ffffff } /* Classroom Data */
+.card:has(#schooldetails5)   .card-header { background: #ff8c1a; color: #ffffff } /* Specialization Data */
+
 
 /* ==== SCHOOL DETAILS CARDS STYLING ==== */
 
@@ -433,6 +439,21 @@ body.dashboard-bg {
 #schooldetails5 tr:nth-child(even) {
   background-color: #f9f9f9;
 }
+
+.spinner-border {
+  border: 0.25em solid rgba(255, 255, 255, 0.3);
+  border-top: 0.25em solid white;
+  border-radius: 50%;
+  width: 3rem;
+  height: 3rem;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
 
 
 
