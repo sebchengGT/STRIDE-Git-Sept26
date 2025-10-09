@@ -1599,113 +1599,49 @@ observeEvent(input$show_curricular_graphs, {
               )
             )
           ))),
-      # --- Second Top-Level Tab: Data Explorer --
-  #     tags$head(
-  #       tags$style(HTML("
-  #   /* ===== GENERAL SCROLL FIX ===== */
-  #   .bslib-sidebar, 
-  #   .bslib-sidebar-content, 
-  #   .sidebar, 
-  #   .bslib-card {
-  #     overflow-x: hidden !important;
-  #   }
-  # 
-  #   /* ===== PICKER INPUT DROPDOWNS (sidebar only) ===== */
-  #   .bslib-sidebar .bootstrap-select,
-  #   .bslib-sidebar .dropdown-menu {
-  #     max-width: 100% !important;
-  #     width: 100% !important;
-  #   }
-  # 
-  #   /* Fix dropdowns expanding outside sidebar */
-  #   .bslib-sidebar .dropdown-menu.open {
-  #     left: 0 !important;
-  #     right: 0 !important;
-  #     width: 100% !important;
-  #     overflow-x: hidden !important;
-  #     white-space: normal !important; /* allow text wrapping */
-  #     word-wrap: break-word !important;
-  #   }
-  # 
-  #   /* Allow long option labels to wrap to next line */
-  #   .bootstrap-select .dropdown-menu li a span.text {
-  #     white-space: normal !important;
-  #     word-break: break-word !important;
-  #     display: inline-block !important;
-  #   }
-  # 
-  #   /* Prevent layout_sidebar from causing scrollbars */
-  #   .bslib-layout-sidebar {
-  #     overflow-x: hidden !important;
-  #   }
-  # 
-  #   /* ===== NAVBAR SPACING FIX ===== */
-  #   .navbar-nav, .bslib-navbar-nav {
-  #     display: flex !important;
-  #     align-items: center !important;
-  #     gap: 10px !important; /* reduce space between nav items */
-  #   }
-  # 
-  #   /* Ensure no extra right spacing between nav menus */
-  #   .navbar-nav > li, .bslib-navbar-nav > li {
-  #     margin-right: 0 !important;
-  #     padding-right: 0 !important;
-  #   }
-  # 
-  #   /* ===== NAVBAR DROPDOWN FIX ===== */
-  #   .navbar .dropdown-menu,
-  #   .bslib-navbar .dropdown-menu {
-  #     width: auto !important;
-  #     min-width: 220px !important;
-  #     text-align: left !important;
-  #     white-space: nowrap !important;
-  #     word-wrap: normal !important;
-  #     border-radius: 6px !important;
-  #     box-shadow: 0 4px 10px rgba(0,0,0,0.1) !important;
-  #     margin-top: 4px !important; /* reduce dropdown gap */
-  #     margin-bottom: 4px !important;
-  #   }
-  # 
-  #   /* Adjust Data Explorer dropdown items */
-  #   .navbar .dropdown-menu > li > a,
-  #   .bslib-navbar .dropdown-menu > li > a {
-  #     padding: 8px 14px !important;
-  #     font-weight: 600 !important;
-  #     display: block !important;
-  #   }
-  # 
-  #   /* Hover effect */
-  #   .navbar .dropdown-menu > li > a:hover,
-  #   .bslib-navbar .dropdown-menu > li > a:hover {
-  #     background-color: #2c3895 !important;
-  #     color: white !important;
-  #   }
-  # 
-  #   /* ===== THIRD LEVEL DASHBOARD DROPDOWN FIX ===== */
-  #   .navbar .dropdown-menu li a,
-  #   .bslib-navbar .dropdown-menu li a {
-  #     white-space: normal !important;
-  #     word-break: break-word !important;
-  #     line-height: 1.2em !important;
-  #   }
-  # 
-  #   /* Keeps dropdown text readable without overlap */
-  #   .navbar .dropdown-menu li,
-  #   .bslib-navbar .dropdown-menu li {
-  #     padding-top: 4px !important;
-  #     padding-bottom: 4px !important;
-  #   }
-  # "))
-  #     )
-  #     ,
-      
-      nav_panel(
+    # --- Second Top-Level Tab: Data Explorer --
+      tags$head(
+        tags$style(HTML("
+
+    /* Allow long option labels to wrap to next line */
+    .bootstrap-select .dropdown-menu li a span.text {
+      white-space: normal !important;
+      word-break: break-word !important;
+      display: inline-block !important;
+    }
+
+    /* ===== NAVBAR DROPDOWN FIX ===== */
+    .navbar .dropdown-menu,
+    .bslib-navbar .dropdown-menu {
+      width: auto !important;
+      min-width: 220px !important;
+      text-align: left !important;
+      white-space: nowrap !important;
+      word-wrap: normal !important;
+      border-radius: 6px !important;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1) !important;
+      margin-top: 4px !important; /* reduce dropdown gap */
+      margin-bottom: 4px !important;
+    }
+  
+    /* Hover effect */
+    .navbar .dropdown-menu > li > a:hover,
+    .bslib-navbar .dropdown-menu > li > a:hover {
+      background-color: #2c3895 !important;
+      color: white !important;
+    }
+   
+  "))
+      )
+      ,
+
+      nav_menu(
         title = tags$b("Data Explorer"),  # Dropdown menu
         icon = bs_icon("table"),
-        # 
-        # # --- Nav Panel 1: School Information ---
-        # nav_panel(
-        #   title = tags$b("School Information"),
+
+        # --- Nav Panel 1: School Information ---
+        nav_panel(
+          title = tags$b("School Information"),
           layout_sidebar(
             sidebar = sidebar(
               width = 350,
@@ -1786,67 +1722,96 @@ observeEvent(input$show_curricular_graphs, {
             )
           )
         ),
-# 
-#         # --- Nav Panel 2: Third Level Dashboard ---
-#         nav_panel(
-#           title = tags$b("Third Level Dashboard"),
-#           layout_sidebar(
-#             sidebar = sidebar(
-#               width = 350,
-#               h6("Strand Filter:"),
-#               pickerInput(
-#                 inputId = "ThirdLevel_Strands",
-#                 label = "Select Strand(s):",
-#                 choices = c(
-#                   "ADMINISTRATION",
-#                   "DEPED ATTACHED AGENCIES",
-#                   "FINANCE",
-#                   "HUMAN RESOURCE AND ORGANIZATIONAL DEVELOPMENT",
-#                   "LEARNING SYSTEM",
-#                   "LEGAL AND LEGISLATIVE AFFAIRS",
-#                   "OFFICE OF THE SECRETARY",
-#                   "OPERATIONS",
-#                   "PROCUREMENT",
-#                   "STRATEGIC MANAGEMENT",
-#                   "TEACHERS AND EDUCATION COUNCIL SECRETARIAT"
-#                 ),
-#                 selected = c(
-#                   "ADMINISTRATION",
-#                   "DEPED ATTACHED AGENCIES",
-#                   "FINANCE",
-#                   "HUMAN RESOURCE AND ORGANIZATIONAL DEVELOPMENT",
-#                   "LEARNING SYSTEM",
-#                   "LEGAL AND LEGISLATIVE AFFAIRS",
-#                   "OFFICE OF THE SECRETARY",
-#                   "OPERATIONS",
-#                   "PROCUREMENT",
-#                   "STRATEGIC MANAGEMENT",
-#                   "TEACHERS AND EDUCATION COUNCIL SECRETARIAT"
-#                 ),
-#                 multiple = TRUE,
-#                 options = pickerOptions(
-#                   actionsBox = TRUE,
-#                   liveSearch = TRUE,
-#                   header = "Select Strand(s)",
-#                   title = "No Strand Selected",
-#                   selectedTextFormat = "count > 3",
-#                   dropupAuto = FALSE,
-#                   dropup = FALSE
-#                 )
-#               )
-#             ),
-# 
-#             layout_columns(
-#               card(
-#                 card_header(strong("Third Level Officials")),
-#                 dataTableOutput("ThirdLevel_Table")
-#               ),
-#               col_widths = c(12,12)
-#             )
-#           )
-#         )),
+  # --- Nav Panel 2: Third Level Dashboard ---
+  nav_panel(
+    title = tags$b("Third Level Dashboard"),
+    layout_sidebar(
+      sidebar = sidebar(
+        width = 350,
+        h6("Strand Filter:"),
+        pickerInput(
+          inputId = "ThirdLevel_Strands",
+          label = "Select Strand(s):",
+          choices = c(
+            "Administration",
+            "Deped Attached Agencies",
+            "Finance",
+            "Human Resource And Organizational Development",
+            "Learning System",
+            "Legal And Legislative Affairs",
+            "Office Of The Secretary",
+            "Operations",
+            "Procurement",
+            "Strategic Management",
+            "Teachers And Education Council Secretariat"
+          ),
+          selected = c(
+            "Administration",
+            "Deped Attached Agencies",
+            "Finance",
+            "Human Resource And Organizational Development",
+            "Learning System",
+            "Legal And Legislative Affairs",
+            "Office Of The Secretary",
+            "Operations",
+            "Procurement",
+            "Strategic Management",
+            "Teachers And Education Council Secretariat"
+          ),
+          multiple = TRUE,
+          options = pickerOptions(
+            actionsBox = TRUE,
+            liveSearch = TRUE,
+            header = "Select Strand(s)",
+            title = "No Strand Selected",
+            selectedTextFormat = "count > 3",
+            dropupAuto = FALSE,
+            dropup = FALSE,
+            
+          ),
+          choicesOpt = list(
+            style = "white-space: normal; word-break: break-word; overflow-wrap: break-word;"
+          )
+          
+        )),
       
-        
+      layout_columns(
+        card(
+          full_screen = TRUE,
+          style = "
+      width: 100%;
+      max-height: 85vh;      /* responsive height based on viewport */
+      overflow-y: auto;      /* enables scroll inside card */
+      margin-bottom: 20px;   /* prevents footer overlap */
+    ",
+          card_header(
+            strong("HROD Data Panel"),
+            style = "
+        font-size: 22px;
+        padding: 15px 20px;
+        text-align: center;
+        background-color: #f8f9fa;
+        border-bottom: 2px solid #dee2e6;
+      "
+          ),
+          card_body(
+            div(
+              style = "
+          padding: 10px;
+          overflow-x: auto;
+          height: calc(85vh - 80px); /* keep table visible within card */
+        ",
+              dataTableOutput("ThirdLevel_Table")
+            )
+          )
+        ),
+        col_widths = c(12)
+      )
+    )
+    )
+  ),
+    
+    
    
       # --- Quick School Search ---
       nav_panel(
@@ -7456,9 +7421,15 @@ observeEvent(input$show_curricular_graphs, {
   
   filtered_third <- reactive({
     df <- ThirdLevel %>%
-      filter(STRAND %in% input$ThirdLevel_Strands)
+      filter(STRAND %in% input$ThirdLevel_Strands) %>%
+      mutate(across(
+        c(STRAND, BUREAU.SERVICE, OFFICE, NAME, POSITION, DESIGNATION, TELEPHONE.NUMBER, DEPED.EMAIL),
+        ~ ifelse(is.na(.) | . == "", "-", .)
+      ))
+    
     print(head(df))
     df
+    
   })
   
   output$ThirdLevel_Table <- DT::renderDT(server = TRUE, {
