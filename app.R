@@ -89,34 +89,24 @@ ui <- fluidPage(
   tags$head(tags$meta(name = "viewport", content = "width=device-width, initial-scale=1.0, maximum-scale=3.0")),
   
   
-  tags$div(
-    class = "app-header",
-    style = "
-    display: flex;
-    align-items: center;        /* vertically center all items */
-    justify-content: center;    /* center horizontally */
-    gap: 25px;                  /* space between logo, text, logo */
-    flex-wrap: nowrap;          /* keep them in one line */
-    padding: 10px 0;
-  ",
-    
-    # Left logo
-    tags$img(src = "logo3.png", height = "90px"),
-    
-    tags$div(
+  shinyjs::hidden(
+    div(
+      id = "main_header",
+      class = "app-header",
       style = "
       display: flex;
-      flex-direction: column;
       align-items: center;
       justify-content: center;
-      text-align: center;
+      gap: 25px;
+      padding: 8px;
     ",
-      h2("DepEd STRIDE Dashboard"),
-      p("Strategic Inventory for Deployment Efficiency")
-    ),
-    
-    # Right logo
-    tags$img(src = "HROD LOGO.jpg", height = "90px")
+      tags$img(src = "logo3.png", height = "90px"),
+      div(
+        h2("DepEd STRIDE Dashboard"),
+        p("Strategic Inventory for Deployment Efficiency")
+      ),
+      tags$img(src = "HROD LOGO1.png", height = "90px")
+    )
   ),
   
   
@@ -152,6 +142,21 @@ ui <- fluidPage(
            ))
   ), 
   # Custom styling
+  
+  shinyjs::hidden(
+    tags$div(
+      id = "main_header",
+      class = "app-header",
+      style = "display: flex; align-items: center; gap: 15px; justify-content: center;",
+      
+      tags$img(src = "logo3.png", height = "100px"),
+      tags$div(
+        h2("DepEd STRIDE Dashboard"),
+        p("Strategic Inventory for Deployment Efficiency")
+      ),
+      tags$img(src = "new_logo.png", height = "90px")
+    )
+  ),
   
   shinyjs::hidden(
     div(
@@ -338,6 +343,7 @@ observeEvent(input$show_curricular_graphs, {
         if (current_username == "iamdeped") { # <<<< Your specific username condition
           # Authenticated AND username is "user1"
           shinyjs::show("main_content")
+          shinyjs::show("main_header")
           shinyjs::hide("mgmt_content")
         } else {
           
@@ -345,6 +351,7 @@ observeEvent(input$show_curricular_graphs, {
             # Authenticated BUT username is NOT "user1"
             # This could be user2, user3, etc.
             shinyjs::show("mgmt_content")
+            shinyjs::show("main_header")
             shinyjs::hide("main_content")
             # output$generic_secure_data <- renderPrint({"Generic secure data for other users..."})
           }}}
@@ -354,6 +361,7 @@ observeEvent(input$show_curricular_graphs, {
       # shinyjs::hide("loading_screen")
       shinyjs::show(selector = "#login")
       shinyjs::show("StrideLogo")
+      shinyjs::hide("main_header")
       shinyjs::hide("main_content")
       shinyjs::hide("mgmt_content")
     }
@@ -1837,7 +1845,7 @@ observeEvent(input$show_curricular_graphs, {
         font-size: 22px;
         padding: 15px 20px;
         text-align: center;
-        background-color: #f8f9fa;
+        background-color: ##f3284f;
         border-bottom: 2px solid #dee2e6;
       "
           ),
@@ -2355,14 +2363,14 @@ observeEvent(input$show_curricular_graphs, {
           card(full_screen = TRUE,
                card_header(div(strong("School Profile"),
                                tags$span(em("(Select a school in the table above)"),
-                                         style = "font-size: 0.7em; color: grey;")
+                                         style = "font-size: 0.7em; color: white;")
                )),
                tableOutput("SHSTablex")
           ),
           card(full_screen = TRUE,
                card_header(div(strong("Specialization Data"),
                                tags$span(em("(based on eSF7 for SY 2023-2024)"),
-                                         style = "font-size: 0.7em; color: grey;")
+                                         style = "font-size: 0.7em; color: white;")
                )),
                tableOutput("PilotSpec")
           ),

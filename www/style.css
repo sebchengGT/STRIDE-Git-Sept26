@@ -19,9 +19,9 @@ body.login-bg::before {
   position: fixed;
   top: 0; left: 0;
   width: 100%; height: 100%;
-  background: url("STRIDE logo.png") no-repeat center center;
-  background-size: 60%;
-  opacity: 0.5;   /* 👈 adjust watermark visibility */
+  background: url("STRIDE logo.png") no-repeat center top; /* changed */
+  background-size: 70%;  /* you can also reduce size */
+  opacity: 1;   /* 👈 adjust watermark visibility */
   z-index: -1;
 }
 
@@ -43,7 +43,7 @@ body.dashboard-bg {
 #login-panel {
   width: 500px;
   max-width: 100%;
-  margin: 150px auto !important;  /* pushes login panel down */
+  margin: 350px auto !important;  /* pushes login panel down */
   padding: 20px;
   /* If you want vertical center instead, replace margin with:
      position: relative;
@@ -248,18 +248,28 @@ body.dashboard-bg {
 
 body.dashboard-bg {
   /*background-color: #c8d5cd;*/
-  background: url("backg4.png");
   background-repeat: no-repeat;     
   background-attachment: scroll;    
   background-size: cover;           
   background-position: center top;  
 }
 
+body.dashboard-bg::before {
+  content: "";
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: url("5.png") no-repeat center top / cover;
+  opacity: 0.2; /* 👈 adjust transparency: 0 = invisible, 1 = solid */
+  z-index: -1;
+}
+
 .accordion .accordion-button:not(.collapsed) {
     box-shadow: none;
     font-weight: bolder;
     font-size: 20px;
-    background-color: #eee567;
+    color: #ffffff;
+    text-shadow: 2px 2px black;
+    background-color: #f3284f;
 }
 
 #Curricular_Offering_Bar, #School_Size_Typology_Bar {
@@ -275,6 +285,9 @@ body.dashboard-bg {
 
 .card-header:first-child {
     font-size: 20px;
+    color: #ffffff;
+    background-color: #f3284f;
+    text-shadow: 1px 0px 2px #020202;
     border-radius: var(--bs-card-inner-border-radius) var(--bs-card-inner-border-radius) 0 0;
 }
 
@@ -369,6 +382,17 @@ body.dashboard-bg {
   color: #002D62; /* optional – DepEd blue */
 }
 
+.nav-pills .nav-link.active,.nav-pills :where(ul.nav.navbar-nav > li)>a.active,.nav-pills .nav-tabs>li>a.active,.nav-pills>li>a.active,.nav-pills .nav-link:hover,.nav-pills :where(ul.nav.navbar-nav > li)>a:hover,.nav-pills .nav-tabs>li>a:hover,.nav-pills>li>a:hover,.nav-pills .nav-link:focus,.nav-pills :where(ul.nav.navbar-nav > li)>a:focus,.nav-pills .nav-tabs>li>a:focus,.nav-pills>li>a:focus {
+    background-color: #ffffff;
+    color: black;
+    text-shadow: none;
+    border-color: #dfd7ca
+}
+.nav-pills .nav-link,.nav-pills :where(ul.nav.navbar-nav > li)>a,.nav-pills .nav-tabs>li>a,.nav-pills>li>a {
+    color: #ffffff;
+    border: 1px solid transparent
+}
+
 
 /* ==== NATIONAL STATISTICS VALUE BOX TITLES & VALUES ==== */
 
@@ -393,12 +417,6 @@ body.dashboard-bg {
 .bslib-value-box .value-box-value {
   text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
 }
-
-.card:has(#schooldetails)    .card-header { background: #004c99; color: #ffffff } /* Basic Info */
-.card:has(#schooldetails2)   .card-header { background: #009e5d; color: #ffffff } /* HR Data */
-.card:has(#schooldetails3)   .card-header { background: #f4c542; color: #ffffff } /* Classroom Data */
-.card:has(#schooldetails5)   .card-header { background: #ff8c1a; color: #ffffff } /* Specialization Data */
-
 
 /* ==== SCHOOL DETAILS CARDS STYLING ==== */
 
