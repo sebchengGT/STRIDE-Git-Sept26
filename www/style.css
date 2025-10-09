@@ -258,7 +258,7 @@ body.dashboard-bg::before {
   content: "";
   position: fixed;
   top: 0; left: 0; right: 0; bottom: 0;
-  background: url("5.png") no-repeat center top / cover;
+  background: url("6.png") no-repeat center top / cover;
   opacity: 0.2; /* 👈 adjust transparency: 0 = invisible, 1 = solid */
   z-index: -1;
 }
