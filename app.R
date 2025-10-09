@@ -80,6 +80,24 @@ ui <- fluidPage(
   # Use shinyjs to easily show/hide elements
   shinyjs::useShinyjs(),
   
+  #For warning buttons
+  #currently litera bootstrap theme makes the warning button orange
+  tags$head(
+    tags$style(HTML("
+    .btn-warning {
+      background-color: #ffc107 !important; /* classic yellow */
+      border-color: #ffc107 !important;
+      color: #212529 !important; /* readable text */
+      font-weight: 600;
+    }
+
+    .btn-warning:hover {
+      background-color: #e0a800 !important; /* darker yellow hover */
+      border-color: #d39e00 !important;
+      color: #fff !important;
+    }
+  "))
+  ),
   
   tags$head(
     includeCSS("www/style.css"),
@@ -1653,30 +1671,14 @@ observeEvent(input$show_curricular_graphs, {
               )
             )
           ))),
-<<<<<<< HEAD
-      # --- Second Top-Level Tab: Data Explorer --
-      tags$head(
-        tags$style(HTML("
-
-    /* Allow long option labels to wrap to next line /
-=======
     # --- Second Top-Level Tab: Data Explorer --
-      tags$head(
-        tags$style(HTML("
-
-    /* Allow long option labels to wrap to next line */
->>>>>>> 8c8c6973105efc52c133c0748425a47399b13104
     .bootstrap-select .dropdown-menu li a span.text {
       white-space: normal !important;
       word-break: break-word !important;
       display: inline-block !important;
     }
 
-<<<<<<< HEAD
-    / ===== NAVBAR DROPDOWN FIX ===== /
-=======
     /* ===== NAVBAR DROPDOWN FIX ===== */
->>>>>>> 8c8c6973105efc52c133c0748425a47399b13104
     .navbar .dropdown-menu,
     .bslib-navbar .dropdown-menu {
       width: auto !important;
@@ -1686,19 +1688,11 @@ observeEvent(input$show_curricular_graphs, {
       word-wrap: normal !important;
       border-radius: 6px !important;
       box-shadow: 0 4px 10px rgba(0,0,0,0.1) !important;
-<<<<<<< HEAD
-      margin-top: 4px !important; / reduce dropdown gap /
-      margin-bottom: 4px !important;
-    }
-  
-    / Hover effect */
-=======
       margin-top: 4px !important; /* reduce dropdown gap */
       margin-bottom: 4px !important;
     }
   
     /* Hover effect */
->>>>>>> 8c8c6973105efc52c133c0748425a47399b13104
     .navbar .dropdown-menu > li > a:hover,
     .bslib-navbar .dropdown-menu > li > a:hover {
       background-color: #2c3895 !important;
@@ -1710,7 +1704,6 @@ observeEvent(input$show_curricular_graphs, {
       ,
 
       nav_menu(
-<<<<<<< HEAD
         title = tags$b("Data Explorer"),  # Dropdown menu
         icon = bs_icon("table"),
 
@@ -1890,8 +1883,6 @@ observeEvent(input$show_curricular_graphs, {
 
       
       nav_panel(
-=======
->>>>>>> 8c8c6973105efc52c133c0748425a47399b13104
         title = tags$b("Data Explorer"),  # Dropdown menu
         icon = bs_icon("table"),
 
@@ -1978,6 +1969,40 @@ observeEvent(input$show_curricular_graphs, {
             )
           )
         ),
+        tags$head(
+          tags$style(HTML("
+
+    /* Allow long option labels to wrap to next line */
+    .bootstrap-select .dropdown-menu li a span.text {
+      white-space: normal !important;
+      word-break: break-word !important;
+      display: inline-block !important;
+    }
+
+    /* ===== NAVBAR DROPDOWN FIX ===== */
+    .navbar .dropdown-menu,
+    .bslib-navbar .dropdown-menu {
+      width: auto !important;
+      min-width: 220px !important;
+      text-align: left !important;
+      white-space: nowrap !important;
+      word-wrap: normal !important;
+      border-radius: 6px !important;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1) !important;
+      margin-top: 4px !important; /* reduce dropdown gap */
+      margin-bottom: 4px !important;
+    }
+  
+    /* Hover effect */
+    .navbar .dropdown-menu > li > a:hover,
+    .bslib-navbar .dropdown-menu > li > a:hover {
+      background-color: #2c3895 !important;
+      color: white !important;
+    }
+   
+  "))
+        )
+        ,
   # --- Nav Panel 2: Third Level Dashboard ---
   nav_panel(
     title = tags$b("Third Level Dashboard"),
@@ -2076,7 +2101,7 @@ observeEvent(input$show_curricular_graphs, {
         layout_sidebar(
           sidebar = sidebar(
             textInput("text","Enter School Name"),
-            input_task_button("TextRun", icon_busy = fontawesome::fa_i("refresh", class = "fa-spin", "aria-hidden" = "true"), strong("Show Selection"), class = "btn-success")),
+            input_task_button("TextRun", icon_busy = fontawesome::fa_i("refresh", class = "fa-spin", "aria-hidden" = "true"), strong("Show Selection"), class = "btn-warning")),
           layout_columns(
             card(
               card_header(strong("Search Output")),
@@ -2125,7 +2150,7 @@ observeEvent(input$show_curricular_graphs, {
                              selected = "Region I"),
                  uiOutput("resource_map_division"),
                  uiOutput("resource_map_legislative_district"),
-                 input_task_button("Mapping_Run", strong("Show Selection"), class = "btn-success"),
+                 input_task_button("Mapping_Run", strong("Show Selection"), class = "btn-warning"),
             ),
             hr(),
             
@@ -2142,7 +2167,7 @@ observeEvent(input$show_curricular_graphs, {
                   "Learner Congestion",
                   "Industries",
                   "Facilities",
-                  "LMS"
+                  "Last Mile School"
                 ),
                 selected = "Teaching Deployment"
               )
@@ -2212,7 +2237,7 @@ observeEvent(input$show_curricular_graphs, {
           selectInput("resource_map_level", "Filter Curricular Level:",
                       choices = c("Elementary School"="ES","Junior High School"="JHS","Senior High School"="SHS"),
                       selected = "ES"),
-          input_task_button("Teaching_Deployment_Refresh", strong("Refresh"), class = "btn-success"),
+          input_task_button("Teaching_Deployment_Refresh", strong("Refresh"), class = "btn-warning"),
           col_widths = c(4,-8,2)),
         hr(),
         layout_column_wrap(
@@ -2259,104 +2284,161 @@ observeEvent(input$show_curricular_graphs, {
       )
       
     } else if (selected_resource_type == "Non-teaching Deployment") {
-      
       tagList(
         h3("Non-teaching Deployment Overview"),
         hr(),
-        layout_columns(
-          navset_card_tab(
-            nav_spacer(),
-            nav_panel(
-              title = "Regional Summary",
-              layout_columns(
-                card(
-                  card_header(strong("Schools under Clustered AO II Deployment")),
-                  valueBoxOutput("f2")
+        
+        # --- Accordion only for the tabbed summaries ---
+        accordion(
+          open = "Deployment Summary by Level",  # optional: opens this by default
+          accordion_panel(
+            title = "Deployment Summary by Level",
+            icon = bsicons::bs_icon("people-fill"),
+            
+            # --- Your existing navset_card_tab layout ---
+            layout_columns(
+              navset_card_tab(
+                nav_spacer(),
+                nav_panel(
+                  title = "Regional Summary",
+                  layout_columns(
+                    card(
+                      card_header(strong("Schools under Clustered AO II Deployment")),
+                      valueBoxOutput("f2")
+                    ),
+                    card(
+                      card_header(strong("Schools with Dedicated AOII Deployment")),
+                      valueBoxOutput("g2")
+                    ),
+                    col_widths = c(6,6)
+                  )
                 ),
-                card(
-                  card_header(strong("Schools with Dedicated AOII Deployment")),
-                  valueBoxOutput("g2")
+                nav_panel(
+                  title = "Division Summary",
+                  layout_columns(
+                    card(
+                      card_header(strong("Schools under Clustered AO II Deployment")),
+                      valueBoxOutput("a2")
+                    ),
+                    card(
+                      card_header(strong("Schools with Dedicated AOII Deployment")),
+                      valueBoxOutput("b2")
+                    ),
+                    col_widths = c(6,6)
+                  )
                 ),
-                col_widths = c(6,6)
-              )
-            ),
-            nav_panel(
-              title = "Division Summary",
-              layout_columns(
-                card(
-                  card_header(strong("Schools under Clustered AO II Deployment")),
-                  valueBoxOutput("a2")
-                ),
-                card(
-                  card_header(strong("Schools with Dedicated AOII Deployment")),
-                  valueBoxOutput("b2")
-                ),
-                col_widths = c(6, 6)
-              )
-            ),
-            nav_panel(
-              title = "District Summary",
-              layout_columns(
-                card(
-                  card_header(strong("Schools under Clustered AO II Deployment")),
-                  valueBoxOutput("e2")
-                ),
-                card(
-                  card_header(strong("Schools with Dedicated AOII Deployment")),
-                  valueBoxOutput("h2")
-                ),
-                col_widths = c(6, 6)
+                nav_panel(
+                  title = "District Summary",
+                  layout_columns(
+                    card(
+                      card_header(strong("Schools under Clustered AO II Deployment")),
+                      valueBoxOutput("e2")
+                    ),
+                    card(
+                      card_header(strong("Schools with Dedicated AOII Deployment")),
+                      valueBoxOutput("h2")
+                    ),
+                    col_widths = c(6,6)
+                  )
+                )
               )
             )
-          ),
+          )
+        ),
+        
+        hr(),
+        
+        # --- This part stays outside the accordion ---
+        layout_columns(
           card(
-            card_header(div(strong("AO II Deployment Status"),
-                            tags$span(
-                              em("(as of September 2, 2025)"),
-                              style = "font-size: 0.8em; color: grey; margin-top: 0.1em; margin-bottom: 0;"
-                            )
-            )),
+            card_header(
+              div(
+                strong("AO II Deployment Status"),
+                tags$span(
+                  em("(as of September 2, 2025)"),
+                  style = "font-size: 0.8em; color: grey; margin-top: 0.1em; margin-bottom: 0;"
+                )
+              )
+            ),
             dataTableOutput("AO2Table")
           ),
-          card(full_screen = TRUE,
-               card_header(strong("Personnel Deployment Mapping")),
-               leafletOutput("AO2Mapping", height = 800)
+          card(
+            full_screen = TRUE,
+            card_header(strong("Personnel Deployment Mapping")),
+            leafletOutput("AO2Mapping", height = 800)
           ),
-          col_widths = c(12,5,7)
+          col_widths = c(5,7)
         )
       )
+    
       
     } else if (selected_resource_type == "Classroom Inventory") {
-      
       tagList(
         h3("Classroom Inventory Overview"),
         hr(),
-        layout_column_wrap(
-          width = 1/3,
-          card(
-            card_header(strong("Regional Classroom Shortage")),
-            valueBoxOutput("ROCRShort")
+        
+        # --- Accordion for National and Shortage Summaries ---
+        accordion(
+          
+          # ⃣Panel: National Overview
+          accordion_panel(
+            title = "National Classroom Inventory Overview",
+            icon = bsicons::bs_icon("bar-chart-fill"),
+            layout_columns(
+              card(
+                card_header(
+                  tagList(
+                    strong("National Classroom Breakdown"),
+                    tags$br(),
+                    tags$em("(n = 165,443)")
+                  )
+                ),
+                plotlyOutput("Classroom_Shortage_Region_Graph2")
+              ),
+              col_widths = c(12)
+            )
           ),
-          card(
-            card_header(strong("Division Classroom Shortage")),
-            valueBoxOutput("SDOCRShort")
-          ),
-          card(
-            card_header(strong("District Classroom Shortage")),
-            valueBoxOutput("DistCRShort")
+          
+          hr(),
+          #  Panel: Classroom Shortage Summary
+          accordion_panel(
+            title = "Classroom Shortage Summary",
+            icon = bsicons::bs_icon("exclamation-triangle"),
+            layout_column_wrap(
+              width = 1/3,
+              card(
+                card_header(strong("Regional Classroom Shortage")),
+                valueBoxOutput("ROCRShort")
+              ),
+              card(
+                card_header(strong("Division Classroom Shortage")),
+                valueBoxOutput("SDOCRShort")
+              ),
+              card(
+                card_header(strong("District Classroom Shortage")),
+                valueBoxOutput("DistCRShort")
+              )
+            )
           )
         ),
+        
+        hr(),
+        
+        # --- Table and Mapping ---
         layout_columns(
-          card(full_screen = TRUE,
-               card_header(strong("School Building Priority Index")),
-               dataTableOutput("CLTable")
+          card(
+            full_screen = TRUE,
+            card_header(strong("School Building Priority Index")),
+            dataTableOutput("CLTable")
           ),
-          card(full_screen = TRUE,
-               card_header(strong("School Mapping")),
-               leafletOutput("CLMapping", height = 800)
+          card(
+            full_screen = TRUE,
+            card_header(strong("School Mapping")),
+            leafletOutput("CLMapping", height = 800)
           )
         )
       )
+    
       
     } else if (selected_resource_type == "Industries") {
       
@@ -2483,11 +2565,57 @@ observeEvent(input$show_curricular_graphs, {
         )
       )
       
-    } else if (selected_resource_type == "LMS") {
-      
+    } else if (selected_resource_type == "Last Mile School") {
       tagList(
         h3("Last Mile Schools (LMS) Overview"),
         hr(),
+        
+        # --- Accordion for LMS Summaries ---
+        accordion(
+          open = "National and Regional Breakdown",  # optional: open first panel by default
+          
+          # 1️⃣ Panel: National + Regional Breakdown
+          accordion_panel(
+            title = "National and Regional Breakdown",
+            icon = bsicons::bs_icon("bar-chart"),
+            layout_columns(
+              card(
+                card_header(
+                  tagList(
+                    strong("Regional Breakdown of Last Mile Schools"),
+                    tags$br(),
+                    tags$em("(n = 9,100)")
+                  )
+                ),
+                plotlyOutput("LMS_Nation_Graph2")
+              ),
+              col_widths = c(12)
+            )
+          ),
+          
+        
+          hr(),
+          
+          # 2️⃣ Panel: Regional and Division Totals
+          accordion_panel(
+            title = "Regional and Division Totals",
+            icon = bsicons::bs_icon("geo-alt"),
+            layout_columns(
+              card(
+                card_header(strong("Total Last Mile Schools by Region")),
+                valueBoxOutput("LMS_Total_Region")
+              ),
+              card(
+                card_header(strong("Total Last Mile Schools by Division")),
+                valueBoxOutput("LMS_Total_Division")
+              ),
+              col_widths = c(6, 6)
+            )
+          )
+        ),
+        
+      hr(), 
+      
         layout_columns(
           card(
             full_screen = TRUE,
@@ -2499,7 +2627,7 @@ observeEvent(input$show_curricular_graphs, {
             card_header(strong("LMS Mapping")),
             leafletOutput("LMSMapping", height = 800)
           ),
-          col_widths = c(6,6)
+          col_widths = c(6, 6)
         )
       )
     }
@@ -6542,6 +6670,82 @@ observeEvent(input$show_curricular_graphs, {
              margin = list(b = 100)) # Increase bottom margin for x-axis labels
   })
   
+  output$LMS_Nation_Graph2 <- renderPlotly({
+    # Use the reactive filtered data
+    current_filtered_data <- filtered_LMS_region() %>% 
+      rename(
+        "With Buildable Space" = Buildable_space,
+        "With Excess Classrooms" = With_Excess,
+        "Without Classroom Shortage" = Without_Shortage,
+        "Last Mile Schools" = LMS,
+        "GIDCA" = GIDCA,
+        "With Shortage" = With_Shortage
+      ) %>%
+      pivot_longer(13:18, names_to = "Type", values_to = "Count")
+    
+    # --- Empty Data Handling ---
+    if (nrow(current_filtered_data) == 0) {
+      return(ggplotly(
+        ggplot() +
+          annotate("text", x = 0.5, y = 0.5, label = "No data for selected regions/divisions") +
+          theme_void()
+      ))
+    }
+    
+    # --- ✅ Focus only on "Last Mile Schools" and aggregate all regions (National total) ---
+    plot_data <- current_filtered_data %>%
+      filter(Type == "Last Mile Schools") %>%  # Only keep LMS
+      group_by(Region, Type) %>%
+      summarise(
+        Count = sum(as.numeric(Count), na.rm = TRUE),
+        .groups = "drop"
+      )
+    
+    # Compute national total
+    national_total <- plot_data %>%
+      summarise(TotalCount = sum(Count, na.rm = TRUE)) %>%
+      pull(TotalCount)
+    
+    # --- ✅ Create the plot ---
+    p <- ggplot(plot_data,
+                aes(
+                  x = reorder(Region, -Count),
+                  y = Count,
+                  fill = Region,
+                  text = paste(
+                    "Region:", Region,
+                    "<br>Count:", scales::comma(Count)
+                  )
+                )) +
+      geom_bar(stat = "identity", color = "black", size = 0.25) +
+      geom_hline(yintercept = 0, color = "black") +
+      geom_text(
+        aes(x = Region, y = Count * 1.05, label = scales::comma(Count)),
+        size = 3.5,
+        color = "black"
+      ) +
+      labs(
+        title = paste0("Last Mile Schools by Region (n = ", scales::comma(national_total), ")"),
+        x = "Region",
+        y = "Number of Last Mile Schools",
+        fill = "Region"
+      ) +
+      scale_y_continuous(labels = scales::comma) +
+      theme_minimal() +
+      theme(
+        axis.text.x = element_text(size = 10, angle = 45, hjust = 1),
+        legend.position = "none",
+        plot.title = element_text(hjust = 0.5, face = "bold", size = 14)
+      )
+    
+    # Convert ggplot to plotly
+    ggplotly(p, tooltip = "text") %>%
+      layout(
+        hoverlabel = list(bgcolor = "white"),
+        margin = list(b = 100)
+      ) %>%
+      style(hoverinfo = "text")
+  })
   output$LMS_Nation_Graph <- renderPlotly({
     # Use the reactive filtered data
     # Correct the column selection: pivot columns 13-17 without excluding any.
@@ -6605,6 +6809,116 @@ observeEvent(input$show_curricular_graphs, {
       # Use plotly's style function to hide the "trace" hover info and keep the custom text
       style(hoverinfo = "text") 
   })
+  
+  output$Classroom_Shortage_Region_Graph2 <- renderPlotly({
+    
+    # Use the reactive filtered data
+    current_filtered_data <- LMS
+    
+    # --- Empty Data Handling ---
+    if (nrow(current_filtered_data) == 0) {
+      return(ggplotly(ggplot() +
+                        annotate("text", x = 0.5, y = 0.5, label = "No data for selected regions/divisions") +
+                        theme_void()))
+    }
+    
+    # Prepare the data for plotting
+    # Ensure 'Estimated_CL_Shortage' is treated as numeric
+    plot_data <- current_filtered_data %>%
+      group_by(Region) %>%
+      summarise(Count = sum(as.numeric(Estimated_CL_Shortage), na.rm = TRUE), .groups = 'drop')
+    
+    # Create the ggplot
+    p <- ggplot(plot_data,
+                aes(x = reorder(Region, -Count),
+                    y = Count,
+                    fill = Region,
+                    text = paste("Region: ", Region,
+                                 "<br>Classroom Shortage: ", scales::comma(Count)))) + # Custom tooltip text
+      geom_bar(stat = "identity", color = "black") +
+      geom_text(data = plot_data,
+                aes(x = Region, y = Count * 1.05, label = scales::comma(Count)), # Modified line
+                inherit.aes = FALSE,
+                size = 3.5,
+                color = "black") +
+      labs(x = "Region",
+           y = "Classroom Shortage") +
+      scale_y_continuous(labels = scales::comma) + # Format y-axis labels as comma-separated numbers
+      theme_minimal() +
+      theme(axis.text.x = element_text(size = 10, angle = 45, hjust = 1),
+            legend.position = "none", # No legend needed for single fill
+            plot.title = element_text(hjust = 0.5)) # Center the plot title
+    
+    # Convert ggplot to plotly, ensuring custom text is used for hover
+    ggplotly(p, tooltip = "text", source = "classroomShortageRegionPlot") %>%
+      layout(hoverlabel = list(bgcolor = "white"),
+             # Adjust margins to prevent labels from being cut off if needed
+             margin = list(b = 100)) # Increase bottom margin for x-axis labels
+  })
+  
+  output$LMS_Nation_Graph2 <- renderPlotly({
+    full_data <- LMS %>%   
+      rename(
+        "With Buildable Space" = Buildable_space,
+        "With Excess Classrooms" = With_Excess,
+        "Without Classroom Shortage" = Without_Shortage,
+        "Last Mile Schools" = LMS,
+        "GIDCA" = GIDCA,
+        "With Shortage" = With_Shortage
+      ) %>%
+      pivot_longer(13:18, names_to = "Type", values_to = "Count")
+    
+    # --- Keep only "Last Mile Schools" and aggregate all regions ---
+    plot_data <- full_data %>%
+      filter(Type == "Last Mile Schools") %>%
+      group_by(Region) %>%
+      summarise(
+        Count = sum(as.numeric(Count), na.rm = TRUE),
+        .groups = "drop"
+      )
+    
+    # --- Compute national total ---
+    national_total <- sum(plot_data$Count, na.rm = TRUE)
+    
+    # ---  Create the chart ---
+    p <- ggplot(plot_data,
+                aes(
+                  x = reorder(Region, -Count),
+                  y = Count,
+                  fill = Region,
+                  text = paste(
+                    "Region:", Region,
+                    "<br>Count:", scales::comma(Count)
+                  )
+                )) +
+      geom_bar(stat = "identity", color = "black", size = 0.25) +
+      geom_text(
+        aes(label = scales::comma(Count), y = Count * 1.05),
+        size = 3.5,
+        color = "black"
+      ) +
+      labs(
+        title = paste0("Regional Breakdown of Last Mile Schools\n(n = ", scales::comma(national_total), ")"),
+        x = "Region",
+        y = "Number of Last Mile Schools",
+        fill = "Region"
+      ) +
+      scale_y_continuous(labels = scales::comma) +
+      theme_minimal() +
+      theme(
+        plot.title = element_text(hjust = 0.5, size = 14, face = "bold"),
+        axis.text.x = element_text(size = 10, angle = 45, hjust = 1),
+        legend.position = "none"
+      )
+    
+    ggplotly(p, tooltip = "text") %>%
+      layout(
+        hoverlabel = list(bgcolor = "white"),
+        margin = list(b = 100)
+      ) %>%
+      style(hoverinfo = "text")
+  })
+  
   
   output$LMS_Division_Graph <- renderPlotly({
     
@@ -7533,7 +7847,7 @@ observeEvent(input$show_curricular_graphs, {
   # output$PipelinePrograms <- renderPlotly({ ... })
   
   # --- Reactive Table Data based on Plotly Click (Updated for Multiple Sources) ---
-  output$projectDetailTable <- DT::renderDT(server = TRUE, {
+  output$projectDetailTable <- DT::renderDT(server = FALSE, {
     # Initialize table_to_display with the pre-filtered data
     table_to_display <- filtered_data3()
     
@@ -7616,7 +7930,7 @@ observeEvent(input$show_curricular_graphs, {
     }
   })
   
-  output$HROD_Table <- DT::renderDT(server = TRUE, {
+  output$HROD_Table <- DT::renderDT(server = FALSE, {
     # Get all unique choices from the original dataset for comparison
     all_regions <- unique(uni$Region)
     all_divisions <- unique(uni$Division)
@@ -7688,7 +8002,7 @@ observeEvent(input$show_curricular_graphs, {
     
   })
   
-  output$ThirdLevel_Table <- DT::renderDT(server = TRUE, {
+  output$ThirdLevel_Table <- DT::renderDT(server = FALSE, {
     
 
     datatable(
@@ -8318,7 +8632,7 @@ observeEvent(input$show_curricular_graphs, {
       )
       
       pal <- colorFactor(
-        palette = c("red", "orange", "yellow", "green"),
+        palette = c("red", "orange", "purple", "green"),
         domain = domain,
         ordered = TRUE
       )
@@ -8794,7 +9108,7 @@ observeEvent(input$show_curricular_graphs, {
         library = "fa",
         markerColor = case_when(
           suppressWarnings(as.numeric(mainreactCR$SBPI)) > 0   & as.numeric(mainreactCR$SBPI) <= 0.5 ~ "green",   # Mild (0–0.5)
-          suppressWarnings(as.numeric(mainreactCR$SBPI)) > 0.5 & as.numeric(mainreactCR$SBPI) <= 1.5 ~ "yellow",  # Minor (0.6–1.5)
+          suppressWarnings(as.numeric(mainreactCR$SBPI)) > 0.5 & as.numeric(mainreactCR$SBPI) <= 1.5 ~ "purple",  # Minor (0.6–1.5)
           suppressWarnings(as.numeric(mainreactCR$SBPI)) > 1.5 & as.numeric(mainreactCR$SBPI) <= 2.0 ~ "orange",  # Major (1.6–2.0)
           suppressWarnings(as.numeric(mainreactCR$SBPI)) > 2.0                                         ~ "red",     # Extreme (>2.0)
           TRUE                                                                                        ~ "lightgray"
@@ -8977,6 +9291,36 @@ observeEvent(input$show_curricular_graphs, {
     output$DistCRShort <- renderValueBox({
       valueBox(tags$p(strong(sum(mainreactNTP$Est.CS, na.rm = TRUE)), style = "font-family: Poppins; font-size: 20px; color: #111111; text-align: center;"), subtitle = NULL)
     })
+    
+    # --- Total Last Mile Schools by Region ---
+    output$LMS_Total_Region <- renderValueBox({
+      total_region_lms <- sum(mainreactunireg$LMS, na.rm = TRUE)  # <-- adjust dataset/column name if needed
+      
+      valueBox(
+        tags$p(
+          strong(scales::comma(total_region_lms)),
+          style = "font-family: Poppins; font-size: 20px; color: #111111; text-align: center;"
+        ),
+        subtitle = tags$p("Total LMS (Region Level)", 
+                          style = "font-family: Poppins; font-size: 14px; text-align: center; color: #555555;")
+      )
+    })
+    
+    
+    # --- Total Last Mile Schools by Division ---
+    output$LMS_Total_Division <- renderValueBox({
+      total_division_lms <- sum(mainreactunidiv$LMS, na.rm = TRUE)  # <-- adjust dataset/column name if needed
+      
+      valueBox(
+        tags$p(
+          strong(scales::comma(total_division_lms)),
+          style = "font-family: Poppins; font-size: 20px; color: #111111; text-align: center;"
+        ),
+        subtitle = tags$p("Total LMS (Division Level)", 
+                          style = "font-family: Poppins; font-size: 14px; text-align: center; color: #555555;")
+      )
+    })
+    
     
     dfreact_CL <- reactive({
       
