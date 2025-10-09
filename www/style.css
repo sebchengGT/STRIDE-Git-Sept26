@@ -19,9 +19,9 @@ body.login-bg::before {
   position: fixed;
   top: 0; left: 0;
   width: 100%; height: 100%;
-  background: url("STRIDE logo.png") no-repeat center top; /* changed */
-  background-size: 70%;  /* you can also reduce size */
-  opacity: 1;   /* 👈 adjust watermark visibility */
+  background: url("STRIDE logo.png") no-repeat center; /* changed */
+  background-size: 50%;  /* you can also reduce size */
+  opacity: 0.4;   /* 👈 adjust watermark visibility */
   z-index: -1;
 }
 
@@ -166,6 +166,7 @@ body.dashboard-bg {
  /* Force navbar items to left align */
 .navbar-nav {
   justify-content: flex-start !important;
+  --bs-nav-link-color: #000;
 }
 .navbar-collapse {
   justify-content: flex-start !important;
@@ -174,6 +175,18 @@ body.dashboard-bg {
 .navbar .nav-item {
   margin: auto;
   font-size: 20px;
+}
+
+.navbar.navbar-inverse {
+    /* Set the background color to the yellowish/orange */
+    background-color: #f0ad4e !important;
+    
+    /* Bootstrap variable overrides for emphasis/text color */
+    --bs-emphasis-color: #000;
+    --bs-emphasis-color-rgb: 0, 0, 0;
+    --bs-navbar-active-color: rgb(32, 33, 36);
+    --bs-navbar-hover-color: rgb(224 0 0);
+
 }
 
 
@@ -269,7 +282,7 @@ body.dashboard-bg::before {
     font-size: 20px;
     color: #ffffff;
     text-shadow: 2px 2px black;
-    background-color: #f3284f;
+    background-color: #002D62;
 }
 
 #Curricular_Offering_Bar, #School_Size_Typology_Bar {
@@ -286,7 +299,7 @@ body.dashboard-bg::before {
 .card-header:first-child {
     font-size: 20px;
     color: #ffffff;
-    background-color: #f3284f;
+    background-color: #002D62;
     text-shadow: 1px 0px 2px #020202;
     border-radius: var(--bs-card-inner-border-radius) var(--bs-card-inner-border-radius) 0 0;
 }
