@@ -20,8 +20,8 @@ body.login-bg::before {
   top: 0; left: 0;
   width: 100%; height: 100%;
   background: url("STRIDE logo.png") no-repeat center; /* changed */
-  background-size: 50%;  /* you can also reduce size */
-  opacity: 0.4;   /* 👈 adjust watermark visibility */
+  background-size: 60%;  /* you can also reduce size */
+  opacity: 0.7;   /* 👈 adjust watermark visibility */
   z-index: -1;
 }
 
@@ -107,6 +107,17 @@ body.dashboard-bg {
   opacity: 0.8;
 }
 
+.header-logo-left {
+  height: 110px;
+  width: auto;
+}
+
+/* Right logo */
+.header-logo-right {
+  height: 100px;
+  width: auto;
+}
+
 /* Well box */
 .well {
   display: block;
@@ -188,6 +199,15 @@ body.dashboard-bg {
     --bs-navbar-hover-color: rgb(224 0 0);
 
 }
+
+@media (min-width: 992px) {
+    .navbar-expand-lg,.navbar:not(.navbar-expand):not(.navbar-expand-sm):not(.navbar-expand-md):not(.navbar-expand-lg):not(.navbar-expand-xl) {
+        flex-wrap:nowrap;
+        -webkit-flex-wrap: nowrap;
+        justify-content: flex-start;
+        -webkit-justify-content: flex-start;
+        background-color: #f0ad4e;
+    }
 
 
 .dashboard-container {
