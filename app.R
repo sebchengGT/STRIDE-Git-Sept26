@@ -8896,7 +8896,7 @@ observeEvent(input$show_curricular_graphs, {
       addCircleMarkers(
         lng = mainreactSHS$Longitude,
         lat = mainreactSHS$Latitude,
-        radius = 20,  # increase circle size (default is around 5)
+        radius = 80,  # increase circle size (default is around 5)
         color = "black",  # border color
         weight = 1,  # border thickness
         fillColor = "orange",  # fill color (like markerColor before)
