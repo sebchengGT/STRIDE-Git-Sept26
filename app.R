@@ -8893,23 +8893,22 @@ observeEvent(input$show_curricular_graphs, {
       ) %>%
       
       # --- SHS Schools (always orange university icons) ---
-      addAwesomeMarkers(
-        clusterOptions = markerClusterOptions(disableClusteringAtZoom = 15),
+      addCircleMarkers(
         lng = mainreactSHS$Longitude,
         lat = mainreactSHS$Latitude,
-        icon = makeAwesomeIcon(
-          icon = "university",
-          library = "fa",
-          markerColor = "beige"   
-        ),
+        radius = 20,  # increase circle size (default is around 5)
+        color = "black",  # border color
+        weight = 1,  # border thickness
+        fillColor = "orange",  # fill color (like markerColor before)
+        fillOpacity = 0.5,  # lower opacity (range: 0–1)
         label = values_industry,
         labelOptions = labelOptions(
           noHide = FALSE,
           textsize = "12px",
           direction = "top",
-          fill = TRUE,
           style = list("border-color" = "rgba(0,0,0,0.5)")
-        )
+        ),
+        clusterOptions = markerClusterOptions(disableClusteringAtZoom = 15)
       ) %>%
       
       # --- Industry markers (cog icons, colored by sector) ---
