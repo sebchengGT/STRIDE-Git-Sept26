@@ -115,13 +115,17 @@ ui <- fluidPage(
     style = "display: flex; align-items: center; gap: 15px; justify-content: center;",
     
     # Logo
-    tags$img(src = "logo3.png", height = "100px"),
+    tags$img(src = "logo3.png", class = "header-logo-left"),
     
-    # Text beside the logo
+    # Center text
     tags$div(
-      h2("DepEd STRIDE Dashboard"),
-      p("Strategic Inventory for Deployment Efficiency")
-    )
+      class = "header-title",
+      h2("Department of Education"),
+      p("STRIDE: Strategic Inventory for Deployment Efficiency")
+    ),
+    
+    # Right logo
+    tags$img(src = "HROD LOGO1.png", class = "header-logo-right")
   ),
   
   
