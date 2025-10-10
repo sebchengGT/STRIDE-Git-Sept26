@@ -1,0 +1,496 @@
+body {
+  background-color: #f9fafc;
+  font-family: 'Poppins', sans-serif; /* Updated font */
+  margin: 0;
+  padding-bottom: 60px; /* leave space so footer doesn’t overlap */
+  opacity: 1; /* keep content fully visible */
+}
+
+body.login-bg {
+  background: none;
+  background-size: cover;
+  background-attachment: fixed;
+  color: white;
+}
+
+/* Watermark logo */
+body.login-bg::before {
+  content: "";
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: url("STRIDE logo.png") no-repeat center; /* changed */
+  background-size: 50%;  /* you can also reduce size */
+  opacity: 0.4;   /* 👈 adjust watermark visibility */
+  z-index: -1;
+}
+
+body.dashboard-bg {
+  background-color: #f9fafc;
+  background-image: none;
+  color: #333;
+}
+
+/* Login page wrapper */
+.login-page {
+  display: flex;
+  justify-content: center;
+  margin-top: 60px;   /* 👈 space between header and login */
+  padding: 20px;
+}
+
+/* Login panel (choose ONE method) */
+#login-panel {
+  width: 500px;
+  max-width: 100%;
+  margin: 350px auto !important;  /* pushes login panel down */
+  padding: 20px;
+  /* If you want vertical center instead, replace margin with:
+     position: relative;
+     top: 50%;
+     transform: translateY(-50%);
+  */
+}
+
+/* Style the login card */
+#login .panel,
+#login .card, 
+#login .well {
+  background-color: rgba(0, 45, 98, 0.9) !important; /* dark blue card */
+  color: #fff !important;
+  padding: 25px;
+  border-radius: 12px;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+  max-width: 400px;
+  margin: auto;
+  text-align: left;
+}
+/* Animate the login box */
+/*#login-login_ui {
+  animation: slideUp 1s ease-out;
+}
+.fade-in {
+  animation: slideUp 1s ease-out;
+}
+
+@keyframes slideUp {
+  0% {
+    transform: translateY(40px);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* ==== HEADER ==== */
+.app-header {
+  background: linear-gradient(rgba(0, 45, 98, 0.9), rgba(0, 45, 98, 0.9));
+  color: white;
+  padding: 4px;
+  text-align: center;
+  position: sticky;
+  top: 0;
+  z-index: 9999 !important;
+}
+
+.app-header h2 {
+  text-align: center;
+  margin: 0;
+  font-size: 1.8em;
+}
+
+.app-header p {
+  margin: 0;
+  font-size: 0.9em;
+  opacity: 0.8;
+}
+
+/* Well box */
+.well {
+  display: block;
+  background-color: #13345ade;
+  color: white;
+  padding: 1rem;
+  border-radius: 2.375rem;
+  text-shadow: 2px 3px black;
+}
+
+/* ==== FOOTER ==== */
+.app-footer {
+  background-color: #f1f1f1;
+  color: #444;
+  text-align: center;
+  padding: 10px;
+  position: fixed;
+  bottom: 0;
+  width: 100%;
+  border-top: 1px solid #ccc;
+  font-size: 0.9em;
+  z-index: 9999 !important;
+}
+
+/* ==== CUSTOM CARDS ==== */
+/*.card-header {
+  background-color: #e6f0ff !important;
+  color: #002D62 !important;
+  font-weight: bold;
+}
+
+/* ==== VALUE BOX ==== */
+.value-box .value {
+  font-size: 1.2em;
+  color: #d63384;
+}
+.value-box .title {
+  white-space: normal !important;
+}
+
+
+/* Animate "Please Log in" */
+/*#login-title {
+  animation: fadeInDown 1s ease-out;
+}
+
+@keyframes fadeInDown {
+  0% {
+    opacity: 0;
+    transform: translateY(-30px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+} 
+ /* Force navbar items to left align */
+.navbar-nav {
+  justify-content: flex-start !important;
+  --bs-nav-link-color: #000;
+}
+.navbar-collapse {
+  justify-content: flex-start !important;
+}
+
+.navbar .nav-item {
+  margin: auto;
+  font-size: 20px;
+}
+
+.navbar.navbar-inverse {
+    /* Set the background color to the yellowish/orange */
+    background-color: #f0ad4e !important;
+    
+    /* Bootstrap variable overrides for emphasis/text color */
+    --bs-emphasis-color: #000;
+    --bs-emphasis-color-rgb: 0, 0, 0;
+    --bs-navbar-active-color: rgb(32, 33, 36);
+    --bs-navbar-hover-color: rgb(224 0 0);
+
+}
+
+
+.dashboard-container {
+  transform-origin: top left;
+  transform: scale(var(--zoom-scale, 1)); /* Controlled by JS */
+  transition: transform 0.2s ease-out;
+}
+
+/* Prevent text from compressing */
+.card,
+.card-body,
+.card-header {
+  text-align: center;
+  font-size: 15px; /* base size */
+  line-height: 1.3;
+  overflow: visible;
+  white-space: normal;
+  font-weight: bolder;
+  font-family: 'Poppins', sans-serif; /* Updated font */
+  box-shadow: 2px 1px 3px 0px rgba(0, 0, 0, 0.98);
+}
+
+
+  
+/*.card {
+  text-align: -webkit-center;
+}
+
+.card.animate {
+  opacity: 1;
+  transform: translateY(0);
+}*/
+
+.bslib-sidebar-layout>.sidebar>.sidebar-content {
+    display: flex*/
+;
+    flex-direction: column;
+    gap: var(--bslib-spacer, 1rem);
+    padding: var(--_padding);
+    padding-top: var(--_padding-icon);
+    background: #23558f;
+    font-family: 'Poppins', sans-serif; /* Updated font */
+    font-size: 17px;
+    text-shadow: 1px 2px 2px #black;
+    letter-spacing: 0px;
+    word-spacing: -0.4px;
+    color: #FFFFFF;
+    font-weight: 700;
+    text-decoration: none;
+    font-style: normal;
+    font-variant: normal;
+    text-transform: none;
+    text-align: center;
+    
+}
+.bslib-sidebar-layout .sidebar .sidebar-title {
+  color: #ffffff !important; /* Change to your desired color */
+  font-size: 28px;
+  font-weight: 900;
+  text-shadow: 2px 2px 3px black;
+}
+
+
+.bslib-accordion-panel-3227 {
+    box-shadow: 2px 2px 7px 1px #306a90;
+    font-weight: 800;
+}
+.sidebar-content>.bslib-gap-spacing{
+  sidebar-width: auto;
+}
+
+body.dashboard-bg {
+  /*background-color: #c8d5cd;*/
+  background-repeat: no-repeat;     
+  background-attachment: scroll;    
+  background-size: cover;           
+  background-position: center top;  
+}
+
+body.dashboard-bg::before {
+  content: "";
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: url("6.png") no-repeat center top / cover;
+  opacity: 0.2; /* 👈 adjust transparency: 0 = invisible, 1 = solid */
+  z-index: -1;
+}
+
+.accordion .accordion-button:not(.collapsed) {
+    box-shadow: none;
+    font-weight: bolder;
+    font-size: 20px;
+    color: #ffffff;
+    text-shadow: 2px 2px black;
+    background-color: #002D62;
+}
+
+#Curricular_Offering_Bar, #School_Size_Typology_Bar {
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  padding: 10px;
+}
+
+.card-header b {
+  text-align: left;
+}
+
+.card-header:first-child {
+    font-size: 20px;
+    color: #ffffff;
+    background-color: #002D62;
+    text-shadow: 1px 0px 2px #020202;
+    border-radius: var(--bs-card-inner-border-radius) var(--bs-card-inner-border-radius) 0 0;
+}
+
+#curricular_graphs {
+  transition: opacity 0.5s ease;
+}
+
+#curricular_graphs[style*="display: none"] {
+  opacity: 0;
+}
+
+.app-header h2 {
+    text-align: center;
+    margin: 0;
+    font-size: 40px;
+    text-shadow: 5px 4px 2px #000000;
+    
+}
+
+.app-header p {
+    margin: 0;
+    font-size: 23px;
+    opacity: 0.8;
+    text-shadow: 5px 4px 2px #000000;
+}
+
+.value-box .title {
+  color: #002D62 !important; /* DepEd blue or choose your color */
+  font-weight: 800;
+  font-size: 1em;
+  text-transform: uppercase;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.4);
+  letter-spacing: 0.5px;
+}
+.value-box .value {
+  color: #FFD700 !important; /* gold */
+  font-size: 1.4em;
+  font-weight: 900;
+  text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.5);
+}
+
+.value-box {
+  background-color: #f0f4ff;
+  border-radius: 10px;
+  padding: 12px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+  transition: transform 0.2s ease;
+}
+
+.value-box:hover {
+  transform: translateY(-3px);
+}
+
+ ==== CARD HEADERS (Dashboard Section Titles) ==== */
+.card-header {
+  background: linear-gradient(90deg, #002D62, #004c99); /* DepEd Blue gradient */
+  color: #ffffff !important;
+  font-weight: 900;
+  font-size: 20px;
+  letter-spacing: 0.5px;
+  text-shadow: 2px 2px 3px rgba(0, 0, 0, 0.4);
+  border-radius: 10px 10px 0 0; /* Rounded top corners */
+  text-align: center;
+  padding: 10px 15px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+/* ==== FIX: RESOURCE TYPE RADIO BUTTON ALIGNMENT ==== */
+#resource_type_selection {
+  text-align: left !important;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start !important;
+  justify-content: flex-start !important;
+  padding-left: 15px;
+}
+
+/* Make sure each radio button stacks neatly left */
+#resource_type_selection .shiny-options-group {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start !important;
+  gap: 6px; /* adds small spacing between items */
+}
+
+/* Align labels and text cleanly */
+#resource_type_selection .radio label,
+#resource_type_selection label,
+#resource_type_selection span {
+  text-align: left !important;
+  font-weight: 600;
+  color: #002D62; /* optional – DepEd blue */
+}
+
+.nav-pills .nav-link.active,.nav-pills :where(ul.nav.navbar-nav > li)>a.active,.nav-pills .nav-tabs>li>a.active,.nav-pills>li>a.active,.nav-pills .nav-link:hover,.nav-pills :where(ul.nav.navbar-nav > li)>a:hover,.nav-pills .nav-tabs>li>a:hover,.nav-pills>li>a:hover,.nav-pills .nav-link:focus,.nav-pills :where(ul.nav.navbar-nav > li)>a:focus,.nav-pills .nav-tabs>li>a:focus,.nav-pills>li>a:focus {
+    background-color: #ffffff;
+    color: black;
+    text-shadow: none;
+    border-color: #dfd7ca
+}
+.nav-pills .nav-link,.nav-pills :where(ul.nav.navbar-nav > li)>a,.nav-pills .nav-tabs>li>a,.nav-pills>li>a {
+    color: #ffffff;
+    border: 1px solid transparent
+}
+
+
+/* ==== NATIONAL STATISTICS VALUE BOX TITLES & VALUES ==== */
+
+/* Make the text titles (e.g., "Purely ES", "Small", etc.) bold */
+.bslib-value-box .value-box-title {
+  font-weight: 900 !important;
+  font-size: 22px !important;   /* increase title size */
+  color: #black !important;      /* DepEd blue */
+  text-transform: none;           /* keep normal case */
+  letter-spacing: 0.3px;
+}
+
+/* Make the numbers (e.g., 35,036) bold too */
+.bslib-value-box .value-box-value {
+  font-weight: 900 !important;
+  font-size: 25px !important;
+  color: #004c99 !important;
+}
+
+/* Optional: add a subtle text-shadow for better readability */
+.bslib-value-box .value-box-title,
+.bslib-value-box .value-box-value {
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+/* ==== SCHOOL DETAILS CARDS STYLING ==== */
+
+/* Center all card headers under the Quick School Search section */
+#schooldetails, 
+#schooldetails2, 
+#schooldetails3, 
+#schooldetails5 {
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* ==== CENTER TABLE CONTENTS INSIDE SCHOOL DETAILS CARDS ==== */
+
+/* Center all table headers and cells */
+#schooldetails th, #schooldetails td,
+#schooldetails2 th, #schooldetails2 td,
+#schooldetails3 th, #schooldetails3 td,
+#schooldetails5 th, #schooldetails5 td {
+  text-align: center !important;
+  vertical-align: middle !important;
+}
+
+/* Optional: make headers stand out */
+#schooldetails th,
+#schooldetails2 th,
+#schooldetails3 th,
+#schooldetails5 th {
+  font-weight: 900;
+  background-color: #002D62;
+  color: #ffffff;
+}
+
+/* Optional: zebra rows for readability */
+#schooldetails tr:nth-child(even),
+#schooldetails2 tr:nth-child(even),
+#schooldetails3 tr:nth-child(even),
+#schooldetails5 tr:nth-child(even) {
+  background-color: #f9f9f9;
+}
+
+.spinner-border {
+  border: 0.25em solid rgba(255, 255, 255, 0.3);
+  border-top: 0.25em solid white;
+  border-radius: 50%;
+  width: 3rem;
+  height: 3rem;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+
+
+
+
+
+
+
+
+  
