@@ -6152,20 +6152,26 @@ observeEvent(input$show_curricular_graphs, {
   
   output$school_count_regional_graph <- renderPlotly({
     
-    current_filtered_data <- filtered_school_data_region() # Use the reactive filtered data
-    
-    # --- Empty Data Handling ---
-    if (nrow(current_filtered_data) == 0) {
-      return(ggplotly(ggplot() +
-                        annotate("text", x = 0.5, y = 0.5, label = "No data for selected regions/divisions") +
-                        theme_void()))
+    # --- If picker is empty, clear the plot ---
+    if (is.null(input$dashboard_region_filter) || length(input$dashboard_region_filter) == 0) {
+      return(NULL)  # This will make the plot area blank
     }
     
-    # Define the levels for Modified.COC for consistent ordering
-    coc_levels <- c("Purely ES", "JHS with SHS", "ES and JHS (K to 10)", "Purely JHS", "All Offering (K to 12)", "Purely SHS")
+    # Continue only when there is a selection
+    current_filtered_data <- filtered_school_data_region()
     
-    # Prepare the data for plotting
-    # Group by Region and Modified.COC
+    if (nrow(current_filtered_data) == 0) {
+      return(ggplotly(
+        ggplot() +
+          annotate("text", x = 0.5, y = 0.5,
+                   label = "No data for selected regions/divisions") +
+          theme_void()
+      ))
+    }
+    
+    coc_levels <- c("Purely ES", "JHS with SHS", "ES and JHS (K to 10)",
+                    "Purely JHS", "All Offering (K to 12)", "Purely SHS")
+    
     plot_data <- current_filtered_data %>%
       group_by(Region, Modified.COC) %>%
       summarise(Count = n(), .groups = 'drop')
@@ -6174,78 +6180,29 @@ observeEvent(input$show_curricular_graphs, {
       group_by(Modified.COC) %>%
       summarise(TotalCount = sum(Count))
     
-    # Calculate total counts per Region for reordering the X-axis
-    region_total_counts <- plot_data %>%
-      group_by(Region) %>%
-      summarise(Total_Region_Count = sum(Count), .groups = 'drop')
-    
-    # Join total counts back to plot_data for reordering
-    plot_data <- plot_data %>%
-      left_join(region_total_counts, by = "Region") %>%
-      # Create a reordered factor for Region based on Total_Region_Count
-      mutate(Region_reordered = reorder(Region, Total_Region_Count))
-    
-    
-    
-    # Create the ggplot
-    p <- ggplot(plot_data,
-                aes(x = factor(Modified.COC, levels = coc_levels), # Regions on the X-axis
-                    y = Count,
-                    fill = Region, # Fill by Modified.COC
-                    text = paste("Region: ", Region,
-                                 "<br>School Type: ", Modified.COC,
-                                 "<br>Count: ", scales::comma(Count)))) + # Custom tooltip text
-      geom_bar(stat = "identity", position = "stack", color = "black", size = 0.25) + # Dodged bars
+    p <- ggplot(plot_data, aes(
+      x = factor(Modified.COC, levels = coc_levels),
+      y = Count,
+      fill = Region,
+      text = paste("Region: ", Region,
+                   "<br>School Type: ", Modified.COC,
+                   "<br>Count: ", scales::comma(Count))
+    )) +
+      geom_bar(stat = "identity", position = "stack", color = "black", size = 0.25) +
       geom_text(data = plot_data_totals,
-                aes(x = Modified.COC, y = TotalCount * 1.05, label = scales::comma(TotalCount)), # Modified line
+                aes(x = Modified.COC, y = TotalCount * 1.05,
+                    label = scales::comma(TotalCount)),
                 inherit.aes = FALSE,
-                size = 3.5,
-                color = "black") +
+                size = 3.5, color = "black") +
       labs(x = "Modified Curricular Offering",
-           y = "Number of Schools",
-           fill = "Region") +
-      scale_y_continuous(labels = scales::comma) + # Format y-axis labels as comma-separated numbers
+           y = "Number of Schools", fill = "Region") +
+      scale_y_continuous(labels = scales::comma) +
       theme_minimal() +
       theme(axis.text.x = element_text(size = 10, angle = 45, hjust = 1),
-            legend.position = "bottom", # Position legend at the bottom
-            plot.title = element_text(hjust = 0.5)) # Center the plot title
+            legend.position = "bottom",
+            plot.title = element_text(hjust = 0.5))
     
-  #   # Build a small frame-based plotly animation that grows the bars from 0->full
-  #   # Create scaled frames for a smooth startup animation
-  #   n_frames <- 8
-  #   scales_seq <- seq(0, 1, length.out = n_frames)
-  #   
-  #   frames_df <- plot_data %>%
-  #     tidyr::crossing(frame_step = seq_along(scales_seq)) %>%
-  #     mutate(scale = scales_seq[frame_step],
-  #            Count_scaled = Count * scale,
-  #            hover_text = paste("Region: ", Region,
-  #                               "<br>School Type: ", Modified.COC,
-  #                               "<br>Count: ", scales::comma(Count)))
-  #   
-  #   # Use plot_ly with frames and stacked bars
-  #   p_plotly <- plot_ly(
-  #     data = frames_df,
-  #     x = ~factor(Modified.COC, levels = coc_levels),
-  #     y = ~Count_scaled,
-  #     color = ~Region,
-  #     frame = ~frame_step,
-  #     type = 'bar',
-  #     text = ~hover_text,
-  #     hoverinfo = 'text',
-  #     marker = list(line = list(width = 0.5, color = 'black'))
-  #   ) %>%
-  #     layout(barmode = 'stack',
-  #            hoverlabel = list(bgcolor = 'white'),
-  #            margin = list(b = 100),
-  #            xaxis = list(title = 'Modified Curricular Offering', tickangle = 45),
-  #            yaxis = list(title = 'Number of Schools'))
-  #   
-  #   # Auto-play the animation on render using a tiny JS hook
-  #   p_plotly <- htmlwidgets::onRender(p_plotly,
-  #                                     "function(el, x) {\n\n        // Small timeout to ensure plot is fully initialized\n        setTimeout(function(){\n          try{\n            Plotly.animate(el, null, {frame: {duration: 80, redraw: false}, transition: {duration: 0}, mode: 'immediate'});\n          }catch(e){\n            console.log('Animation error:', e);\n          }\n        }, 150);\n      }")
-  #   
-  #   p_plotly
+    ggplotly(p, tooltip = "text")
   })
   
   output$SOSSS_DataTable <- DT::renderDT({
@@ -6263,19 +6220,23 @@ observeEvent(input$show_curricular_graphs, {
   
   output$SOSSS_Region_Typology <- renderPlotly({
     
-    # Assume 'filtered_sosss_data' is a reactive expression that provides
-    # the 'uni' data filtered by input$dashboard_region_filter and
-    # input$dashboard_division_filter.
-    current_filtered_data <- filtered_school_data_region() # Use the reactive filtered data
+    # --- Hide plot if Region picker is empty ---
+    if (is.null(input$dashboard_region_filter) || length(input$dashboard_region_filter) == 0) {
+      return(NULL)
+    }
     
-    # --- Empty Data Handling ---
+    # --- Use filtered region-level data ---
+    current_filtered_data <- filtered_school_data_region()
+    
+    # --- Handle no data case ---
     if (nrow(current_filtered_data) == 0) {
       return(ggplotly(ggplot() +
-                        annotate("text", x = 0.5, y = 0.5, label = "No data for selected regions/divisions") +
+                        annotate("text", x = 0.5, y = 0.5, 
+                                 label = "No data for selected regions") +
                         theme_void()))
     }
     
-    # Prepare the data for plotting
+    # --- Prepare data for plotting ---
     plot_data <- current_filtered_data %>%
       group_by(Region, School.Size.Typology) %>%
       summarise(Count = n(), .groups = 'drop')
@@ -6284,8 +6245,6 @@ observeEvent(input$show_curricular_graphs, {
       group_by(School.Size.Typology) %>%
       summarise(TotalCount = sum(Count))
     
-    # Calculate total counts per region for reordering (optional, but good practice for clarity)
-    # This makes the reorder factor consistent based on total schools per region.
     region_totals <- plot_data %>%
       group_by(Region) %>%
       summarise(TotalCount = sum(Count), .groups = 'drop')
@@ -6294,39 +6253,36 @@ observeEvent(input$show_curricular_graphs, {
       left_join(region_totals, by = "Region") %>%
       mutate(Old.Region_reordered = reorder(Region, -TotalCount))
     
-    # Define the levels for School.Size.Typology for consistent ordering
-    sosss_levels <- c("Very Small", "Small", "Medium", "Large", "Very Large", "Extremely Large", "Mega")
+    sosss_levels <- c("Very Small", "Small", "Medium", "Large", 
+                      "Very Large", "Extremely Large", "Mega")
     
-    # Create the ggplot
+    # --- Plot ---
     p <- ggplot(plot_data,
                 aes(x = factor(School.Size.Typology, levels = sosss_levels),
                     y = Count,
                     fill = Old.Region_reordered,
                     text = paste("Region: ", Region,
                                  "<br>School Size: ", School.Size.Typology,
-                                 "<br>Count: ", scales::comma(Count)))) + # Custom tooltip text
+                                 "<br>Count: ", scales::comma(Count)))) +
       geom_bar(stat = "identity", position = "stack", color = "black", size = 0.25) +
       geom_text(data = plot_data_totals,
-                aes(x = School.Size.Typology, y = TotalCount * 1.05, label = scales::comma(TotalCount)), # Modified line
-                inherit.aes = FALSE,
-                size = 3.5,
-                color = "black") +
+                aes(x = School.Size.Typology, y = TotalCount * 1.05, 
+                    label = scales::comma(TotalCount)),
+                inherit.aes = FALSE, size = 3.5, color = "black") +
       labs(x = "School Size Typology",
            y = "Number of Schools",
            fill = "Region") +
-      scale_y_continuous(labels = scales::comma) + # Format y-axis labels as comma-separated numbers
+      scale_y_continuous(labels = scales::comma) +
       theme_minimal() +
       theme(axis.text.x = element_text(size = 10, angle = 45, hjust = 1),
-            legend.position = "bottom", # Position legend at the bottom
-            plot.title = element_text(hjust = 0.5)) # Center the plot title
+            legend.position = "bottom",
+            plot.title = element_text(hjust = 0.5))
     
-    # Convert ggplot to plotly, ensuring custom text is used for hover
-    # And apply hovermode = "x unified" for better multi-trace hover
     ggplotly(p, tooltip = "text", source = "sosssRegionPlot") %>%
       layout(hoverlabel = list(bgcolor = "white"),
-             # Adjust margins to prevent labels from being cut off if needed
-             margin = list(b = 100)) # Increase bottom margin for x-axis labels
+             margin = list(b = 100))
   })
+  
   
   output$SOSSS_All_List_Typology <- DT::renderDT({
     datatable(
@@ -6370,113 +6326,113 @@ observeEvent(input$show_curricular_graphs, {
   
   output$Classroom_Shortage_Region_Graph <- renderPlotly({
     
-    # Use the reactive filtered data
-    current_filtered_data <- filtered_LMS_region()
-    
-    # --- Empty Data Handling ---
-    if (nrow(current_filtered_data) == 0) {
-      return(ggplotly(ggplot() +
-                        annotate("text", x = 0.5, y = 0.5, label = "No data for selected regions/divisions") +
-                        theme_void()))
+    # Hide plot when no region is selected
+    if (is.null(input$dashboard_region_filter) || length(input$dashboard_region_filter) == 0) {
+      return(NULL)
     }
     
-    # Prepare the data for plotting
-    # Ensure 'Estimated_CL_Shortage' is treated as numeric
+    current_filtered_data <- filtered_LMS_region()
+    
+    # Handle empty data
+    if (nrow(current_filtered_data) == 0) {
+      return(ggplotly(
+        ggplot() +
+          annotate("text", x = 0.5, y = 0.5,
+                   label = "No data for selected regions") +
+          theme_void()
+      ))
+    }
+    
+    # Prepare data
     plot_data <- current_filtered_data %>%
       group_by(Region) %>%
       summarise(Count = sum(as.numeric(Estimated_CL_Shortage), na.rm = TRUE), .groups = 'drop')
     
-    # Create the ggplot
+    # Plot
     p <- ggplot(plot_data,
                 aes(x = reorder(Region, -Count),
                     y = Count,
                     fill = Region,
                     text = paste("Region: ", Region,
-                                 "<br>Classroom Shortage: ", scales::comma(Count)))) + # Custom tooltip text
+                                 "<br>Classroom Shortage: ", scales::comma(Count)))) +
       geom_bar(stat = "identity", color = "black") +
-      geom_text(data = plot_data,
-                aes(x = Region, y = Count * 1.05, label = scales::comma(Count)), # Modified line
-                inherit.aes = FALSE,
-                size = 3.5,
-                color = "black") +
-      labs(x = "Region",
-           y = "Classroom Shortage") +
-      scale_y_continuous(labels = scales::comma) + # Format y-axis labels as comma-separated numbers
+      geom_text(aes(y = Count * 1.05, label = scales::comma(Count)),
+                size = 3.5, color = "black") +
+      labs(x = "Region", y = "Classroom Shortage") +
+      scale_y_continuous(labels = scales::comma) +
       theme_minimal() +
       theme(axis.text.x = element_text(size = 10, angle = 45, hjust = 1),
-            legend.position = "none", # No legend needed for single fill
-            plot.title = element_text(hjust = 0.5)) # Center the plot title
+            legend.position = "none",
+            plot.title = element_text(hjust = 0.5))
     
-    # Convert ggplot to plotly, ensuring custom text is used for hover
     ggplotly(p, tooltip = "text", source = "classroomShortageRegionPlot") %>%
       layout(hoverlabel = list(bgcolor = "white"),
-             # Adjust margins to prevent labels from being cut off if needed
-             margin = list(b = 100)) # Increase bottom margin for x-axis labels
+             margin = list(b = 100))
   })
   
+  
+  
   output$LMS_Nation_Graph <- renderPlotly({
-    # Use the reactive filtered data
-    # Correct the column selection: pivot columns 13-17 without excluding any.
-    current_filtered_data <- filtered_LMS_region() %>% rename("With Buildable Space" = Buildable_space, "With Excess Classrooms" = With_Excess, "Without Classroom Shortage" = Without_Shortage, "Last Mile Schools" = LMS, "GIDCA" = GIDCA, "With Shortage" = With_Shortage) %>%
-      pivot_longer(13:18, names_to = "Type", values_to = "Count")
     
-    # --- Empty Data Handling ---
-    if (nrow(current_filtered_data) == 0) {
-      return(ggplotly(ggplot() +
-                        annotate("text", x = 0.5, y = 0.5, label = "No data for selected regions/divisions") +
-                        theme_void()))
+    # Hide plot when no region is selected
+    if (is.null(input$dashboard_region_filter) || length(input$dashboard_region_filter) == 0) {
+      return(NULL)
     }
     
-    # Prepare the data for plotting
-    # Ensure 'Count' is treated as numeric
+    # Reactive data
+    current_filtered_data <- filtered_LMS_region() %>%
+      rename(
+        "With Buildable Space" = Buildable_space,
+        "With Excess Classrooms" = With_Excess,
+        "Without Classroom Shortage" = Without_Shortage,
+        "Last Mile Schools" = LMS,
+        "GIDCA" = GIDCA,
+        "With Shortage" = With_Shortage
+      ) %>%
+      pivot_longer(13:18, names_to = "Type", values_to = "Count")
+    
+    # Handle empty data
+    if (nrow(current_filtered_data) == 0) {
+      return(ggplotly(
+        ggplot() +
+          annotate("text", x = 0.5, y = 0.5, label = "No data for selected regions") +
+          theme_void()
+      ))
+    }
+    
+    # Prepare data
     plot_data <- current_filtered_data %>%
       group_by(Region, Type) %>%
-      summarise(
-        Count = sum(as.numeric(Count), na.rm = TRUE), 
-        .groups = 'drop'
-      )
+      summarise(Count = sum(as.numeric(Count), na.rm = TRUE), .groups = 'drop')
     
     plot_data_totals <- plot_data %>%
       group_by(Type) %>%
       summarise(TotalCount = sum(Count))
     
-    # Create the ggplot
-    # Use the correct column names for the tooltip text
+    # Plot
     p <- ggplot(plot_data,
-                aes(
-                  x = reorder(Type, -Count),
-                  y = Count,
-                  fill = Region,
-                  text = paste(
-                    "Type:", Type,
-                    "<br>Count:", scales::comma(Count)
-                  )
-                )) +
+                aes(x = reorder(Type, -Count),
+                    y = Count,
+                    fill = Region,
+                    text = paste("Type:", Type, "<br>Count:", scales::comma(Count)))) +
       geom_bar(stat = "identity", position = "stack", color = "black", size = 0.25) +
       geom_text(data = plot_data_totals,
-                aes(x = Type, y = TotalCount * 1.05, label = scales::comma(TotalCount)), # Modified line
+                aes(x = Type, y = TotalCount * 1.05, label = scales::comma(TotalCount)),
                 inherit.aes = FALSE,
-                size = 3.5,
-                color = "black") +
-      labs(x = "Type",
-           y = "Count",
-           fill = "Region") +
-      scale_y_continuous(labels = scales::comma) + 
+                size = 3.5, color = "black") +
+      labs(x = "Type", y = "Count", fill = "Region") +
+      scale_y_continuous(labels = scales::comma) +
       theme_minimal() +
-      theme(
-        axis.text.x = element_text(size = 10, angle = 45, hjust = 1),
-        legend.position = "right", # Display the legend to show the `Type` fill
-        plot.title = element_text(hjust = 0.5) 
-      )
+      theme(axis.text.x = element_text(size = 10, angle = 45, hjust = 1),
+            legend.position = "right",
+            plot.title = element_text(hjust = 0.5))
     
-    # Convert ggplot to plotly, ensuring custom text is used for hover
-    # Also, hide unnecessary hover info from ggplotly
-    ggplotly(p, tooltip = "text", source = "classroomShortageRegionPlot") %>%
+    ggplotly(p, tooltip = "text", source = "LMS_Region") %>%
       layout(hoverlabel = list(bgcolor = "white"),
-             margin = list(b = 100)) %>% 
-      # Use plotly's style function to hide the "trace" hover info and keep the custom text
-      style(hoverinfo = "text") 
+             margin = list(b = 100)) %>%
+      style(hoverinfo = "text")
   })
+  
   
   output$Classroom_Shortage_Region_Graph2 <- renderPlotly({
     
@@ -6704,61 +6660,63 @@ observeEvent(input$show_curricular_graphs, {
   
   output$LMS_Division_Graph <- renderPlotly({
     
-    current_filtered_data <- filtered_LMS_division() %>% rename("With Buildable Space" = Buildable_space, "With Excess Classrooms" = With_Excess, "Without Classroom Shortage" = Without_Shortage, "Last Mile Schools" = LMS, "GIDCA" = GIDCA, "With Shortage" = With_Shortage) %>%
-      pivot_longer(13:18, names_to = "Type", values_to = "Count")
-    
-    # --- Empty Data Handling ---
-    if (nrow(current_filtered_data) == 0) {
-      return(ggplotly(ggplot() +
-                        annotate("text", x = 0.5, y = 0.5, label = "No data for selected regions/divisions") +
-                        theme_void()))
+    # Hide plot when region or division is unselected
+    if (is.null(input$dashboard_region_filter) || length(input$dashboard_region_filter) == 0 ||
+        is.null(input$dashboard_division_filter) || length(input$dashboard_division_filter) == 0) {
+      return(NULL)
     }
     
-    # Prepare the data for plotting
-    # Ensure 'Count' is treated as numeric
+    current_filtered_data <- filtered_LMS_division() %>%
+      rename(
+        "With Buildable Space" = Buildable_space,
+        "With Excess Classrooms" = With_Excess,
+        "Without Classroom Shortage" = Without_Shortage,
+        "Last Mile Schools" = LMS,
+        "GIDCA" = GIDCA,
+        "With Shortage" = With_Shortage
+      ) %>%
+      pivot_longer(13:18, names_to = "Type", values_to = "Count")
+    
+    # Handle empty data
+    if (nrow(current_filtered_data) == 0) {
+      return(ggplotly(
+        ggplot() +
+          annotate("text", x = 0.5, y = 0.5, label = "No data for selected divisions") +
+          theme_void()
+      ))
+    }
+    
+    # Prepare data
     plot_data <- current_filtered_data %>%
       group_by(Division, Type) %>%
-      summarise(
-        Count = sum(as.numeric(Count), na.rm = TRUE), 
-        .groups = 'drop'
-      )
+      summarise(Count = sum(as.numeric(Count), na.rm = TRUE), .groups = 'drop')
     
-    # Create the ggplot
-    # Use the correct column names for the tooltip text
+    # Plot
     p <- ggplot(plot_data,
-                aes(
-                  x = reorder(Type,-Count),
-                  y = Count,
-                  fill = Division,
-                  text = paste(
-                    "Division:", Division,
-                    "<br>Count:", scales::comma(Count)
-                  )
-                )) +
+                aes(x = reorder(Type, -Count),
+                    y = Count,
+                    fill = Division,
+                    text = paste("Division:", Division,
+                                 "<br>Count:", scales::comma(Count)))) +
       geom_bar(stat = "identity", color = "black", size = 0.25) +
       geom_text(data = plot_data,
-                aes(x = Type, y = Count * 1.05, label = scales::comma(Count)), # Modified line
+                aes(x = Type, y = Count * 1.05, label = scales::comma(Count)),
                 inherit.aes = FALSE,
-                size = 3.5,
-                color = "black") +
-      labs(x = "Division",
-           y = "Count") +
-      scale_y_continuous(labels = scales::comma) + 
+                size = 3.5, color = "black") +
+      labs(x = "Division", y = "Count") +
+      scale_y_continuous(labels = scales::comma) +
       theme_minimal() +
-      theme(
-        axis.text.x = element_text(size = 10, angle = 45, hjust = 1),
-        legend.position = "right", # Display the legend to show the `Type` fill
-        plot.title = element_text(hjust = 0.5) 
-      )
+      theme(axis.text.x = element_text(size = 10, angle = 45, hjust = 1),
+            legend.position = "right",
+            plot.title = element_text(hjust = 0.5))
     
-    # Convert ggplot to plotly, ensuring custom text is used for hover
-    # Also, hide unnecessary hover info from ggplotly
-    ggplotly(p, tooltip = "text", source = "classroomShortageRegionPlot") %>%
+    ggplotly(p, tooltip = "text", source = "LMS_Division") %>%
       layout(hoverlabel = list(bgcolor = "white"),
-             margin = list(b = 100)) %>% 
-      # Use plotly's style function to hide the "trace" hover info and keep the custom text
-      style(hoverinfo = "text") 
+             margin = list(b = 100)) %>%
+      style(hoverinfo = "text")
   })
+  
+  
   
   output$LMS_All_List  <- DT::renderDT({
     
@@ -6896,55 +6854,68 @@ observeEvent(input$show_curricular_graphs, {
   
   
   output$School_Principal_Regional_Graph <- renderPlotly({
-    # Use the reactive filtered data
+    
+    # --- Hide plot when no region/division is selected ---
+    if (is.null(input$dashboard_region_filter) || length(input$dashboard_region_filter) == 0) {
+      return(NULL)
+    }
+    
     current_filtered_data <- filtered_school_data_region()
     
     # --- Empty Data Handling ---
-    if (nrow(current_filtered_data) == 0) {
-      return(NULL) 
+    if (is.null(current_filtered_data) || nrow(current_filtered_data) == 0) {
+      return(ggplotly(
+        ggplot() +
+          annotate("text", x = 0.5, y = 0.5,
+                   label = "No data for selected regions") +
+          theme_void()
+      ))
     }
     
-    # Prepare the data for plotting
+    # --- Prepare data ---
     plot_data <- current_filtered_data %>%
-      select(Region, Designation) %>%
       group_by(Region, Designation) %>%
-      summarize(Count = n(), .groups = 'drop') # Ungroup after summarize
+      summarise(Total_Count = n(), .groups = 'drop')
     
+    # --- Totals for each Designation ---
     plot_data_totals <- plot_data %>%
       group_by(Designation) %>%
-      summarise(TotalCount = sum(Count))
+      summarise(TotalCount = sum(Total_Count))
     
-    # Define the levels for Designation for consistent ordering
+    # --- Order of designations ---
     designation_levels <- c("School Principal", "Teacher-in-Charge", "Officer-in-Charge")
     
-    # Create the ggplot
+    # --- Build Plot ---
     p <- ggplot(plot_data,
-                aes(x = factor(Designation, levels = designation_levels), # Reorder regions based on overall count (across all designations)
-                    y = Count,
-                    fill = Region, # Ensure fill order is consistent
+                aes(x = factor(Designation, levels = designation_levels),
+                    y = Total_Count,
+                    fill = Region,
                     text = paste("Region: ", Region,
                                  "<br>Designation: ", Designation,
-                                 "<br>Count: ", scales::comma(Count)))) + # Custom tooltip text
+                                 "<br>Total Count: ", scales::comma(Total_Count)))) +
       geom_bar(stat = "identity", position = "stack", color = "black", size = 0.25) +
       geom_text(data = plot_data_totals,
-                aes(x = Designation, y = TotalCount * 1.05, label = scales::comma(TotalCount)), # Modified line
+                aes(x = Designation, y = TotalCount * 1.05,
+                    label = scales::comma(TotalCount)),
                 inherit.aes = FALSE,
-                size = 3.5,
-                color = "black") +
+                size = 3.5, color = "black") +
       labs(x = "Designation",
-           y = "Count of Individuals",
-           fill = "Region") +
-      scale_y_continuous(labels = scales::comma) + # Format y-axis labels as comma-separated numbers
+           y = "Total Count of Individuals",
+           title = "Regional School Principal Shortage by Designation") +
+      scale_y_continuous(labels = scales::comma) +
       theme_minimal() +
       theme(axis.text.x = element_text(size = 10, angle = 45, hjust = 1),
-            legend.position = "bottom", # Position legend at the bottom
-            plot.title = element_text(hjust = 0.5)) # Center the plot title
+            legend.position = "bottom",
+            plot.title = element_text(hjust = 0.5))
     
-    # Convert ggplot to plotly, ensuring custom text is used for hover
+    # --- Convert to Plotly ---
     ggplotly(p, tooltip = "text", source = "schoolPrincipalRegionPlot") %>%
-      layout(hoverlabel = list(bgcolor = "white"),
-             margin = list(b = 100)) # Increase bottom margin for x-axis labels
+      layout(
+        hoverlabel = list(bgcolor = "white"),
+        margin = list(b = 100)
+      )
   })
+  
   
   output$School_Principal_All_List <- DT::renderDT({
     datatable(uni %>% filter(Region != "BARMM") %>% filter(Region %in% input$dashboard_region_filter) %>% select("Division","SchoolID","School.Name","Designation") %>% rename("School" = School.Name, "School ID" = SchoolID), extension = 'Buttons', rownames = FALSE, filter = 'top', options = list(scrollX = TRUE, pageLength = 10, columnDefs = list(list(className = 'dt-center', targets ="_all")), dom = 'Bfrtip', buttons = list('csv','excel','pdf','print')))})
@@ -6987,117 +6958,115 @@ observeEvent(input$show_curricular_graphs, {
   # defined in your server logic.
   
   output$AOII_Regional_Graph <- renderPlotly({
-    # Use the reactive filtered data
+    
+    # --- Hide plot when no region/division is selected ---
+    if (is.null(input$dashboard_region_filter) || length(input$dashboard_region_filter) == 0) {
+      return(NULL)
+    }
+    
     current_filtered_data <- filtered_school_data_region()
     
     # --- Empty Data Handling ---
-    if (nrow(current_filtered_data) == 0) {
+    if (is.null(current_filtered_data) || nrow(current_filtered_data) == 0) {
       return(ggplotly(ggplot() +
-                        annotate("text", x = 0.5, y = 0.5, label = "No data for selected regions/divisions") +
+                        annotate("text", x = 0.5, y = 0.5, 
+                                 label = "No data for selected regions") +
                         theme_void()))
     }
     
-    # Prepare the data for plotting
     plot_data <- current_filtered_data %>%
       group_by(Region, Clustering.Status) %>%
-      summarize(Total_Count = n(), .groups = 'drop')
+      summarise(Total_Count = n(), .groups = 'drop')
     
     plot_data_totals <- plot_data %>%
       group_by(Clustering.Status) %>%
       summarise(TotalCount = sum(Total_Count))
     
-    # Calculate total counts per Region for the overall labels on top of stacked bars
-    total_labels_data <- plot_data %>%
-      group_by(Region) %>%
-      summarise(Grand_Total = sum(Total_Count), .groups = 'drop')
-    
-    # Define the levels for Clustering.Status for consistent stacking order in the legend and on the bars
     clustering_levels <- c("None Deployed", "Clustered", "Dedicated")
     
-    # Create the ggplot
     p <- ggplot(plot_data,
-                aes(x = factor(Clustering.Status, levels = clustering_levels), # Reorder regions based on overall total count for the region
+                aes(x = factor(Clustering.Status, levels = clustering_levels),
                     y = Total_Count,
-                    fill = Region, # Fill by Clustering.Status for coloring and consistent order
+                    fill = Region,
                     text = paste("Region: ", Region,
                                  "<br>Clustering Status: ", Clustering.Status,
-                                 "<br>Count: ", scales::comma(Total_Count)))) + # Custom tooltip text
+                                 "<br>Count: ", scales::comma(Total_Count)))) +
       geom_bar(stat = "identity", position = "stack", color = "black", size = 0.25) +
       geom_text(data = plot_data_totals,
-                aes(x = Clustering.Status, y = TotalCount * 1.05, label = scales::comma(TotalCount)), # Modified line
+                aes(x = Clustering.Status, y = TotalCount * 1.05, 
+                    label = scales::comma(TotalCount)),
                 inherit.aes = FALSE,
-                size = 3.5,
-                color = "black") +
-      labs(x = "Region",
-           y = "Total Count of Schools") +
-      scale_y_continuous(labels = scales::comma) + # Format y-axis labels as comma-separated numbers
+                size = 3.5, color = "black") +
+      labs(x = "Clustering Status",
+           y = "Total Count of Schools",
+           title = "Regional AO II Deployment by Clustering Status") +
+      scale_y_continuous(labels = scales::comma) +
       theme_minimal() +
       theme(axis.text.x = element_text(size = 10, angle = 45, hjust = 1),
-            legend.position = "bottom", # Position legend at the bottom
-            plot.title = element_text(hjust = 0.5)) # Center the plot title
+            legend.position = "bottom",
+            plot.title = element_text(hjust = 0.5))
     
-    # Convert ggplot to plotly, ensuring custom text is used for hover
     ggplotly(p, tooltip = "text", source = "aoiiRegionPlot") %>%
       layout(hoverlabel = list(bgcolor = "white"),
-             margin = list(b = 100)) # Increase bottom margin for x-axis labels
+             margin = list(b = 100))
   })
   
+  
   output$PDOI_Regional_Graph <- renderPlotly({
-    # Use the reactive filtered data
+    
+    # --- Hide plot when no region is selected ---
+    if (is.null(input$dashboard_region_filter) || length(input$dashboard_region_filter) == 0) {
+      return(NULL)
+    }
+    
     current_filtered_data <- filtered_school_data_region()
     
     # --- Empty Data Handling ---
-    if (nrow(current_filtered_data) == 0) {
-      return(ggplotly(ggplot() +
-                        annotate("text", x = 0.5, y = 0.5, label = "No data for selected regions/divisions") +
-                        theme_void()))
+    if (is.null(current_filtered_data) || nrow(current_filtered_data) == 0) {
+      return(ggplotly(
+        ggplot() +
+          annotate("text", x = 0.5, y = 0.5, label = "No data for selected regions") +
+          theme_void()
+      ))
     }
     
-    # Prepare the data for plotting
     plot_data <- current_filtered_data %>%
       group_by(Region, PDOI_Deployment) %>%
-      summarize(Total_Count = n(), .groups = 'drop')
+      summarise(Total_Count = n(), .groups = 'drop')
     
     plot_data_totals <- plot_data %>%
       group_by(PDOI_Deployment) %>%
       summarise(TotalCount = sum(Total_Count))
     
-    # Calculate total counts per Region for the overall labels on top of stacked bars
-    total_labels_data <- plot_data %>%
-      group_by(Region) %>%
-      summarise(Grand_Total = sum(Total_Count), .groups = 'drop')
-    
-    # Define the levels for PDOI_Deployment for consistent stacking order in the legend and on the bars
     pdoi_levels <- c("Without PDO I", "With PDO I")
     
-    
-    # Create the ggplot
     p <- ggplot(plot_data,
-                aes(x = factor(PDOI_Deployment, levels = pdoi_levels), # Reorder regions based on overall total count for the region
+                aes(x = factor(PDOI_Deployment, levels = pdoi_levels),
                     y = Total_Count,
-                    fill = Region, # Fill by PDOI_Deployment for coloring and consistent order
+                    fill = Region,
                     text = paste("Region: ", Region,
                                  "<br>PDO I Deployment: ", PDOI_Deployment,
-                                 "<br>Total Count: ", scales::comma(Total_Count)))) + # Custom tooltip text
+                                 "<br>Total Count: ", scales::comma(Total_Count)))) +
       geom_bar(stat = "identity", position = "stack", color = "black", size = 0.25) +
       geom_text(data = plot_data_totals,
-                aes(x = PDOI_Deployment, y = TotalCount * 1.05, label = scales::comma(TotalCount)), # Modified line
-                inherit.aes = FALSE,
-                size = 3.5,
-                color = "black") +
-      labs(x = "PDOI_Deployment",
-           y = "Total Count of Schools") +
-      scale_y_continuous(labels = scales::comma) + # Format y-axis labels as comma-separated numbers
+                aes(x = PDOI_Deployment, y = TotalCount * 1.05,
+                    label = scales::comma(TotalCount)),
+                inherit.aes = FALSE, size = 3.5, color = "black") +
+      labs(x = "PDO I Deployment",
+           y = "Total Count of Schools",
+           title = "Regional PDO I Deployment by Status") +
+      scale_y_continuous(labels = scales::comma) +
       theme_minimal() +
       theme(axis.text.x = element_text(size = 10, angle = 45, hjust = 1),
-            legend.position = "bottom", # Position legend at the bottom
-            plot.title = element_text(hjust = 0.5)) # Center the plot title
+            legend.position = "bottom",
+            plot.title = element_text(hjust = 0.5))
     
-    # Convert ggplot to plotly, ensuring custom text is used for hover
     ggplotly(p, tooltip = "text", source = "pdoiRegionPlot") %>%
       layout(hoverlabel = list(bgcolor = "white"),
-             margin = list(b = 100)) # Increase bottom margin for x-axis labels
+             hovermode = "closest",
+             margin = list(b = 100))
   })
+  
   
   # Assuming 'uni' is your original unfiltered data frame for Sufficiency data
   # Make sure 'uni' is loaded and available in your Shiny app's global environment or server.R
@@ -8931,7 +8900,7 @@ observeEvent(input$show_curricular_graphs, {
         icon = makeAwesomeIcon(
           icon = "university",
           library = "fa",
-          markerColor = "orange"   
+          markerColor = "beige"   
         ),
         label = values_industry,
         labelOptions = labelOptions(
@@ -9845,20 +9814,27 @@ observeEvent(input$show_curricular_graphs, {
   
   output$school_count_division_graph <- renderPlotly({
     
+    # --- If region or division picker is empty, clear the plot ---
+    if (is.null(input$dashboard_region_filter) || length(input$dashboard_region_filter) == 0 ||
+        is.null(input$dashboard_division_filter) || length(input$dashboard_division_filter) == 0) {
+      return(NULL)  # Make plot area blank when "Deselect All" is clicked
+    }
+    
     current_filtered_data <- filtered_school_data_division() # Use the reactive filtered data
     
     # --- Empty Data Handling ---
     if (nrow(current_filtered_data) == 0) {
-      return(ggplotly(ggplot() +
-                        annotate("text", x = 0.5, y = 0.5, label = "No data for selected regions/divisions") +
-                        theme_void()))
+      return(ggplotly(
+        ggplot() +
+          annotate("text", x = 0.5, y = 0.5, 
+                   label = "No data for selected regions/divisions") +
+          theme_void()
+      ))
     }
     
-    # Define the levels for Modified.COC for consistent ordering
-    coc_levels <- c("Purely ES", "JHS with SHS", "ES and JHS (K to 10)", "Purely JHS", "All Offering (K to 12)", "Purely SHS")
+    coc_levels <- c("Purely ES", "JHS with SHS", "ES and JHS (K to 10)",
+                    "Purely JHS", "All Offering (K to 12)", "Purely SHS")
     
-    # Prepare the data for plotting
-    # Group by Region and Modified.COC
     plot_data <- current_filtered_data %>%
       group_by(Division, Modified.COC) %>%
       summarise(Count = n(), .groups = 'drop')
@@ -9867,71 +9843,71 @@ observeEvent(input$show_curricular_graphs, {
       group_by(Modified.COC) %>%
       summarise(TotalCount = sum(Count))
     
-    
-    # Calculate total counts per Region for reordering the X-axis
     division_total_counts <- plot_data %>%
       group_by(Division) %>%
       summarise(Total_Division_Count = sum(Count), .groups = 'drop')
     
-    # Join total counts back to plot_data for reordering
     plot_data <- plot_data %>%
       left_join(division_total_counts, by = "Division") %>%
-      # Create a reordered factor for Region based on Total_Region_Count
       mutate(Division_reordered = reorder(Division, Total_Division_Count))
     
-    
-    # Create the ggplot
     p <- ggplot(plot_data,
-                aes(x = factor(Modified.COC, levels = coc_levels), # Regions on the X-axis
+                aes(x = factor(Modified.COC, levels = coc_levels),
                     y = Count,
-                    fill = Division_reordered, # Fill by Modified.COC
-                    # IMPORTANT: Add 'key' aesthetic here to store combined info for click events
+                    fill = Division_reordered,
                     key = paste(Division, Modified.COC),
                     text = paste("Division: ", Division,
                                  "<br>School Type: ", Modified.COC,
-                                 "<br>Count: ", scales::comma(Count)))) + # Custom tooltip text
-      geom_bar(stat = "identity", position = "stack", color = "black", size = 0.25) + # Dodged bars
+                                 "<br>Count: ", scales::comma(Count)))) +
+      geom_bar(stat = "identity", position = "stack", color = "black", size = 0.25) +
       geom_text(data = plot_data_totals,
-                aes(x = Modified.COC, y = TotalCount * 1.05, label = scales::comma(TotalCount)), # Modified line
+                aes(x = Modified.COC, y = TotalCount * 1.05,
+                    label = scales::comma(TotalCount)),
                 inherit.aes = FALSE,
-                size = 3.5,
-                color = "black") +
+                size = 3.5, color = "black") +
       labs(x = "Region",
            y = "Number of Schools",
            fill = "School Type") +
-      scale_y_continuous(labels = scales::comma) + # Format y-axis labels as comma-separated numbers
+      scale_y_continuous(labels = scales::comma) +
       theme_minimal() +
       theme(axis.text.x = element_text(size = 10, angle = 45, hjust = 1),
-            legend.position = "bottom", # Position legend at the bottom
-            plot.title = element_text(hjust = 0.5)) # Center the plot title
+            legend.position = "bottom",
+            plot.title = element_text(hjust = 0.5))
     
-    # Convert ggplot to plotly, ensuring custom text is used for hover
-    # Ensure the 'key' is passed through to plotly as 'customdata' for reliable clicks
     ggplotly(p, tooltip = "text", source = "schoolcountplot_division") %>%
       layout(hoverlabel = list(bgcolor = "white"),
              hovermode = "closest",
              margin = list(b = 100))
   })
   
+
+  
   output$school_count_district_graph <- renderPlotly({
+    
+    # --- If region or division picker is empty, clear the plot ---
+    if (is.null(input$dashboard_region_filter) || length(input$dashboard_region_filter) == 0 ||
+        is.null(input$dashboard_division_filter) || length(input$dashboard_division_filter) == 0) {
+      return(NULL)
+    }
     
     current_filtered_data <- filtered_school_data_division()
     
     # --- Empty Data Handling ---
     if (nrow(current_filtered_data) == 0) {
-      return(ggplotly(ggplot() +
-                        annotate("text", x = 0.5, y = 0.5, label = "No data for selected regions/Legislative.Districts") +
-                        theme_void()))
+      return(ggplotly(
+        ggplot() +
+          annotate("text", x = 0.5, y = 0.5, 
+                   label = "No data for selected regions/Legislative Districts") +
+          theme_void()
+      ))
     }
     
-    # Define the levels for Modified.COC for consistent ordering
-    coc_levels <- c("Purely ES", "JHS with SHS", "ES and JHS (K to 10)", "Purely JHS", "All Offering (K to 12)", "Purely SHS")
+    coc_levels <- c("Purely ES", "JHS with SHS", "ES and JHS (K to 10)",
+                    "Purely JHS", "All Offering (K to 12)", "Purely SHS")
     
-    # Prepare the data for plotting
     plot_data <- current_filtered_data %>%
       group_by(Division, Legislative.District, Modified.COC) %>%
       summarise(Count = n(), .groups = 'drop') %>%
-      # Use as.character() on the grouping variables right away
       mutate(
         Division = as.character(Division),
         Legislative.District = as.character(Legislative.District),
@@ -9942,15 +9918,9 @@ observeEvent(input$show_curricular_graphs, {
       group_by(Modified.COC) %>%
       summarise(TotalCount = sum(Count))
     
-    # Calculate total counts per Legislative.District for reordering the X-axis
-    Legislative.District_total_counts <- plot_data %>%
-      group_by(Division, Legislative.District) %>%
-      summarise(Total_Legislative.District_Count = sum(Count), .groups = 'drop')
+    plot_data <- plot_data %>%
+      mutate(Division_LegDist = paste0(Division, "- ", Legislative.District))
     
-    # Join total counts back to plot_data for reordering and create concatenated variable
-    plot_data <- plot_data %>% mutate(Division_LegDist = paste0(Division, "- ", Legislative.District))
-    
-    # Create the ggplot
     p <- ggplot(plot_data,
                 aes(x = factor(Modified.COC, levels = coc_levels),
                     y = Count,
@@ -9960,10 +9930,10 @@ observeEvent(input$show_curricular_graphs, {
                                  "<br>Count:", scales::comma(Count)))) +
       geom_bar(stat = "identity", position = "stack", color = "black", size = 0.25) +
       geom_text(data = plot_data_totals,
-                aes(x = Modified.COC, y = TotalCount * 1.05, label = scales::comma(TotalCount)), # Modified line
+                aes(x = Modified.COC, y = TotalCount * 1.05,
+                    label = scales::comma(TotalCount)),
                 inherit.aes = FALSE,
-                size = 3.5,
-                color = "black") +
+                size = 3.5, color = "black") +
       labs(x = "Modified COC",
            y = "Count",
            fill = "Legislative District") +
@@ -9973,14 +9943,13 @@ observeEvent(input$show_curricular_graphs, {
             legend.position = "bottom",
             plot.title = element_text(hjust = 0.5))
     
-    # Convert ggplot to plotly, specifying the correct tooltip aesthetic
     ggplotly(p, tooltip = "text") %>%
-      layout(
-        hoverlabel = list(bgcolor = "white"),
-        hovermode = "closest",
-        margin = list(b = 100)
-      )
+      layout(hoverlabel = list(bgcolor = "white"),
+             hovermode = "closest",
+             margin = list(b = 100))
   })
+  
+  
   
   
   # In your server.R file, ensure 'rv' is initialized once, e.g., at the top of the server function:
@@ -10002,17 +9971,22 @@ observeEvent(input$show_curricular_graphs, {
   
   output$SOSSS_Division_Typology <- renderPlotly({
     
-    # Assume 'filtered_school_data_region' provides the 'uni' data filtered by dashboard region and division.
-    current_filtered_data <- filtered_school_data_division() # Use the reactive filtered data
+    # --- Hide plot if Region or Division picker is empty ---
+    if (is.null(input$dashboard_region_filter) || length(input$dashboard_region_filter) == 0 ||
+        is.null(input$dashboard_division_filter) || length(input$dashboard_division_filter) == 0) {
+      return(NULL)
+    }
     
-    # --- Empty Data Handling ---
+    current_filtered_data <- filtered_school_data_division()
+    
+    # --- Handle no data case ---
     if (nrow(current_filtered_data) == 0) {
       return(ggplotly(ggplot() +
-                        annotate("text", x = 0.5, y = 0.5, label = "No data for selected regions/divisions") +
+                        annotate("text", x = 0.5, y = 0.5, 
+                                 label = "No data for selected divisions") +
                         theme_void()))
     }
     
-    # Prepare the data for plotting
     plot_data <- current_filtered_data %>%
       group_by(Division, School.Size.Typology) %>%
       summarise(Count = n(), .groups = 'drop')
@@ -10021,7 +9995,6 @@ observeEvent(input$show_curricular_graphs, {
       group_by(School.Size.Typology) %>%
       summarise(TotalCount = sum(Count))
     
-    # Calculate total counts per region for reordering (optional, but good practice for clarity)
     region_totals <- plot_data %>%
       group_by(Division) %>%
       summarise(TotalCount = sum(Count), .groups = 'drop')
@@ -10030,54 +10003,56 @@ observeEvent(input$show_curricular_graphs, {
       left_join(region_totals, by = "Division") %>%
       mutate(Division_reordered = reorder(Division, -TotalCount))
     
-    # Define the levels for School.Size.Typology for consistent ordering
-    sosss_levels <- c("Very Small", "Small", "Medium", "Large", "Very Large", "Extremely Large", "Mega")
+    sosss_levels <- c("Very Small", "Small", "Medium", "Large", 
+                      "Very Large", "Extremely Large", "Mega")
     
-    # Create the ggplot
     p <- ggplot(plot_data,
                 aes(x = factor(School.Size.Typology, levels = sosss_levels),
                     y = Count,
                     fill = Division_reordered,
-                    # IMPORTANT: Add 'key' aesthetic here to store combined info for click events
                     key = paste(Division, School.Size.Typology),
-                    text = paste("Region: ", Division,
+                    text = paste("Division: ", Division,
                                  "<br>School Size: ", School.Size.Typology,
-                                 "<br>Count: ", scales::comma(Count)))) + # Custom tooltip text
-      geom_bar(stat = "identity", position = "stack", color = "black", size = 0.25) + # Label for each bar
+                                 "<br>Count: ", scales::comma(Count)))) +
+      geom_bar(stat = "identity", position = "stack", color = "black", size = 0.25) +
       geom_text(data = plot_data_totals,
-                aes(x = School.Size.Typology, y = TotalCount + 10 * (max(TotalCount) / TotalCount), label = scales::comma(TotalCount)), # Modified line
-                inherit.aes = FALSE,
-                size = 3.5,
-                color = "black") +
+                aes(x = School.Size.Typology, y = TotalCount * 1.05, 
+                    label = scales::comma(TotalCount)),
+                inherit.aes = FALSE, size = 3.5, color = "black") +
       labs(x = "School Size Typology",
            y = "Number of Schools",
            fill = "Division") +
-      scale_y_continuous(labels = scales::comma) + # Format y-axis labels as comma-separated numbers
+      scale_y_continuous(labels = scales::comma) +
       theme_minimal() +
       theme(axis.text.x = element_text(size = 10, angle = 45, hjust = 1),
-            legend.position = "bottom", # Position legend at the bottom
-            plot.title = element_text(hjust = 0.5)) # Center the plot title
+            legend.position = "bottom",
+            plot.title = element_text(hjust = 0.5))
     
-    # Convert ggplot to plotly, ensuring custom text is used for hover
-    ggplotly(p, tooltip = "text", source = "sosssRegionPlot") %>%
+    ggplotly(p, tooltip = "text", source = "sosssDivisionPlot") %>%
       layout(hoverlabel = list(bgcolor = "white"),
-             hovermode = "closest", # Changed to "closest" as per previous request
-             margin = list(b = 100)) # Increase bottom margin for x-axis labels
+             hovermode = "closest",
+             margin = list(b = 100))
   })
+  
   
   output$SOSSS_District_Typology <- renderPlotly({
     
-    # Assume 'filtered_school_data_region' provides the 'uni' data filtered by dashboard region and Legislative.District.
-    current_filtered_data <- filtered_school_data_division() # Use the reactive filtered data
+    # --- Hide plot if Region or Division picker is empty ---
+    if (is.null(input$dashboard_region_filter) || length(input$dashboard_region_filter) == 0 ||
+        is.null(input$dashboard_division_filter) || length(input$dashboard_division_filter) == 0) {
+      return(NULL)
+    }
     
-    # --- Empty Data Handling ---
+    current_filtered_data <- filtered_school_data_division()
+    
+    # --- Handle no data case ---
     if (nrow(current_filtered_data) == 0) {
       return(ggplotly(ggplot() +
-                        annotate("text", x = 0.5, y = 0.5, label = "No data for selected regions/Legislative.Districts") +
+                        annotate("text", x = 0.5, y = 0.5, 
+                                 label = "No data for selected legislative districts") +
                         theme_void()))
     }
     
-    # Prepare the data for plotting
     plot_data <- current_filtered_data %>%
       group_by(Division, Legislative.District, School.Size.Typology) %>%
       summarise(Count = n(), .groups = 'drop')
@@ -10086,51 +10061,45 @@ observeEvent(input$show_curricular_graphs, {
       group_by(School.Size.Typology) %>%
       summarise(TotalCount = sum(Count))
     
-    # Calculate total counts per region for reordering (optional, but good practice for clarity)
     region_totals <- plot_data %>%
       group_by(Legislative.District) %>%
       summarise(TotalCount = sum(Count), .groups = 'drop')
     
     plot_data <- plot_data %>%
       left_join(region_totals, by = "Legislative.District") %>%
-      mutate(Legislative.District_reordered = reorder(Legislative.District, -TotalCount))
+      mutate(Legislative.District_reordered = reorder(Legislative.District, -TotalCount)) %>%
+      mutate(Division_LegDist = paste0(Division, "- ", Legislative.District))
     
-    plot_data <- plot_data %>% mutate(Division_LegDist = paste0(Division, "- ", Legislative.District))
+    sosss_levels <- c("Very Small", "Small", "Medium", "Large", 
+                      "Very Large", "Extremely Large", "Mega")
     
-    
-    # Define the levels for School.Size.Typology for consistent ordering
-    sosss_levels <- c("Very Small", "Small", "Medium", "Large", "Very Large", "Extremely Large", "Mega")
-    
-    # Create the ggplot
     p <- ggplot(plot_data,
                 aes(x = factor(School.Size.Typology, levels = sosss_levels),
                     y = Count,
                     fill = Division_LegDist,
-                    # IMPORTANT: Add 'key' aesthetic here to store combined info for click events
                     text = paste("Legislative District: ", Division_LegDist,
                                  "<br>School Size: ", School.Size.Typology,
-                                 "<br>Count: ", scales::comma(Count)))) + # Custom tooltip text
-      geom_bar(stat = "identity", position = "stack", color = "black", size = 0.25) + # Label for each bar
+                                 "<br>Count: ", scales::comma(Count)))) +
+      geom_bar(stat = "identity", position = "stack", color = "black", size = 0.25) +
       geom_text(data = plot_data_totals,
-                aes(x = School.Size.Typology, y = TotalCount * 1.05, label = scales::comma(TotalCount)), # Modified line
-                inherit.aes = FALSE,
-                size = 3.5,
-                color = "black") +
+                aes(x = School.Size.Typology, y = TotalCount * 1.05, 
+                    label = scales::comma(TotalCount)),
+                inherit.aes = FALSE, size = 3.5, color = "black") +
       labs(x = "School Size Typology",
            y = "Number of Schools",
            fill = "Legislative District") +
-      scale_y_continuous(labels = scales::comma) + # Format y-axis labels as comma-separated numbers
+      scale_y_continuous(labels = scales::comma) +
       theme_minimal() +
       theme(axis.text.x = element_text(size = 10, angle = 45, hjust = 1),
-            legend.position = "bottom", # Position legend at the bottom
-            plot.title = element_text(hjust = 0.5)) # Center the plot title
+            legend.position = "bottom",
+            plot.title = element_text(hjust = 0.5))
     
-    # Convert ggplot to plotly, ensuring custom text is used for hover
-    ggplotly(p, tooltip = "text", source = "sosssRegionPlot") %>%
+    ggplotly(p, tooltip = "text", source = "sosssDistrictPlot") %>%
       layout(hoverlabel = list(bgcolor = "white"),
-             hovermode = "closest", # Changed to "closest" as per previous request
-             margin = list(b = 100)) # Increase bottom margin for x-axis labels
+             hovermode = "closest",
+             margin = list(b = 100))
   })
+  
   
   
   # Reactive expression for filtering the SOSSS table data based on dashboard filters and plot clicks
@@ -10194,131 +10163,133 @@ observeEvent(input$show_curricular_graphs, {
   
   # Your Teacher_Shortage_Regional_Graph renderPlotly
   output$Teacher_Shortage_Regional_Graph <- renderPlotly({
-    # Use the reactive filtered data, which already applies Region and Division filters
-    current_filtered_data <- filtered_teacher_shortage_data_region() # <-- CHANGE: Use reactive data
     
-    # --- Empty Data Handling ---
-    if (nrow(current_filtered_data) == 0) {
-      return(ggplotly(ggplot() +
-                        annotate("text", x = 0.5, y = 0.5, label = "No data for selected regions/divisions") +
-                        theme_void()))
+    # --- Hide plot when Region filter is empty ---
+    if (is.null(input$dashboard_region_filter) || length(input$dashboard_region_filter) == 0) {
+      return(NULL)
     }
     
-    # Prepare the data for plotting
+    current_filtered_data <- filtered_teacher_shortage_data_region()
+    
+    # --- Empty data handling ---
+    if (nrow(current_filtered_data) == 0) {
+      return(ggplotly(
+        ggplot() +
+          annotate("text", x = 0.5, y = 0.5, 
+                   label = "No data for selected regions/divisions") +
+          theme_void()
+      ))
+    }
+    
+    # --- Prepare data ---
     plot_data <- current_filtered_data %>%
-      pivot_longer(cols = c(ES_Shortage, JHS_Shortage, SHS_Shortage), names_to = "Inventory", values_to = "Count") %>%
+      pivot_longer(cols = c(ES_Shortage, JHS_Shortage, SHS_Shortage),
+                   names_to = "Inventory", values_to = "Count") %>%
       mutate(Count = as.numeric(Count)) %>%
       na.omit() %>%
       group_by(Region, Inventory) %>%
-      summarize(Total_Count = sum(Count, na.rm = TRUE), .groups = 'drop')
+      summarise(Total_Count = sum(Count, na.rm = TRUE), .groups = 'drop')
     
     plot_data_totals <- plot_data %>%
       group_by(Inventory) %>%
       summarise(TotalCount = sum(Total_Count))
     
-    # total_labels_data is for stacked bars, not typically used for dodged bars
-    # total_labels_data <- plot_data %>%
-    #   group_by(Region) %>%
-    #   summarise(Grand_Total = sum(Total_Count), .groups = 'drop')
-    
-    # Define the levels for Inventory for consistent order
     inventory_levels <- c("ES_Shortage", "JHS_Shortage", "SHS_Shortage")
     
-    # Create the ggplot
     p <- ggplot(plot_data,
-                aes(x = factor(Inventory, levels = inventory_levels), # Reorder regions based on overall total count for the region
+                aes(x = factor(Inventory, levels = inventory_levels),
                     y = Total_Count,
-                    fill = Region, # Fill by Inventory for coloring and consistent order
-                    # IMPORTANT: Add 'key' aesthetic here to store the region+inventory for click events
+                    fill = Region,
                     text = paste("Region: ", Region,
-                                 "<br>School Type: ", gsub("_Shortage", "", Inventory), # Clean up label for tooltip
+                                 "<br>School Type: ", gsub("_Shortage", "", Inventory),
                                  "<br>Count: ", scales::comma(Total_Count)))) +
       geom_bar(stat = "identity", position = "stack", color = "black", size = 0.25) +
       geom_text(data = plot_data_totals,
-                aes(x = Inventory, y = TotalCount * 1.05, label = scales::comma(TotalCount)), # Modified line
+                aes(x = Inventory, y = TotalCount * 1.05,
+                    label = scales::comma(TotalCount)),
                 inherit.aes = FALSE,
-                size = 3.5,
-                color = "black") +
-      labs(x = "Region",
+                size = 3.5, color = "black") +
+      labs(x = "School Type",
            y = "Total Shortage Count",
-           title = "Regional Teacher Shortage by School Type") +
+           title = "Regional Teacher Shortage by School Type",
+           fill = "Region") +
       scale_y_continuous(labels = scales::comma) +
       theme_minimal() +
       theme(axis.text.x = element_text(size = 10, angle = 45, hjust = 1),
             legend.position = "bottom",
             plot.title = element_text(hjust = 0.5))
     
-    # Convert ggplot to plotly, ensuring custom text is used for hover and source for clicks
     ggplotly(p, tooltip = "text", source = "teacherShortageRegionPlot") %>%
       layout(hoverlabel = list(bgcolor = "white"),
-             hovermode = "closest", # Ensure hover targets closest bar
+             hovermode = "closest",
              margin = list(b = 100))
   })
   
+  
   output$Teacher_Shortage_Division_Graph <- renderPlotly({
-    # Use the reactive filtered data, which already applies Division and Division filters
-    current_filtered_data <- filtered_teacher_shortage_data_division() # <-- CHANGE: Use reactive data
     
-    # --- Empty Data Handling ---
-    if (nrow(current_filtered_data) == 0) {
-      return(ggplotly(ggplot() +
-                        annotate("text", x = 0.5, y = 0.5, label = "No data for selected Divisions/divisions") +
-                        theme_void()))
+    # --- Hide plot when region or division filter is empty ---
+    if (is.null(input$dashboard_region_filter) || length(input$dashboard_region_filter) == 0 ||
+        is.null(input$dashboard_division_filter) || length(input$dashboard_division_filter) == 0) {
+      return(NULL)
     }
     
-    # Prepare the data for plotting
+    current_filtered_data <- filtered_teacher_shortage_data_division()
+    
+    # --- Empty data handling ---
+    if (nrow(current_filtered_data) == 0) {
+      return(ggplotly(
+        ggplot() +
+          annotate("text", x = 0.5, y = 0.5,
+                   label = "No data for selected divisions") +
+          theme_void()
+      ))
+    }
+    
+    # --- Prepare data ---
     plot_data <- current_filtered_data %>%
-      pivot_longer(cols = c(ES_Shortage, JHS_Shortage, SHS_Shortage), names_to = "Inventory", values_to = "Count") %>%
+      pivot_longer(cols = c(ES_Shortage, JHS_Shortage, SHS_Shortage),
+                   names_to = "Inventory", values_to = "Count") %>%
       mutate(Count = as.numeric(Count)) %>%
       na.omit() %>%
       group_by(Division, Inventory) %>%
-      summarize(Total_Count = sum(Count, na.rm = TRUE), .groups = 'drop')
+      summarise(Total_Count = sum(Count, na.rm = TRUE), .groups = 'drop')
     
     plot_data_totals <- plot_data %>%
       group_by(Inventory) %>%
       summarise(TotalCount = sum(Total_Count))
     
-    # total_labels_data is for stacked bars, not typically used for dodged bars
-    # total_labels_data <- plot_data %>%
-    #   group_by(Division) %>%
-    #   summarise(Grand_Total = sum(Total_Count), .groups = 'drop')
-    
-    # Define specific colors for each inventory type for consistency
-    
-    # Define the levels for Inventory for consistent order
     inventory_levels <- c("ES_Shortage", "JHS_Shortage", "SHS_Shortage")
     
-    # Create the ggplot
     p <- ggplot(plot_data,
-                aes(x = factor(Inventory, levels = inventory_levels), # Reorder Divisions based on overall total count for the Division
+                aes(x = factor(Inventory, levels = inventory_levels),
                     y = Total_Count,
-                    fill = Division, # Fill by Inventory for coloring and consistent order
-                    # IMPORTANT: Add 'key' aesthetic here to store the Division+inventory for click events
-                    key = paste(Division, Inventory, sep = "::"), # Key as per your latest code
+                    fill = Division,
                     text = paste("Division: ", Division,
-                                 "<br>School Type: ", gsub("_Shortage", "", Inventory), # Clean up label for tooltip
+                                 "<br>School Type: ", gsub("_Shortage", "", Inventory),
                                  "<br>Count: ", scales::comma(Total_Count)))) +
       geom_bar(stat = "identity", position = "stack", color = "black", size = 0.25) +
       geom_text(data = plot_data_totals,
-                aes(x = Inventory, y = TotalCount * 1.05, label = scales::comma(TotalCount)), # Modified line
+                aes(x = Inventory, y = TotalCount * 1.05,
+                    label = scales::comma(TotalCount)),
                 inherit.aes = FALSE,
-                size = 3.5,
-                color = "black") +
-      labs(x = "Inventory",
+                size = 3.5, color = "black") +
+      labs(x = "School Type",
            y = "Total Shortage Count",
-           title = "Division Teacher Shortage by School Type") +
+           title = "Division Teacher Shortage by School Type",
+           fill = "Division") +
       scale_y_continuous(labels = scales::comma) +
       theme_minimal() +
       theme(axis.text.x = element_text(size = 10, angle = 45, hjust = 1),
             legend.position = "bottom",
             plot.title = element_text(hjust = 0.5))
     
-    # Convert ggplot to plotly, ensuring custom text is used for hover and source for clicks
     ggplotly(p, tooltip = "text", source = "teacherShortageDivisionPlot") %>%
       layout(hoverlabel = list(bgcolor = "white"),
-             hovermode = "closest", # Ensure hover targets closest bar
+             hovermode = "closest",
              margin = list(b = 100))
   })
+  
   
   # In your server.R file, ensure 'rv' is initialized with the new reactive value:
   # rv <- reactiveValues(
@@ -10345,139 +10316,123 @@ observeEvent(input$show_curricular_graphs, {
   })
   
   output$School_Principal_Division_Graph <- renderPlotly({
-    # Use the reactive filtered data
+    
+    # --- Hide plot when no region/division is selected ---
+    if (is.null(input$dashboard_region_filter) || length(input$dashboard_region_filter) == 0 ||
+        is.null(input$dashboard_division_filter) || length(input$dashboard_division_filter) == 0) {
+      return(NULL)
+    }
+    
     current_filtered_data <- filtered_school_data_division()
     
     # --- Empty Data Handling ---
-    if (nrow(current_filtered_data) == 0) {
+    if (is.null(current_filtered_data) || nrow(current_filtered_data) == 0) {
       return(ggplotly(ggplot() +
-                        annotate("text", x = 0.5, y = 0.5, label = "No data for selected regions/divisions") +
+                        annotate("text", x = 0.5, y = 0.5, 
+                                 label = "No data for selected regions/divisions") +
                         theme_void()))
     }
     
-    # Prepare the data for plotting
     plot_data <- current_filtered_data %>%
       select(Division, Designation) %>%
       group_by(Division, Designation) %>%
-      summarize(Count = n(), .groups = 'drop') # Ungroup after summarize
+      summarize(Count = n(), .groups = 'drop')
     
     plot_data_totals <- plot_data %>%
       group_by(Designation) %>%
       summarise(TotalCount = sum(Count))
     
-    # Calculate total counts per region for reordering the x-axis
-    region_totals <- plot_data %>%
-      group_by(Division) %>%
-      summarise(TotalCount = sum(Count), .groups = 'drop')
-    
-    plot_data <- plot_data %>%
-      left_join(region_totals, by = "Division") %>%
-      mutate(Division_reordered = reorder(Division, -TotalCount))
-    
-    
-    # Define the levels for Designation for consistent ordering
     designation_levels <- c("School Principal", "Teacher-in-Charge", "Officer-in-Charge")
     
-    # Create the ggplot
     p <- ggplot(plot_data,
-                aes(x = factor(Designation, levels = designation_levels), # Reorder regions based on overall count (across all designations)
+                aes(x = factor(Designation, levels = designation_levels),
                     y = Count,
-                    fill = Division_reordered, # Ensure fill order is consistent
-                    # IMPORTANT: Add 'key' aesthetic here to store combined info for click events
+                    fill = Division,
                     key = paste(Division, Designation),
-                    text = paste("Region: ", Division,
+                    text = paste("Division: ", Division,
                                  "<br>Designation: ", Designation,
-                                 "<br>Count: ", scales::comma(Count)))) + # Custom tooltip text
-      geom_bar(stat = "identity", position = "stack", color = "black", size = 0.25) + 
+                                 "<br>Count: ", scales::comma(Count)))) +
+      geom_bar(stat = "identity", position = "stack", color = "black", size = 0.25) +
       geom_text(data = plot_data_totals,
-                aes(x = Designation, y = TotalCount * 1.05, label = scales::comma(TotalCount)), # Modified line
+                aes(x = Designation, y = TotalCount * 1.05, 
+                    label = scales::comma(TotalCount)),
                 inherit.aes = FALSE,
-                size = 3.5,
-                color = "black") +
-      labs(x = "Designation",
-           y = "Count of Individuals",
-           fill = "Division") +
-      scale_y_continuous(labels = scales::comma) + # Format y-axis labels as comma-separated numbers
+                size = 3.5, color = "black") +
+      labs(x = "Designation", y = "Count of Individuals",
+           title = "Division School Principal Shortage by Designation") +
+      scale_y_continuous(labels = scales::comma) +
       theme_minimal() +
       theme(axis.text.x = element_text(size = 10, angle = 45, hjust = 1),
-            legend.position = "bottom", # Position legend at the bottom
-            plot.title = element_text(hjust = 0.5)) # Center the plot title
+            legend.position = "bottom",
+            plot.title = element_text(hjust = 0.5))
     
-    # Convert ggplot to plotly, ensuring custom text is used for hover
-    ggplotly(p, tooltip = "text", source = "schoolPrincipalRegionPlot") %>%
+    ggplotly(p, tooltip = "text", source = "schoolPrincipalDivisionPlot") %>%
       layout(hoverlabel = list(bgcolor = "white"),
-             hovermode = "closest", # Changed to "closest" for individual bar tooltips
-             margin = list(b = 100)) # Increase bottom margin for x-axis labels
+             hovermode = "closest",
+             margin = list(b = 100))
   })
   
+  
   output$School_Principal_District_Graph <- renderPlotly({
-    # Use the reactive filtered data
+    
+    # --- Hide plot when no region/division is selected ---
+    if (is.null(input$dashboard_region_filter) || length(input$dashboard_region_filter) == 0 ||
+        is.null(input$dashboard_division_filter) || length(input$dashboard_division_filter) == 0) {
+      return(NULL)
+    }
+    
     current_filtered_data <- filtered_school_data_division()
     
     # --- Empty Data Handling ---
-    if (nrow(current_filtered_data) == 0) {
+    if (is.null(current_filtered_data) || nrow(current_filtered_data) == 0) {
       return(ggplotly(ggplot() +
-                        annotate("text", x = 0.5, y = 0.5, label = "No data for selected regions/Legislative.Districts") +
+                        annotate("text", x = 0.5, y = 0.5, 
+                                 label = "No data for selected Legislative Districts") +
                         theme_void()))
     }
     
-    # Prepare the data for plotting
     plot_data <- current_filtered_data %>%
       select(Division, Legislative.District, Designation) %>%
       group_by(Division, Legislative.District, Designation) %>%
-      summarize(Count = n(), .groups = 'drop') # Ungroup after summarize
+      summarize(Count = n(), .groups = 'drop')
     
     plot_data_totals <- plot_data %>%
       group_by(Designation) %>%
       summarise(TotalCount = sum(Count))
     
-    # Calculate total counts per region for reordering the x-axis
-    region_totals <- plot_data %>%
-      group_by(Legislative.District) %>%
-      summarise(TotalCount = sum(Count), .groups = 'drop')
-    
     plot_data <- plot_data %>%
-      left_join(region_totals, by = "Legislative.District") %>%
-      mutate(Legislative.District_reordered = reorder(Legislative.District, -TotalCount))
+      mutate(Division_LegDist = paste0(Division, " - ", Legislative.District))
     
-    plot_data <- plot_data %>% mutate(Division_LegDist = paste0(Division, "- ", Legislative.District))
-    
-    
-    # Define the levels for Designation for consistent ordering
     designation_levels <- c("School Principal", "Teacher-in-Charge", "Officer-in-Charge")
     
-    # Create the ggplot
     p <- ggplot(plot_data,
-                aes(x = factor(Designation, levels = designation_levels), # Reorder regions based on overall count (across all designations)
+                aes(x = factor(Designation, levels = designation_levels),
                     y = Count,
-                    fill = Division_LegDist, # Ensure fill order is consistent
-                    # IMPORTANT: Add 'key' aesthetic here to store combined info for click events
+                    fill = Division_LegDist,
                     key = paste(Division_LegDist, Designation),
-                    text = paste("Region: ", Legislative.District,
+                    text = paste("Legislative District: ", Legislative.District,
                                  "<br>Designation: ", Designation,
-                                 "<br>Count: ", scales::comma(Count)))) + # Custom tooltip text
+                                 "<br>Count: ", scales::comma(Count)))) +
       geom_bar(stat = "identity", position = "stack", color = "black", size = 0.25) +
       geom_text(data = plot_data_totals,
-                aes(x = Designation, y = TotalCount * 1.05, label = scales::comma(TotalCount)), # Modified line
+                aes(x = Designation, y = TotalCount * 1.05, 
+                    label = scales::comma(TotalCount)),
                 inherit.aes = FALSE,
-                size = 3.5,
-                color = "black") +
-      labs(x = "Region",
-           y = "Count of Individuals",
-           fill = "Designation",
-           title = "Regional School Principal Designation by Type") +
-      scale_y_continuous(labels = scales::comma) + # Format y-axis labels as comma-separated numbers
+                size = 3.5, color = "black") +
+      labs(x = "Designation", y = "Count of Individuals",
+           title = "Legislative District School Principal Shortage by Designation") +
+      scale_y_continuous(labels = scales::comma) +
       theme_minimal() +
       theme(axis.text.x = element_text(size = 10, angle = 45, hjust = 1),
-            legend.position = "bottom", # Position legend at the bottom
-            plot.title = element_text(hjust = 0.5)) # Center the plot title
+            legend.position = "bottom",
+            plot.title = element_text(hjust = 0.5))
     
-    # Convert ggplot to plotly, ensuring custom text is used for hover
-    ggplotly(p, tooltip = "text", source = "schoolPrincipalRegionPlot") %>%
+    ggplotly(p, tooltip = "text", source = "schoolPrincipalDistrictPlot") %>%
       layout(hoverlabel = list(bgcolor = "white"),
-             hovermode = "closest", # Changed to "closest" for individual bar tooltips
-             margin = list(b = 100)) # Increase bottom margin for x-axis labels
+             hovermode = "closest",
+             margin = list(b = 100))
   })
+  
   
   
   # Reactive expression for filtering the School Principal table data
@@ -10578,127 +10533,119 @@ observeEvent(input$show_curricular_graphs, {
   })
   
   output$AOII_Division_Graph <- renderPlotly({
-    # Use the reactive filtered data
+    
+    # --- Hide plot when no region/division is selected ---
+    if (is.null(input$dashboard_region_filter) || length(input$dashboard_region_filter) == 0 ||
+        is.null(input$dashboard_division_filter) || length(input$dashboard_division_filter) == 0) {
+      return(NULL)
+    }
+    
     current_filtered_data <- filtered_school_data_division()
     
     # --- Empty Data Handling ---
-    if (nrow(current_filtered_data) == 0) {
+    if (is.null(current_filtered_data) || nrow(current_filtered_data) == 0) {
       return(ggplotly(ggplot() +
-                        annotate("text", x = 0.5, y = 0.5, label = "No data for selected Divisions/divisions") +
+                        annotate("text", x = 0.5, y = 0.5, 
+                                 label = "No data for selected divisions") +
                         theme_void()))
     }
     
-    # Prepare the data for plotting
     plot_data <- current_filtered_data %>%
       group_by(Division, Clustering.Status) %>%
-      summarize(Total_Count = n(), .groups = 'drop')
+      summarise(Total_Count = n(), .groups = 'drop')
     
     plot_data_totals <- plot_data %>%
       group_by(Clustering.Status) %>%
       summarise(TotalCount = sum(Total_Count))
     
-    # Calculate total counts per Division for the overall labels on top of stacked bars
-    total_labels_data <- plot_data %>%
-      group_by(Division) %>%
-      summarise(Grand_Total = sum(Total_Count), .groups = 'drop')
-    
-    # Define the levels for Clustering.Status for consistent stacking order in the legend and on the bars
     clustering_levels <- c("None Deployed", "Clustered", "Dedicated")
     
-    # Create the ggplot
     p <- ggplot(plot_data,
-                aes(x = factor(Clustering.Status, levels = clustering_levels), # Reorder Divisions based on overall total count for the Division
+                aes(x = factor(Clustering.Status, levels = clustering_levels),
                     y = Total_Count,
-                    fill = Division, # Fill by Clustering.Status for coloring and consistent order
-                    # IMPORTANT: Add 'key' aesthetic here to store combined info for click events
-                    key = paste(Division, Clustering.Status),
+                    fill = Division,
                     text = paste("Division: ", Division,
                                  "<br>Clustering Status: ", Clustering.Status,
-                                 "<br>Count: ", scales::comma(Total_Count)))) + # Custom tooltip text
-      geom_bar(stat = "identity", position = "stack", color = "black", size = 0.25) + 
+                                 "<br>Count: ", scales::comma(Total_Count)))) +
+      geom_bar(stat = "identity", position = "stack", color = "black", size = 0.25) +
       geom_text(data = plot_data_totals,
-                aes(x = Clustering.Status, y = TotalCount * 1.05, label = scales::comma(TotalCount)), # Modified line
+                aes(x = Clustering.Status, y = TotalCount * 1.05, 
+                    label = scales::comma(TotalCount)),
                 inherit.aes = FALSE,
-                size = 3.5,
-                color = "black") +
+                size = 3.5, color = "black") +
       labs(x = "Clustering Status",
            y = "Total Count of Schools",
-           title = "Division-Level AO II Deployment by Clustering Status") +
-      scale_y_continuous(labels = scales::comma) + # Format y-axis labels as comma-separated numbers
+           title = "Division AO II Deployment by Clustering Status") +
+      scale_y_continuous(labels = scales::comma) +
       theme_minimal() +
       theme(axis.text.x = element_text(size = 10, angle = 45, hjust = 1),
-            legend.position = "bottom", # Position legend at the bottom
-            plot.title = element_text(hjust = 0.5)) # Center the plot title
+            legend.position = "bottom",
+            plot.title = element_text(hjust = 0.5))
     
-    # Convert ggplot to plotly, ensuring custom text is used for hover
     ggplotly(p, tooltip = "text", source = "aoiiDivisionPlot") %>%
       layout(hoverlabel = list(bgcolor = "white"),
-             hovermode = "closest", # Changed to "closest" for individual segment tooltips
-             margin = list(b = 100)) # Increase bottom margin for x-axis labels
+             hovermode = "closest",
+             margin = list(b = 100))
   })
   
+  
   output$AOII_District_Graph <- renderPlotly({
-    # Use the reactive filtered data
+    
+    # --- Hide plot when no region/division is selected ---
+    if (is.null(input$dashboard_region_filter) || length(input$dashboard_region_filter) == 0 ||
+        is.null(input$dashboard_division_filter) || length(input$dashboard_division_filter) == 0) {
+      return(NULL)
+    }
+    
     current_filtered_data <- filtered_school_data_division()
     
     # --- Empty Data Handling ---
-    if (nrow(current_filtered_data) == 0) {
+    if (is.null(current_filtered_data) || nrow(current_filtered_data) == 0) {
       return(ggplotly(ggplot() +
-                        annotate("text", x = 0.5, y = 0.5, label = "No data for selected Legislative.Districts/divisions") +
+                        annotate("text", x = 0.5, y = 0.5, 
+                                 label = "No data for selected legislative districts") +
                         theme_void()))
     }
     
-    # Prepare the data for plotting
     plot_data <- current_filtered_data %>%
       group_by(Division, Legislative.District, Clustering.Status) %>%
-      summarize(Total_Count = n(), .groups = 'drop')
+      summarise(Total_Count = n(), .groups = 'drop') %>%
+      mutate(Division_LegDist = paste0(Division, " - ", Legislative.District))
     
     plot_data_totals <- plot_data %>%
       group_by(Clustering.Status) %>%
       summarise(TotalCount = sum(Total_Count))
     
-    # Calculate total counts per Legislative.District for the overall labels on top of stacked bars
-    total_labels_data <- plot_data %>%
-      group_by(Division, Legislative.District) %>%
-      summarise(Grand_Total = sum(Total_Count), .groups = 'drop')
-    
-    # Define the levels for Clustering.Status for consistent stacking order in the legend and on the bars
     clustering_levels <- c("None Deployed", "Clustered", "Dedicated")
     
-    plot_data <- plot_data %>% mutate(Division_LegDist = paste0(Division, "- ", Legislative.District))
-    
-    
-    # Create the ggplot
     p <- ggplot(plot_data,
-                aes(x = factor(Clustering.Status, levels = clustering_levels), # Reorder Legislative.Districts based on overall total count for the Legislative.District
+                aes(x = factor(Clustering.Status, levels = clustering_levels),
                     y = Total_Count,
-                    fill = reorder(Division_LegDist, -Total_Count), # Fill by Clustering.Status for coloring and consistent order
-                    # IMPORTANT: Add 'key' aesthetic here to store combined info for click events
-                    key = paste(Division_LegDist, Clustering.Status),
-                    text = paste("Legislative.District: ", Legislative.District,
+                    fill = Division_LegDist,
+                    text = paste("Legislative District: ", Legislative.District,
                                  "<br>Clustering Status: ", Clustering.Status,
-                                 "<br>Count: ", scales::comma(Total_Count)))) + # Custom tooltip text
-      geom_bar(stat = "identity", position = "stack", color = "black", size = 0.25) + 
+                                 "<br>Count: ", scales::comma(Total_Count)))) +
+      geom_bar(stat = "identity", position = "stack", color = "black", size = 0.25) +
       geom_text(data = plot_data_totals,
-                aes(x = Clustering.Status, y = TotalCount * 1.05, label = scales::comma(TotalCount)), # Modified line
+                aes(x = Clustering.Status, y = TotalCount * 1.05, 
+                    label = scales::comma(TotalCount)),
                 inherit.aes = FALSE,
-                size = 3.5,
-                color = "black") +
-      labs(x = "Legislative.District",
+                size = 3.5, color = "black") +
+      labs(x = "Clustering Status",
            y = "Total Count of Schools",
-           fill = "Legislative District") +
-      scale_y_continuous(labels = scales::comma) + # Format y-axis labels as comma-separated numbers
+           title = "Legislative District AO II Deployment by Clustering Status") +
+      scale_y_continuous(labels = scales::comma) +
       theme_minimal() +
       theme(axis.text.x = element_text(size = 10, angle = 45, hjust = 1),
-            legend.position = "bottom", # Position legend at the bottom
-            plot.title = element_text(hjust = 0.5)) # Center the plot title
+            legend.position = "bottom",
+            plot.title = element_text(hjust = 0.5))
     
-    # Convert ggplot to plotly, ensuring custom text is used for hover
-    ggplotly(p, tooltip = "text", source = "aoiiLegislative.DistrictPlot") %>%
+    ggplotly(p, tooltip = "text", source = "aoiiDistrictPlot") %>%
       layout(hoverlabel = list(bgcolor = "white"),
-             hovermode = "closest", # Changed to "closest" for individual segment tooltips
-             margin = list(b = 100)) # Increase bottom margin for x-axis labels
+             hovermode = "closest",
+             margin = list(b = 100))
   })
+  
   
   
   # Reactive expression for filtering the AOII table data
@@ -10802,18 +10749,26 @@ observeEvent(input$show_curricular_graphs, {
   
   
   output$PDOI_Division_Graph <- renderPlotly({
-    # Use the reactive filtered data. User provided `filtered_school_data_Division()` here.
+    # Hide plot when region or division is unselected
+    if (is.null(input$dashboard_region_filter) || length(input$dashboard_region_filter) == 0 ||
+        is.null(input$dashboard_division_filter) || length(input$dashboard_division_filter) == 0) {
+      return(NULL)
+    }
+    
     current_filtered_data <- filtered_school_data_division()
     
     # --- Empty Data Handling ---
     if (nrow(current_filtered_data) == 0) {
-      return(ggplotly(ggplot() +
-                        annotate("text", x = 0.5, y = 0.5, label = "No data for selected Divisions/divisions") +
-                        theme_void()))
+      return(ggplotly(
+        ggplot() +
+          annotate("text", x = 0.5, y = 0.5, label = "No data for selected divisions") +
+          theme_void()
+      ))
     }
     
-    # Prepare the data for plotting
+    # Prepare data
     plot_data <- current_filtered_data %>%
+      select(Division, PDOI_Deployment) %>%
       group_by(Division, PDOI_Deployment) %>%
       summarize(Total_Count = n(), .groups = 'drop')
     
@@ -10821,107 +10776,90 @@ observeEvent(input$show_curricular_graphs, {
       group_by(PDOI_Deployment) %>%
       summarise(TotalCount = sum(Total_Count))
     
-    # Calculate total counts per Division for the overall labels on top of stacked bars
-    total_labels_data <- plot_data %>%
-      group_by(Division) %>%
-      summarise(Grand_Total = sum(Total_Count), .groups = 'drop')
-    
-    # Define the levels for PDOI_Deployment for consistent stacking order in the legend and on the bars
     pdoi_levels <- c("Without PDO I", "With PDO I")
     
-    
-    # Create the ggplot
     p <- ggplot(plot_data,
-                aes(x = factor(PDOI_Deployment, levels = pdoi_levels), # Reorder Divisions based on overall total count for the Division
+                aes(x = factor(PDOI_Deployment, levels = pdoi_levels),
                     y = Total_Count,
-                    fill = Division, # Fill by PDOI_Deployment for coloring and consistent order
-                    # IMPORTANT: Add 'key' aesthetic here to store combined info for click events
-                    key = paste(Division, PDOI_Deployment),
+                    fill = Division,
                     text = paste("Division: ", Division,
                                  "<br>PDO I Deployment: ", PDOI_Deployment,
-                                 "<br>Total Count: ", scales::comma(Total_Count)))) + # Custom tooltip text
-      geom_bar(stat = "identity", position = "stack", color = "black", size = 0.25) + 
+                                 "<br>Total Count: ", scales::comma(Total_Count)))) +
+      geom_bar(stat = "identity", position = "stack", color = "black") +
       geom_text(data = plot_data_totals,
-                aes(x = PDOI_Deployment, y = TotalCount * 1.05, label = scales::comma(TotalCount)), # Modified line
-                inherit.aes = FALSE,
-                size = 3.5,
-                color = "black") +
-      labs(x = "Clustering Status",
-           y = "Total Count of Schools",
-           title = "Division-Level PDO I Deployment by Status") +
-      scale_y_continuous(labels = scales::comma) + # Format y-axis labels as comma-separated numbers
+                aes(x = PDOI_Deployment, y = TotalCount * 1.05,
+                    label = scales::comma(TotalCount)),
+                inherit.aes = FALSE, size = 3.5, color = "black") +
+      labs(x = "PDO I Deployment", y = "Total Count of Schools",
+           title = "Division PDO I Deployment by Status") +
+      scale_y_continuous(labels = scales::comma) +
       theme_minimal() +
       theme(axis.text.x = element_text(size = 10, angle = 45, hjust = 1),
-            legend.position = "bottom", # Position legend at the bottom
-            plot.title = element_text(hjust = 0.5)) # Center the plot title
+            legend.position = "bottom",
+            plot.title = element_text(hjust = 0.5))
     
-    # Convert ggplot to plotly, ensuring custom text is used for hover
     ggplotly(p, tooltip = "text", source = "pdoiDivisionPlot") %>%
       layout(hoverlabel = list(bgcolor = "white"),
-             hovermode = "closest", # Changed to "closest" for individual segment tooltips
-             margin = list(b = 100)) # Increase bottom margin for x-axis labels
+             hovermode = "closest",
+             margin = list(b = 100))
   })
   
+  
   output$PDOI_District_Graph <- renderPlotly({
-    # Use the reactive filtered data. User provided `filtered_school_data_Legislative.District()` here.
+    # Hide plot when region or division is unselected
+    if (is.null(input$dashboard_region_filter) || length(input$dashboard_region_filter) == 0 ||
+        is.null(input$dashboard_division_filter) || length(input$dashboard_division_filter) == 0) {
+      return(NULL)
+    }
+    
     current_filtered_data <- filtered_school_data_division()
     
     # --- Empty Data Handling ---
     if (nrow(current_filtered_data) == 0) {
-      return(ggplotly(ggplot() +
-                        annotate("text", x = 0.5, y = 0.5, label = "No data for selected Legislative.Districts/divisions") +
-                        theme_void()))
+      return(ggplotly(
+        ggplot() +
+          annotate("text", x = 0.5, y = 0.5, label = "No data for selected Legislative Districts") +
+          theme_void()
+      ))
     }
     
-    # Prepare the data for plotting
+    # Prepare data
     plot_data <- current_filtered_data %>%
+      select(Division, Legislative.District, PDOI_Deployment) %>%
       group_by(Division, Legislative.District, PDOI_Deployment) %>%
-      summarize(Total_Count = n(), .groups = 'drop')
+      summarize(Total_Count = n(), .groups = 'drop') %>%
+      mutate(Division_LegDist = paste0(Division, " - ", Legislative.District))
     
     plot_data_totals <- plot_data %>%
       group_by(PDOI_Deployment) %>%
       summarise(TotalCount = sum(Total_Count))
     
-    # Calculate total counts per Legislative.District for the overall labels on top of stacked bars
-    total_labels_data <- plot_data %>%
-      group_by(Legislative.District) %>%
-      summarise(Grand_Total = sum(Total_Count), .groups = 'drop')
-    
-    # Define the levels for PDOI_Deployment for consistent stacking order in the legend and on the bars
     pdoi_levels <- c("Without PDO I", "With PDO I")
     
-    plot_data <- plot_data %>% mutate(Division_LegDist = paste0(Division, "- ", Legislative.District))
-    
-    # Create the ggplot
     p <- ggplot(plot_data,
-                aes(x = factor(PDOI_Deployment, levels = pdoi_levels), # Reorder Legislative.Districts based on overall total count for the Legislative.District
+                aes(x = factor(PDOI_Deployment, levels = pdoi_levels),
                     y = Total_Count,
-                    fill = reorder(Division_LegDist, -Total_Count), # Fill by PDOI_Deployment for coloring and consistent order
-                    # IMPORTANT: Add 'key' aesthetic here to store combined info for click events
-                    key = paste(Legislative.District, PDOI_Deployment),
-                    text = paste("Legislative.District: ", Legislative.District,
+                    fill = Division_LegDist,
+                    text = paste("Legislative District: ", Legislative.District,
                                  "<br>PDO I Deployment: ", PDOI_Deployment,
-                                 "<br>Total Count: ", scales::comma(Total_Count)))) + # Custom tooltip text
-      geom_bar(stat = "identity", position = "stack", color = "black", size = 0.25) + 
+                                 "<br>Total Count: ", scales::comma(Total_Count)))) +
+      geom_bar(stat = "identity", position = "stack", color = "black") +
       geom_text(data = plot_data_totals,
-                aes(x = PDOI_Deployment, y = TotalCount * 1.05, label = scales::comma(TotalCount)), # Modified line
-                inherit.aes = FALSE,
-                size = 3.5,
-                color = "black") +
-      labs(x = "Deployment Status",
-           y = "Total Count of Schools",
-           fill = "Legislative District") +
-      scale_y_continuous(labels = scales::comma) + # Format y-axis labels as comma-separated numbers
+                aes(x = PDOI_Deployment, y = TotalCount * 1.05,
+                    label = scales::comma(TotalCount)),
+                inherit.aes = FALSE, size = 3.5, color = "black") +
+      labs(x = "PDO I Deployment", y = "Total Count of Schools",
+           title = "Legislative District PDO I Deployment by Status") +
+      scale_y_continuous(labels = scales::comma) +
       theme_minimal() +
       theme(axis.text.x = element_text(size = 10, angle = 45, hjust = 1),
-            legend.position = "bottom", # Position legend at the bottom
-            plot.title = element_text(hjust = 0.5)) # Center the plot title
+            legend.position = "bottom",
+            plot.title = element_text(hjust = 0.5))
     
-    # Convert ggplot to plotly, ensuring custom text is used for hover
-    ggplotly(p, tooltip = "text", source = "pdoiLegislative.DistrictPlot") %>%
+    ggplotly(p, tooltip = "text", source = "pdoiDistrictPlot") %>%
       layout(hoverlabel = list(bgcolor = "white"),
-             hovermode = "closest", # Changed to "closest" for individual segment tooltips
-             margin = list(b = 100)) # Increase bottom margin for x-axis labels
+             hovermode = "closest",
+             margin = list(b = 100))
   })
   
   
@@ -11345,114 +11283,106 @@ observeEvent(input$show_curricular_graphs, {
   )
   
   output$Classroom_Shortage_Division_Graph <- renderPlotly({
-    current_filtered_data <- filtered_LMS_division()
     
-    if (nrow(current_filtered_data) == 0) {
-      return(
-        ggplotly(
-          ggplot() +
-            annotate("text", x = 0.5, y = 0.5, label = "No data for selected regions/divisions") +
-            theme_void()
-        )
-      )
+    # Hide plot when region or division is unselected
+    if (is.null(input$dashboard_region_filter) || length(input$dashboard_region_filter) == 0 ||
+        is.null(input$dashboard_division_filter) || length(input$dashboard_division_filter) == 0) {
+      return(NULL)
     }
     
-    plot_data <- current_filtered_data |>
-      mutate(Estimated_CL_Shortage = as.numeric(Estimated_CL_Shortage)) |>
-      group_by(Division) |>
+    current_filtered_data <- filtered_LMS_division()
+    
+    # Handle empty data
+    if (nrow(current_filtered_data) == 0) {
+      return(ggplotly(
+        ggplot() +
+          annotate("text", x = 0.5, y = 0.5,
+                   label = "No data for selected divisions") +
+          theme_void()
+      ))
+    }
+    
+    # Prepare data
+    plot_data <- current_filtered_data %>%
+      mutate(Estimated_CL_Shortage = as.numeric(Estimated_CL_Shortage)) %>%
+      group_by(Division) %>%
       summarise(Count = sum(Estimated_CL_Shortage, na.rm = TRUE), .groups = "drop")
     
-    p <- ggplot(
-      plot_data,
-      aes(
-        x = reorder(Division, -Count),
-        y = Count,
-        fill = Division,
-        key = Division,
-        text = paste0("Region: ", Division, "<br>Classroom Shortage: ", scales::comma(Count))
-      )
-    ) +
+    # Plot
+    p <- ggplot(plot_data,
+                aes(x = reorder(Division, -Count),
+                    y = Count,
+                    fill = Division,
+                    text = paste0("Division: ", Division,
+                                  "<br>Classroom Shortage: ", scales::comma(Count)))) +
       geom_bar(stat = "identity", color = "black") +
-      geom_text(data = plot_data,
-                aes(x = Division, y = Count * 1.05, label = scales::comma(Count)), # Modified line
-                inherit.aes = FALSE,
-                size = 3.5,
-                color = "black") +
-      labs(
-        x = "Division",
-        y = "Classroom Shortage"
-      ) +
+      geom_text(aes(y = Count * 1.05, label = scales::comma(Count)),
+                size = 3.5, color = "black") +
+      labs(x = "Division", y = "Classroom Shortage") +
       scale_y_continuous(labels = scales::comma) +
       theme_minimal() +
-      theme(
-        axis.text.x = element_text(size = 10, angle = 45, hjust = 1),
-        legend.position = "none",
-        plot.title = element_text(hjust = 0.5)
-      )
+      theme(axis.text.x = element_text(size = 10, angle = 45, hjust = 1),
+            legend.position = "none",
+            plot.title = element_text(hjust = 0.5))
     
-    ggplotly(p, tooltip = "text", source = "classroomShortage_division") |>
-      layout(
-        hoverlabel = list(bgcolor = "white"),
-        hovermode = "closest",
-        margin = list(b = 100)
-      )
+    ggplotly(p, tooltip = "text", source = "classroomShortage_division") %>%
+      layout(hoverlabel = list(bgcolor = "white"),
+             hovermode = "closest",
+             margin = list(b = 100))
   })
   
+  
+  
   output$Classroom_Shortage_District_Graph <- renderPlotly({
-    current_filtered_data <- filtered_LMS_division()
     
-    if (nrow(current_filtered_data) == 0) {
-      return(
-        ggplotly(
-          ggplot() +
-            annotate("text", x = 0.5, y = 0.5, label = "No data for selected Legislative_Districts/divisions") +
-            theme_void()
-        )
-      )
+    # Hide plot when region or division is unselected
+    if (is.null(input$dashboard_region_filter) || length(input$dashboard_region_filter) == 0 ||
+        is.null(input$dashboard_division_filter) || length(input$dashboard_division_filter) == 0) {
+      return(NULL)
     }
     
-    plot_data <- current_filtered_data |>
-      mutate(Estimated_CL_Shortage = as.numeric(Estimated_CL_Shortage)) |>
-      group_by(Division, Legislative_District) |>
-      summarise(Count = sum(Estimated_CL_Shortage, na.rm = TRUE), .groups = "drop")
+    current_filtered_data <- filtered_LMS_division()
     
-    plot_data <- plot_data %>% mutate(Division_LegDist = paste0(Division, "- ", Legislative_District))
+    # Handle empty data
+    if (nrow(current_filtered_data) == 0) {
+      return(ggplotly(
+        ggplot() +
+          annotate("text", x = 0.5, y = 0.5,
+                   label = "No data for selected legislative districts") +
+          theme_void()
+      ))
+    }
     
-    p <- ggplot(
-      plot_data,
-      aes(
-        x = reorder(Division_LegDist, -Count),
-        y = Count,
-        fill = Division_LegDist,
-        key = Division_LegDist,
-        text = paste0("Legislative_District: ", Division_LegDist, "<br>Classroom Shortage: ", scales::comma(Count))
-      )
-    ) +
+    # Prepare data
+    plot_data <- current_filtered_data %>%
+      mutate(Estimated_CL_Shortage = as.numeric(Estimated_CL_Shortage)) %>%
+      group_by(Division, Legislative_District) %>%
+      summarise(Count = sum(Estimated_CL_Shortage, na.rm = TRUE), .groups = "drop") %>%
+      mutate(Division_LegDist = paste0(Division, " - ", Legislative_District))
+    
+    # Plot
+    p <- ggplot(plot_data,
+                aes(x = reorder(Division_LegDist, -Count),
+                    y = Count,
+                    fill = Division_LegDist,
+                    text = paste0("Legislative District: ", Division_LegDist,
+                                  "<br>Classroom Shortage: ", scales::comma(Count)))) +
       geom_bar(stat = "identity", color = "black") +
-      geom_text(data = plot_data,
-                aes(x = Division_LegDist, y = Count * 1.05, label = scales::comma(Count)), # Modified line
-                inherit.aes = FALSE,
-                size = 3.5,
-                color = "black") +
-      labs(
-        x = "Legislative District",
-        y = "Classroom Shortage"
-      ) +
+      geom_text(aes(y = Count * 1.05, label = scales::comma(Count)),
+                size = 3.5, color = "black") +
+      labs(x = "Legislative District", y = "Classroom Shortage") +
       scale_y_continuous(labels = scales::comma) +
       theme_minimal() +
-      theme(
-        axis.text.x = element_text(size = 10, angle = 45, hjust = 1),
-        legend.position = "none",
-        plot.title = element_text(hjust = 0.5)
-      )
+      theme(axis.text.x = element_text(size = 10, angle = 45, hjust = 1),
+            legend.position = "none",
+            plot.title = element_text(hjust = 0.5))
     
-    ggplotly(p, tooltip = "text", source = "classroomShortage_district") |>
-      layout(
-        hoverlabel = list(bgcolor = "white"),
-        hovermode = "closest",
-        margin = list(b = 100)
-      )
+    ggplotly(p, tooltip = "text", source = "classroomShortage_district") %>%
+      layout(hoverlabel = list(bgcolor = "white"),
+             hovermode = "closest",
+             margin = list(b = 100))
   })
+  
   
   filtered_classroom_shortage_table_data <- reactive({
     req(filtered_school_data_region())
