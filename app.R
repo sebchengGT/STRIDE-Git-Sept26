@@ -181,7 +181,7 @@ ui <- fluidPage(
   div(
     id = "loading-overlay",
     class = "loading-overlay",
-    img(src = "LOAD.gif", class = "loading-gif"),
+    img(src = "LOAD2.gif", class = "loading-gif"),
     
   ),
   tags$script("$('#loading-overlay').hide();"),
@@ -227,7 +227,8 @@ server <- function(input, output, session) {
     data <- data.frame(
       Category = c("Purely ES", "JHS with SHS", "ES and JHS (K to 10)",
                    "Purely JHS", "All Offering (K to 12)", "Purely SHS"),
-      Count = c(35036, 6598, 1690, 1367, 832, 262)
+      Count = c(35036, 6598, 1690, 1367, 832, 262),
+      marker = list(color = "#0072B2")
     )
     
     plot_ly(
@@ -244,7 +245,8 @@ server <- function(input, output, session) {
     data <- data.frame(
       Category = c("Purely ES", "JHS with SHS", "ES and JHS (K to 10)",
                    "Purely JHS", "All Offering (K to 12)", "Purely SHS"),
-      Count = c(35036, 6598, 1690, 1367, 832, 262)
+      Count = c(35036, 6598, 1690, 1367, 832, 262),
+      marker = list(color = "#D9534F")
     )
     
     plot_ly(
@@ -587,6 +589,7 @@ observeEvent(input$show_curricular_graphs, {
                 icon = bsicons::bs_icon("bar-chart"), # Optional icon
                 layout_column_wrap(
                   width = 1/2,
+                  marker = list(color = c("#0072B2", "#28a745", "#FFD700")),
                   uiOutput("total_schools_box"),
                   uiOutput("total_schools_box_div")))),
             hr(), 
