@@ -4,9 +4,7 @@
 #testingsept302025
 #testcommitoctober120252
 #TESTINGGGGGGGGGGGGGGGGGGGGGGGGG
-#Testpush
-#commit 
-# push test
+#oct 13, 2025
 library(tidyverse)
 library(DT)
 library(dplyr)
@@ -1966,124 +1964,166 @@ observeEvent(input$show_curricular_graphs, {
       # )
     )
   })
-  
-  # Reactive expression to generate the main panel content
+
   # Reactive expression to generate the main panel content
   output$dynamic_resource_panel <- renderUI({
     
     selected_resource_type <- input$resource_type_selection
-    
     if (selected_resource_type == "Teaching Deployment") {
       
       tagList(
         h3("Teaching Deployment Overview"),
         hr(),
+        
         layout_columns(
           selectInput("resource_map_level", "Filter Curricular Level:",
-                      choices = c("Elementary School"="ES","Junior High School"="JHS","Senior High School"="SHS"),
+                      choices = c("Elementary School"="ES",
+                                  "Junior High School"="JHS",
+                                  "Senior High School"="SHS"),
                       selected = "ES"),
           input_task_button("Teaching_Deployment_Refresh", strong("Refresh"), class = "btn-warning"),
-          col_widths = c(4,-8,2)),
+          col_widths = c(4, -8, 2)
+        ),
+        
         hr(),
-        layout_column_wrap(
-          width = 1/5,
-          card(
-            card_header(strong("RO Filling-up Rate")),
-            valueBoxOutput("f")
-          ),
-          card(
-            card_header(strong("RO Unfilled Items")),
-            valueBoxOutput("g")
-          ),
-          card(
-            card_header(strong("SDO Filling-up Rate")),
-            valueBoxOutput("a")
-          ),
-          card(
-            card_header(strong("SDO Unfilled Items")),
-            valueBoxOutput("b")
-          ),
-          card(
-            card_header(strong("SDO Net Shortage")),
-            valueBoxOutput("e")
+        
+        # --- Accordion only for summary cards ---
+        accordion(
+          open = "Deployment Summary by Level",
+          
+          accordion_panel(
+            title = "Deployment Summary by Level",
+            icon = bsicons::bs_icon("bar-chart-fill"),
+            
+            # --- Start of Tabset (now ABOVE the summary cards) ---
+            navset_tab(
+              nav_panel("Regional Breakdown",
+                        plotlyOutput("Classroom_Shortage_Region_Graph2")
+              ),
+              nav_panel("Priority Divisions",
+                        plotlyOutput("Classroom_Shortage_Division_Graph2")
+              ),
+              nav_panel("Dataset",
+                        dataTableOutput("Classroom_Shortage_Dataset")
+              )
+            ),
+            # --- End of Tabset ---
+            
+            hr(),
+            
+            # --- Summary Cards ---
+            layout_column_wrap(
+              width = 1/5,
+              card(
+                card_header(strong("RO Filling-up Rate")),
+                valueBoxOutput("f")
+              ),
+              card(
+                card_header(strong("RO Unfilled Items")),
+                valueBoxOutput("g")
+              ),
+              card(
+                card_header(strong("SDO Filling-up Rate")),
+                valueBoxOutput("a")
+              ),
+              card(
+                card_header(strong("SDO Unfilled Items")),
+                valueBoxOutput("b")
+              ),
+              card(
+                card_header(strong("SDO Net Shortage")),
+                valueBoxOutput("e")
+              )
+            )
           )
         ),
+        
+        hr(),
+        
         layout_columns(
           card(
             card_header(strong("Teacher Excess and Shortage")),
             dataTableOutput("TeacherShortage_Table")
           ),
-          card(full_screen = TRUE,
-               card_header(strong("Personnel Deployment Mapping")),
-               leafletOutput("TeacherShortage_Mapping", height = 700)
+          card(
+            full_screen = TRUE,
+            card_header(strong("Personnel Deployment Mapping")),
+            leafletOutput("TeacherShortage_Mapping", height = 700)
           ),
-          card(height = 200,
-               card_header(div("School Summary",
-                               tags$span(em("(Select a school from the table above)"),
-                                         style = "font-size: 0.7em; color: grey;")
-               )),
-               uiOutput("TeacherShortage_Assessment")
+          card(
+            height = 200,
+            card_header(div(
+              "School Summary",
+              tags$span(em("(Select a school from the table above)"),
+                        style = "font-size: 0.7em; color: grey;")
+            )),
+            uiOutput("TeacherShortage_Assessment")
           ),
           col_widths = c(4, 8, 12)
         )
       )
       
-    } else if (selected_resource_type == "Non-teaching Deployment") {
+    }
+    else if (selected_resource_type == "Non-teaching Deployment") {
       tagList(
         h3("Non-teaching Deployment Overview"),
         hr(),
         
-        # --- Accordion only for the tabbed summaries ---
+        # --- Accordion for the summary sections ---
         accordion(
-          open = "Deployment Summary by Level",  # optional: opens this by default
+          open = "Deployment Summary by Level",
           accordion_panel(
             title = "Deployment Summary by Level",
             icon = bsicons::bs_icon("people-fill"),
             
-            # --- Your existing navset_card_tab layout ---
-            layout_columns(
-              navset_card_tab(
-                nav_spacer(),
-                nav_panel(
-                  title = "Regional Summary",
-                  layout_columns(
-                    card(
-                      card_header(strong("Schools under Clustered AO II Deployment")),
-                      valueBoxOutput("f2")
-                    ),
-                    card(
-                      card_header(strong("Schools with Dedicated AOII Deployment")),
-                      valueBoxOutput("g2")
-                    ),
-                    col_widths = c(6,6)
+            # --- Tabbed summaries inside accordion ---
+            navset_card_tab(
+              nav_spacer(),
+              
+              # --- Regional Summary ---
+              nav_panel(
+                title = "Regional Summary",
+                layout_column_wrap(
+                  width = 1/2,  # Two cards side by side
+                  card(
+                    card_header(strong("Schools under Clustered AO II Deployment")),
+                    valueBoxOutput("f2")
+                  ),
+                  card(
+                    card_header(strong("Schools with Dedicated AOII Deployment")),
+                    valueBoxOutput("g2")
                   )
-                ),
-                nav_panel(
-                  title = "Division Summary",
-                  layout_columns(
-                    card(
-                      card_header(strong("Schools under Clustered AO II Deployment")),
-                      valueBoxOutput("a2")
-                    ),
-                    card(
-                      card_header(strong("Schools with Dedicated AOII Deployment")),
-                      valueBoxOutput("b2")
-                    ),
-                    col_widths = c(6,6)
+                )
+              ),
+              
+              # --- Division Summary ---
+              nav_panel(
+                title = "Division Summary",
+                layout_column_wrap(
+                  width = 1/2,
+                  card(
+                    card_header(strong("Schools under Clustered AO II Deployment")),
+                    valueBoxOutput("a2")
+                  ),
+                  card(
+                    card_header(strong("Schools with Dedicated AOII Deployment")),
+                    valueBoxOutput("b2")
                   )
-                ),
-                nav_panel(
-                  title = "District Summary",
-                  layout_columns(
-                    card(
-                      card_header(strong("Schools under Clustered AO II Deployment")),
-                      valueBoxOutput("e2")
-                    ),
-                    card(
-                      card_header(strong("Schools with Dedicated AOII Deployment")),
-                      valueBoxOutput("h2")
-                    ),
-                    col_widths = c(6,6)
+                )
+              ),
+              
+              # --- District Summary ---
+              nav_panel(
+                title = "District Summary",
+                layout_column_wrap(
+                  width = 1/2,
+                  card(
+                    card_header(strong("Schools under Clustered AO II Deployment")),
+                    valueBoxOutput("e2")
+                  ),
+                  card(
+                    card_header(strong("Schools with Dedicated AOII Deployment")),
+                    valueBoxOutput("h2")
                   )
                 )
               )
@@ -2115,7 +2155,7 @@ observeEvent(input$show_curricular_graphs, {
           col_widths = c(5,7)
         )
       )
-    
+  
       
     } else if (selected_resource_type == "Classroom Inventory") {
       tagList(
@@ -2194,68 +2234,119 @@ observeEvent(input$show_curricular_graphs, {
       tagList(
         h3("Industries Overview"),
         hr(),
-        layout_column_wrap(
-          width = 1/2,
-          card(
-            card_header(strong("Total SHS Count")),
-            valueBoxOutput("SHSCountUniv")
-          ),
-          card(
-            card_header(strong("Total Industry Count")),
-            valueBoxOutput("IndCount")
+        
+        # --- Accordion for Industry Summary and others ---
+        accordion(
+          open = "Industry Summary",
+          
+          #  Panel: Industry Summary
+          accordion_panel(
+            title = "Industry Summary",
+            icon = bsicons::bs_icon("bar-chart"),
+            
+            # --- Industry Distribution Overview Card placed FIRST ---
+            card(
+              full_screen = TRUE,
+              card_header(
+                tagList(
+                  strong("Industry Breakdown"),
+                  tags$br(),
+                  tags$em("(n = )")
+                )
+              ),
+              
+              # --- Tabset ---
+              navset_tab(
+                nav_panel("Regional Breakdown",
+                          plotlyOutput("Ind_Regional_Graph")
+                ),
+                nav_panel("Priority Divisions",
+                          plotlyOutput("Ind_Division_Graph")
+                ),
+                nav_panel("Dataset",
+                          dataTableOutput("Ind_Dataset")
+                )
+              )
+            ),
+            
+            # --- Divider line for better separation ---
+            hr(),
+            
+            # --- Summary Counts ---
+            layout_column_wrap(
+              width = 1/2,
+              card(
+                card_header(strong("Total SHS Count")),
+                valueBoxOutput("SHSCountUniv")
+              ),
+              card(
+                card_header(strong("Total Industry Count")),
+                valueBoxOutput("IndCount")
+              )
+            ),
+            
+            # --- Nearby Industry Count ---
+            card(
+              card_header("Nearby Industry Count (~10 km radius):"),
+              layout_column_wrap(
+                width = 1/6,
+                card(
+                  card_header(strong("Manufacturing and Engineering")),
+                  valueBoxOutput("AccoCount")
+                ),
+                card(
+                  card_header(strong("Hospitality and Tourism")),
+                  valueBoxOutput("ProfCount")
+                ),
+                card(
+                  card_header(strong("Public Administration")),
+                  valueBoxOutput("TranCount")
+                ),
+                card(
+                  card_header(strong("Professional/Private Services")),
+                  valueBoxOutput("WastCount")
+                ),
+                card(
+                  card_header(strong("Business and Finance")),
+                  valueBoxOutput("WholCount")
+                ),
+                card(
+                  card_header(strong("Agriculture and Agri-business")),
+                  valueBoxOutput("WholCount2")
+                )
+              )
+            )
           )
         ),
-        card(
-          card_header("Nearby Industry Count (~10 km radius):"),
-          layout_column_wrap(
-            width = 1/6,
-            card(
-              card_header(strong("Manufacturing and Engineering")),
-              valueBoxOutput("AccoCount")
-            ),
-            card(
-              card_header(strong("Hospitality and Tourism")),
-              valueBoxOutput("ProfCount")
-            ),
-            card(
-              card_header(strong("Public Administration")),
-              valueBoxOutput("TranCount")
-            ),
-            card(
-              card_header(strong("Professional/Private Services")),
-              valueBoxOutput("WastCount")
-            ),
-            card(
-              card_header(strong("Business and Finance")),
-              valueBoxOutput("WholCount")
-            ),
-            card(
-              card_header(strong("Agriculture and Agri-business")),
-              valueBoxOutput("WholCount2")
-            )
-          )),
+        
+        hr(),
+        
+        # --- Remaining Layout: SHS list, mapping, etc. ---
         layout_columns(
           card(
             card_header(strong("List of SHS")),
             dataTableOutput("SHSListTable")
           ),
-          card(full_screen = TRUE,
-               card_header(strong("SHS to Industry Mapping")),
-               leafletOutput("SHSMapping", height = 700, width = "100%")
+          card(
+            full_screen = TRUE,
+            card_header(strong("SHS to Industry Mapping")),
+            leafletOutput("SHSMapping", height = 700, width = "100%")
           ),
-          card(full_screen = TRUE,
-               card_header(div(strong("School Profile"),
-                               tags$span(em("(Select a school in the table above)"),
-                                         style = "font-size: 0.7em; color: grey;")
-               )),
-               tableOutput("SHSTablex")
+          card(
+            full_screen = TRUE,
+            card_header(div(strong("School Profile"),
+                            tags$span(em("(Select a school in the table above)"),
+                                      style = "font-size: 0.7em; color: grey;")
+            )),
+            tableOutput("SHSTablex")
           ),
-          card(full_screen = TRUE,
-               card_header(div(strong("Specialization Data"),
-                               tags$span(em("(based on eSF7 for SY 2023-2024)"),
-                                         style = "font-size: 0.7em; color: grey;")
-               )),
-               tableOutput("PilotSpec")
+          card(
+            full_screen = TRUE,
+            card_header(div(strong("Specialization Data"),
+                            tags$span(em("(based on eSF7 for SY 2023-2024)"),
+                                      style = "font-size: 0.7em; color: grey;")
+            )),
+            tableOutput("PilotSpec")
           ),
           card(
             card_header(div(strong("Nearby Industries"),
@@ -2267,11 +2358,14 @@ observeEvent(input$show_curricular_graphs, {
           col_widths = c(4, 8, 6, 6, 12)
         )
       )
-      
-    } else if (selected_resource_type == "Facilities") {
+    }
+    
+    
+    else if (selected_resource_type == "Facilities") {
       
       tagList(
         h3("Education Facilities Mapping"),
+        
         layout_columns(
           col_widths = c(6, 6), 
           selectInput("EFD_Type", "Select Type",
@@ -2279,12 +2373,40 @@ observeEvent(input$show_curricular_graphs, {
                       selected = "New Construction"
           )
         ),
+        
         input_task_button("Facilities_Refresh", strong("Refresh"), class = "btn-success"),
         hr(),
+        
+        # --- Accordion Wrapper ---
+        accordion(
+          open = "Facilities Overview",
+          
+          accordion_panel(
+            title = "Facilities Overview",
+            icon = bsicons::bs_icon("building"),
+            
+            # --- Start of Tabset ---
+            navset_tab(
+              nav_panel("Regional Breakdown",
+                        plotlyOutput("Facilities_Regional_Graph")
+              ),
+              nav_panel("Division Breakdown",
+                        plotlyOutput("Facilities_Division_Graph")
+              ),
+              nav_panel("Dataset",
+                        dataTableOutput("Facilities_Dataset")
+              )
+            )
+            # --- End of Tabset ---
+          )
+        ),
+        
+        hr(),
+        
         layout_columns(
           card(
             full_screen = TRUE,
-            card_header(strong("")),
+            card_header(strong("School Project Allocation per Funding Year")),
             dataTableOutput("FacTable")
           ),
           card(
@@ -2295,15 +2417,43 @@ observeEvent(input$show_curricular_graphs, {
         )
       )
       
-    } else if (selected_resource_type == "Learner Congestion") {
+    }
+    else if (selected_resource_type == "Learner Congestion") {
       
       tagList(
         h3("Learner Congestion Mapping (SY 2023-2024)"),
         hr(),
+        
+        # --- Accordion Wrapper ---
+        accordion(
+          open = "Learner Congestion Overview",
+          
+          accordion_panel(
+            title = "Learner Congestion Overview",
+            icon = bsicons::bs_icon("diagram-3-fill"),
+            
+            # --- Start of Tabset ---
+            navset_tab(
+              nav_panel("Regional Breakdown",
+                        plotlyOutput("Congest_Regional_Graph")
+              ),
+              nav_panel("Division Breakdown",
+                        plotlyOutput("Congest_Division_Graph")
+              ),
+              nav_panel("Dataset",
+                        dataTableOutput("Congest_Dataset")
+              )
+            )
+            # --- End of Tabset ---
+          )
+        ),
+        
+        hr(),
+        
         layout_columns(
           card(
             full_screen = TRUE,
-            card_header(strong("")),
+            card_header(strong("Congestion Summary Table")),
             dataTableOutput("CongestTable")
           ),
           card(
@@ -2314,7 +2464,8 @@ observeEvent(input$show_curricular_graphs, {
         )
       )
       
-    } else if (selected_resource_type == "Last Mile School") {
+    }
+    else if (selected_resource_type == "Last Mile School") {
       tagList(
         h3("Last Mile Schools (LMS) Overview"),
         hr(),
@@ -2428,23 +2579,35 @@ observeEvent(input$show_curricular_graphs, {
   
   # --- Legislative District UI ---
   output$resource_map_legislative_district <- renderUI({
+    
     if (is.null(input$Resource_SDO) || input$Resource_SDO == "Select Input") {
-      selectInput(
-        "Resource_LegDist",
-        "Select a Legislative District:",
+      pickerInput(
+        inputId = "Resource_LegDist",
+        label = "Select Legislative District(s):",
         choices = "Select Input",
-        selected = "Select Input"
+        selected = NULL,
+        multiple = TRUE,
+        options = list(
+          `actions-box` = TRUE,
+          `none-selected-text` = "Select one or more districts"
+        )
       )
     } else {
-      filtered_district <- c(df[df$Division == input$Resource_SDO, "Legislative.District"])
-      selectInput(
-        "Resource_LegDist",
-        "Select a Legislative District:",
+      filtered_district <- unique(df[df$Division == input$Resource_SDO, "Legislative.District"])
+      pickerInput(
+        inputId = "Resource_LegDist",
+        label = "Select Legislative District(s):",
         choices = filtered_district,
-        selected = filtered_district[1]
+        selected = filtered_district[1], # or `selected = filtered_district` to select all by default
+        multiple = TRUE,
+        options = list(
+          `actions-box` = TRUE,
+          `none-selected-text` = "Select one or more districts"
+        )
       )
     }
   })
+  
   
   # Reactive value to store uploaded data
   uploaded_data <- reactiveVal(NULL)
@@ -6723,6 +6886,135 @@ observeEvent(input$show_curricular_graphs, {
   })
   
   
+  # --- Regional Breakdown: Total number of industries per Region ---
+  output$Ind_Regional_Graph <- renderPlotly({
+    
+    # --- Use your existing dataset name (replace this if named differently)
+    plot_data <- ind %>%
+      group_by(Region, Sector) %>%
+      summarise(Total = n(), .groups = "drop")  # count number of companies
+    
+    # --- Compute total industries nationally ---
+    national_total <- sum(plot_data$Total, na.rm = TRUE)
+    
+    # --- Create stacked bar chart ---
+    p <- ggplot(plot_data,
+                aes(
+                  x = reorder(Region, -Total),
+                  y = Total,
+                  fill = Sector,
+                  text = paste0(
+                    "Region: ", Region,
+                    "<br>Sector: ", Sector,
+                    "<br>Count: ", scales::comma(Total)
+                  )
+                )) +
+      geom_bar(stat = "identity", position = "stack", color = "black", size = 0.25) +
+      geom_text(
+        aes(label = scales::comma(Total)),
+        size = 3.5,
+        color = "black",
+        position = position_stack(vjust = 0.5),
+        check_overlap = TRUE
+      ) +
+      labs(
+        title = "",
+        x = "Region",
+        y = "Industry Count",
+        fill = "Sector"
+      ) +
+      scale_y_continuous(labels = scales::comma) +
+      theme_minimal() +
+      theme(
+        plot.title = element_text(hjust = 0.5, size = 14, face = "bold"),
+        axis.text.x = element_text(size = 10, angle = 45, hjust = 1),
+        legend.position = "right"
+      )
+    
+    # --- Convert ggplot to interactive plotly ---
+    ggplotly(p, tooltip = "text") %>%
+      layout(
+        hoverlabel = list(bgcolor = "white"),
+        margin = list(b = 100)
+      ) %>%
+      style(hoverinfo = "text")
+  })
+  
+  
+  # --- Priority Divisions: Total number of industries per Division ---
+  output$Ind_Division_Graph <- renderPlotly({
+    
+    # --- Base dataset ---
+    plot_data <- ind %>%
+      group_by(Province, Sector) %>%
+      summarise(Total = n(), .groups = "drop")
+    
+    # --- Compute totals per Province for ranking ---
+    province_totals <- plot_data %>%
+      group_by(Province) %>%
+      summarise(Total_All = sum(Total, na.rm = TRUE), .groups = "drop") %>%
+      arrange(desc(Total_All)) %>%
+      slice_head(n = 20)  # Top 20 provinces
+    
+    # --- Keep only those top 20 provinces in the main data ---
+    plot_data <- plot_data %>%
+      filter(Province %in% province_totals$Province)
+    
+    # --- Make Province an ordered factor for display ---
+    plot_data$Province <- factor(plot_data$Province, levels = province_totals$Province)
+    province_totals$Province <- factor(province_totals$Province, levels = province_totals$Province)
+    
+    # --- Create stacked bar chart ---
+    p <- ggplot(plot_data,
+                aes(
+                  x = Province,
+                  y = Total,
+                  fill = Sector,
+                  text = paste0(
+                    "Province: ", Province,
+                    "<br>Sector: ", Sector,
+                    "<br>Count: ", scales::comma(Total)
+                  )
+                )) +
+      geom_bar(stat = "identity", position = "stack", color = "black", size = 0.25) +
+      
+      # --- Add total count label above each province ---
+      geom_text(
+        data = province_totals,
+        aes(x = Province, y = Total_All, label = scales::comma(Total_All)),
+        inherit.aes = FALSE,   # 👈 Prevent ggplot from looking for "Sector"
+        vjust = -0.7,
+        size = 3.8,
+        fontface = "bold",
+        color = "black"
+      ) +
+      
+      labs(
+        title = "",
+        x = "Division",
+        y = "Industry Count",
+        fill = "Sector"
+      ) +
+      scale_y_continuous(
+        labels = scales::comma,
+        expand = expansion(mult = c(0, 0.12))  # Extra space above for labels
+      ) +
+      theme_minimal() +
+      theme(
+        plot.title = element_text(hjust = 0.5, size = 14, face = "bold"),
+        axis.text.x = element_text(size = 10, angle = 45, hjust = 1),
+        legend.position = "right"
+      )
+    
+    # --- Convert to interactive plotly ---
+    ggplotly(p, tooltip = "text") %>%
+      layout(
+        hoverlabel = list(bgcolor = "white"),
+        margin = list(b = 120)
+      ) %>%
+      style(hoverinfo = "text")
+  })
+  
   
   output$LMS_All_List  <- DT::renderDT({
     
@@ -6753,7 +7045,7 @@ observeEvent(input$show_curricular_graphs, {
     )
   })
   
-  output$LMS_Dataset  <- DT::renderDT(server = FALSE, {
+  output$LMS_Dataset  <- DT::renderDT(server = TRUE, {
     
     data_to_display <- LMS %>% filter(LMS == 1) %>% select(Region, Division, School_Name, Total_Enrollment,Instructional_Rooms, Estimated_CL_Shortage, Buildable_space) %>% rename("School Name" = School_Name,"Total Enrolment" = Total_Enrollment, "Number of Classrooms" = Instructional_Rooms, "Estimated Classroom Shortage" = Estimated_CL_Shortage, "Buildable Space" = Buildable_space)
     
@@ -6789,7 +7081,7 @@ observeEvent(input$show_curricular_graphs, {
     )
   })
   
-  output$Classroom_Shortage_Dataset  <- DT::renderDT(server = FALSE, {
+  output$Classroom_Shortage_Dataset  <- DT::renderDT(server = TRUE, {
     
     data_to_display <- LMS %>% select(Region, Division, School_Name, Total_Enrollment,Instructional_Rooms, Estimated_CL_Shortage, Buildable_space) %>% rename("School Name" = School_Name,"Total Enrolment" = Total_Enrollment, "Number of Classrooms" = Instructional_Rooms, "Estimated Classroom Shortage" = Estimated_CL_Shortage, "Buildable Space" = Buildable_space)
     
@@ -7676,7 +7968,7 @@ observeEvent(input$show_curricular_graphs, {
   # output$PipelinePrograms <- renderPlotly({ ... })
   
   # --- Reactive Table Data based on Plotly Click (Updated for Multiple Sources) ---
-  output$projectDetailTable <- DT::renderDT(server = FALSE, {
+  output$projectDetailTable <- DT::renderDT(server = TRUE, {
     # Initialize table_to_display with the pre-filtered data
     table_to_display <- filtered_data3()
     
@@ -7759,7 +8051,7 @@ observeEvent(input$show_curricular_graphs, {
     }
   })
   
-  output$HROD_Table <- DT::renderDT(server = FALSE, {
+  output$HROD_Table <- DT::renderDT(server = TRUE, {
     # Get all unique choices from the original dataset for comparison
     all_regions <- unique(uni$Region)
     all_divisions <- unique(uni$Division)
@@ -7831,7 +8123,7 @@ observeEvent(input$show_curricular_graphs, {
     
   })
   
-  output$ThirdLevel_Table <- DT::renderDT(server = FALSE, {
+  output$ThirdLevel_Table <- DT::renderDT(server = TRUE, {
     
 
     datatable(
@@ -7867,9 +8159,9 @@ observeEvent(input$show_curricular_graphs, {
   })
   
   
-  output$explorer_efd_data_table <- DT::renderDT(server = FALSE, {datatable(EFDDB %>% filter(Region == input$explorer_efd_region_filter) %>% filter(Division == input$explorer_efd_SDO) %>% arrange(District), extension = 'Buttons', filter = 'top', options = list(scrollX = TRUE, pageLength = 10, columnDefs = list(list(className = 'dt-center', targets ="_all")), rownames = FALSE, dom = 'Bfrtip', buttons = list('csv','excel','print')))})
+  output$explorer_efd_data_table <- DT::renderDT(server = TRUE, {datatable(EFDDB %>% filter(Region == input$explorer_efd_region_filter) %>% filter(Division == input$explorer_efd_SDO) %>% arrange(District), extension = 'Buttons', filter = 'top', options = list(scrollX = TRUE, pageLength = 10, columnDefs = list(list(className = 'dt-center', targets ="_all")), rownames = FALSE, dom = 'Bfrtip', buttons = list('csv','excel','print')))})
   
-  output$explorer_masterlist_data_table <- DT::renderDT(server = FALSE, {datatable(EFDMP %>% filter(Region == input$explorer_masterlist_region_filter) %>% filter(Division == input$explorer_masterlist_SDO) %>% arrange(desc(FundingYear)) %>% select(Region, Division, District, SchoolID, School.Name,FundingYear,Category,Allocation,Completion,Status), extension = 'Buttons', filter = 'top', options = list(scrollX = TRUE, pageLength = 10, columnDefs = list(list(className = 'dt-center', targets ="_all")), rownames = FALSE, dom = 'Bfrtip', buttons = list('csv','excel','print')))})
+  output$explorer_masterlist_data_table <- DT::renderDT(server = TRUE, {datatable(EFDMP %>% filter(Region == input$explorer_masterlist_region_filter) %>% filter(Division == input$explorer_masterlist_SDO) %>% arrange(desc(FundingYear)) %>% select(Region, Division, District, SchoolID, School.Name,FundingYear,Category,Allocation,Completion,Status), extension = 'Buttons', filter = 'top', options = list(scrollX = TRUE, pageLength = 10, columnDefs = list(list(className = 'dt-center', targets ="_all")), rownames = FALSE, dom = 'Bfrtip', buttons = list('csv','excel','print')))})
   
   output$explorer_efd_division_filter <- renderUI({
     req(input$explorer_efd_region_filter) # Ensure region is selected before updating division
@@ -7991,7 +8283,7 @@ observeEvent(input$show_curricular_graphs, {
     })
     
     # --- Render DataTable ---
-    output$TextTable <- DT::renderDT(server = FALSE, {
+    output$TextTable <- DT::renderDT(server = TRUE, {
       datatable(
         df1() %>%
           select("Region", "Division", "Legislative.District", "Municipality", "School.Name") %>%
@@ -8287,7 +8579,7 @@ observeEvent(input$show_curricular_graphs, {
       }
     })
     
-    output$FacTable <- DT::renderDT(server = FALSE, {
+    output$FacTable <- DT::renderDT(server = TRUE, {
       datatable(dfreact_fac() %>%
                   arrange(FundingYear) %>% 
                   select("Region","Division","School.Name","FundingYear","Allocation") %>%
@@ -8345,7 +8637,7 @@ observeEvent(input$show_curricular_graphs, {
       }
     })
     
-    output$TeacherShortage_Table <- DT::renderDT(server = FALSE, {datatable(dfreact_TS() %>% select("School.Name","TeacherShortage","TeacherExcess") %>% rename("School" = School.Name, "Shortage" = TeacherShortage, "Excess" = TeacherExcess), extension = 'Buttons', rownames = FALSE, options = list(scrollX = TRUE, pageLength = 5, columnDefs = list(list(className = 'dt-center', targets ="_all")), dom = 'Bfrtip', buttons = list('csv','excel','pdf','print')))})
+    output$TeacherShortage_Table <- DT::renderDT(server = TRUE, {datatable(dfreact_TS() %>% select("School.Name","TeacherShortage","TeacherExcess") %>% rename("School" = School.Name, "Shortage" = TeacherShortage, "Excess" = TeacherExcess), extension = 'Buttons', rownames = FALSE, options = list(scrollX = TRUE, pageLength = 5, columnDefs = list(list(className = 'dt-center', targets ="_all")), dom = 'Bfrtip', buttons = list('csv','excel','pdf','print')))})
     
     output$a <- renderValueBox({
       valueBox(tags$p(strong(SDO[which(SDO$Region==RegRCT & SDO$Division==SDORCT1),"FillUpRate"]), style = "font-family: Poppins; font-size: 20px; color: #111111; text-align: center;"), subtitle = NULL)
@@ -8590,129 +8882,7 @@ observeEvent(input$show_curricular_graphs, {
           )
         )
     })
-    
-    #LMSTABLE 
-    # output$LMSTable <- renderDataTable({
-    #   
-    #   lms_data <- LMS %>%
-    #     filter(LMS == 1) %>%   # Step 1: LMS only
-    #     left_join(uni %>% select(SchoolID,Latitude,Longitude), by = c("School_ID" = "SchoolID")) %>%   # Step 2: lat/long
-    #     left_join(buildablecsv %>% select(SCHOOL.ID,OTHER.REMARKS..Buildable.Space..), by = c("School_ID" = "SCHOOL.ID"))          # always filter Region
-    #   
-    #   # # Apply Division filter only if not "Select Input"
-    #   # if (!is.null(input$Resource_SDO) && input$Resource_SDO != "Select Input") {
-    #   #   lms_data <- lms_data %>% filter(Division == input$Resource_SDO)
-    #   # }
-    #   # 
-    #   # # Apply District filter only if not "Select Input"
-    #   # if (!is.null(input$Resource_LegDist) && input$Resource_LegDist != "Select Input") {
-    #   #   lms_data <- lms_data %>% filter(LD == input$Resource_LegDist)
-    #   # }
-    #   
-    #   # Final select
-    #   lms_data <- lms_data %>%
-    #     select(
-    #       School_Name,
-    #       Buildable_space,
-    #       OTHER.REMARKS..Buildable.Space..
-    #     )
-    #   
-    #   datatable(
-    #     lms_data,
-    #     options = list(pageLength = 10, scrollX = TRUE),
-    #     selection = "single",   # allow single row selection
-    #     extensions = c("FixedColumns"),
-    #     callback = JS("window.dispatchEvent(new Event('resize'));")
-    #   )
-    # })
-    
-    
-    # --- LMS Map (initialize once) ---
-    
-    
-    # --- LMS Map (update markers when filters change) ---
-    # observe({
-    #   req(buildablecsv)
-    # 
-    #   # Filter data based on user selections
-    #   lms_data <- lms_data
-    # 
-    #   # Same palette as above
-    #   pal <- colorFactor(
-    #     palette = c("green", "red"),
-    #     domain = factor(c("Y", "N"), levels = c("Y", "N"))
-    #   )
-    # 
-    #   # --- Zoom map when a row is selected ---
-    #   observeEvent(input$LMSTable_rows_selected, {
-    #     req(lms_data)
-    #     req(input$LMSTable_rows_selected)
-    # 
-    #     lms_data_zoom <- lms_data %>%
-    #       filter(REGION == input$resource_map_region) %>%
-    #       filter(DIVISION == input$Resource_SDO) %>%
-    #       filter(`Avaiability of Buildable Space (Y/N)` == "Y")
-    # 
-    #     selected_row <- input$LMSTable_rows_selected
-    #     school <- lms_data_zoom[selected_row, ]
-    # 
-    #     leafletProxy("LMSMapping") %>%
-    #       setView(lng = school$Longitude, lat = school$Latitude, zoom = 16)
-    #   })
-    # 
-    #   # Update markers only
-    #   leafletProxy("LMSMapping", data = lms_data) %>%
-    #     clearMarkers() %>%
-    #     addAwesomeMarkers(
-    #       lng = ~Longitude,
-    #       lat = ~Latitude,
-    #       popup = ~htmltools::HTML(paste0(
-    #         "<b>", `NAME OF SCHOOL`, "</b><br>",
-    #         "School ID: ", `SCHOOL ID`, "<br>",
-    #         "Municipality: ", `MUNICIPALITY/ LOCATION`, "<br>",
-    #         "Division: ", DIVISION, "<br>",
-    #         "Region: ", REGION, "<hr>",
-    #         "<b>LD:</b> ", LD, "<br>",
-    #         "<b>No. of Sites:</b> ", `NO. OF SITES`, "<br>",
-    #         "<b>Scope of Works:</b> ", `SCOPE OF WORKS`, "<br>",
-    #         "<b>Other Config:</b> ", `OTHER DESIGN CONFIGURATION`, "<br>",
-    #         "<b>Academic Classrooms:</b> ", `NO. OF ACADEMIC CLASSROOMS`, "<br>",
-    #         "<b>Workshops (2-CL):</b> ", `NO. OF WORKSHOP (equivalent to 2-CL)`, "<br>",
-    #         "<b>ICT Labs (2-CL):</b> ", `NO. OF ICT/COMPUTER LABORATORY (equivalent to 2-CL)`, "<br>",
-    #         "<b>Science Labs (2-CL):</b> ", `NO. OF SCIENCE LABORATORY (equivalent to 2-CL)`, "<br>",
-    #         "<b>AVR (2-CL):</b> ", `NO. OF AVR (equivalent to 2-CL)`, "<br>",
-    #         "<b>Home Econ (2-CL):</b> ", `NO. OF HOME ECONOMICS (equivalent to 2-CL)`, "<br>",
-    #         "<b>Total Classrooms:</b> ", `TOTAL CLASSROOMS`, "<br>",
-    #         "<b>With Demolition?:</b> ", `WITH DEMOLITION? YES/ NO`, "<br>",
-    #         "<b>With Site Improvement?:</b> ", `WITH SITE IMPROVEMENT? YES/ NO`, "<br>",
-    #         "<b>With Slope Protection?:</b> ", `WITH SLOPE PROTECTION? YES/NO`, "<br>",
-    #         "<b>Remarks:</b> ", `OTHER REMARKS`, "<br>",
-    #         "<b>Site Dev Plan?:</b> ", `With Site Development Plan?`, "<br>",
-    #         "<b>Other Proposals?:</b> ", `With proposal from OTHER SOURCES, including LGUs, NGOs, Private Sector etc)?`, "<br>",
-    #         "<b>Buildable Space:</b> ", `Avaiability of Buildable Space (Y/N)`, "<br>",
-    #         "<b>Remarks (Buildable):</b> ", `OTHER REMARKS (Buildable Space)`, "<br>",
-    #         "<b>Site Ownership:</b> ", `Site Ownership`, "<br>",
-    #         "<b>Remarks Ownership:</b> ", `OTHER REMARKS Site Ownership`, "<br>",
-    #         "<b>Accessibility:</b> ", `Viability / Accessibility (Y/N)`, "<br>",
-    #         "<b>Remarks Access:</b> ", `OTHER REMARKS Viability / Accessibility`, "<br>",
-    #         "<b>Operational Readiness:</b> ", `Operational Readiness (Y/N)`, "<br>",
-    #         "<b>Remarks OR:</b> ", `OTHER REMARKS Operational Readiness`, "<br>",
-    #         "<b>Implementability:</b> ", `Implementability of Proposed Scope (Y/N)`, "<br>",
-    #         "<b>Remarks Impl:</b> ", `OTHER REMARKS Implementability of Proposed Scope`, "<br>",
-    #         "<b>Geotechnical Testing:</b> ", `Geotechnical Testing (Y/N)`, "<br>",
-    #         "<b>Remarks Geotech:</b> ", `OTHER REMARKS Geotechnical Testing`
-    #       )),
-    #       icon = ~makeAwesomeIcon(
-    #         icon = "graduation-cap",
-    #         library = "fa",
-    #         markerColor = ifelse(`Avaiability of Buildable Space (Y/N)` == "Y", "green", "red")
-    #       ),
-    #       clusterOptions = markerClusterOptions(disableClusteringAtZoom = 15)
-    #     )
-    # 
-    # 
-    # })
-    
+  
     
     
     RegRCT <- input$resource_map_region
@@ -8818,7 +8988,7 @@ observeEvent(input$show_curricular_graphs, {
     })
     
     
-    output$LMSTable <- renderDT(server = FALSE, {
+    output$LMSTable <- renderDT(server = TRUE, {
       
       # # Apply Division filter only if not "Select Input"
       # if (!is.null(input$Resource_SDO) && input$Resource_SDO != "Select Input") {
@@ -8888,7 +9058,6 @@ observeEvent(input$show_curricular_graphs, {
     values_industry <- paste(strong("SCHOOL INFORMATION"),"<br>School Name:",mainreactSHS$School.Name,"<br>School ID:",mainreactSHS$SchoolID) %>% lapply(htmltools::HTML)
     
     values.ind <- paste(mainreactind$Company,"<br>Province:",mainreactind$Province) %>% lapply(htmltools::HTML)
-    
     leafletProxy("SHSMapping") %>%
       clearMarkers() %>%
       clearMarkerClusters() %>%
@@ -8898,15 +9067,15 @@ observeEvent(input$show_curricular_graphs, {
         zoom = 7
       ) %>%
       
-      # --- SHS Schools (always orange university icons) ---
+      # --- SHS Circles (background layer) ---
       addCircleMarkers(
         lng = mainreactSHS$Longitude,
         lat = mainreactSHS$Latitude,
-        radius = 80,  # increase circle size (default is around 5)
-        color = "black",  # border color
-        weight = 1,  # border thickness
-        fillColor = "orange",  # fill color (like markerColor before)
-        fillOpacity = 0.5,  # lower opacity (range: 0–1)
+        radius = 80,
+        color = "black",
+        weight = 1,
+        fillColor = "orange",
+        fillOpacity = 0.5,
         label = values_industry,
         labelOptions = labelOptions(
           noHide = FALSE,
@@ -8917,7 +9086,26 @@ observeEvent(input$show_curricular_graphs, {
         clusterOptions = markerClusterOptions(disableClusteringAtZoom = 15)
       ) %>%
       
-      # --- Industry markers (cog icons, colored by sector) ---
+      # --- NEW: AwesomeMarkers above SHS circles ---
+      addAwesomeMarkers(
+        lng = mainreactSHS$Longitude,
+        lat = mainreactSHS$Latitude,
+        icon = makeAwesomeIcon(
+          icon = 'graduation-cap',
+          library = 'fa',
+          markerColor = 'blue',
+          iconColor = 'white'
+        ),
+        label = mainreactSHS$SchoolName,   # FIXED: remove ~
+        labelOptions = labelOptions(
+          noHide = FALSE,
+          textsize = "12px",
+          direction = "top"
+        ),
+        clusterOptions = markerClusterOptions(disableClusteringAtZoom = 15)
+      ) %>%
+      
+      # --- Industry markers (cog icons) ---
       addAwesomeMarkers(
         clusterOptions = markerClusterOptions(disableClusteringAtZoom = 12),
         lng = mainreactind$Longitude,
@@ -8942,6 +9130,8 @@ observeEvent(input$show_curricular_graphs, {
           direction = "top"
         )
       )
+    
+    
     
     # --- Update markers with leafletProxy ---
     observe({
@@ -9024,7 +9214,7 @@ observeEvent(input$show_curricular_graphs, {
       }
     })
     
-    output$TeacherShortage_Table <- DT::renderDT(server = FALSE, {datatable(dfreact_TS() %>% select("School.Name","TeacherShortage","TeacherExcess") %>% rename("School" = School.Name, "Shortage" = TeacherShortage, "Excess" = TeacherExcess), extension = 'Buttons', rownames = FALSE, options = list(scrollX = TRUE, pageLength = 5, columnDefs = list(list(className = 'dt-center', targets ="_all")), dom = 'Bfrtip', buttons = list('csv','excel','pdf','print')))})
+    output$TeacherShortage_Table <- DT::renderDT(server = TRUE, {datatable(dfreact_TS() %>% select("School.Name","TeacherShortage","TeacherExcess") %>% rename("School" = School.Name, "Shortage" = TeacherShortage, "Excess" = TeacherExcess), extension = 'Buttons', rownames = FALSE, options = list(scrollX = TRUE, pageLength = 5, columnDefs = list(list(className = 'dt-center', targets ="_all")), dom = 'Bfrtip', buttons = list('csv','excel','pdf','print')))})
     
     output$a <- renderValueBox({
       valueBox(tags$p(strong(SDO[which(SDO$Region==RegRCT & SDO$Division==SDORCT1),"FillUpRate"]), style = "font-family: Poppins; font-size: 20px; color: #111111; text-align: center;"), subtitle = NULL)
