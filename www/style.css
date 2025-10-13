@@ -17,10 +17,10 @@ body.login-bg {
 body.login-bg::before {
   content: "";
   position: fixed;
-  top: 0; left: 0;
+  top: -100px; left: 0;
   width: 100%; height: 100%;
   background: url("STRIDE logo.png") no-repeat center; /* changed */
-  background-size: 60%;  /* you can also reduce size */
+  background-size: 50%;  /* you can also reduce size */
   opacity: 0.7;   /* 👈 adjust watermark visibility */
   z-index: -1;
 }
@@ -41,10 +41,15 @@ body.dashboard-bg {
 
 /* Login panel (choose ONE method) */
 #login-panel {
-  width: 500px;
+  width: 400px;
   max-width: 100%;
   margin: 350px auto !important;  /* pushes login panel down */
   padding: 20px;
+  position: fixed !important;
+  top: 20% !important;
+  left: 50% !important;
+  transform: translate(-50%, -50%)
+  
   /* If you want vertical center instead, replace margin with:
      position: relative;
      top: 50%;
@@ -157,24 +162,6 @@ body.dashboard-bg {
 .value-box .title {
   white-space: normal !important;
 }
-
-
-/* Animate "Please Log in" */
-/*#login-title {
-  animation: fadeInDown 1s ease-out;
-}
-
-@keyframes fadeInDown {
-  0% {
-    opacity: 0;
-    transform: translateY(-30px);
-  }
-  100% {
-    opacity: 1;
-    transform: translateY(0);
-  }
-} 
- /* Force navbar items to left align */
 .navbar-nav {
   justify-content: flex-start !important;
   --bs-nav-link-color: #000;
@@ -291,8 +278,8 @@ body.dashboard-bg::before {
   content: "";
   position: fixed;
   top: 0; left: 0; right: 0; bottom: 0;
-  background: url("6.png") no-repeat center top / cover;
-  opacity: 0.2; /* 👈 adjust transparency: 0 = invisible, 1 = solid */
+  background: url("backg5.png") no-repeat center top / cover;
+  opacity: 0.3; /* 👈 adjust transparency: 0 = invisible, 1 = solid */
   z-index: -1;
 }
 
@@ -491,19 +478,70 @@ body.dashboard-bg::before {
   background-color: #f9f9f9;
 }
 
-.spinner-border {
-  border: 0.25em solid rgba(255, 255, 255, 0.3);
-  border-top: 0.25em solid white;
-  border-radius: 50%;
-  width: 3rem;
-  height: 3rem;
-  animation: spin 1s linear infinite;
+/* ===== BRANDED LOADING OVERLAY ===== */
+.loading-overlay {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%;
+  height: 100%;
+  background: #ffffff; /* DepEd dark blue overlay */
+  display: none; /* hidden by default */
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  z-index: 99999;
+  text-align: center;
+  font-family: 'Poppins', sans-serif;
 }
 
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+.loading-logo {
+  width: 150px;
+  height: 150px;
+  animation: logo-spin 2s linear infinite;
+  filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.7));
 }
+
+@keyframes logo-spin {
+  0%   { transform: rotate(0deg) scale(1); }
+  50%  { transform: rotate(180deg) scale(1.05); }
+  100% { transform: rotate(360deg) scale(1); }
+}
+
+/* === CENTERED FULLSCREEN GIF LOADER === */
+.loading-overlay {
+  position: fixed;
+  top: 0; 
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: #ffffff;
+  display: flex;                  /* ✅ makes centering easy */
+  align-items: center;            /* ✅ center vertically */
+  justify-content: center;        /* ✅ center horizontally */
+  flex-direction: column;         /* ✅ stack GIF + text vertically */
+  z-index: 99999;
+  text-align: center;
+}
+
+.loading-gif {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 200px;
+  height: auto;
+  filter: drop-shadow(0 0 15px rgba(255, 255, 255, 0.7));
+}
+
+body.dashboard-bg.loading-active main,
+body.dashboard-bg.loading-active .bslib-page,
+body.dashboard-bg.loading-active .card {
+  filter: blur(3px);
+  transition: filter 0.3s ease-in-out;
+}
+
+
+
 
 
 
