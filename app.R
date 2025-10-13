@@ -28,6 +28,7 @@ library(plotly)
 library(readr)
 library(geojsonio)
 library(shinyWidgets)
+library(later)
 
 # HROD Data Upload
 df <- read_parquet("School-Level-v2.parquet") # per Level Data
@@ -174,6 +175,16 @@ ui <- fluidPage(
       id = "mgmt_content",
       uiOutput("STRIDE2"))),
     
+  # Loading overlay
+  div(
+    id = "loading-overlay",
+    class = "loading-overlay",
+    img(src = "LOAD.gif", class = "loading-gif"),
+    
+  ),
+  tags$script("$('#loading-overlay').hide();"),
+  
+  
   
   
   
@@ -337,11 +348,13 @@ observeEvent(input$show_curricular_graphs, {
     }
     
     if (auth_status) {
-      # Logged in → Dashboard mode
-      shinyjs::runjs('document.body.classList.remove("login-bg");')
-      shinyjs::runjs('document.body.classList.add("dashboard-bg");')
+      shinyjs::runjs('
+    $("#loading-overlay").fadeIn(200);
+    document.body.classList.remove("login-bg");
+    document.body.classList.add("dashboard-bg");
+  ')
     } else {
-      # Logged out → Login mode
+      shinyjs::runjs('$("#loading-overlay").hide();')
       shinyjs::runjs('document.body.classList.remove("dashboard-bg");')
       shinyjs::runjs('document.body.classList.add("login-bg");')
     }})
