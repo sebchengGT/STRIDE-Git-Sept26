@@ -47,7 +47,6 @@ $(document).ready(function () {
     }
   }
 
-  // 1️⃣ Show loader on ANY nav/tab click
   // --- STRIDE Loading Screen Control (Only after login) ---
 $(document).on("shiny:connected", function() {
   // Only show loader if user is already in dashboard mode
@@ -70,6 +69,83 @@ $(document).on("shiny:value", function() {
 
 
 });
+
+// Auto-show dropdowns on hover (desktop only)
+$(document).ready(function() {
+  if (window.innerWidth > 992) { // desktop only
+    $(".navbar .dropdown").hover(
+      function() {
+        $(this).addClass("show");
+        $(this).find(".dropdown-menu").addClass("show");
+      },
+      function() {
+        $(this).removeClass("show");
+        $(this).find(".dropdown-menu").removeClass("show");
+      }
+    );
+  }
+});
+
+// === SAFE SMOOTH DROP-IN FOR LEAFLET MARKERS ===
+// === RELIABLE LEAFLET MARKER DROP ANIMATION ===
+$(document).on("shiny:connected", function() {
+  // Wait for map container to exist
+  const waitForMap = setInterval(() => {
+    const mapPane = document.querySelector("#TextMapping .leaflet-marker-pane");
+    if (mapPane) {
+      clearInterval(waitForMap);
+
+      // Watch for new marker icons being added inside the map
+      const observer = new MutationObserver((mutationsList) => {
+        mutationsList.forEach(mutation => {
+          mutation.addedNodes.forEach(node => {
+            if (node.classList && node.classList.contains("leaflet-marker-icon")) {
+              // Animate each new marker
+              const markers = document.querySelectorAll("#TextMapping .leaflet-marker-icon");
+              markers.forEach((marker, index) => {
+                marker.style.opacity = "0";
+                marker.style.transform = "translateY(-10px) scale(0.9)";
+                marker.style.animation = "dropMarker 0.6s ease-out forwards";
+                marker.style.animationDelay = `${index * 0.1}s`; // delay between markers
+              });
+            }
+          });
+        });
+      });
+
+      observer.observe(mapPane, { childList: true });
+    }
+  }, 300);
+});
+
+
+// === REPLAY SIDEBAR ANIMATION ON NAV SWITCH ===
+$(document).on("click", ".nav-link", function() {
+  const sidebar = document.querySelector(".bslib-sidebar-layout > .sidebar");
+  if (sidebar) {
+    sidebar.style.animation = "none";
+    sidebar.offsetHeight; // trigger reflow
+    sidebar.style.animation = "sidebarSlideIn 0.6s ease-out";
+  }
+});
+
+
+// === REPLAY BODY + SIDEBAR ANIMATIONS ON NAV SWITCH ===
+$(document).on("click", ".nav-link", function() {
+  const sidebar = document.querySelector(".bslib-sidebar-layout > .sidebar");
+  const main = document.querySelector(".bslib-sidebar-layout > .main");
+
+  [sidebar, main].forEach(el => {
+    if (el) {
+      el.style.animation = "none";
+      el.offsetHeight; // reflow
+      const animName = el.classList.contains("sidebar") ? "sidebarSlideIn" : "bodyFadeIn";
+      el.style.animation = `${animName} 0.6s ease-out`;
+    }
+  });
+});
+
+
 
 
 

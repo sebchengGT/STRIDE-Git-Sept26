@@ -229,8 +229,7 @@ body.dashboard-bg {
 }*/
 
 .bslib-sidebar-layout>.sidebar>.sidebar-content {
-    display: flex*/
-;
+    display: flex;
     flex-direction: column;
     gap: var(--bslib-spacer, 1rem);
     padding: var(--_padding);
@@ -248,6 +247,7 @@ body.dashboard-bg {
     font-variant: normal;
     text-transform: none;
     text-align: center;
+    overflow-y: visible !important;
     
 }
 .bslib-sidebar-layout .sidebar .sidebar-title {
@@ -278,7 +278,8 @@ body.dashboard-bg::before {
   content: "";
   position: fixed;
   top: 0; left: 0; right: 0; bottom: 0;
-  background: url("backg5.png") no-repeat center top / cover;
+  background-color: #acbfd6;
+  /*background: url("backg5.png") no-repeat center top / cover;*/
   opacity: 0.3; /* 👈 adjust transparency: 0 = invisible, 1 = solid */
   z-index: -1;
 }
@@ -540,15 +541,138 @@ body.dashboard-bg.loading-active .card {
   transition: filter 0.3s ease-in-out;
 }
 
+/* === AUTO-DROPDOWN ON HOVER === */
+.navbar-nav li.nav-item.dropdown:hover > .dropdown-menu {
+  display: block;
+  margin-top: 0; /* Removes jump */
+  animation: dropdownFade 0.3s ease-in-out;
+}
+
+/* Smooth fade-in animation for dropdown */
+@keyframes dropdownFade {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Optional: make hover menus stay visible a bit longer */
+.navbar-nav li.nav-item.dropdown {
+  position: relative;
+}
+
+.navbar-nav li.nav-item.dropdown .dropdown-menu {
+  display: none;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  background-color: white;
+  border-radius: 0 0 8px 8px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+.bslib-sidebar-layout > .sidebar {
+  position: sticky !important;   /* Keeps it visible on screen */
+  top: 0;                        /* Stick to top */
+  max-height: 100vh;             /* Full viewport height */
+  overflow-y: auto !important;   /* Scrolls internally */
+  scrollbar-width: thin;         /* Optional: thin scrollbar */
+  scrollbar-color: #002D62 #f9fafc; /* DepEd blue scrollbar */
+}
+
+/* === LEAFLET MARKER FADE-IN ANIMATION === */
+.leaflet-marker-icon {
+  opacity: 0;
+  transform: translateY(-10px) scale(0.9);
+  animation: dropMarker 0.5s ease forwards;
+}
+
+/* === MARKER DROP-IN ANIMATION === */
+@keyframes dropMarker {
+  0% {
+    opacity: 0;
+    transform: translateY(-15px) scale(0.9);
+  }
+  70% {
+    opacity: 1;
+    transform: translateY(2px) scale(1.05);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+
+/* === SIDEBAR SLIDE-IN ANIMATION === */
+.bslib-sidebar-layout > .sidebar {
+  animation: sidebarSlideIn 0.6s ease-out;
+  transform-origin: left;
+}
+
+@keyframes sidebarSlideIn {
+  0% {
+    opacity: 0;
+    transform: translateX(-30px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Optional: make inner cards appear smoothly too */
+.bslib-sidebar-layout > .sidebar .card {
+  opacity: 0;
+  transform: translateY(10px);
+  animation: cardFadeUp 0.6s ease forwards;
+  animation-delay: 0.3s;
+}
+
+@keyframes cardFadeUp {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
 
 
 
+/* === MAIN BODY FADE + SLIDE ANIMATION === */
+.bslib-sidebar-layout > .main {
+  animation: bodyFadeIn 0.7s ease-out;
+  transform-origin: top;
+  animation-delay: 0.1s;
+}
+
+@keyframes bodyFadeIn {
+  0% {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
 
 
+/* === BODY CARD STAGGERED ENTRANCE === */
+.bslib-sidebar-layout > .main .card {
+  opacity: 0;
+  transform: translateY(15px);
+  animation: cardUp 0.6s ease forwards;
+  animation-delay: 0.3s;
+}
 
+@keyframes cardUp {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
 
-
-
-
-
-  

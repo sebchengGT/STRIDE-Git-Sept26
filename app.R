@@ -104,7 +104,8 @@ ui <- fluidPage(
   
   tags$head(
     includeCSS("www/style.css"),
-    includeScript("www/script.js")
+    includeScript("www/script.js"),
+    tags$script(src = "https://unpkg.com/leaflet.smoothmarkerbouncing/leaflet.smoothmarkerbouncing.js")
   ),
   
   tags$head(tags$meta(name = "viewport", content = "width=device-width, initial-scale=1.0, maximum-scale=3.0")),
@@ -179,11 +180,10 @@ ui <- fluidPage(
   div(
     id = "loading-overlay",
     class = "loading-overlay",
-    img(src = "LOAD2.gif", class = "loading-gif"),
+    img(src = "LOAD.gif", class = "loading-gif"),
     
   ),
   tags$script("$('#loading-overlay').hide();"),
-  
   
   
   
@@ -469,6 +469,7 @@ observeEvent(input$show_curricular_graphs, {
                      )
                    )
               )),
+            
             accordion(
               accordion_panel(
                 title = "National Statistics",
@@ -953,7 +954,7 @@ observeEvent(input$show_curricular_graphs, {
               div( # This div acts as a container for the right-hand filter cards
                 card( # Filter by Category
                   card_header("Filter by Category"),
-                  height = 500,
+                  height = 200,
                   card_body(
                     pickerInput(
                       inputId = "selected_category",
@@ -976,7 +977,7 @@ observeEvent(input$show_curricular_graphs, {
                 ),
                 card( # Filter by Region
                   card_header("Filter by Region"),
-                  height = 500,
+                  height = 200,
                   card_body(
                     pickerInput(
                       inputId = "selected_region",
@@ -999,7 +1000,7 @@ observeEvent(input$show_curricular_graphs, {
                 ),
                 card( # Filter by Division
                   card_header("Filter by Division"),
-                  height = 500,
+                  height = 200,
                   card_body(
                     pickerInput(
                       inputId = "selected_division",
@@ -1153,7 +1154,7 @@ observeEvent(input$show_curricular_graphs, {
               # Card for Main Category Picker (combining General Info, Resource Shortage, Other)
               # Assuming this UI code is part of your sidebar or main UI definition
               
-              card(height = 400, # Adjusted height to 500
+              card(height = 200, # Adjusted height to 500
                    card_header(tags$b("Select Category")),
                    card_body( # Wrapped pickerInput in card_body
                      pickerInput(
@@ -1221,7 +1222,7 @@ observeEvent(input$show_curricular_graphs, {
               # Assuming this UI code is part of your sidebar or main UI definition
               
               # Region Filter
-              card(height = 400, # Adjusted height
+              card(height = 200, # Adjusted height
                    card_header(tags$b("Region Filter")),
                    card_body( # Added card_body
                      pickerInput(
@@ -1830,7 +1831,7 @@ observeEvent(input$show_curricular_graphs, {
         font-size: 22px;
         padding: 15px 20px;
         text-align: center;
-        background-color: #f8f9fa;
+        background-color: #002D62;
         border-bottom: 2px solid #dee2e6;
       "
           ),
@@ -8279,10 +8280,6 @@ observeEvent(input$show_curricular_graphs, {
           style = list("border-color" = "rgba(0,0,0,0.5)")
         )
       )
-    
-    mainreact1 <- uni %>%
-      arrange(Region, Division) %>%
-      filter(grepl(Text, as.character(School.Name), ignore.case = TRUE))
     
     df1 <- reactive({
       
