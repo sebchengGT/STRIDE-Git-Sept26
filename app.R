@@ -104,7 +104,8 @@ ui <- fluidPage(
   
   tags$head(
     includeCSS("www/style.css"),
-    includeScript("www/script.js")
+    includeScript("www/script.js"),
+    tags$script(src = "https://unpkg.com/leaflet.smoothmarkerbouncing/leaflet.smoothmarkerbouncing.js")
   ),
   
   tags$head(tags$meta(name = "viewport", content = "width=device-width, initial-scale=1.0, maximum-scale=3.0")),
@@ -120,7 +121,7 @@ ui <- fluidPage(
     # Center text
     tags$div(
       class = "header-title",
-      h2("Department of Education"),
+      h2("DepEd STRIDE Dashboard"),
       p("STRIDE: Strategic Inventory for Deployment Efficiency")
     ),
     
@@ -188,7 +189,6 @@ ui <- fluidPage(
   
   
   
-  
   tags$footer(
     class = "app-footer",
     tags$p("© Based on GMIS (April 2025) and eBEIS (SY 2024–2025)")))
@@ -225,7 +225,8 @@ server <- function(input, output, session) {
     data <- data.frame(
       Category = c("Purely ES", "JHS with SHS", "ES and JHS (K to 10)",
                    "Purely JHS", "All Offering (K to 12)", "Purely SHS"),
-      Count = c(35036, 6598, 1690, 1367, 832, 262)
+      Count = c(35036, 6598, 1690, 1367, 832, 262),
+      marker = list(color = "#0072B2")
     )
     
     plot_ly(
@@ -242,7 +243,8 @@ server <- function(input, output, session) {
     data <- data.frame(
       Category = c("Purely ES", "JHS with SHS", "ES and JHS (K to 10)",
                    "Purely JHS", "All Offering (K to 12)", "Purely SHS"),
-      Count = c(35036, 6598, 1690, 1367, 832, 262)
+      Count = c(35036, 6598, 1690, 1367, 832, 262),
+      marker = list(color = "#D9534F")
     )
     
     plot_ly(
@@ -585,6 +587,7 @@ observeEvent(input$show_curricular_graphs, {
                 icon = bsicons::bs_icon("bar-chart"), # Optional icon
                 layout_column_wrap(
                   width = 1/2,
+                  marker = list(color = c("#0072B2", "#28a745", "#FFD700")),
                   uiOutput("total_schools_box"),
                   uiOutput("total_schools_box_div")))),
             hr(), 
@@ -950,7 +953,7 @@ observeEvent(input$show_curricular_graphs, {
               div( # This div acts as a container for the right-hand filter cards
                 card( # Filter by Category
                   card_header("Filter by Category"),
-                  height = 500,
+                  height = 400,
                   card_body(
                     pickerInput(
                       inputId = "selected_category",
@@ -973,7 +976,7 @@ observeEvent(input$show_curricular_graphs, {
                 ),
                 card( # Filter by Region
                   card_header("Filter by Region"),
-                  height = 500,
+                  height = 400,
                   card_body(
                     pickerInput(
                       inputId = "selected_region",
@@ -996,7 +999,7 @@ observeEvent(input$show_curricular_graphs, {
                 ),
                 card( # Filter by Division
                   card_header("Filter by Division"),
-                  height = 500,
+                  height = 400,
                   card_body(
                     pickerInput(
                       inputId = "selected_division",
@@ -1827,7 +1830,7 @@ observeEvent(input$show_curricular_graphs, {
         font-size: 22px;
         padding: 15px 20px;
         text-align: center;
-        background-color: #f8f9fa;
+        background-color: #00234d;
         border-bottom: 2px solid #dee2e6;
       "
           ),
@@ -8276,10 +8279,6 @@ observeEvent(input$show_curricular_graphs, {
           style = list("border-color" = "rgba(0,0,0,0.5)")
         )
       )
-    
-    mainreact1 <- uni %>%
-      arrange(Region, Division) %>%
-      filter(grepl(Text, as.character(School.Name), ignore.case = TRUE))
     
     df1 <- reactive({
       
