@@ -28,10 +28,18 @@ library(plotly)
 library(readr)
 library(geojsonio)
 library(shinyWidgets)
-
 library(later)
+library(googlesheets4)
+library(DBI)
+library(RPostgres)
+library(pool)
+
 
 # HROD Data Upload
+SHEET_URL <- "https://docs.google.com/spreadsheets/d/1e3ni50Jcv3sBAkG8TbwBt4v7kjjMRSVvf9gxtcMiqjU/edit?gid=0#gid=0"
+SHEET_ID <- "https://docs.google.com/spreadsheets/d/1x9D8xfXtkT1Mbr4M4We7I9sUqoj42X4SFX9N9hu24wM/edit?gid=0#gid=0"
+SHEET_NAME <- "Sheet1" # Assuming the data is on the first tab
+school_data <- reactiveVal(NULL)
 df <- read_parquet("School-Level-v2.parquet") # per Level Data
 uni <- read_parquet("School-Unique-v2.parquet") # School-level Data
 IndALL <- read_parquet("IndDistance.ALL2.parquet") # Industry Distances
@@ -88,19 +96,61 @@ user_base <- tibble::tibble(
   name = c("User One", "User Two")
 )
 
-# Define UI for application that draws a histogram
-ui <- fluidPage(
+login_register_UI <- function(id) {
+  ns <- NS(id)
   
+  # Use bslib::card for a contained, stylish panel
+  card(
+    # Use bslib::card_header for a title
+    card_header(
+      class = "bg-dark text-white",
+      "Cloud App Authentication"
+    ),
+    # Content of the card
+    div(
+      class = "d-flex justify-content-center mb-3", # Use Bootstrap utility classes
+      # The main panel for login/register choice using a tab-like navigation
+      uiOutput(ns("form_selector_ui"))
+    ),
+    
+    # The actual form (either login or register) displayed inside the card body
+    uiOutput(ns("dynamic_form_ui"))
+  )
+}
+
+SERVICE_ACCOUNT_FILE <- "service_account.json" 
+
+# Check if the file exists before attempting to authenticate
+if (file.exists(SERVICE_ACCOUNT_FILE)) {
+  # Authenticate non-interactively using the service account file
+  gs4_auth(
+    scopes = "https://www.googleapis.com/auth/spreadsheets",
+    path = SERVICE_ACCOUNT_FILE
+  )
+  print("googlesheets4 authenticated successfully using Service Account.")
+} else {
+  warning(paste("Service account key not found at:", SERVICE_ACCOUNT_FILE, 
+                "Interactive authentication may be required."))
+}
+
+# Define UI for application that draws a histogram
+# --- 5. Run App (Fixed UI) ---
+
+# Use bslib::page_fluid for the root UI, which is the standard bslib container
+ui <- page_fluid(
+  
+  # Use shinyjs to easily show/hide elements
+  shinyjs::useShinyjs(), 
+  
+  # Apply a clean theme (e.g., Bootstrap 5's "litera")
   theme = bs_theme(version = 5,
                    bootswatch = "litera",
                    font_scale = 0.9,
                    base_font = font_google("Alan Sans")),
-  # Use shinyjs to easily show/hide elements
-  shinyjs::useShinyjs(),
   
-  #For warning buttons
-  #currently litera bootstrap theme makes the warning button orange
+  # Global Head elements
   tags$head(
+    # Custom styling for btn-warning (if litera theme overrides it)
     tags$style(HTML("
     .btn-warning {
       background-color: #ffc107 !important; /* classic yellow */
@@ -114,18 +164,20 @@ ui <- fluidPage(
       border-color: #d39e00 !important;
       color: #fff !important;
     }
-  "))
-  ),
-  
-  tags$head(
+    ")),
+    
+    # External files (ensure they are in the 'www' folder)
     includeCSS("www/style.css"),
     includeScript("www/script.js"),
-    tags$script(src = "https://unpkg.com/leaflet.smoothmarkerbouncing/leaflet.smoothmarkerbouncing.js")
+    
+    # Leaflet smooth marker bouncing script
+    tags$script(src = "https://unpkg.com/leaflet.smoothmarkerbouncing/leaflet.smoothmarkerbouncing.js"),
+    
+    # Viewport meta tag
+    tags$meta(name = "viewport", content = "width=device-width, initial-scale=1.0, maximum-scale=3.0")
   ),
   
-  tags$head(tags$meta(name = "viewport", content = "width=device-width, initial-scale=1.0, maximum-scale=3.0")),
-  
-  
+  # Header (always visible)
   tags$div(
     class = "app-header",
     style = "display: flex; align-items: center; gap: 15px; justify-content: center;",
@@ -144,39 +196,8 @@ ui <- fluidPage(
     tags$img(src = "HROD LOGO1.png", class = "header-logo-right")
   ),
   
-  
-  
-  
-  # tags$head(
-  #   tags$style(HTML("
-  #     body {
-  #       background-image: url('my.background.png'); #/* Path to your image in www folder */
-  #       background-size: cover; #/* Cover the entire page */
-  #       background-repeat: no-repeat; #/* Do not repeat the image */
-  #       background-attachment: fixed; #/* Optional: Fix the background image during scroll */
-  #       background-position: center center; #/* Center the image */
-  #       height: 100vh; #/* Ensure body takes full viewport height */
-  #       margin: 0; #/* Remove default body margin */
-  #     }
-  #                   "))),
-  # 
-  # Row for the login panel UI
-  
-  fluidRow(
-    column(width = 12,
-           div(
-             id = "login-title",# Add the login UI
-             shinyauthr::loginUI(
-               id = "login",
-               title = "Please Log In",
-               user_title = "Username",
-               pass_title = "Password",
-               login_title = "Log In",
-               error_message = "Invalid username or password!" # Custom error message
-             )
-           ))
-  ), 
-  # Custom styling
+  # 💡 CRITICAL FIX: The dynamic container for login/main app UI
+  uiOutput("page_ui"),
   
   shinyjs::hidden(
     div(
@@ -184,29 +205,29 @@ ui <- fluidPage(
       uiOutput("STRIDE1"))),
   
   shinyjs::hidden(
-    div(class = "dashboard-container",
-      uiOutput("STRIDE2")  # your dashboard content
-  ),
-  div(
+    div(
       id = "mgmt_content",
       uiOutput("STRIDE2"))),
-    
-  # Loading overlay
+  
+  shinyjs::hidden(
+    div(
+      id = "data_input_content",
+      uiOutput("STRIDE_data"))),
+  
+  # Loading overlay (The logic to hide it is placed below the dynamic content)
   div(
     id = "loading-overlay",
     class = "loading-overlay",
     img(src = "LOAD.gif", class = "loading-gif"),
-    
   ),
   tags$script("$('#loading-overlay').hide();"),
   
-  
-  
-  
-  
+  # Footer (always visible)
   tags$footer(
     class = "app-footer",
-    tags$p("© Based on GMIS (April 2025) and eBEIS (SY 2024–2025)")))
+    tags$p("© Based on GMIS (April 2025) and eBEIS (SY 2024–2025)"))
+)
+
 
 
 
@@ -229,10 +250,10 @@ server <- function(input, output, session) {
   
   
   # Call the shinyauthr::logoutServer module
-  logout_init <- shinyauthr::logoutServer(
-    id = "logout",
-    active = reactive(credentials()$user_auth) # Logout button active only when logged in
-  )
+  # logout_init <- shinyauthr::logoutServer(
+  #   id = "logout",
+  #   active = reactive(credentials()$user_auth) # Logout button active only when logged in
+  # )
   
   
   # --- Curricular Offering Bar Chart ---
@@ -270,16 +291,16 @@ server <- function(input, output, session) {
   })
   
   # --- Toggle visibility for Curricular Offering graphs ---
-observeEvent(input$show_curricular_graphs, {
-  if (input$show_curricular_graphs %% 2 == 1) {
-    shinyjs::show("curricular_graphs")
-    updateActionButton(session, "show_curricular_graphs", label = "Hide Graphs")
-  } else {
-    shinyjs::hide("curricular_graphs")
-    updateActionButton(session, "show_curricular_graphs", label = "Show Graphs")
-  }
-})
-
+  observeEvent(input$show_curricular_graphs, {
+    if (input$show_curricular_graphs %% 2 == 1) {
+      shinyjs::show("curricular_graphs")
+      updateActionButton(session, "show_curricular_graphs", label = "Hide Graphs")
+    } else {
+      shinyjs::hide("curricular_graphs")
+      updateActionButton(session, "show_curricular_graphs", label = "Show Graphs")
+    }
+  })
+  
   # --- School Size Typology Bar Chart ---
   output$School_Size_Typology_Bar <- renderPlotly({
     data <- data.frame(
@@ -314,67 +335,309 @@ observeEvent(input$show_curricular_graphs, {
   })# --- Authentication ---
   # Call the shinyauthr::loginServer module
   # credentials() will be a reactive returning a tibble with user_auth, info, and additional columns from user_base
-  credentials <- shinyauthr::loginServer(
-    id = "login",
-    data = user_base,
-    user_col = user,
-    pwd_col = password_hash, # Use the hashed password column
-    sodium_hashed = TRUE,    # Important: tell shinyauthr we are using sodium hashes
-    log_out = reactive(logout_init()) # Link to the logout button
-  )
+  # credentials <- shinyauthr::loginServer(
+  #   id = "login",
+  #   data = user_base,
+  #   user_col = user,
+  #   pwd_col = password_hash, # Use the hashed password column
+  #   sodium_hashed = TRUE,    # Important: tell shinyauthr we are using sodium hashes
+  #   log_out = reactive(logout_init()) # Link to the logout button
+  # )
+  # 
+  # 
+  # 
+  # # --- Reactive Values & Observers ---
+  # # Observe the authentication status
+  # observe({
+  #   auth_status <- credentials()$user_auth
+  #   if (auth_status) {
+  #     # User is authenticated. Let's get their details.
+  #     user_info <- credentials()$info
+  #     # This is a tibble with the user's row
+  #     
+  #     # Ensure user_info is available and has the username
+  #     # (It should if auth_status is TRUE and your user_base is set up correctly)
+  #     if (!is.null(user_info) && "user" %in% names(user_info)) {
+  #       current_username <- user_info$user # Get the username
+  #       
+  #       # --- Always hide the login panel when authenticated ---
+  #       shinyjs::hide(selector = "#login") # Or shinyjs::hide(id = "login-login_ui")
+  #       shinyjs::hide("StrideLogo")
+  #       # --- Conditional logic based on username ---
+  #       if (current_username == "iamdeped") { # <<<< Your specific username condition
+  #         # Authenticated AND username is "user1"
+  #         shinyjs::show("main_content")
+  #         shinyjs::hide("mgmt_content")
+  #       } else {
+  #         
+  #         if (current_username == "depedadmin") {
+  #           # Authenticated BUT username is NOT "user1"
+  #           # This could be user2, user3, etc.
+  #           shinyjs::show("mgmt_content")
+  #           shinyjs::hide("main_content")
+  #           # output$generic_secure_data <- renderPrint({"Generic secure data for other users..."})
+  #         }}}
+  #   } else {
+  #     # User is NOT authenticated (e.g., after logout or initially)
+  #     shinyjs::show(selector = "#login")
+  #     shinyjs::show("StrideLogo")
+  #     shinyjs::hide("main_content")
+  #     shinyjs::hide("mgmt_content")
+  #   }
+  #   
+  #   if (auth_status) {
+  #     shinyjs::runjs('
+  #   $("#loading-overlay").fadeIn(200);
+  #   document.body.classList.remove("login-bg");
+  #   document.body.classList.add("dashboard-bg");
+  # ')
+  #   } else {
+  #     shinyjs::runjs('$("#loading-overlay").hide();')
+  #     shinyjs::runjs('document.body.classList.remove("dashboard-bg");')
+  #     shinyjs::runjs('document.body.classList.add("login-bg");')
+  #   }})
   
-  
-  
-  # --- Reactive Values & Observers ---
-  # Observe the authentication status
-  observe({
-    auth_status <- credentials()$user_auth
-    if (auth_status) {
-      # User is authenticated. Let's get their details.
-      user_info <- credentials()$info
-      # This is a tibble with the user's row
+  output$STRIDE_data <- renderUI({
+    fluidPage(
+      theme = bs_theme(
+        version = 5,
+        base_font = font_google("Poppins")
+      ),
       
-      # Ensure user_info is available and has the username
-      # (It should if auth_status is TRUE and your user_base is set up correctly)
-      if (!is.null(user_info) && "user" %in% names(user_info)) {
-        current_username <- user_info$user # Get the username
+      # --- CUSTOM CSS FOR FLOATING SIDEBAR ---
+      tags$head(
+        tags$style(HTML("
+      #sidebar {
+        position: -webkit-sticky; /* For Safari */
+        position: sticky;
+        top: 20px; /* Adjust this value for padding from the top */
+      }
+      #submit:disabled {
+        background-color: #cccccc; /* Light gray background */
+        border-color: #cccccc;    /* Matching border color */
+        color: #666666;          /* Dark gray text for readability */
+        cursor: not-allowed;      /* Show a 'not-allowed' mouse cursor */
+      }
+      .input-error {
+        border: 1px solid #dc3545; /* A standard red color */
+        box-shadow: 0 0 0.2rem #dc3545; /* Adds a subtle glow */
+      }
+    "))
+      ),
+      
+      useShinyjs(),
+      br(),
+      tags$div(
+        id = "form_title_bar", # Unique ID for potential custom CSS
+        style = "
+    background-color: #f0ad4e; /* Deep Blue, matching a professional theme */
+    color: white; /* White text for contrast */
+    padding: 15px 20px; /* Padding inside the bar */
+    margin-bottom: 20px; /* Space below the bar */
+    border-radius: 5px; /* Slightly rounded corners for a modern look */
+    text-align: center; /* Center the text */
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1); /* Subtle shadow for depth */
+  ",
+        h1(
+          strong("STRIDE Data Entry Form"),
+          style = "
+      margin: 0; 
+      font-size: 2.5rem;
+      /* 💡 NEW: Add the text-shadow property here */
+      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.4); 
+    "  # Ensure no default margin and use a large font
+        )
+      ),
+      
+      div(
+        id = "form_container",
         
-        # --- Always hide the login panel when authenticated ---
-        shinyjs::hide(selector = "#login") # Or shinyjs::hide(id = "login-login_ui")
-        shinyjs::hide("StrideLogo")
-        # --- Conditional logic based on username ---
-        if (current_username == "iamdeped") { # <<<< Your specific username condition
-          # Authenticated AND username is "user1"
-          shinyjs::show("main_content")
-          shinyjs::hide("mgmt_content")
-        } else {
+        sidebarLayout(
           
-          if (current_username == "depedadmin") {
-            # Authenticated BUT username is NOT "user1"
-            # This could be user2, user3, etc.
-            shinyjs::show("mgmt_content")
-            shinyjs::hide("main_content")
-            # output$generic_secure_data <- renderPrint({"Generic secure data for other users..."})
-          }}}
-    } else {
-      # User is NOT authenticated (e.g., after logout or initially)
-      shinyjs::show(selector = "#login")
-      shinyjs::show("StrideLogo")
-      shinyjs::hide("main_content")
-      shinyjs::hide("mgmt_content")
-    }
+          # The sidebar panel now contains Step 1
+          sidebarPanel(
+            id = "sidebar", # ID for the CSS to target
+            width = 3,      # Adjust width (out of 12)
+            h3(strong("School Profile")),
+            hr(),
+            textInput("school_id", "School ID", placeholder = "e.g. 193849"),
+            textInput("school_name", "School Name:", placeholder = "e.g. Juan Dela Cruz Elementary School"),
+            selectInput("stride_region", "Region:",
+                        choices = c("--- Select a Region ---" = "", "Region I", "Region II", "Region III", "Region IV-A", "MIMAROPA", "Region V", "Region VI", "NIR", "Region VII", "Region VIII", "Region IX", "Region X", "Region XI", "Region XII", "CARAGA", "CAR", "NCR"),
+                        selected = NULL),
+            uiOutput("stride_division"),
+            selectInput("curricular_offering", "Filter Curricular Offering:",
+                        choices = c("--- Select a Curricular Offering ---" = "","Purely ES", "Purely JHS", "Purely SHS", "JHS and SHS", "ES and JHS", "All Offering"),
+                        selected = NULL)
+          ),
+          
+          # The main panel contains the rest of the form
+          mainPanel(
+            width = 9, # Adjusted width to complement sidebar
+            accordion(
+              id = "form_accordion",
+              multiple = FALSE,
+              
+              accordion_panel(
+                title = strong("School Information"),
+                value = "step1",
+                fluidRow(
+                  textInput("school_head_gn", "Given Name (School Head):", placeholder = "Enter Given Name"),
+                  textInput("school_head_mn", "Middle Name (School Head):", placeholder = "Enter Middle Name"),
+                  textInput("school_head_ln", "Last Name (School Head):", placeholder = "Enter Last Name"),
+                  selectInput("school_head_position", "Plantilla Position:",
+                              choices = c("School Principal I","School Principal II","School Principal III")),
+                  textInput("school_head_contact", "Contact Number", placeholder = "e.g. 09129382923"),
+                  textInput("school_head_contact_alt", "Alternative Contact Number", placeholder = "e.g. 09122314424"),
+                  textInput("school_head_email", "DepEd Email Address:", placeholder = "e.g. juan.delacruz@deped.gov.ph"),
+                  textInput("school_head_email_alt", "Alternative Email Address:", placeholder = "e.g. juan.delacruz@gmail.com")
+                )
+              ),
+              
+              accordion_panel(
+                title = strong("Enrolment per Grade Level"),
+                value = "step2",
+                fluidRow(
+                  column(4, numericInput("g1","Grade 1", value = "")),
+                  column(4, numericInput("g2","Grade 2", value = "")),
+                  column(4, numericInput("g3","Grade 3", value = "")),
+                  column(4, numericInput("g4","Grade 4", value = "")),
+                  column(4, numericInput("g5","Grade 5", value = "")),
+                  column(4, numericInput("g6","Grade 6", value = "")),
+                  column(4, numericInput("g7","Grade 7", value = "")),
+                  column(4, numericInput("g8","Grade 8", value = "")),
+                  column(4, numericInput("g9","Grade 9", value = "")),
+                  column(4, numericInput("g10","Grade 10", value = "")),
+                  column(4, numericInput("g11","Grade 11", value = "")),
+                  column(4, numericInput("g12","Grade 12", value = ""))
+                )
+              ),
+              
+              accordion_panel(
+                title = strong("Organized Classes per Grade Level"),
+                value = "step3",
+                fluidRow(
+                  column(4, numericInput("org_g1","Grade 1", value = "")),
+                  column(4, numericInput("org_g2","Grade 2", value = "")),
+                  column(4, numericInput("org_g3","Grade 3", value = "")),
+                  column(4, numericInput("org_g4","Grade 4", value = "")),
+                  column(4, numericInput("org_g5","Grade 5", value = "")),
+                  column(4, numericInput("org_g6","Grade 6", value = "")),
+                  column(4, numericInput("org_g7","Grade 7", value = "")),
+                  column(4, numericInput("org_g8","Grade 8", value = "")),
+                  column(4, numericInput("org_g9","Grade 9", value = "")),
+                  column(4, numericInput("org_g10","Grade 10", value = "")),
+                  column(4, numericInput("org_g11","Grade 11", value = "")),
+                  column(4, numericInput("org_g12","Grade 12", value = ""))
+                )
+              ),
+              
+              accordion_panel(
+                title = strong("Number of Teaching Personnel"),
+                value = "step4",
+                fluidRow(
+                  column(4, numericInput("teaching_elem","Total ES Teachers", value = "")),
+                  column(4, numericInput("teaching_jhs","Total JHS Teachers", value = "")),
+                  column(4, numericInput("teaching_shs","Total SHS Teachers", value = ""))
+                )
+              ),
+              
+              accordion_panel(
+                title = strong("School Infrastructure"),
+                value = "step5",
+                fluidRow(
+                  column(4, numericInput("instructional_rooms_es","Number of Classrooms for ES", value = "")),
+                  column(4, numericInput("instructional_rooms_jhs","Number of Classrooms for JHS", value = "")),
+                  column(4, numericInput("instructional_rooms_shs","Number of Classrooms for SHS", value = "")),
+                  column(4, numericInput("instructional_rooms_repair","Number of Classrooms for Repair", value = "")),
+                  column(4, numericInput("buildings","Number of Buildings", value = "")),
+                  column(4, numericInput("buildings_repair","Number of Buildings for Repair", value = ""))
+                )
+              ),
+              
+              accordion_panel(
+                title = strong("School Resources"),
+                value = "step6",
+                fluidRow(
+                  column(3, numericInput("laptops","Number of Laptops", value = "")),
+                  column(3, numericInput("laptops_repair","Number of Laptops for Repair", value = "")),
+                  column(3, numericInput("chairs","Number of Chairs", value = "")),
+                  column(3, numericInput("chairs_repair","Number of Chairs for Repair", value = "")),
+                  column(3, numericInput("desk","Number of Desks", value = "")),
+                  column(3, numericInput("desk_repair","Number of Desks for Repair", value = "")),
+                  column(3, numericInput("ecart","Number of e-carts", value = "")),
+                  column(3, numericInput("ecart_repair","Number of e-carts for Repair", value = "")),
+                  column(3, numericInput("toilet","Number of Toilets", value = "")),
+                  column(3, numericInput("toilet_repair","Number of Toilets for Repair", value = "")),
+                  column(3, numericInput("printer","Number of Printers", value = "")),
+                  column(3, numericInput("printer_repair","Number of Printers for Repair", value = "")),
+                  column(3, numericInput("tv","Number of TV", value = "")),
+                  column(3, numericInput("tv_repair","Number of TV for Repair", value = "")),
+                  column(3, numericInput("science_lab","Number of Science Labs", value = "")),
+                  column(3, numericInput("computer_lab","Number of Computer Labs", value = "")),
+                  column(3, numericInput("tvl_lab","Number of TVL Labs", value = ""))
+                )
+              ),
+              
+              accordion_panel(
+                title = strong("Teacher Specialization"),
+                value = "step7",
+                fluidRow(
+                  column(4, numericInput("english","English", value = "")),
+                  column(4, numericInput("math","Math", value = "")),
+                  column(4, numericInput("science","Science", value = "")),
+                  column(4, numericInput("biological_science","Biological Science", value = "")),
+                  column(4, numericInput("physical_science","Physical Science", value = "")),
+                  column(4, numericInput("general_education","General Education", value = "")),
+                  column(4, numericInput("araling_panlipunan","Araling Panlipunan", value = "")),
+                  column(4, numericInput("tle","TLE", value = "")),
+                  column(4, numericInput("mapeh","MAPEH", value = "")),
+                  column(4, numericInput("filipino","Filipino", value = "")),
+                  column(4, numericInput("esp","ESP", value = "")),
+                  column(4, numericInput("agriculture","Agriculture", value = "")),
+                  column(4, numericInput("ece","Early Childhood Education", value = "")),
+                  column(4, numericInput("sped","SPED", value = ""))
+                )
+                # REMOVED: Duplicate submit button was here.
+              )
+            )
+          )
+        ),
+        
+        hr(), # Adds a visual separator
+        fluidRow(
+          column(
+            12,
+            align = "center",
+            # This is the single, centralized submit button. It's disabled initially.
+            actionButton("submit", "Submit Form", class = "btn-success btn-lg", icon = icon("check"), disabled = TRUE)
+          )
+        ),
+        br() # Adds some space at the bottom
+      ),
+      
+      # --- Thank You / Confirmation Section (Hidden by default) ---
+      hidden(
+        div(
+          id = "thank_you_section",
+          h3("Thank You! 👋"),
+          p("Your submission has been recorded successfully."),
+          actionButton("start_over", "Submit Another Response")
+        )
+      )
+    )
+  })
+  
+  output$stride_division <- renderUI({
+    filtered_division <- c(df[df$Region==input$stride_region,"Division"])
     
-    if (auth_status) {
-      shinyjs::runjs('
-    $("#loading-overlay").fadeIn(200);
-    document.body.classList.remove("login-bg");
-    document.body.classList.add("dashboard-bg");
-  ')
-    } else {
-      shinyjs::runjs('$("#loading-overlay").hide();')
-      shinyjs::runjs('document.body.classList.remove("dashboard-bg");')
-      shinyjs::runjs('document.body.classList.add("login-bg");')
-    }})
+    selectInput(
+      inputId = "stride_divisio2",
+      label = "Division:",
+      choices = c("--- Select Division ---" = "", filtered_division),
+      selected = NULL
+    )
+  })
   
   output$STRIDE2 <- renderUI({
     page_navbar(
@@ -1654,12 +1917,12 @@ observeEvent(input$show_curricular_graphs, {
               )
             )
           ))),
-    # --- Second Top-Level Tab: Data Explorer --
-
+      # --- Second Top-Level Tab: Data Explorer --
+      
       nav_menu(
         title = tags$b("Data Explorer"),  # Dropdown menu
         icon = bs_icon("table"),
-
+        
         # --- Nav Panel 1: School Information ---
         nav_panel(
           title = tags$b("School Information"),
@@ -1777,97 +2040,97 @@ observeEvent(input$show_curricular_graphs, {
   "))
         )
         ,
-  # --- Nav Panel 2: Third Level Dashboard ---
-  nav_panel(
-    title = tags$b("Third Level Dashboard"),
-    layout_sidebar(
-      sidebar = sidebar(
-        width = 350,
-        h6("Strand Filter:"),
-        pickerInput(
-          inputId = "ThirdLevel_Strands",
-          label = "Select Strand(s):",
-          choices = c(
-            "Administration",
-            "Deped Attached Agencies",
-            "Finance",
-            "Human Resource And Organizational Development",
-            "Learning System",
-            "Legal And Legislative Affairs",
-            "Office Of The Secretary",
-            "Operations",
-            "Procurement",
-            "Strategic Management",
-            "Teachers And Education Council Secretariat"
-          ),
-          selected = c(
-            "Administration",
-            "Deped Attached Agencies",
-            "Finance",
-            "Human Resource And Organizational Development",
-            "Learning System",
-            "Legal And Legislative Affairs",
-            "Office Of The Secretary",
-            "Operations",
-            "Procurement",
-            "Strategic Management",
-            "Teachers And Education Council Secretariat"
-          ),
-          multiple = TRUE,
-          options = pickerOptions(
-            actionsBox = TRUE,
-            liveSearch = TRUE,
-            header = "Select Strand(s)",
-            title = "No Strand Selected",
-            selectedTextFormat = "count > 3",
-            dropupAuto = FALSE,
-            dropup = FALSE,
+        # --- Nav Panel 2: Third Level Dashboard ---
+        nav_panel(
+          title = tags$b("Third Level Dashboard"),
+          layout_sidebar(
+            sidebar = sidebar(
+              width = 350,
+              h6("Strand Filter:"),
+              pickerInput(
+                inputId = "ThirdLevel_Strands",
+                label = "Select Strand(s):",
+                choices = c(
+                  "Administration",
+                  "Deped Attached Agencies",
+                  "Finance",
+                  "Human Resource And Organizational Development",
+                  "Learning System",
+                  "Legal And Legislative Affairs",
+                  "Office Of The Secretary",
+                  "Operations",
+                  "Procurement",
+                  "Strategic Management",
+                  "Teachers And Education Council Secretariat"
+                ),
+                selected = c(
+                  "Administration",
+                  "Deped Attached Agencies",
+                  "Finance",
+                  "Human Resource And Organizational Development",
+                  "Learning System",
+                  "Legal And Legislative Affairs",
+                  "Office Of The Secretary",
+                  "Operations",
+                  "Procurement",
+                  "Strategic Management",
+                  "Teachers And Education Council Secretariat"
+                ),
+                multiple = TRUE,
+                options = pickerOptions(
+                  actionsBox = TRUE,
+                  liveSearch = TRUE,
+                  header = "Select Strand(s)",
+                  title = "No Strand Selected",
+                  selectedTextFormat = "count > 3",
+                  dropupAuto = FALSE,
+                  dropup = FALSE,
+                  
+                ),
+                choicesOpt = list(
+                  style = "white-space: normal; word-break: break-word; overflow-wrap: break-word;"
+                )
+                
+              )),
             
-          ),
-          choicesOpt = list(
-            style = "white-space: normal; word-break: break-word; overflow-wrap: break-word;"
-          )
-          
-        )),
-      
-      layout_columns(
-        card(
-          full_screen = TRUE,
-          style = "
+            layout_columns(
+              card(
+                full_screen = TRUE,
+                style = "
       width: 100%;
       max-height: 85vh;      /* responsive height based on viewport */
       overflow-y: auto;      /* enables scroll inside card */
       margin-bottom: 20px;   /* prevents footer overlap */
     ",
-          card_header(
-            strong("HROD Data Panel"),
-            style = "
+                card_header(
+                  strong("HROD Data Panel"),
+                  style = "
         font-size: 22px;
         padding: 15px 20px;
         text-align: center;
         background-color: #00234d;
         border-bottom: 2px solid #dee2e6;
       "
-          ),
-          card_body(
-            div(
-              style = "
+                ),
+                card_body(
+                  div(
+                    style = "
           padding: 10px;
           overflow-x: auto;
           height: calc(85vh - 80px); /* keep table visible within card */
         ",
-              dataTableOutput("ThirdLevel_Table")
+                    dataTableOutput("ThirdLevel_Table")
+                  )
+                )
+              ),
+              col_widths = c(12)
             )
           )
-        ),
-        col_widths = c(12)
-      )
-    )
-    )
-  ),
-    
-    
-   
+        )
+      ),
+      
+      
+      
       # --- Quick School Search ---
       nav_panel(
         title = tags$b("Quick School Search"),
@@ -1995,7 +2258,7 @@ observeEvent(input$show_curricular_graphs, {
       # )
     )
   })
-
+  
   # Reactive expression to generate the main panel content
   output$dynamic_resource_panel <- renderUI({
     
@@ -2186,7 +2449,7 @@ observeEvent(input$show_curricular_graphs, {
           col_widths = c(5,7)
         )
       )
-  
+      
       
     } else if (selected_resource_type == "Classroom Inventory") {
       tagList(
@@ -2214,17 +2477,17 @@ observeEvent(input$show_curricular_graphs, {
                 navset_tab(
                   # Tab 1: Regional Classroom Breakdown (Your existing content)
                   nav_panel("Regional Breakdown",
-                      plotlyOutput("Classroom_Shortage_Region_Graph2")
+                            plotlyOutput("Classroom_Shortage_Region_Graph2")
                   ),
                   # Tab 2: Division Classroom Shortage Breakdown (The new tab)
                   nav_panel("Priority Divisions",
-                      plotlyOutput("Classroom_Shortage_Division_Graph2")
+                            plotlyOutput("Classroom_Shortage_Division_Graph2")
                   ),
                   nav_panel("Dataset",
                             dataTableOutput("Classroom_Shortage_Dataset"))
                 )),
-                # End of Tabset
-
+              # End of Tabset
+              
               card(
                 card_header(strong("Regional Classroom Shortage")),
                 valueBoxOutput("ROCRShort")
@@ -2234,8 +2497,8 @@ observeEvent(input$show_curricular_graphs, {
                 valueBoxOutput("SDOCRShort")
               ),
               #card(
-               # card_header(strong("District Classroom Shortage")),
-                #valueBoxOutput("DistCRShort")
+              # card_header(strong("District Classroom Shortage")),
+              #valueBoxOutput("DistCRShort")
               #),
               col_widths = c(12,6,6)
             )
@@ -2258,7 +2521,7 @@ observeEvent(input$show_curricular_graphs, {
           )
         )
       )
-    
+      
       
     } else if (selected_resource_type == "Industries") {
       
@@ -2523,11 +2786,11 @@ observeEvent(input$show_curricular_graphs, {
                 navset_tab(
                   # Tab 1: Regional Breakdown (Your existing content)
                   nav_panel("Regional Breakdown",
-                      plotlyOutput("LMS_Nation_Graph2")
+                            plotlyOutput("LMS_Nation_Graph2")
                   ),
                   # Tab 2: Division Breakdown (The new tab)
                   nav_panel("Priority Divisions",
-                      plotlyOutput("LMS_Division_Graph2")
+                            plotlyOutput("LMS_Division_Graph2")
                   ),
                   nav_panel("Dataset",
                             dataTableOutput("LMS_Dataset")
@@ -2546,8 +2809,8 @@ observeEvent(input$show_curricular_graphs, {
           )
         ),
         
-      hr(), 
-      
+        hr(), 
+        
         layout_columns(
           card(
             full_screen = TRUE,
@@ -6395,7 +6658,7 @@ observeEvent(input$show_curricular_graphs, {
                 inherit.aes = FALSE,
                 size = 3.5, color = "black") +
       labs( title = "Regional Distribution of Schools by Curricular Offering", x = "Modified Curricular Offering",
-           y = "Number of Schools", fill = "Region") +
+            y = "Number of Schools", fill = "Region") +
       scale_y_continuous(labels = scales::comma) +
       theme_minimal() +
       theme(axis.text.x = element_text(size = 10, angle = 45, hjust = 1),
@@ -6471,9 +6734,9 @@ observeEvent(input$show_curricular_graphs, {
                 inherit.aes = FALSE, size = 3.5, color = "black") +
       labs(
         title = "Regional Distribution of Schools by Size Typology",
-           x = "School Size Typology",
-           y = "Number of Schools",
-           fill = "Region") +
+        x = "School Size Typology",
+        y = "Number of Schools",
+        fill = "Region") +
       scale_y_continuous(labels = scales::comma) +
       theme_minimal() +
       theme(axis.text.x = element_text(size = 10, angle = 45, hjust = 1),
@@ -8570,7 +8833,7 @@ observeEvent(input$show_curricular_graphs, {
   
   output$ThirdLevel_Table <- DT::renderDT(server = TRUE, {
     
-
+    
     datatable(
       filtered_third() %>%
         select(
@@ -8599,7 +8862,7 @@ observeEvent(input$show_curricular_graphs, {
         )
       )
       
-
+      
     )
   })
   
@@ -9323,7 +9586,7 @@ observeEvent(input$show_curricular_graphs, {
           )
         )
     })
-  
+    
     
     
     RegRCT <- input$resource_map_region
@@ -9423,11 +9686,11 @@ observeEvent(input$show_curricular_graphs, {
         lng = mainreactLMS$Longitude,
         lat = mainreactLMS$Latitude,
         icon = makeAwesomeIcon(icon = "education", library = "glyphicon",
-        markerColor = case_when(
-          (mainreactLMS$Buildable_space == 0 & mainreactLMS$Estimated_CL_Shortage == 0) ~ "gray",
-          mainreactLMS$Buildable_space == 0 ~ "red", # Corrected to '=='
-          mainreactLMS$Buildable_space == 1 ~ "green", # Corrected to '=='
-        )),
+                               markerColor = case_when(
+                                 (mainreactLMS$Buildable_space == 0 & mainreactLMS$Estimated_CL_Shortage == 0) ~ "gray",
+                                 mainreactLMS$Buildable_space == 0 ~ "red", # Corrected to '=='
+                                 mainreactLMS$Buildable_space == 1 ~ "green", # Corrected to '=='
+                               )),
         label = values.LMS,
         labelOptions = labelOptions(noHide = F, textsize = "12px", direction = "top")
       )
@@ -9654,7 +9917,7 @@ observeEvent(input$show_curricular_graphs, {
           )
         )
       )
-
+    
     
     leafletProxy("TeacherShortage_Mapping") %>% clearMarkers() %>% clearMarkerClusters() %>% setView(lng = mainreact1$Longitude[1], lat = mainreact1$Latitude[1], zoom = 7) %>% 
       addAwesomeMarkers(clusterOptions = markerClusterOptions(disableClusteringAtZoom = 15), lng = mainreact1$Longitude, lat = mainreact1$Latitude, popup = values_teacher_shortage_popup, options = popupOptions(), label = values_teacher_shortage, labelOptions = labelOptions(noHide = F, textsize = "12px", direction = "top"), icon = makeAwesomeIcon(icon = "education", library = "glyphicon", markerColor = case_when(mainreact1$TeacherShortage > 0 ~ "red", mainreact1$TeacherExcess > 0 ~ "blue", (mainreact1$TeacherExcess == 0 & mainreact1$TeacherShortage == 0) ~ "green", is.na(mainreact1$TeacherShortage) ~ "gray")))
@@ -9779,7 +10042,7 @@ observeEvent(input$show_curricular_graphs, {
     })
     
     #output$DistCRShort <- renderValueBox({
-      #valueBox(tags$p(strong(sum(mainreactNTP$Est.CS, na.rm = TRUE)), style = "font-family: Poppins; font-size: 20px; color: #111111; text-align: center;"), subtitle = NULL)
+    #valueBox(tags$p(strong(sum(mainreactNTP$Est.CS, na.rm = TRUE)), style = "font-family: Poppins; font-size: 20px; color: #111111; text-align: center;"), subtitle = NULL)
     #})
     
     # --- Total Last Mile Schools by Region ---
@@ -10362,20 +10625,20 @@ observeEvent(input$show_curricular_graphs, {
           fixedHeader = list(
             header = TRUE,
             footer = FALSE),
-        GMISDiv2,
-        filter = "top",
-        extensions = "FixedHeader",
-        options = list(
-          fixedHeader = list(header = TRUE, footer = FALSE),
-          scrollY = "300px",
-          scrollCollapse = TRUE,
-          columnDefs = list(list(className = 'dt-center', targets = '_all')),
-          rownames = FALSE
-        )
-      ))
+          GMISDiv2,
+          filter = "top",
+          extensions = "FixedHeader",
+          options = list(
+            fixedHeader = list(header = TRUE, footer = FALSE),
+            scrollY = "300px",
+            scrollCollapse = TRUE,
+            columnDefs = list(list(className = 'dt-center', targets = '_all')),
+            rownames = FALSE
+          )
+        ))
     })
   })
-      
+  
   
   observeEvent(input$SHSListTable_rows_selected, {
     
@@ -10520,8 +10783,8 @@ observeEvent(input$show_curricular_graphs, {
                 inherit.aes = FALSE,
                 size = 3.5, color = "black") +
       labs(  title = "Division Distribution of Schools by Curricular Offering", x = "Region",
-           y = "Number of Schools",
-           fill = "School Type") +
+             y = "Number of Schools",
+             fill = "School Type") +
       scale_y_continuous(labels = scales::comma) +
       theme_minimal() +
       theme(axis.text.x = element_text(size = 10, angle = 45, hjust = 1),
@@ -10534,7 +10797,7 @@ observeEvent(input$show_curricular_graphs, {
              margin = list(b = 100))
   })
   
-
+  
   
   output$school_count_district_graph <- renderPlotly({
     
@@ -10589,8 +10852,8 @@ observeEvent(input$show_curricular_graphs, {
                 inherit.aes = FALSE,
                 size = 3.5, color = "black") +
       labs( title = "District Distribution of Schools by Curricular Offering", x = "Modified COC",
-           y = "Count",
-           fill = "Legislative District") +
+            y = "Count",
+            fill = "Legislative District") +
       scale_y_continuous(labels = scales::comma) +
       theme_minimal() +
       theme(axis.text.x = element_text(size = 10, angle = 45, hjust = 1),
@@ -10674,8 +10937,8 @@ observeEvent(input$show_curricular_graphs, {
                     label = scales::comma(TotalCount)),
                 inherit.aes = FALSE, size = 3.5, color = "black") +
       labs( title = "Division-Level Distribution of Schools by Size Typology", x = "School Size Typology",
-           y = "Number of Schools",
-           fill = "Division") +
+            y = "Number of Schools",
+            fill = "Division") +
       scale_y_continuous(labels = scales::comma) +
       theme_minimal() +
       theme(axis.text.x = element_text(size = 10, angle = 45, hjust = 1),
@@ -20464,6 +20727,706 @@ observeEvent(input$show_curricular_graphs, {
     ggplotly(p, tooltip = "text", source = "cloudenrolmentRegionPlot") %>%
       layout(hoverlabel = list(bgcolor = "white"),
              margin = list(b = 100)) # Increase bottom margin for x-axis labels
+  })
+  
+  ### ENHANCED LOGIN PAGE ####
+  
+  # Reactive value to track the user's status: "unauthenticated", "login", "register", "authenticated"
+  user_status <- reactiveVal("unauthenticated")
+  
+  # 💡 NEW: Reactive value to store the username after successful authentication
+  authenticated_user <- reactiveVal(NULL)
+  
+  # Reactive value to hold the user's choice: "login" or "register"
+  form_choice <- reactiveVal("login")  
+  
+  # Reactive value to trigger a database refresh
+  db_trigger <- reactiveVal(0)  
+  
+  # Reactive value to hold the user database
+  user_database <- reactive({
+    # Depend on the trigger. Every time db_trigger changes, this runs.
+    db_trigger()  
+    
+    # Read data from Google Sheet
+    users_db <- tryCatch({
+      googlesheets4::read_sheet(SHEET_URL)
+    }, error = function(e) {
+      showNotification(paste("Error reading database:", e$message,  
+                             "Assuming sheet structure is correct."), type = "error")
+      # Return an empty dataframe with correct structure on error to prevent crashing
+      # Ensure 'Station' column is included
+      return(data.frame(Email_Address = character(), Password = character(), Station = character())) 
+    })
+    
+    return(users_db)
+  })
+  
+  observe({
+    
+    # --- Part A: Check if required fields are filled ---
+    
+    # List the IDs of all inputs that MUST be filled out.
+    # Optional fields are not included here.
+    required_inputs <- c(
+      "school_id",
+      "school_head_contact",
+      "school_head_email"
+    )
+    
+    # This checks that each required input is not empty or NULL.
+    # It returns TRUE only if all required fields have a value.
+    all_filled <- all(sapply(required_inputs, function(id) {
+      !is.null(input[[id]]) && input[[id]] != ""
+    }))
+    
+    # --- Part B: Check if the inputs have the correct format ---
+    
+    # We use `isTRUE()` to safely handle potential errors (like NA) from checks.
+    # It treats anything that isn't exactly TRUE as FALSE.
+    
+    # Validate School ID: must be a number and have the correct length.
+    school_id_ok <- isTRUE(
+      !is.na(as.numeric(input$school_id)) &&                # Is it a number?
+        nchar(as.character(input$school_id)) == 6 # Is it the right length?
+    )
+    
+    # Validate Primary Contact: must be a number and have the correct length.
+    contact_ok <- isTRUE(
+      !is.na(as.numeric(input$school_head_contact)) &&
+        nchar(as.character(input$school_head_contact)) == 11
+    )
+    
+    # Validate Alternate Contact: it's valid if it's empty OR if it meets the format rules.
+    contact_alt_ok <- isTRUE(
+      input$school_head_contact_alt == "" || # It's okay if empty
+        (
+          !is.na(as.numeric(input$school_head_contact_alt)) &&
+            nchar(as.character(input$school_head_contact_alt)) == 11
+        )
+    )
+    
+    # Validate Primary Email: must contain "@deped.gov.ph".
+    email_ok <- isTRUE(grepl("@deped.gov.ph", input$school_head_email))
+    
+    # Validate Alternate Email: it's valid if it's empty OR if it meets the format rules.
+    email_alt_ok <- isTRUE(
+      input$school_head_email_alt == "" || # It's okay if empty
+        grepl("@", input$school_head_email_alt)
+    )
+    
+    # Combine all format checks. This will be TRUE only if every single check above is TRUE.
+    all_correct <- school_id_ok && contact_ok && contact_alt_ok && email_ok && email_alt_ok
+    
+    # --- Part C: Enable or Disable the Submit Button ---
+    
+    # The button is enabled only if all required fields are filled AND all formats are correct.
+    if (all_filled && all_correct) {
+      shinyjs::enable("submit")
+    } else {
+      shinyjs::disable("submit")
+    }
+  })
+  
+  # --- UI Rendering Logic ---
+  
+  # Main dynamic UI switch
+  output$page_ui <- renderUI({
+    status <- user_status()
+    current_user <- authenticated_user() # Retrieve the currently logged-in user
+    
+    if (status == "authenticated" && !is.null(current_user)) {
+      # 1. Get the full user row from the database based on the authenticated username
+      users_db <- user_database()
+      user_row <- users_db[users_db$Email_Address == current_user, ]
+      
+      # Ensure the user still exists and has a station
+      if (nrow(user_row) == 1) {
+        station <- user_row$Station[1] # Use the Station value
+        
+        # 2. Switch UI based on the Station
+        if (station == "Central Office") {
+          shinyjs::hide("data_input_content")
+          shinyjs::show("mgmt_content")
+          shinyjs::hide("main_content")
+        } else if (station == "School") {
+          shinyjs::show("data_input_content")
+          shinyjs::hide("main_content")
+          shinyjs::hide("mgmt_content")
+        } else {
+          # Default UI for other stations (Regional Office, SDO, etc.)
+          # You can add more specific UIs here if needed
+          return(card(card_header("Application Dashboard"), 
+                      h2(paste("Welcome,", station, "User!")), 
+                      actionButton("main_app-logout", "Logout", class = "btn-danger")))
+        }
+        return(NULL)
+      }
+    }
+    
+    # If unauthenticated, or user data not found, show login/register
+    # Center the login card on the page when unauthenticated
+    div(
+      class = "d-flex justify-content-center align-items-center", 
+      style = "height: 80vh;", # Use full viewport height for centering
+      div(style = "width: 400px; max-width: 90%;", # Set a max width for the card
+          login_register_UI("auth")
+      )
+    )
+  })
+  
+  # --- Authentication Module (Login/Register Forms) ---
+  # CRITICAL FIX: Only call the module ONCE at the start of the server.
+  # 💡 NEW: Pass the authenticated_user reactiveVal to the module
+  callModule(authentication_server, "auth", 
+             user_status, form_choice, SHEET_URL, user_database, db_trigger, 
+             authenticated_user) # Pass the new reactive
+  
+  # --- Main App Module ---
+  
+  # Handle logout from the main app
+  observeEvent(input$`main_app-logout`, {
+    user_status("unauthenticated")
+    authenticated_user(NULL) # 💡 NEW: Clear the authenticated user
+    form_choice("login")  
+    showNotification("Logged out successfully.", type = "message")
+  })
+}
+
+# --- Authentication Server (Handles the logic for login and registration) ---
+authentication_server <- function(input, output, session, user_status, 
+                                  form_choice, sheet_url, user_database, db_trigger, 
+                                  authenticated_user) { # 💡 NEW: Receive the reactive
+  
+  # ... (form_selector_ui and dynamic_form_ui remain mostly the same) ...
+  
+  # 1. UI for selecting Login or Register
+  output$form_selector_ui <- renderUI({
+    list(
+      # The form selector now uses an input group style with btn-group
+      div(
+        class = "btn-group btn-group-toggle",  
+        role = "group",
+        actionButton(session$ns("btn_login"), "Login",  
+                     class = paste0("btn", if (form_choice() == "login") " btn-primary" else " btn-outline-primary")),
+        actionButton(session$ns("btn_register"), "Register",
+                     class = paste0("btn", if (form_choice() == "register") " btn-primary" else " btn-outline-primary"))
+      )
+    )
+  })
+  
+  # Handle button clicks to switch forms
+  observeEvent(input$btn_login, form_choice("login"))
+  observeEvent(input$btn_register, form_choice("register"))
+  
+  # 2. Dynamic form rendering (Login or Register)
+  output$dynamic_form_ui <- renderUI({
+    ns <- session$ns
+    if (form_choice() == "login") {
+      # Use a bslib::card_body_fill for clean padding
+      card_body_fill(
+        h5("Sign in with your credentials"),
+        textInput(ns("login_user"), "DepEd Email"),
+        passwordInput(ns("login_pass"), "Password"),
+        actionButton(ns("do_login"), "Login", class = "btn-success w-100"), # w-100 for full width
+        uiOutput(ns("login_message"))
+      )
+    } else {
+      card_body_fill(
+        h5("Create a new account"),
+        textInput(ns("reg_user"), "Enter your DepEd Email"), # Label changed here
+        selectInput(
+          ns("govlev"),
+          "Select Station:", 
+          # 👇 FIX: Add an empty string "" as the first value.
+          choices = c("— Select an Option —" = "", 
+                      "Central Office", 
+                      "Regional Office", 
+                      "Schools Division Office", 
+                      "School"), 
+          # You can now completely omit 'selected = ""' or leave it as NULL
+          selected = NULL 
+        ),
+        uiOutput(ns("station_specific_ui")),
+        passwordInput(ns("reg_pass"), "Choose Password"),
+        passwordInput(ns("reg_pass_confirm"), "Confirm Password"),
+        actionButton(ns("do_register"), "Register Account", class = "btn-success w-100"),
+        uiOutput(ns("register_message"))
+      )
+    }
+  })
+  
+  output$station_specific_ui <- renderUI({
+    ns <- session$ns
+    
+    # Ensure govlev has been initialized before checking its value
+    req(input$govlev) 
+    
+    if (input$govlev == "School") {
+      # Render the 6-digit School ID input
+      tagList(
+        textInput(ns("school_id"), "School ID:"),
+        # Basic client-side validation hint
+        tags$small("Enter your School ID.", class = "text-muted") 
+      )
+    } else if (input$govlev %in% c("Central Office", "Regional Office", "Schools Division Office")) { # Explicit check for Office types
+      # Render the general Office name input for all other selections
+      tagList(
+        textInput(ns("office_name"), "Office Name"),
+        # Basic client-side validation hint
+        tags$small("Enter Bureau/Division. Do not abbreviate!", class = "text-muted")
+      )
+    }
+    # If "— Select an Option —" is chosen, nothing is rendered
+  })
+  
+  # --- 3. Login Logic ---
+  observeEvent(input$do_login, {
+    req(input$login_user, input$login_pass)
+    
+    # Use the reactive user_database
+    users_db <- user_database()
+    
+    if (nrow(users_db) == 0) {
+      output$login_message <- renderUI({
+        tags$p("Database is empty or inaccessible.", class = "text-danger mt-2")
+      })
+      return()
+    }
+    
+    # Check for user credentials
+    user_row <- users_db[users_db$Email_Address == input$login_user, ]
+    
+    if (nrow(user_row) == 1 && user_row$Password == input$login_pass) {
+      # Login successful for ANY station
+      user_status("authenticated")
+      authenticated_user(input$login_user) # 💡 CRITICAL: Store the logged-in username
+      
+      # Clear the login fields on success
+      updateTextInput(session, "login_user", value = "")
+      updateTextInput(session, "login_pass", value = "")
+      
+      # Clear any previous messages
+      output$login_message <- renderUI({})
+      
+    } else {
+      output$login_message <- renderUI({
+        tags$p("Invalid username or password.", class = "text-danger mt-2")
+      })
+    }
+  })
+  
+  # --- 4. Registration Logic ---
+  observeEvent(input$do_register, {
+    req(input$reg_user, input$reg_pass, input$reg_pass_confirm, input$govlev)
+    
+    # Check if a station has been selected (must be done early)
+    if (input$govlev == "") {
+      output$register_message <- renderUI({
+        tags$p("Please select your Station.", class = "text-danger mt-2")
+      })
+      return()
+    }
+    
+    # 1. School ID and Office Name Validation/Requirement
+    
+    # Variable to hold station-specific detail, initialized to NA
+    station_detail_id <- NA_character_
+    station_detail_office <- NA_character_
+    
+    if (input$govlev == "School") {
+      # CRITICAL FIX: Use req() to ensure the input exists if 'School' is selected
+      req(input$school_id) 
+      
+      school_id_trimmed <- trimws(input$school_id)
+      
+      # School ID Length Check (from previous request)
+      if (nchar(school_id_trimmed) != 6) {
+        output$register_message <- renderUI({
+          tags$p("School ID must be exactly 6 digits.", class = "text-danger mt-2")
+        })
+        return()
+      }
+      # If valid, assign the value
+      station_detail_id <- school_id_trimmed
+      
+    } else if (input$govlev %in% c("Central Office", "Regional Office", "Schools Division Office")) {
+      # CRITICAL FIX: Use req() to ensure the input exists for office stations
+      req(input$office_name)
+      
+      # Office Name Requirement Check (simple check to ensure it's not empty)
+      if (trimws(input$office_name) == "") {
+        output$register_message <- renderUI({
+          tags$p("Please enter your Office Name.", class = "text-danger mt-2")
+        })
+        return()
+      }
+      # If valid, assign the value
+      station_detail_office <- trimws(input$office_name)
+    }
+    
+    # 2. Email Domain Validation
+    if (!endsWith(input$reg_user, "@deped.gov.ph")) {
+      output$register_message <- renderUI({
+        tags$p("Registration requires an official @deped.gov.ph email address.", class = "text-danger mt-2")
+      })
+      return()
+    }
+    
+    # 3. Password Match Validation
+    if (input$reg_pass != input$reg_pass_confirm) {
+      output$register_message <- renderUI({
+        tags$p("Passwords do not match.", class = "text-danger mt-2")
+      })
+      return()
+    }
+    
+    # Use the reactive user_database for checking existing users
+    users_db <- user_database()
+    
+    if (input$reg_user %in% users_db$Email_Address) {
+      output$register_message <- renderUI({
+        tags$p("Email_Address already taken. Please choose another.", class = "text-danger mt-2")
+      })
+      return()
+    }
+    
+    # 4. Successful validation - Register user
+    # CRITICAL FIX: Use the created variables (which are guaranteed to be 1 row)
+    # This prevents the "arguments imply differing number of rows" error.
+    new_user <- data.frame(
+      Registration_Date = as.character(Sys.time()),
+      Email_Address = input$reg_user,
+      Password = input$reg_pass,
+      Station = input$govlev,
+      School_ID = station_detail_id, # Will be ID or NA
+      Office = station_detail_office, # Will be Office Name or NA
+      stringsAsFactors = FALSE
+    )
+    
+    # Append the new user to the Google Sheet
+    sheet_write_status <- tryCatch({
+      # Note: Ensure your Google Sheet has all five columns: Email_Address, Password, Station, School_ID, Office
+      googlesheets4::sheet_append(sheet_url, data = new_user)
+      TRUE
+    }, error = function(e) {
+      showNotification(paste("Error writing to database:", e$message), type = "error")
+      FALSE
+    })
+    
+    if (sheet_write_status) {
+      db_trigger(db_trigger() + 1)  
+      user_status("authenticated")
+      authenticated_user(input$reg_user)
+    }
+  })
+  
+  ### SERVER FOR DATA ENTRY GOOGLE SHEETS ####
+  
+  # Reactive function to read the data (run once when server starts)
+  observeEvent(TRUE, {
+    # This reads the data and stores it in the reactiveVal
+    tryCatch({
+      # Use read_sheet to read the data, forcing it to character to match inputs
+      data <- read_sheet(
+        ss = SHEET_ID, 
+        sheet = SHEET_NAME, 
+        col_types = "c", # Read all columns as character to prevent type mismatch
+        trim_ws = TRUE
+      )
+      school_data(data)
+    }, error = function(e) {
+      showModal(modalDialog(
+        title = "Authentication Error",
+        paste("Failed to read Google Sheet. Check Sheet ID, network, and permissions:", e$message),
+        footer = modalButton("Close")
+      ))
+      # Stop execution if data cannot be loaded
+      stop("Sheet read failed.")
+    })
+  }, once = TRUE) # Run only once when the server starts
+  
+  # ... (Your validate_numeric_input function goes here) ...
+  validate_numeric_input <- function(inputId, len) {
+    
+    observeEvent(input[[inputId]], {
+      
+      # Get the value from the input. 
+      val_str <- input[[inputId]]
+      
+      # --- FIX: Check for NULL, Empty String, OR NA ---
+      # We must explicitly handle NA before nchar or grepl is called.
+      if (is.null(val_str) || val_str == "" || is.na(val_str)) {
+        shinyjs::removeClass(id = inputId, class = "input-error")
+        return()
+      }
+      
+      # 2. Check if the input contains ONLY digits.
+      # We use isTRUE() as a safeguard, just in case grepl returns NA (though unlikely here)
+      # is_all_digits will be TRUE or FALSE, never NA.
+      is_all_digits <- isTRUE(grepl("^\\d+$", val_str))
+      
+      # 3. Check the exact character length.
+      is_correct_length <- nchar(val_str) == len
+      
+      # The input is valid only if both conditions are TRUE.
+      # R's '&&' is safe because is_all_digits is guaranteed TRUE/FALSE.
+      is_valid <- is_all_digits && is_correct_length
+      
+      if (is_valid) {
+        shinyjs::removeClass(id = inputId, class = "input-error")
+      } else {
+        shinyjs::addClass(id = inputId, class = "input-error")
+      }
+    }, ignoreNULL = FALSE) 
+  }
+  # ... (Your validation observers go here) ...
+  validate_numeric_input(inputId = "school_id", len = 6)
+  validate_numeric_input(inputId = "school_head_contact", len = 11)
+  validate_numeric_input(inputId = "school_head_contact_alt", len = 11)
+  
+  # (Your email validation observers go here - they remain unchanged)
+  observeEvent(input$school_head_email, {
+    id_val <- input$school_head_email
+    is_valid <- (id_val == "" || grepl("@deped.gov.ph", id_val))
+    if (is_valid) { shinyjs::removeClass(id = "school_head_email", class = "input-error") } 
+    else { shinyjs::addClass(id = "school_head_email", class = "input-error") }
+  })
+  
+  observeEvent(input$school_head_email_alt, {
+    id_val <- input$school_head_email_alt
+    is_valid <- (id_val == "" || grepl("@", id_val))
+    if (is_valid) { shinyjs::removeClass(id = "school_head_email_alt", class = "input-error") } 
+    else { shinyjs::addClass(id = "school_head_email_alt", class = "input-error") }
+  })
+  
+  # --- [UPDATED] List of all required input IDs for form data collection ---
+  required_inputs <- c(
+    # ... (Your required_inputs list remains the same) ...
+    "school_id", "school_name", "school_head_gn", "school_head_mn", "school_head_ln",
+    "school_head_position", "region", "division", "curricular_offering",
+    "school_head_contact","school_head_contact_alt","school_head_email","school_head_email_alt",
+    "g1", "g2", "g3", "g4", "g5", "g6", "g7", "g8", "g9", "g10", "g11", "g12",
+    "org_g1", "org_g2", "org_g3", "org_g4", "org_g5", "org_g6",
+    "org_g7", "org_g8", "org_g9", "org_g10", "org_g11", "org_g12",
+    "teaching_elem", "teaching_jhs", "teaching_shs",
+    "instructional_rooms_es", "instructional_rooms_jhs", "instructional_rooms_shs",
+    "instructional_rooms_repair", "buildings", "buildings_repair",
+    "laptops", "laptops_repair", "chairs", "chairs_repair", "desk", "desk_repair",
+    "ecart", "ecart_repair", "toilet", "toilet_repair", "printer", "printer_repair",
+    "tv", "tv_repair", "science_lab", "computer_lab", "tvl_lab",
+    "english", "math", "science", "biological_science", "physical_science",
+    "general_education", "araling_panlipunan", "tle", "mapeh", "filipino",
+    "esp", "agriculture", "ece", "sped"
+  )
+  
+  # --- Observer to enable/disable the submit button (This remains unchanged) ---
+  # ... (Your observe({}) block for submit button logic remains the same) ...
+  
+  # --- Dynamic UI for Division based on Region selection (Requires 'df' to be defined) ---
+  # Assuming 'df' is loaded elsewhere, this part remains unchanged.
+  # output$division <- renderUI({ ... })
+  
+  # --- [REVISED] Observer to auto-load existing school records (From Google Sheet) ---
+  observe({
+    req(school_data()) # Require that the data has been loaded
+    req(input$school_id)
+    current_school_id <- debounce(reactive(input$school_id), 500)
+    
+    if (is.null(current_school_id()) || current_school_id() == "") return()
+    
+    data_df <- school_data()
+    
+    # 1. Find the matching row
+    # Ensure School ID column is read correctly, assume it's "school_id"
+    # We use tolower(names(data_df)) just in case the column name has different case
+    match_row <- which(data_df[[tolower("school_id")]] == current_school_id())
+    
+    if (length(match_row) > 0) {
+      # --- IF RECORD FOUND: Load the data ---
+      showNotification("Existing school record loaded.", type = "message", duration = 3)
+      record_details <- data_df[match_row[1], ] # Use the first match
+      
+      # 2. Update UI elements using the loaded row
+      # Text Inputs
+      updateTextInput(session, "school_name", value = record_details$school_name)
+      updateTextInput(session, "school_head_gn", value = record_details$school_head_gn)
+      updateTextInput(session, "school_head_mn", value = record_details$school_head_mn)
+      updateTextInput(session, "school_head_ln", value = record_details$school_head_ln)
+      updateTextInput(session, "school_head_contact", value = record_details$school_head_contact)
+      updateTextInput(session, "school_head_contact_alt", value = record_details$school_head_contact_alt)
+      updateTextInput(session, "school_head_email", value = record_details$school_head_email)
+      updateTextInput(session, "school_head_email_alt", value = record_details$school_head_email_alt)
+      
+      # Select Inputs
+      updateSelectInput(session, "school_head_position", selected = record_details$school_head_position)
+      updateSelectInput(session, "region", selected = record_details$region)
+      # Assuming division updates dynamically based on region, but we update it anyway
+      updateSelectInput(session, "division", selected = record_details$division)
+      updateSelectInput(session, "curricular_offering", selected = record_details$curricular_offering)
+      
+      # Numeric Inputs (Using lapply to be concise)
+      numeric_ids <- c(
+        paste0("g", 1:12), paste0("org_g", 1:12), 
+        # ... (rest of your numeric IDs) ...
+        "teaching_elem", "teaching_jhs", "teaching_shs",
+        "instructional_rooms_es", "instructional_rooms_jhs", "instructional_rooms_shs", 
+        "instructional_rooms_repair", "buildings", "buildings_repair",
+        "laptops", "laptops_repair", "chairs", "chairs_repair", "desk", "desk_repair",
+        "ecart", "ecart_repair", "toilet", "toilet_repair", "printer", "printer_repair",
+        "tv", "tv_repair", "science_lab", "computer_lab", "tvl_lab",
+        "english", "math", "science", "biological_science", "physical_science",
+        "general_education", "araling_panlipunan", "tle", "mapeh", "filipino",
+        "esp", "agriculture", "ece", "sped"
+      )
+      
+      lapply(numeric_ids, function(id) {
+        # Need to convert loaded value to numeric for updateNumericInput
+        updateNumericInput(session, id, value = as.numeric(record_details[[tolower(id)]]))
+      })
+      
+    } else {
+      # --- IF NO RECORD FOUND: Clear all fields (same as your original logic) ---
+      # ... (Your clear fields logic remains the same) ...
+      showNotification("No matching record found. Starting new entry.", type = "warning", duration = 3)
+      
+      # Text Inputs
+      updateTextInput(session, "school_name", value = "")
+      updateTextInput(session, "school_head_gn", value = "")
+      updateTextInput(session, "school_head_mn", value = "")
+      updateTextInput(session, "school_head_ln", value = "")
+      updateTextInput(session, "school_head_contact", value = "")
+      updateTextInput(session, "school_head_contact_alt", value = "")
+      updateTextInput(session, "school_head_email", value = "")
+      updateTextInput(session, "school_head_email_alt", value = "")
+      
+      # Select Inputs (Reset to defaults/prompts)
+      updateSelectInput(session, "school_head_position", selected = "School Principal I") 
+      updateSelectInput(session, "region", selected = "--- Select a Region ---") # Use the prompt value from your UI
+      updateSelectInput(session, "division", selected = NULL)
+      updateSelectInput(session, "curricular_offering", selected = "--- Select a Curricular Offering ---") # Use the prompt value
+      
+      # Numeric Inputs: Clear all numeric fields by setting value = NA
+      numeric_ids <- c(
+        paste0("g", 1:12), paste0("org_g", 1:12), 
+        "teaching_elem", "teaching_jhs", "teaching_shs",
+        "instructional_rooms_es", "instructional_rooms_jhs", "instructional_rooms_shs", 
+        "instructional_rooms_repair", "buildings", "buildings_repair",
+        "laptops", "laptops_repair", "chairs", "chairs_repair", "desk", "desk_repair",
+        "ecart", "ecart_repair", "toilet", "toilet_repair", "printer", "printer_repair",
+        "tv", "tv_repair", "science_lab", "computer_lab", "tvl_lab",
+        "english", "math", "science", "biological_science", "physical_science",
+        "general_education", "araling_panlipunan", "tle", "mapeh", "filipino",
+        "esp", "agriculture", "ece", "sped"
+      )
+      
+      lapply(numeric_ids, function(id) {
+        updateNumericInput(session, id, value = NA) 
+      })
+    }
+  })
+  
+  observeEvent(input$submit, {
+    
+    # --- DEBUGGING STEP 0 (MOVED OUTSIDE TRY/CATCH) ---
+    # If this notification shows, the observeEvent is definitely firing.
+    showNotification("--- Submission Triggered! ---", duration = 5, type = "warning")
+    
+    # --- DEBUGGING STEP 1 (BREAKPOINT) ---
+    # If the console stops here, the execution is successful up to this point.
+    browser() # Press 'c' and Enter in the console to continue execution.
+    
+    # Use tryCatch to capture and display any errors during submission
+    tryCatch({
+      
+      # Helper function to convert empty text/NA to a unified NA for sheet
+      empty_to_na <- function(x) {
+        if (is.character(x) && length(x) == 1 && x == "") {
+          return(NA_character_)
+        } else if (is.null(x) || is.na(x)) {
+          return(NA)
+        }
+        return(x)
+      }
+      
+      # --- CRITICAL PRE-CHECKS (Verify access to globals) ---
+      if (!exists("SHEET_ID") || !exists("SHEET_NAME") || !is.function(school_data) || !exists("sheet_write")) {
+        # This will now be caught by the tryCatch block if it runs
+        stop("Fatal Error: One or more global dependencies (SHEET_ID, SHEET_NAME, school_data(), sheet_write/sheet_append functions) are missing or inaccessible.")
+      }
+      
+      # Check if a record with the given school_id already exists in the local data
+      data_df <- school_data()
+      school_id_col <- tolower("school_id")
+      
+      match_row_index <- which(data_df[[school_id_col]] == input$school_id)
+      record_exists <- length(match_row_index) > 0
+      
+      # Collect all form data into a data frame
+      form_data_list <- lapply(required_inputs, function(id) {
+        empty_to_na(input[[id]])
+      })
+      
+      # Create the single-row data frame for submission
+      new_data <- as.data.frame(form_data_list, stringsAsFactors = FALSE)
+      names(new_data) <- required_inputs
+      
+      # Add a timestamp column (ensure column names match sheet headers)
+      new_data$submission_timestamp <- as.character(Sys.time())
+      
+      if (record_exists) {
+        # --- UPDATE existing record (Requires full sheet rewrite) ---
+        showNotification(paste("Updating entry for", input$school_name), type = "message", duration = NULL)
+        
+        # 1. Update the local reactive data frame
+        # Replace the row in the local data frame with the new data
+        data_df[match_row_index[1], names(new_data)] <- new_data
+        
+        # 2. Write the entire modified data frame back to the sheet
+        # Overwrites the existing sheet content entirely
+        sheet_write(
+          data = data_df, 
+          ss = SHEET_ID, 
+          sheet = SHEET_NAME
+        )
+        
+      } else {
+        # --- INSERT new record (Use sheet_append) ---
+        showNotification(paste("New entry for", input$school_name, "submitted"), type = "message", duration = NULL)
+        
+        # 1. Append the new data to the sheet
+        sheet_append(
+          ss = SHEET_ID, 
+          sheet = SHEET_NAME, 
+          data = new_data
+        )
+        
+        # 2. Update the local reactive data frame with the new row
+        school_data(rbind(data_df, new_data))
+      }
+      
+      # --- SUCCESS ACTIONS ---
+      showNotification("Submission Complete!", type = "success", duration = 5)
+      
+      # Hide the form and show a thank you message after submission
+      hide("form_container")
+      show("thank_you_section")
+      
+    }, error = function(e) {
+      # --- ERROR HANDLING ---
+      error_message <- paste("Submission Failed! Details:", e$message)
+      warning(error_message) # Log to console
+      showNotification(error_message, type = "error", duration = NULL) # Show persistent notification
+      
+      # Re-enable the form if it was hidden
+      show("form_container") 
+    })
+  })
+  
+  
+  # --- Observer to handle the "Start Over" button (remains unchanged) ---
+  observeEvent(input$start_over, {
+    session$reload()
   })
   
 }
