@@ -28,6 +28,7 @@ library(plotly)
 library(readr)
 library(geojsonio)
 library(shinyWidgets)
+
 library(later)
 
 # HROD Data Upload
@@ -35,6 +36,20 @@ df <- read_parquet("School-Level-v2.parquet") # per Level Data
 uni <- read_parquet("School-Unique-v2.parquet") # School-level Data
 IndALL <- read_parquet("IndDistance.ALL2.parquet") # Industry Distances
 ind <- read_parquet("SHS-Industry.parquet") # Industry Coordinates
+# Clean Sector names
+ind <- ind %>%
+  mutate(
+    Sector = case_when(
+      is.na(Sector) | Sector == "#N/A" ~ NA_character_,
+      str_detect(Sector, regex("Agri", ignore_case = TRUE)) ~ "Agriculture and Agri-business",
+      str_detect(Sector, regex("Business", ignore_case = TRUE)) ~ "Business and Finance",
+      str_detect(Sector, regex("Hospitality|Tourism", ignore_case = TRUE)) ~ "Hospitality and Tourism",
+      str_detect(Sector, regex("Manufacturing|Engineeri", ignore_case = TRUE)) ~ "Manufacturing and Engineering",
+      str_detect(Sector, regex("Professional|Service", ignore_case = TRUE)) ~ "Professional/Private Services",
+      str_detect(Sector, regex("Public", ignore_case = TRUE)) ~ "Public Administration",
+      TRUE ~ Sector  # leave unchanged if no match
+    )
+  )
 SDO <- read_parquet("SDOFill.parquet") # SDO and Regional Filling-up Rate
 DBMProp <- read.csv("DBM-Proposal.csv") # Teacher Shortage Data
 
@@ -2011,13 +2026,13 @@ observeEvent(input$show_curricular_graphs, {
             # --- Start of Tabset (now ABOVE the summary cards) ---
             navset_tab(
               nav_panel("Regional Breakdown",
-                        plotlyOutput("Classroom_Shortage_Region_Graph2")
+                        plotlyOutput("Teaching_Deployment_Region_Graph")
               ),
               nav_panel("Priority Divisions",
-                        plotlyOutput("Classroom_Shortage_Division_Graph2")
+                        plotlyOutput("Teaching_Deployment_Division_Graph1")
               ),
               nav_panel("Dataset",
-                        dataTableOutput("Classroom_Shortage_Dataset")
+                        dataTableOutput("Teaching_Deployment_Dataset")
               )
             ),
             # --- End of Tabset ---
@@ -6376,7 +6391,7 @@ observeEvent(input$show_curricular_graphs, {
                     label = scales::comma(TotalCount)),
                 inherit.aes = FALSE,
                 size = 3.5, color = "black") +
-      labs(x = "Modified Curricular Offering",
+      labs( title = "Regional Distribution of Schools by Curricular Offering", x = "Modified Curricular Offering",
            y = "Number of Schools", fill = "Region") +
       scale_y_continuous(labels = scales::comma) +
       theme_minimal() +
@@ -6451,7 +6466,9 @@ observeEvent(input$show_curricular_graphs, {
                 aes(x = School.Size.Typology, y = TotalCount * 1.05, 
                     label = scales::comma(TotalCount)),
                 inherit.aes = FALSE, size = 3.5, color = "black") +
-      labs(x = "School Size Typology",
+      labs(
+        title = "Regional Distribution of Schools by Size Typology",
+           x = "School Size Typology",
            y = "Number of Schools",
            fill = "Region") +
       scale_y_continuous(labels = scales::comma) +
@@ -6540,7 +6557,7 @@ observeEvent(input$show_curricular_graphs, {
       geom_bar(stat = "identity", color = "black") +
       geom_text(aes(y = Count * 1.05, label = scales::comma(Count)),
                 size = 3.5, color = "black") +
-      labs(x = "Region", y = "Classroom Shortage") +
+      labs(title = "Regional Classroom Shortage Distribution", x = "Region", y = "Classroom Shortage") +
       scale_y_continuous(labels = scales::comma) +
       theme_minimal() +
       theme(axis.text.x = element_text(size = 10, angle = 45, hjust = 1),
@@ -6602,7 +6619,7 @@ observeEvent(input$show_curricular_graphs, {
                 aes(x = Type, y = TotalCount * 1.05, label = scales::comma(TotalCount)),
                 inherit.aes = FALSE,
                 size = 3.5, color = "black") +
-      labs(x = "Type", y = "Count", fill = "Region") +
+      labs( title = "Regional Distribution of Last Mile School Indicators", x = "Type", y = "Count", fill = "Region") +
       scale_y_continuous(labels = scales::comma) +
       theme_minimal() +
       theme(axis.text.x = element_text(size = 10, angle = 45, hjust = 1),
@@ -6615,7 +6632,148 @@ observeEvent(input$show_curricular_graphs, {
       style(hoverinfo = "text")
   })
   
+  #Teaching Deployment Backend
+  output$Teaching_Deployment_Region_Graph <- renderPlotly({
+    # --- Get filtered data ---
+    full_data <- Teaching_Deployment %>%   
+      rename(
+        "Deployment" = Deployment_Status, 
+        "Region" = Region_Name              
+      )
+    
+    # --- Handle empty data ---
+    if (nrow(full_data) == 0) {
+      return(ggplotly(
+        ggplot() +
+          annotate("text", x = 0.5, y = 0.5, label = "No data available for Teaching Deployment") +
+          theme_void()
+      ))
+    }
+    
+    # --- Prepare grouped data ---
+    plot_data <- full_data %>%
+      group_by(Region, Deployment) %>%
+      summarise(
+        Count = sum(as.numeric(Count), na.rm = TRUE),
+        .groups = "drop"
+      )
+    
+    # --- Compute total per region for label placement ---
+    region_totals <- plot_data %>%
+      group_by(Region) %>%
+      summarise(Total = sum(Count, na.rm = TRUE), .groups = "drop")
+    
+    # --- Plot ---
+    p <- ggplot(plot_data,
+                aes(
+                  x = reorder(Region, -Count),
+                  y = Count,
+                  fill = Deployment,
+                  text = paste(
+                    "Region:", Region,
+                    "<br>Deployment:", Deployment,
+                    "<br>Count:", scales::comma(Count)
+                  )
+                )) +
+      geom_bar(stat = "identity", position = "stack", color = "black", size = 0.25) +
+      geom_text(
+        data = region_totals,
+        aes(x = Region, y = Total * 1.05, label = scales::comma(Total)),
+        inherit.aes = FALSE,
+        size = 3.5,
+        color = "black"
+      ) +
+      labs(
+        title = "Teaching Deployment by Region",
+        x = "Region",
+        y = "Count",
+        fill = "Deployment Type"
+      ) +
+      scale_y_continuous(labels = scales::comma) +
+      theme_minimal() +
+      theme(
+        plot.title = element_text(hjust = 0.5, size = 14, face = "bold"),
+        axis.text.x = element_text(size = 10, angle = 45, hjust = 1),
+        legend.position = "right"
+      )
+    
+    ggplotly(p, tooltip = "text") %>%
+      layout(
+        hoverlabel = list(bgcolor = "white"),
+        margin = list(b = 100)
+      ) %>%
+      style(hoverinfo = "text")
+  })
   
+  output$Teaching_Deployment_Division_Graph1 <- renderPlotly({
+    # --- Use filtered dataset (replace with your reactive data if available) ---
+    current_filtered_data <- Teaching_Deployment  # e.g. filtered_Teaching_Deployment_division()
+    
+    # --- Empty Data Handling ---
+    if (nrow(current_filtered_data) == 0) {
+      return(ggplotly(
+        ggplot() +
+          annotate("text", x = 0.5, y = 0.5, label = "No data for selected divisions") +
+          theme_void()
+      ))
+    }
+    
+    # --- Data preparation ---
+    plot_data <- current_filtered_data %>%
+      group_by(Division, Deployment) %>%
+      summarise(Count = sum(as.numeric(Count), na.rm = TRUE), .groups = "drop") %>%
+      arrange(desc(Count)) %>%
+      slice_head(n = 20)  # Keep only top 20 divisions
+    
+    # --- Compute division totals for labels ---
+    division_totals <- plot_data %>%
+      group_by(Division) %>%
+      summarise(Total = sum(Count, na.rm = TRUE), .groups = "drop")
+    
+    # --- Create plot ---
+    p <- ggplot(plot_data,
+                aes(
+                  x = reorder(Division, -Count),
+                  y = Count,
+                  fill = Deployment,
+                  text = paste(
+                    "Division:", Division,
+                    "<br>Deployment:", Deployment,
+                    "<br>Count:", scales::comma(Count)
+                  )
+                )) +
+      geom_bar(stat = "identity", position = "stack", color = "black", size = 0.25) +
+      geom_text(
+        data = division_totals,
+        aes(x = Division, y = Total * 1.05, label = scales::comma(Total)),
+        inherit.aes = FALSE,
+        size = 3.5,
+        color = "black"
+      ) +
+      labs(
+        title = "Top 20 Divisions: Teaching Deployment",
+        x = "Division",
+        y = "Count",
+        fill = "Deployment Type"
+      ) +
+      scale_y_continuous(labels = scales::comma) +
+      theme_minimal() +
+      theme(
+        plot.title = element_text(hjust = 0.5, size = 14, face = "bold"),
+        axis.text.x = element_text(size = 10, angle = 45, hjust = 1),
+        legend.position = "right"
+      )
+    
+    # --- Convert to Plotly ---
+    ggplotly(p, tooltip = "text") %>%
+      layout(
+        hoverlabel = list(bgcolor = "white"),
+        margin = list(b = 100)
+      ) %>%
+      style(hoverinfo = "text")
+  })
+  
+  #Classroom Shortage
   output$Classroom_Shortage_Region_Graph2 <- renderPlotly({
     
     # Use the reactive filtered data
@@ -6711,6 +6869,261 @@ observeEvent(input$show_curricular_graphs, {
              margin = list(b = 100)) # Increase bottom margin for x-axis labels
   })
   
+  #learner congestion
+  output$Congest_Regional_Graph <- renderPlotly({
+    # --- Use filtered or static data (replace with your reactive dataset) ---
+    current_filtered_data <- Learner_Congestion  # Example placeholder
+    
+    # --- Empty Data Handling ---
+    if (nrow(current_filtered_data) == 0) {
+      return(ggplotly(
+        ggplot() +
+          annotate("text", x = 0.5, y = 0.5, label = "No data for selected regions") +
+          theme_void()
+      ))
+    }
+    
+    # --- Data preparation ---
+    plot_data <- current_filtered_data %>%
+      group_by(Region, Congestion_Level) %>%
+      summarise(Count = sum(as.numeric(Count), na.rm = TRUE), .groups = "drop")
+    
+    # --- Compute region totals ---
+    region_totals <- plot_data %>%
+      group_by(Region) %>%
+      summarise(Total = sum(Count, na.rm = TRUE), .groups = "drop")
+    
+    # --- Plot ---
+    p <- ggplot(plot_data,
+                aes(
+                  x = reorder(Region, -Count),
+                  y = Count,
+                  fill = Congestion_Level,
+                  text = paste(
+                    "Region:", Region,
+                    "<br>Congestion Level:", Congestion_Level,
+                    "<br>Count:", scales::comma(Count)
+                  )
+                )) +
+      geom_bar(stat = "identity", position = "stack", color = "black", size = 0.25) +
+      geom_text(
+        data = region_totals,
+        aes(x = Region, y = Total * 1.05, label = scales::comma(Total)),
+        inherit.aes = FALSE,
+        size = 3.5,
+        color = "black"
+      ) +
+      labs(
+        title = "Regional Learner Congestion Distribution",
+        x = "Region",
+        y = "Learner Count",
+        fill = "Congestion Level"
+      ) +
+      scale_y_continuous(labels = scales::comma) +
+      theme_minimal() +
+      theme(
+        plot.title = element_text(hjust = 0.5, size = 14, face = "bold"),
+        axis.text.x = element_text(size = 10, angle = 45, hjust = 1),
+        legend.position = "right"
+      )
+    
+    ggplotly(p, tooltip = "text") %>%
+      layout(
+        hoverlabel = list(bgcolor = "white"),
+        margin = list(b = 100)
+      ) %>%
+      style(hoverinfo = "text")
+  })
+  
+  output$Congest_Division_Graph <- renderPlotly({
+    current_filtered_data <- Learner_Congestion  # Example placeholder
+    
+    if (nrow(current_filtered_data) == 0) {
+      return(ggplotly(
+        ggplot() +
+          annotate("text", x = 0.5, y = 0.5, label = "No data for selected divisions") +
+          theme_void()
+      ))
+    }
+    
+    # --- Data preparation ---
+    plot_data <- current_filtered_data %>%
+      group_by(Division, Congestion_Level) %>%
+      summarise(Count = sum(as.numeric(Count), na.rm = TRUE), .groups = "drop") %>%
+      arrange(desc(Count)) %>%
+      slice_head(n = 20)
+    
+    division_totals <- plot_data %>%
+      group_by(Division) %>%
+      summarise(Total = sum(Count, na.rm = TRUE), .groups = "drop")
+    
+    p <- ggplot(plot_data,
+                aes(
+                  x = reorder(Division, -Count),
+                  y = Count,
+                  fill = Congestion_Level,
+                  text = paste(
+                    "Division:", Division,
+                    "<br>Congestion Level:", Congestion_Level,
+                    "<br>Count:", scales::comma(Count)
+                  )
+                )) +
+      geom_bar(stat = "identity", position = "stack", color = "black", size = 0.25) +
+      geom_text(
+        data = division_totals,
+        aes(x = Division, y = Total * 1.05, label = scales::comma(Total)),
+        inherit.aes = FALSE,
+        size = 3.5,
+        color = "black"
+      ) +
+      labs(
+        title = "Top 20 Divisions: Learner Congestion Distribution",
+        x = "Division",
+        y = "Learner Count",
+        fill = "Congestion Level"
+      ) +
+      scale_y_continuous(labels = scales::comma) +
+      theme_minimal() +
+      theme(
+        plot.title = element_text(hjust = 0.5, size = 14, face = "bold"),
+        axis.text.x = element_text(size = 10, angle = 45, hjust = 1),
+        legend.position = "right"
+      )
+    
+    ggplotly(p, tooltip = "text") %>%
+      layout(
+        hoverlabel = list(bgcolor = "white"),
+        margin = list(b = 100)
+      ) %>%
+      style(hoverinfo = "text")
+  })
+  
+  #Facilities
+  output$Facilities_Regional_Graph <- renderPlotly({
+    # Placeholder dataset until reactive data is ready
+    current_filtered_data <- Facilities
+    
+    # --- Empty data handler ---
+    if (is.null(current_filtered_data) || nrow(current_filtered_data) == 0) {
+      return(ggplotly(
+        ggplot() +
+          annotate("text", x = 0.5, y = 0.5, label = "No data available for selected facilities type") +
+          theme_void()
+      ))
+    }
+    
+    # --- Data prep ---
+    plot_data <- current_filtered_data %>%
+      group_by(Region, ProjectType) %>%
+      summarise(Count = sum(as.numeric(Count), na.rm = TRUE), .groups = "drop")
+    
+    region_totals <- plot_data %>%
+      group_by(Region) %>%
+      summarise(Total = sum(Count, na.rm = TRUE), .groups = "drop")
+    
+    # --- Chart ---
+    p <- ggplot(plot_data,
+                aes(
+                  x = reorder(Region, -Count),
+                  y = Count,
+                  fill = ProjectType,
+                  text = paste(
+                    "Region:", Region,
+                    "<br>Project Type:", ProjectType,
+                    "<br>Count:", scales::comma(Count)
+                  )
+                )) +
+      geom_bar(stat = "identity", position = "stack", color = "black", size = 0.25) +
+      geom_text(
+        data = region_totals,
+        aes(x = Region, y = Total * 1.05, label = scales::comma(Total)),
+        inherit.aes = FALSE,
+        size = 3.5,
+        color = "black"
+      ) +
+      labs(
+        title = "Regional Breakdown: Facilities Projects",
+        x = "Region",
+        y = "Number of Projects",
+        fill = "Project Type"
+      ) +
+      scale_y_continuous(labels = scales::comma) +
+      theme_minimal() +
+      theme(
+        plot.title = element_text(hjust = 0.5, face = "bold", size = 14),
+        axis.text.x = element_text(angle = 45, hjust = 1, size = 10),
+        legend.position = "right"
+      )
+    
+    ggplotly(p, tooltip = "text") %>%
+      layout(hoverlabel = list(bgcolor = "white"), margin = list(b = 100))
+  })
+  
+  
+  output$Facilities_Division_Graph <- renderPlotly({
+    # Placeholder dataset
+    current_filtered_data <- Facilities
+    
+    # --- Empty data handler ---
+    if (is.null(current_filtered_data) || nrow(current_filtered_data) == 0) {
+      return(ggplotly(
+        ggplot() +
+          annotate("text", x = 0.5, y = 0.5, label = "No data available for selected facilities type") +
+          theme_void()
+      ))
+    }
+    
+    # --- Data prep ---
+    plot_data <- current_filtered_data %>%
+      group_by(Division, ProjectType) %>%
+      summarise(Count = sum(as.numeric(Count), na.rm = TRUE), .groups = "drop") %>%
+      arrange(desc(Count)) %>%
+      slice_head(n = 20)  # Top 20 only
+    
+    division_totals <- plot_data %>%
+      group_by(Division) %>%
+      summarise(Total = sum(Count, na.rm = TRUE), .groups = "drop")
+    
+    # --- Chart ---
+    p <- ggplot(plot_data,
+                aes(
+                  x = reorder(Division, -Count),
+                  y = Count,
+                  fill = ProjectType,
+                  text = paste(
+                    "Division:", Division,
+                    "<br>Project Type:", ProjectType,
+                    "<br>Count:", scales::comma(Count)
+                  )
+                )) +
+      geom_bar(stat = "identity", position = "stack", color = "black", size = 0.25) +
+      geom_text(
+        data = division_totals,
+        aes(x = Division, y = Total * 1.05, label = scales::comma(Total)),
+        inherit.aes = FALSE,
+        size = 3.5,
+        color = "black"
+      ) +
+      labs(
+        title = "Top 20 Divisions: Facilities Projects",
+        x = "Division",
+        y = "Number of Projects",
+        fill = "Project Type"
+      ) +
+      scale_y_continuous(labels = scales::comma) +
+      theme_minimal() +
+      theme(
+        plot.title = element_text(hjust = 0.5, face = "bold", size = 14),
+        axis.text.x = element_text(angle = 45, hjust = 1, size = 10),
+        legend.position = "right"
+      )
+    
+    ggplotly(p, tooltip = "text") %>%
+      layout(hoverlabel = list(bgcolor = "white"), margin = list(b = 100))
+  })
+  
+  
+  #LMS
   output$LMS_Nation_Graph2 <- renderPlotly({
     full_data <- LMS %>%   
       rename(
@@ -6885,7 +7298,7 @@ observeEvent(input$show_curricular_graphs, {
                 aes(x = Type, y = Count * 1.05, label = scales::comma(Count)),
                 inherit.aes = FALSE,
                 size = 3.5, color = "black") +
-      labs(x = "Division", y = "Count") +
+      labs( title = "Division Distribution of Last Mile School Indicators",x = "Division", y = "Count") +
       scale_y_continuous(labels = scales::comma) +
       theme_minimal() +
       theme(axis.text.x = element_text(size = 10, angle = 45, hjust = 1),
@@ -6907,13 +7320,20 @@ observeEvent(input$show_curricular_graphs, {
       group_by(Region, Sector) %>%
       summarise(Total = n(), .groups = "drop")  # count number of companies
     
-    # --- Compute total industries nationally ---
-    national_total <- sum(plot_data$Total, na.rm = TRUE)
+    # --- Compute totals per Region for total labels ---
+    region_totals <- plot_data %>%
+      group_by(Region) %>%
+      summarise(Total_All = sum(Total, na.rm = TRUE), .groups = "drop") %>%
+      arrange(desc(Total_All))
+    
+    # --- Make Region an ordered factor for display ---
+    plot_data$Region <- factor(plot_data$Region, levels = region_totals$Region)
+    region_totals$Region <- factor(region_totals$Region, levels = region_totals$Region)
     
     # --- Create stacked bar chart ---
     p <- ggplot(plot_data,
                 aes(
-                  x = reorder(Region, -Total),
+                  x = Region,
                   y = Total,
                   fill = Sector,
                   text = paste0(
@@ -6923,20 +7343,28 @@ observeEvent(input$show_curricular_graphs, {
                   )
                 )) +
       geom_bar(stat = "identity", position = "stack", color = "black", size = 0.25) +
+      
+      # --- Add total count label above each Region ---
       geom_text(
-        aes(label = scales::comma(Total)),
-        size = 3.5,
-        color = "black",
-        position = position_stack(vjust = 0.5),
-        check_overlap = TRUE
+        data = region_totals,
+        aes(x = Region, y = Total_All, label = scales::comma(Total_All)),
+        inherit.aes = FALSE,
+        vjust = -0.7,
+        size = 3.8,
+        fontface = "bold",
+        color = "black"
       ) +
+      
       labs(
         title = "",
         x = "Region",
         y = "Industry Count",
         fill = "Sector"
       ) +
-      scale_y_continuous(labels = scales::comma) +
+      scale_y_continuous(
+        labels = scales::comma,
+        expand = expansion(mult = c(0, 0.12))  # Extra space above bars for labels
+      ) +
       theme_minimal() +
       theme(
         plot.title = element_text(hjust = 0.5, size = 14, face = "bold"),
@@ -6952,6 +7380,7 @@ observeEvent(input$show_curricular_graphs, {
       ) %>%
       style(hoverinfo = "text")
   })
+  
   
   
   # --- Priority Divisions: Total number of industries per Division ---
@@ -8904,17 +9333,35 @@ observeEvent(input$show_curricular_graphs, {
     Lev <- input$resource_map_level
     TypeEFD <- input$EFD_Type
     
-    mainreact1 <- df %>% filter(Region == RegRCT) %>% filter(Division == SDORCT1) %>% filter(Legislative.District == DistRCT1) %>% filter(Level == Lev) %>% arrange(desc(TeacherShortage))
+    mainreact1 <- df %>%
+      filter(Region == RegRCT) %>%
+      filter(Division == SDORCT1) %>%
+      filter(Legislative.District %in% DistRCT1) %>% 
+      filter(Level == Lev) %>%
+      arrange(desc(TeacherShortage))
     
     mainreactreg <- df %>% filter(Region == RegRCT)
     mainreactunireg <- uni %>% filter(Region == RegRCT)
     mainreactunidiv <- uni %>% filter(Region == RegRCT) %>% filter(Division == SDORCT1)
     mainreactdiv <- df %>% filter(Region == RegRCT) %>% filter(Division == SDORCT1)
-    mainreactNTP <- uni %>% filter(Region == RegRCT) %>% filter(Division == SDORCT1) %>% filter(Legislative.District == DistRCT1)
+    mainreactNTP <- uni %>% 
+      filter(Region == RegRCT) %>% 
+      filter(Division == SDORCT1) %>% 
+      filter(Legislative.District %in% DistRCT1)   
     mainreactlevreg <- df %>% filter(Region == RegRCT) %>% filter(Level == Lev)
     mainreactlevdiv <- df %>% filter(Region == RegRCT) %>% filter(Division == SDORCT1) %>% filter(Level == Lev)
-    mainreactCR <- uni %>% filter(Region == RegRCT) %>% filter(Division == SDORCT1) %>% filter(Legislative.District == DistRCT1) %>% distinct(SchoolID, .keep_all = TRUE) %>% arrange(desc(SBPI))
-    mainreactSHS <- df %>% filter(Region == RegRCT) %>% filter(Division == SDORCT1) %>% filter(Legislative.District == DistRCT1) %>% filter(Level == "SHS") %>% distinct(SchoolID, .keep_all = TRUE) #Remove the filter of Pilot 2 CLEA4
+    mainreactCR <- uni %>% 
+      filter(Region == RegRCT) %>% 
+      filter(Division == SDORCT1) %>% 
+      filter(Legislative.District %in% DistRCT1) %>%   
+      distinct(SchoolID, .keep_all = TRUE) %>% 
+      arrange(desc(SBPI))
+    mainreactSHS <- df %>% 
+      filter(Region == RegRCT) %>% 
+      filter(Division == SDORCT1) %>% 
+      filter(Legislative.District %in% DistRCT1) %>%  
+      filter(Level == "SHS") %>% 
+      distinct(SchoolID, .keep_all = TRUE) # Remove the filter of Pilot 2 CLEA4
     mainreactind <- ind %>% filter(Region == RegRCT)
     mainreactEFD <- EFDMP %>% 
       filter(!is.na(Old.Region), Old.Region != "") %>% 
@@ -10073,7 +10520,7 @@ observeEvent(input$show_curricular_graphs, {
                     label = scales::comma(TotalCount)),
                 inherit.aes = FALSE,
                 size = 3.5, color = "black") +
-      labs(x = "Region",
+      labs(  title = "Division Distribution of Schools by Curricular Offering", x = "Region",
            y = "Number of Schools",
            fill = "School Type") +
       scale_y_continuous(labels = scales::comma) +
@@ -10142,7 +10589,7 @@ observeEvent(input$show_curricular_graphs, {
                     label = scales::comma(TotalCount)),
                 inherit.aes = FALSE,
                 size = 3.5, color = "black") +
-      labs(x = "Modified COC",
+      labs( title = "District Distribution of Schools by Curricular Offering", x = "Modified COC",
            y = "Count",
            fill = "Legislative District") +
       scale_y_continuous(labels = scales::comma) +
@@ -10227,7 +10674,7 @@ observeEvent(input$show_curricular_graphs, {
                 aes(x = School.Size.Typology, y = TotalCount * 1.05, 
                     label = scales::comma(TotalCount)),
                 inherit.aes = FALSE, size = 3.5, color = "black") +
-      labs(x = "School Size Typology",
+      labs( title = "Division-Level Distribution of Schools by Size Typology", x = "School Size Typology",
            y = "Number of Schools",
            fill = "Division") +
       scale_y_continuous(labels = scales::comma) +
@@ -10293,7 +10740,7 @@ observeEvent(input$show_curricular_graphs, {
                 aes(x = School.Size.Typology, y = TotalCount * 1.05, 
                     label = scales::comma(TotalCount)),
                 inherit.aes = FALSE, size = 3.5, color = "black") +
-      labs(x = "School Size Typology",
+      labs(title = "District Distribution of Schools by Size Typology", x = "School Size Typology",
            y = "Number of Schools",
            fill = "Legislative District") +
       scale_y_continuous(labels = scales::comma) +
@@ -11526,7 +11973,7 @@ observeEvent(input$show_curricular_graphs, {
       geom_bar(stat = "identity", color = "black") +
       geom_text(aes(y = Count * 1.05, label = scales::comma(Count)),
                 size = 3.5, color = "black") +
-      labs(x = "Division", y = "Classroom Shortage") +
+      labs(  title = "Division Classroom Shortage Distribution", x = "Division", y = "Classroom Shortage") +
       scale_y_continuous(labels = scales::comma) +
       theme_minimal() +
       theme(axis.text.x = element_text(size = 10, angle = 45, hjust = 1),
@@ -11578,7 +12025,7 @@ observeEvent(input$show_curricular_graphs, {
       geom_bar(stat = "identity", color = "black") +
       geom_text(aes(y = Count * 1.05, label = scales::comma(Count)),
                 size = 3.5, color = "black") +
-      labs(x = "Legislative District", y = "Classroom Shortage") +
+      labs(title = "District Classroom Shortage Distribution",x = "Legislative District", y = "Classroom Shortage") +
       scale_y_continuous(labels = scales::comma) +
       theme_minimal() +
       theme(axis.text.x = element_text(size = 10, angle = 45, hjust = 1),
