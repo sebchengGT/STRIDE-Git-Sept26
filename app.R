@@ -121,7 +121,7 @@ ui <- fluidPage(
     # Center text
     tags$div(
       class = "header-title",
-      h2("Department of Education"),
+      h2("DepEd STRIDE Dashboard"),
       p("STRIDE: Strategic Inventory for Deployment Efficiency")
     ),
     
@@ -469,7 +469,6 @@ observeEvent(input$show_curricular_graphs, {
                      )
                    )
               )),
-            
             accordion(
               accordion_panel(
                 title = "National Statistics",
@@ -954,7 +953,7 @@ observeEvent(input$show_curricular_graphs, {
               div( # This div acts as a container for the right-hand filter cards
                 card( # Filter by Category
                   card_header("Filter by Category"),
-                  height = 200,
+                  height = 400,
                   card_body(
                     pickerInput(
                       inputId = "selected_category",
@@ -977,7 +976,7 @@ observeEvent(input$show_curricular_graphs, {
                 ),
                 card( # Filter by Region
                   card_header("Filter by Region"),
-                  height = 200,
+                  height = 400,
                   card_body(
                     pickerInput(
                       inputId = "selected_region",
@@ -1000,7 +999,7 @@ observeEvent(input$show_curricular_graphs, {
                 ),
                 card( # Filter by Division
                   card_header("Filter by Division"),
-                  height = 200,
+                  height = 400,
                   card_body(
                     pickerInput(
                       inputId = "selected_division",
@@ -1154,7 +1153,7 @@ observeEvent(input$show_curricular_graphs, {
               # Card for Main Category Picker (combining General Info, Resource Shortage, Other)
               # Assuming this UI code is part of your sidebar or main UI definition
               
-              card(height = 200, # Adjusted height to 500
+              card(height = 400, # Adjusted height to 500
                    card_header(tags$b("Select Category")),
                    card_body( # Wrapped pickerInput in card_body
                      pickerInput(
@@ -1222,7 +1221,7 @@ observeEvent(input$show_curricular_graphs, {
               # Assuming this UI code is part of your sidebar or main UI definition
               
               # Region Filter
-              card(height = 200, # Adjusted height
+              card(height = 400, # Adjusted height
                    card_header(tags$b("Region Filter")),
                    card_body( # Added card_body
                      pickerInput(
@@ -1831,7 +1830,7 @@ observeEvent(input$show_curricular_graphs, {
         font-size: 22px;
         padding: 15px 20px;
         text-align: center;
-        background-color: #002D62;
+        background-color: #00234d;
         border-bottom: 2px solid #dee2e6;
       "
           ),
