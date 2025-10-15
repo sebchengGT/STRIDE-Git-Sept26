@@ -2671,29 +2671,29 @@ server <- function(input, output, session) {
         input_task_button("Facilities_Refresh", strong("Refresh"), class = "btn-success"),
         hr(),
         
-        # --- Accordion Wrapper ---
-        accordion(
-          open = "Facilities Overview",
-          
-          accordion_panel(
-            title = "Facilities Overview",
-            icon = bsicons::bs_icon("building"),
-            
-            # --- Start of Tabset ---
-            navset_tab(
-              nav_panel("Regional Breakdown",
-                        plotlyOutput("Facilities_Regional_Graph")
-              ),
-              nav_panel("Division Breakdown",
-                        plotlyOutput("Facilities_Division_Graph")
-              ),
-              nav_panel("Dataset",
-                        dataTableOutput("Facilities_Dataset")
-              )
-            )
-            # --- End of Tabset ---
-          )
-        ),
+        # # --- Accordion Wrapper ---
+        # accordion(
+        #   open = "Facilities Overview",
+        #   
+        #   accordion_panel(
+        #     title = "Facilities Overview",
+        #     icon = bsicons::bs_icon("building"),
+        #     
+        #     # --- Start of Tabset ---
+        #     navset_tab(
+        #       nav_panel("Regional Breakdown",
+        #                 plotlyOutput("Facilities_Regional_Graph")
+        #       ),
+        #       nav_panel("Division Breakdown",
+        #                 plotlyOutput("Facilities_Division_Graph")
+        #       ),
+        #       nav_panel("Dataset",
+        #                 dataTableOutput("Facilities_Dataset")
+        #       )
+        #     )
+        #     # --- End of Tabset ---
+        #   )
+        # ),
         
         hr(),
         
@@ -2718,29 +2718,29 @@ server <- function(input, output, session) {
         h3("Learner Congestion Mapping (SY 2023-2024)"),
         hr(),
         
-        # --- Accordion Wrapper ---
-        accordion(
-          open = "Learner Congestion Overview",
-          
-          accordion_panel(
-            title = "Learner Congestion Overview",
-            icon = bsicons::bs_icon("diagram-3-fill"),
-            
-            # --- Start of Tabset ---
-            navset_tab(
-              nav_panel("Regional Breakdown",
-                        plotlyOutput("Congest_Regional_Graph")
-              ),
-              nav_panel("Division Breakdown",
-                        plotlyOutput("Congest_Division_Graph")
-              ),
-              nav_panel("Dataset",
-                        dataTableOutput("Congest_Dataset")
-              )
-            )
-            # --- End of Tabset ---
-          )
-        ),
+        # # --- Accordion Wrapper ---
+        # accordion(
+        #   open = "Learner Congestion Overview",
+        #   
+        #   accordion_panel(
+        #     title = "Learner Congestion Overview",
+        #     icon = bsicons::bs_icon("diagram-3-fill"),
+        #     
+        #     # --- Start of Tabset ---
+        #     navset_tab(
+        #       nav_panel("Regional Breakdown",
+        #                 plotlyOutput("Congest_Regional_Graph")
+        #       ),
+        #       nav_panel("Division Breakdown",
+        #                 plotlyOutput("Congest_Division_Graph")
+        #       ),
+        #       nav_panel("Dataset",
+        #                 dataTableOutput("Congest_Dataset")
+        #       )
+        #     )
+        #     # --- End of Tabset ---
+        #   )
+        # ),
         
         hr(),
         
@@ -6898,145 +6898,126 @@ server <- function(input, output, session) {
       style(hoverinfo = "text")
   })
   
-  #Teaching Deployment Backend
+
+  # --- Teaching Deployment: Regional Breakdown Graph ---
   output$Teaching_Deployment_Region_Graph <- renderPlotly({
-    # --- Get filtered data ---
-    full_data <- Teaching_Deployment %>%   
-      rename(
-        "Deployment" = Deployment_Status, 
-        "Region" = Region_Name              
-      )
     
-    # --- Handle empty data ---
-    if (nrow(full_data) == 0) {
-      return(ggplotly(
-        ggplot() +
-          annotate("text", x = 0.5, y = 0.5, label = "No data available for Teaching Deployment") +
-          theme_void()
-      ))
-    }
-    
-    # --- Prepare grouped data ---
-    plot_data <- full_data %>%
-      group_by(Region, Deployment) %>%
-      summarise(
-        Count = sum(as.numeric(Count), na.rm = TRUE),
-        .groups = "drop"
-      )
-    
-    # --- Compute total per region for label placement ---
-    region_totals <- plot_data %>%
-      group_by(Region) %>%
-      summarise(Total = sum(Count, na.rm = TRUE), .groups = "drop")
-    
-    # --- Plot ---
-    p <- ggplot(plot_data,
-                aes(
-                  x = reorder(Region, -Count),
-                  y = Count,
-                  fill = Deployment,
-                  text = paste(
-                    "Region:", Region,
-                    "<br>Deployment:", Deployment,
-                    "<br>Count:", scales::comma(Count)
-                  )
-                )) +
-      geom_bar(stat = "identity", position = "stack", color = "black", size = 0.25) +
-      geom_text(
-        data = region_totals,
-        aes(x = Region, y = Total * 1.05, label = scales::comma(Total)),
-        inherit.aes = FALSE,
-        size = 3.5,
-        color = "black"
-      ) +
-      labs(
-        title = "Teaching Deployment by Region",
-        x = "Region",
-        y = "Count",
-        fill = "Deployment Type"
-      ) +
-      scale_y_continuous(labels = scales::comma) +
-      theme_minimal() +
-      theme(
-        plot.title = element_text(hjust = 0.5, size = 14, face = "bold"),
-        axis.text.x = element_text(size = 10, angle = 45, hjust = 1),
-        legend.position = "right"
-      )
-    
-    ggplotly(p, tooltip = "text") %>%
-      layout(
-        hoverlabel = list(bgcolor = "white"),
-        margin = list(b = 100)
-      ) %>%
-      style(hoverinfo = "text")
-  })
-  
-  output$Teaching_Deployment_Division_Graph1 <- renderPlotly({
-    # --- Use filtered dataset (replace with your reactive data if available) ---
-    current_filtered_data <- Teaching_Deployment  # e.g. filtered_Teaching_Deployment_division()
+    # --- Use the full dataset instead of the filtered one ---
+    current_filtered_data <- df  
     
     # --- Empty Data Handling ---
     if (nrow(current_filtered_data) == 0) {
       return(ggplotly(
         ggplot() +
-          annotate("text", x = 0.5, y = 0.5, label = "No data for selected divisions") +
+          annotate("text", x = 0.5, y = 0.5,
+                   label = "No data available for Teaching Deployment",
+                   size = 5, color = "red") +
           theme_void()
       ))
     }
     
-    # --- Data preparation ---
+    # --- Prepare grouped data (all regions) ---
     plot_data <- current_filtered_data %>%
-      group_by(Division, Deployment) %>%
-      summarise(Count = sum(as.numeric(Count), na.rm = TRUE), .groups = "drop") %>%
-      arrange(desc(Count)) %>%
-      slice_head(n = 20)  # Keep only top 20 divisions
+      group_by(Region) %>%
+      summarise(TeacherShortage = sum(as.numeric(TeacherShortage), na.rm = TRUE),
+                .groups = "drop")
     
-    # --- Compute division totals for labels ---
-    division_totals <- plot_data %>%
-      group_by(Division) %>%
-      summarise(Total = sum(Count, na.rm = TRUE), .groups = "drop")
+    # --- Add labels ---
+    plot_data <- plot_data %>%
+      mutate(Label = scales::comma(TeacherShortage))
     
-    # --- Create plot ---
+    # --- Plot ---
     p <- ggplot(plot_data,
-                aes(
-                  x = reorder(Division, -Count),
-                  y = Count,
-                  fill = Deployment,
-                  text = paste(
-                    "Division:", Division,
-                    "<br>Deployment:", Deployment,
-                    "<br>Count:", scales::comma(Count)
-                  )
-                )) +
-      geom_bar(stat = "identity", position = "stack", color = "black", size = 0.25) +
-      geom_text(
-        data = division_totals,
-        aes(x = Division, y = Total * 1.05, label = scales::comma(Total)),
-        inherit.aes = FALSE,
-        size = 3.5,
-        color = "black"
-      ) +
+                aes(x = reorder(Region, -TeacherShortage),
+                    y = TeacherShortage,
+                    fill = Region,
+                    text = paste("Region:", Region,
+                                 "<br>Teacher Shortage:", scales::comma(TeacherShortage)))) +
+      geom_bar(stat = "identity", color = "black") +
+      geom_text(aes(label = Label), vjust = -0.5, size = 3.5, color = "black") +
       labs(
-        title = "Top 20 Divisions: Teaching Deployment",
-        x = "Division",
-        y = "Count",
-        fill = "Deployment Type"
+        title = "Teacher Shortage by Region",
+        x = "Region",
+        y = "Number of Teacher Shortages"
       ) +
       scale_y_continuous(labels = scales::comma) +
       theme_minimal() +
       theme(
         plot.title = element_text(hjust = 0.5, size = 14, face = "bold"),
         axis.text.x = element_text(size = 10, angle = 45, hjust = 1),
-        legend.position = "right"
+        legend.position = "none"
       )
     
-    # --- Convert to Plotly ---
     ggplotly(p, tooltip = "text") %>%
       layout(
         hoverlabel = list(bgcolor = "white"),
         margin = list(b = 100)
-      ) %>%
-      style(hoverinfo = "text")
+      )
+  })
+  
+  # --- Teaching Deployment: Priority Division Graph ---
+  output$Teaching_Deployment_Division_Graph1 <- renderPlotly({
+    
+    # --- Use the full dataset  ---
+    current_filtered_data <- df
+    
+    # --- Empty Data Handling ---
+    if (nrow(current_filtered_data) == 0) {
+      return(ggplotly(
+        ggplot() +
+          annotate("text", x = 0.5, y = 0.5,
+                   label = "No data for selected regions/divisions") +
+          theme_void()
+      ))
+    }
+    
+    # --- Prepare data for plotting ---
+    plot_data <- current_filtered_data %>%
+      group_by(Division) %>%
+      summarise(Count = sum(as.numeric(TeacherShortage), na.rm = TRUE), .groups = 'drop') %>%
+      arrange(desc(Count)) %>%
+      slice_head(n = 20) 
+    
+    # --- Create ggplot ---
+    p <- ggplot(plot_data,
+                aes(x = reorder(Division, -Count),
+                    y = Count,
+                    fill = Division,
+                    text = paste(
+                      "Division: ", Division,
+                      "<br>Teacher Shortage: ", scales::comma(Count)
+                    ))) +
+      geom_bar(stat = "identity", color = "black") +
+      geom_text(data = plot_data,
+                aes(x = Division, y = Count * 1.05,
+                    label = scales::comma(Count)),
+                inherit.aes = FALSE,
+                size = 3.5,
+                color = "black") +
+      labs(
+        title = "Top 20 Divisions by Teacher Shortage (Teaching Deployment)",
+        x = "Division",
+        y = "Teacher Shortage"
+      ) +
+      scale_y_continuous(labels = scales::comma) +
+      theme_minimal() +
+      theme(
+        plot.title = element_text(
+          hjust = 0.5,
+          face = "bold",
+          size = 14,
+          color = "black"   
+        ),
+        axis.text.x = element_text(size = 10, angle = 45, hjust = 1),
+        legend.position = "none"
+      )
+    
+    # --- Convert ggplot to Plotly ---
+    ggplotly(p, tooltip = "text", source = "teachingDeploymentDivisionPlot") %>%
+      layout(
+        hoverlabel = list(bgcolor = "white"),
+        margin = list(b = 100)
+      )
   })
   
   #Classroom Shortage
@@ -7053,7 +7034,6 @@ server <- function(input, output, session) {
     }
     
     # Prepare the data for plotting
-    # Ensure 'Estimated_CL_Shortage' is treated as numeric
     plot_data <- current_filtered_data %>%
       group_by(Region) %>%
       summarise(Count = sum(as.numeric(Estimated_CL_Shortage), na.rm = TRUE), .groups = 'drop')
@@ -7105,7 +7085,7 @@ server <- function(input, output, session) {
       summarise(Count = sum(as.numeric(Estimated_CL_Shortage), na.rm = TRUE), .groups = 'drop') %>% 
       arrange(desc(Count)) %>%
       # Keep only the top 20 rows (divisions)
-      slice_head(n = 25)
+      slice_head(n = 20)
     
     # Create the ggplot
     p <- ggplot(plot_data,
@@ -9378,11 +9358,11 @@ server <- function(input, output, session) {
   
   
   observeEvent(input$Mapping_Run, {
-    
+     
     output$TeacherShortage_Mapping <- renderLeaflet({
       p = colorFactor(palette = c("red","deepskyblue","green"),domain = c("Shortage","Excess","Balanced"), ordered = T)
       leaflet() %>%
-        setView(lng = 122, lat = 13, zoom =6) %>%
+        setView(lng = 122, lat = 13, zoom =7) %>%
         addProviderTiles(providers$Esri.WorldImagery, group = "Satellite") %>% 
         addProviderTiles(providers$CartoDB.Positron, group = "Road Map") %>% 
         addMeasure(position = "topright", primaryLengthUnit = "kilometers", primaryAreaUnit = "sqmeters") %>% 
