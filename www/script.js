@@ -86,38 +86,6 @@ $(document).ready(function() {
   }
 });
 
-// === SAFE SMOOTH DROP-IN FOR LEAFLET MARKERS ===
-// === RELIABLE LEAFLET MARKER DROP ANIMATION ===
-$(document).on("shiny:connected", function() {
-  // Wait for map container to exist
-  const waitForMap = setInterval(() => {
-    const mapPane = document.querySelector("#TextMapping .leaflet-marker-pane");
-    if (mapPane) {
-      clearInterval(waitForMap);
-
-      // Watch for new marker icons being added inside the map
-      const observer = new MutationObserver((mutationsList) => {
-        mutationsList.forEach(mutation => {
-          mutation.addedNodes.forEach(node => {
-            if (node.classList && node.classList.contains("leaflet-marker-icon")) {
-              // Animate each new marker
-              const markers = document.querySelectorAll("#TextMapping .leaflet-marker-icon");
-              markers.forEach((marker, index) => {
-                marker.style.opacity = "0";
-                marker.style.transform = "translateY(-10px) scale(0.9)";
-                marker.style.animation = "dropMarker 0.6s ease-out forwards";
-                marker.style.animationDelay = `${index * 0.1}s`; // delay between markers
-              });
-            }
-          });
-        });
-      });
-
-      observer.observe(mapPane, { childList: true });
-    }
-  }, 300);
-});
-
 
 // === REPLAY SIDEBAR ANIMATION ON NAV SWITCH ===
 $(document).on("click", ".nav-link", function() {
