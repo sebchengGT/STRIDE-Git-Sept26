@@ -5,7 +5,10 @@
 #testcommitoctober120252
 #TESTINGGGGGGGGGGGGGGGGGGGGGGGGG
 #oct 13, 2025
+<<<<<<< HEAD
 #eeee
+=======
+>>>>>>> fab1c17b4321a1e135fd1f33500315891aa4c8a5
 #updated as of oct 15,2025
 library(tidyverse)
 library(DT)
