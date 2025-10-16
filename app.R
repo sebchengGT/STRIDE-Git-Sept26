@@ -5,10 +5,7 @@
 #testcommitoctober120252
 #TESTINGGGGGGGGGGGGGGGGGGGGGGGGG
 #oct 13, 2025
-<<<<<<< HEAD
 #eeee
-=======
->>>>>>> fab1c17b4321a1e135fd1f33500315891aa4c8a5
 #updated as of oct 15,2025
 library(tidyverse)
 library(DT)
@@ -221,13 +218,24 @@ ui <- page_fluid(
       id = "data_input_content",
       uiOutput("STRIDE_data"))),
   
-  # Loading overlay (The logic to hide it is placed below the dynamic content)
-  div(
+  tags$div(
     id = "loading-overlay",
-    class = "loading-overlay",
-    img(src = "LOAD.gif", class = "loading-gif"),
+    style = "
+    display: none;
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background-color: #ffffff;
+    z-index: 99999;
+    text-align: center;
+  ",
+    tags$div(
+      style = "position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+             color: black; font-size: 1.3em;",
+      tags$img(src = "LOAD.gif", height = "80px"),  # 👈 replace with your GIF or logo
+      tags$p(id = "loading-text", "Welcome to STRIDE...")
+    )
   ),
-  tags$script("$('#loading-overlay').hide();"),
   
   # Footer (always visible)
   tags$footer(
@@ -20987,7 +20995,14 @@ authentication_server <- function(input, output, session, user_status,
     if (nrow(user_row) == 1 && user_row$Password == input$login_pass) {
       # Login successful for ANY station
       user_status("authenticated")
-      authenticated_user(input$login_user) # 💡 CRITICAL: Store the logged-in username
+      authenticated_user(input$login_user)
+      
+      # 🔥 Trigger loader for dashboard transition
+      session$sendCustomMessage("showLoader", "Welcome to Stride...")
+      print(">>> showLoader triggered")
+      later::later(function() {
+      session$sendCustomMessage("hideLoader", NULL)
+      }, 2) # 💡 CRITICAL: Store the logged-in username
       
       # Clear the login fields on success
       updateTextInput(session, "login_user", value = "")
@@ -21105,6 +21120,10 @@ authentication_server <- function(input, output, session, user_status,
       db_trigger(db_trigger() + 1)  
       user_status("authenticated")
       authenticated_user(input$reg_user)
+      
+      # 🔥 Trigger loader after registration success
+      session$sendCustomMessage("showLoader", "Setting up your account...")
+      session$sendCustomMessage("hideLoader", NULL)
     }
   })
   

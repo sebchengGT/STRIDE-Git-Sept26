@@ -113,6 +113,37 @@ $(document).on("click", ".nav-link", function() {
   });
 });
 
+// === UNIVERSAL LOADING CONTROL ===
+function showLoader(text) {
+  if (text) $("#loading-text").text(text);
+  $("#loading-overlay").stop(true, true).fadeIn(200);
+}
+
+function hideLoader() {
+  $("#loading-overlay").stop(true, true).fadeOut(400);
+}
+
+// Custom messages from R
+Shiny.addCustomMessageHandler("showLoader", function(message) {
+  showLoader(message);
+});
+
+Shiny.addCustomMessageHandler("hideLoader", function(message) {
+  hideLoader();
+});
+
+Shiny.addCustomMessageHandler("addDashboardClass", function(message) {
+  $("body").addClass("dashboard-bg");
+});
+
+// Auto-hide loader when Shiny finishes rendering
+$(document).on("shiny:idle", function() {
+  if ($("body").hasClass("dashboard-bg")) {
+    hideLoader();
+  }
+});
+
+
 
 
 
