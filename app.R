@@ -414,11 +414,7 @@ server <- function(input, output, session) {
       # --- CUSTOM CSS FOR FLOATING SIDEBAR ---
       tags$head(
         tags$style(HTML("
-      #sidebar {
-        position: -webkit-sticky; /* For Safari */
-        position: sticky;
-        top: 20px; /* Adjust this value for padding from the top */
-      }
+     
       #submit:disabled {
         background-color: #cccccc; /* Light gray background */
         border-color: #cccccc;    /* Matching border color */
