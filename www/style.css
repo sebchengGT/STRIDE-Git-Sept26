@@ -97,7 +97,7 @@ body.dashboard-bg {
   text-align: center;
   position: sticky;
   top: 0;
-  z-index: 9999 !important;
+  z-index: 10000; /* slightly higher than navbar */
 }
 
 .app-header h2 {
@@ -117,10 +117,18 @@ body.dashboard-bg {
   width: auto;
 }
 
-/* Right logo */
 .header-logo-right {
   height: 100px;
   width: auto;
+}
+
+.bslib-navbar,
+.navbar {
+  position: sticky !important;
+  top: 115px; /* match or slightly exceed header height */
+  z-index: 9999;
+  background-color: #E6A545 !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
 }
 
 /* Well box */
@@ -513,13 +521,19 @@ body.dashboard-bg::before {
   box-shadow: 0 4px 8px rgba(0,0,0,0.15);
 }
 
+/* === FIXED SIDEBAR BELOW HEADER + NAVBAR === */
 .bslib-sidebar-layout > .sidebar {
-  position: sticky !important;   /* Keeps it visible on screen */
-  top: 0;                        /* Stick to top */
-  max-height: 100vh;             /* Full viewport height */
-  overflow-y: auto !important;   /* Scrolls internally */
-  scrollbar-width: thin;         /* Optional: thin scrollbar */
-  scrollbar-color: #002D62 #f9fafc; /* DepEd blue scrollbar */
+  position: -webkit-sticky !important; /* For Safari */
+  position: sticky !important;
+  top: 185px; /* offset to sit below header + navbar */
+  align-self: flex-start;
+  max-height: calc(100vh - 185px);
+  overflow-y: auto !important;
+  background-color: #23558f; /* same as your theme */
+  z-index: 10; /* below navbar/header */
+  scrollbar-width: thin;
+  scrollbar-color: #002D62 #f9fafc;
+  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.1);
 }
 
 /* === LEAFLET MARKER FADE-IN ANIMATION === */
