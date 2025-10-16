@@ -27,48 +27,6 @@ function syncDashboardScale() {
 window.addEventListener('resize', syncDashboardScale);
 window.addEventListener('load', syncDashboardScale);
 
-// --- STRIDE Loading Screen Control ---
-// --- STRIDE Loading Screen Control (Only after login) ---
-$(document).ready(function () {
-
-  // Function to show loader only in dashboard mode
-  function showLoader(text) {
-    if ($("body").hasClass("dashboard-bg")) {
-      if (text) $("#loading-text").text(text);
-      $("#loading-overlay").fadeIn(150);
-    }
-  }
-
-  function hideLoader() {
-    if ($("body").hasClass("dashboard-bg")) {
-      setTimeout(function () {
-        $("#loading-overlay").fadeOut(500);
-      }, 500);
-    }
-  }
-
-  // --- STRIDE Loading Screen Control (Only after login) ---
-$(document).on("shiny:connected", function() {
-  // Only show loader if user is already in dashboard mode
-  if ($("body").hasClass("dashboard-bg")) {
-    $("#loading-overlay").fadeIn(300);
-  } else {
-    $("#loading-overlay").hide(); // Hide loader on login page
-  }
-});
-
-$(document).on("shiny:value", function() {
-  // Fade out loader only when in dashboard
-  if ($("body").hasClass("dashboard-bg")) {
-    setTimeout(function() {
-      $("#loading-overlay").fadeOut(800);
-      $("body").addClass("loaded");
-    }, 600);
-  }
-});
-
-
-});
 
 // Auto-show dropdowns on hover (desktop only)
 $(document).ready(function() {
@@ -84,38 +42,6 @@ $(document).ready(function() {
       }
     );
   }
-});
-
-// === SAFE SMOOTH DROP-IN FOR LEAFLET MARKERS ===
-// === RELIABLE LEAFLET MARKER DROP ANIMATION ===
-$(document).on("shiny:connected", function() {
-  // Wait for map container to exist
-  const waitForMap = setInterval(() => {
-    const mapPane = document.querySelector("#TextMapping .leaflet-marker-pane");
-    if (mapPane) {
-      clearInterval(waitForMap);
-
-      // Watch for new marker icons being added inside the map
-      const observer = new MutationObserver((mutationsList) => {
-        mutationsList.forEach(mutation => {
-          mutation.addedNodes.forEach(node => {
-            if (node.classList && node.classList.contains("leaflet-marker-icon")) {
-              // Animate each new marker
-              const markers = document.querySelectorAll("#TextMapping .leaflet-marker-icon");
-              markers.forEach((marker, index) => {
-                marker.style.opacity = "0";
-                marker.style.transform = "translateY(-10px) scale(0.9)";
-                marker.style.animation = "dropMarker 0.6s ease-out forwards";
-                marker.style.animationDelay = `${index * 0.1}s`; // delay between markers
-              });
-            }
-          });
-        });
-      });
-
-      observer.observe(mapPane, { childList: true });
-    }
-  }, 300);
 });
 
 
@@ -145,6 +71,47 @@ $(document).on("click", ".nav-link", function() {
   });
 });
 
+// === STRIDE UNIVERSAL LOADING CONTROL ===
+function showLoader(text) {
+  if (text) $("#loading-text").text(text);
+  $("#loading-overlay").stop(true, true).fadeIn(200);
+}
+
+function hideLoader() {
+  $("#loading-overlay").stop(true, true).fadeOut(400);
+}
+
+// --- Register message handlers once ---
+Shiny.addCustomMessageHandler("showLoader", function(message) {
+  showLoader(message);
+});
+
+Shiny.addCustomMessageHandler("hideLoader", function(message) {
+  hideLoader();
+});
+
+Shiny.addCustomMessageHandler("addDashboardClass", function(message) {
+  $("body").addClass("dashboard-bg");
+});
+
+// --- Auto-hide loader when Shiny finishes rendering ---
+$(document).on("shiny:connected", function() {
+  setTimeout(() => hideLoader(), 2500);
+});
+
+
+// --- Ensure overlay hidden on page load ---
+$(window).on("load", function() {
+  $("#loading-overlay").hide();
+});
+$(document).on("shiny:idle", function() {
+  console.log("✅ shiny:idle event fired");
+});
+
+$(document).on("shiny:idle", function() {
+  console.log("✅ shiny:idle detected");
+  $("#loading-overlay").fadeOut(400);
+});
 
 
 
