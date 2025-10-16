@@ -1948,18 +1948,36 @@ server <- function(input, output, session) {
               pickerInput("School_Data_Toggles", strong("School Information Data Toggles"), 
                           choices = c("School Size Typology" = "School.Size.Typology", 
                                       "Curricular Offering" = "Modified.COC"),
-                          multiple = TRUE, options = list(`actions-box` = TRUE)),
+                          multiple = TRUE,
+                          options = pickerOptions(
+                            `actions-box` = TRUE,
+                            dropupAuto = FALSE,
+                            dropup = FALSE
+                          )
+              ),
               
               pickerInput("Teaching_Data_Toggles", strong("Teaching Data Toggles"), 
                           choices = c("Total Teachers" = "TotalTeachers", 
                                       "Teacher Excess" = "Total.Excess", 
                                       "Teacher Shortage" = "Total.Shortage"),
-                          multiple = TRUE, options = list(`actions-box` = TRUE)),
+                          multiple = TRUE,
+                          options = pickerOptions(
+                            `actions-box` = TRUE,
+                            dropupAuto = FALSE,
+                            dropup = FALSE
+                          )
+              ),
               
               pickerInput("NTP_Data_Toggles", strong("Non-teaching Data Toggles"), 
                           choices = c("COS" = "Outlier.Status", 
                                       "AOII Clustering Status" = "Clustering.Status"),
-                          multiple = TRUE, options = list(`actions-box` = TRUE)),
+                          multiple = TRUE,
+                          options = pickerOptions(
+                            `actions-box` = TRUE,
+                            dropupAuto = FALSE,
+                            dropup = FALSE
+                          )
+              ),
               
               pickerInput("Enrolment_Data_Toggles", strong("Enrolment Data Toggles"), 
                           choices = c("Total Enrolment" = "TotalEnrolment", "Kinder" = "Kinder", 
@@ -1968,14 +1986,26 @@ server <- function(input, output, session) {
                                       "Grade 7" = "G7", "Grade 8" = "G8", 
                                       "Grade 9" = "G9", "Grade 10" = "G10", 
                                       "Grade 11" = "G11", "Grade 12" = "G12"),
-                          multiple = TRUE, options = list(`actions-box` = TRUE)),
+                          multiple = TRUE,
+                          options = pickerOptions(
+                            `actions-box` = TRUE,
+                            dropupAuto = FALSE,
+                            dropup = FALSE
+                          )
+              ),
               
               pickerInput("Specialization_Data_Toggles", strong("Specialization Data Toggles"), 
                           choices = c("English" = "English", "Mathematics" = "Mathematics", 
                                       "Science" = "Science", 
                                       "Biological Sciences" = "Biological.Sciences", 
                                       "Physical Sciences" = "Physical.Sciences"),
-                          multiple = TRUE, options = list(`actions-box` = TRUE)),
+                          multiple = TRUE,
+                          options = pickerOptions(
+                            `actions-box` = TRUE,
+                            dropupAuto = FALSE,
+                            dropup = FALSE
+                          )
+              ),
               
               pickerInput("EFD_Data_Toggles", strong("Infrastructure Data Toggles"), 
                           choices = c("Number of Buildings" = "Buildings", 
@@ -1992,8 +2022,13 @@ server <- function(input, output, session) {
                                       "School Building Priority Index" = "SBPI", 
                                       "Total Seats" = "Total.Seats.2023.2024", 
                                       "Total Seats Shortage" = "Total.Seats.Shortage.2023.2024"),
-                          multiple = TRUE, options = list(`actions-box` = TRUE))
-            ),
+                          multiple = TRUE,
+                          options = pickerOptions(
+                            `actions-box` = TRUE,
+                            dropupAuto = FALSE,
+                            dropup = FALSE
+                          ))
+              ),
             layout_columns(
               card(
                 card_header(strong("HROD Data Panel")),
@@ -2173,22 +2208,72 @@ server <- function(input, output, session) {
         icon = bs_icon("map"),
         layout_sidebar(
           sidebar = sidebar(
-            width = 375, # Extend sidebar width by 25%
+            width = 375,
             title = "Resource Mapping Filters",
             
             # --- Data Filters Card for Resource Mapping ---
-            card(height = 400,
-                 card_header(tags$b("Data Filters")), # NEW: Card header for filters
-                 selectInput("resource_map_region", "Region:",
-                             choices = c("Region I" = "Region I","Region II" = "Region II","Region III" = "Region III","Region IV-A" = "Region IV-A","MIMAROPA" = "MIMAROPA","Region V" = "Region V","Region VI" = "Region VI","NIR" = "NIR","Region VII" = "Region VII","Region VIII" = "Region VIII","Region IX" = "Region IX","Region X" = "Region X","Region XI" = "Region XI","Region XII" = "Region XII","CARAGA" = "CARAGA","CAR" = "CAR","NCR" = "NCR"),
-                             selected = "Region I"),
-                 uiOutput("resource_map_division"),
-                 uiOutput("resource_map_legislative_district"),
-                 input_task_button("Mapping_Run", strong("Show Selection"), class = "btn-warning"),
+            card(
+              height = 400,
+              card_header(tags$b("Data Filters")),
+              
+              # Region Picker
+              pickerInput(
+                inputId = "resource_map_region",
+                label = "Region:",
+                choices = c(
+                  "Region I" = "Region I","Region II" = "Region II","Region III" = "Region III",
+                  "Region IV-A" = "Region IV-A","MIMAROPA" = "MIMAROPA","Region V" = "Region V",
+                  "Region VI" = "Region VI","NIR" = "NIR","Region VII" = "Region VII",
+                  "Region VIII" = "Region VIII","Region IX" = "Region IX","Region X" = "Region X",
+                  "Region XI" = "Region XI","Region XII" = "Region XII","CARAGA" = "CARAGA",
+                  "CAR" = "CAR","NCR" = "NCR"
+                ),
+                selected = "Region I",
+                multiple = FALSE,
+                options = list(
+                  `actions-box` = FALSE,
+                  `none-selected-text` = "Select a region",
+                  dropupAuto = FALSE,
+                  dropup = FALSE
+                )
+              ),
+              
+              # Division Picker
+              pickerInput(
+                inputId = "Resource_SDO",
+                label = "Select a Division:",
+                choices = NULL,
+                selected = NULL,
+                multiple = FALSE,
+                options = list(
+                  `actions-box` = FALSE,
+                  `none-selected-text` = "Select a division",
+                  dropupAuto = FALSE,
+                  dropup = FALSE
+                )
+              ),
+              
+              # District Picker
+              pickerInput(
+                inputId = "Resource_LegDist",
+                label = "Select Legislative District(s):",
+                choices = NULL,
+                selected = NULL,
+                multiple = TRUE,
+                options = list(
+                  `actions-box` = TRUE,
+                  `none-selected-text` = "Select one or more districts",
+                  dropupAuto = FALSE,
+                  dropup = FALSE
+                )
+              ),
+              
+              input_task_button("Mapping_Run", strong("Show Selection"), class = "btn-warning")
             ),
+            
             hr(),
             
-            # Radio Buttons for resource types
+            # Resource Types
             card(
               card_header(tags$b("Resource Types")),
               radioButtons(
@@ -2208,14 +2293,13 @@ server <- function(input, output, session) {
             )
           ),
           
-          # 2. Main Panel: This is now a single uiOutput that will be rendered dynamically
+          # Main Panel
           mainPanel(
             width = 12,
-            uiOutput("dynamic_resource_panel") # This will be generated by renderUI on the server
+            uiOutput("dynamic_resource_panel")
           )
         )
       ),
-      
       # --- Last Top-Level Tab: About ---
       nav_panel(
         title = tags$b("About"),
@@ -2852,54 +2936,39 @@ server <- function(input, output, session) {
     filtered_division <- c(df[df$Region==input$cloud_dashboard_region_filter,"Division"])
     selectInput("cloud_Dashboard_SDO",HTML(paste0("Division ", em(style = "font-size: 0.8em;", "(for Legislative District data):"))), filtered_division, selected = filtered_division[1])})
   
-  # --- Division UI ---
-  output$resource_map_division <- renderUI({
-    filtered_division <- c(df[df$Region == input$resource_map_region, "Division"])
+  # --- Update Division Picker when Region changes ---
+  observeEvent(input$resource_map_region, {
+    filtered_division <- unique(df[df$Region == input$resource_map_region, "Division"])
     
-    selectInput(
-      "Resource_SDO",
-      "Select a Division:",
+    shinyWidgets::updatePickerInput(
+      session = session,
+      inputId = "Resource_SDO",
       choices = filtered_division,
-      selected = filtered_division[1]
+      selected = if (length(filtered_division) > 0) filtered_division[1] else NULL
+    )
+    
+    # Reset district when region changes
+    shinyWidgets::updatePickerInput(
+      session = session,
+      inputId = "Resource_LegDist",
+      choices = NULL,
+      selected = NULL
     )
   })
   
-  output$explorer_division<- renderUI({
-    filtered_division <- c(df[df$Region==input$explorer_region,"Division"])
-    selectInput("Explorer_SDO","Select a Division:", filtered_division, selected = filtered_division[1])})
-  
-  # --- Legislative District UI ---
-  output$resource_map_legislative_district <- renderUI({
-    
-    if (is.null(input$Resource_SDO) || input$Resource_SDO == "Select Input") {
-      pickerInput(
-        inputId = "Resource_LegDist",
-        label = "Select Legislative District(s):",
-        choices = "Select Input",
-        selected = NULL,
-        multiple = TRUE,
-        options = list(
-          `actions-box` = TRUE,
-          `none-selected-text` = "Select one or more districts"
-        )
-      )
-    } else {
+  # --- Update District Picker when Division changes ---
+  observeEvent(input$Resource_SDO, {
+    if (!is.null(input$Resource_SDO) && input$Resource_SDO != "") {
       filtered_district <- unique(df[df$Division == input$Resource_SDO, "Legislative.District"])
-      pickerInput(
+      
+      shinyWidgets::updatePickerInput(
+        session = session,
         inputId = "Resource_LegDist",
-        label = "Select Legislative District(s):",
         choices = filtered_district,
-        selected = filtered_district[1], # or `selected = filtered_district` to select all by default
-        multiple = TRUE,
-        options = list(
-          `actions-box` = TRUE,
-          `none-selected-text` = "Select one or more districts"
-        )
+        selected = if (length(filtered_district) > 0) filtered_district[1] else NULL
       )
     }
   })
-  
-  
   # Reactive value to store uploaded data
   uploaded_data <- reactiveVal(NULL)
   
@@ -7732,73 +7801,101 @@ server <- function(input, output, session) {
   
   output$LMS_Dataset  <- DT::renderDT(server = TRUE, {
     
-    data_to_display <- LMS %>% filter(LMS == 1) %>% select(Region, Division, School_Name, Total_Enrollment,Instructional_Rooms, Estimated_CL_Shortage, Buildable_space) %>% rename("School Name" = School_Name,"Total Enrolment" = Total_Enrollment, "Number of Classrooms" = Instructional_Rooms, "Estimated Classroom Shortage" = Estimated_CL_Shortage, "Buildable Space" = Buildable_space)
+    data_to_display <- LMS %>%
+      filter(LMS == 1) %>%
+      select(
+        Region,
+        Division,
+        School_Name,
+        Total_Enrollment,
+        Instructional_Rooms,
+        Estimated_CL_Shortage,
+        Buildable_space
+      ) %>%
+      rename(
+        "School Name" = School_Name,
+        "Total Enrolment" = Total_Enrollment,
+        "Number of Classrooms" = Instructional_Rooms,
+        "Estimated Classroom Shortage" = Estimated_CL_Shortage,
+        "Buildable Space" = Buildable_space
+      ) %>%
+      # ✅ Convert 0/1 values to Yes/No for Buildable Space
+      mutate(`Buildable Space` = ifelse(`Buildable Space` == 1, "Yes", "No"))
     
-    # You might want to add a check for NULL or empty data if filtered_school_data_division()
-    # could return such states and you want to display a message or an empty table.
+    # Handle empty data
     if (is.null(data_to_display) || nrow(data_to_display) == 0) {
       return(DT::datatable(
         data.frame("Message" = "No data available based on current selection."),
-        options = list(dom = 't'), # 't' hides all controls, showing only the table body
+        options = list(dom = 't'),
         rownames = FALSE
       ))
     }
     
+    # Render DataTable
     DT::datatable(
-      data_to_display, # Use the output of your reactive expression
+      data_to_display,
       options = list(
-        # Set the 'Buttons' extension
         extensions = 'Buttons',
-        
-        # Place dom and buttons inside the options list
-        dom = 'Bfrtip', 
+        dom = 'Bfrtip',
         buttons = list('csv', 'excel', 'pdf', 'print'),
-        
-        pageLength = 10,       # Number of rows to display per page
-        lengthMenu = c(5, 10, 15, 20), # Options for number of rows per page
-        searching = TRUE,      # Enable search box
-        filter = "top",        # Add filter inputs below column headers
-        paging = TRUE,         # Enable pagination
-        info = TRUE,           # Display table information
-        ordering = TRUE        # Enable column sorting
+        pageLength = 10,
+        lengthMenu = c(5, 10, 15, 20),
+        searching = TRUE,
+        filter = "top",
+        paging = TRUE,
+        info = TRUE,
+        ordering = TRUE
       ),
-      rownames = FALSE # Do not display row names
+      rownames = FALSE
     )
   })
   
+  
   output$Classroom_Shortage_Dataset  <- DT::renderDT(server = TRUE, {
     
-    data_to_display <- LMS %>% select(Region, Division, School_Name, Total_Enrollment,Instructional_Rooms, Estimated_CL_Shortage, Buildable_space) %>% rename("School Name" = School_Name,"Total Enrolment" = Total_Enrollment, "Number of Classrooms" = Instructional_Rooms, "Estimated Classroom Shortage" = Estimated_CL_Shortage, "Buildable Space" = Buildable_space)
+    data_to_display <- LMS %>%
+      select(
+        Region,
+        Division,
+        School_Name,
+        Total_Enrollment,
+        Instructional_Rooms,
+        Estimated_CL_Shortage,
+        Buildable_space
+      ) %>%
+      rename(
+        "School Name" = School_Name,
+        "Total Enrolment" = Total_Enrollment,
+        "Number of Classrooms" = Instructional_Rooms,
+        "Estimated Classroom Shortage" = Estimated_CL_Shortage,
+        "Buildable Space" = Buildable_space
+      ) %>%
+      # ✅ Convert 0/1 to Yes/No for Buildable Space
+      mutate(`Buildable Space` = ifelse(`Buildable Space` == 1, "Yes", "No"))
     
-    # You might want to add a check for NULL or empty data if filtered_school_data_division()
-    # could return such states and you want to display a message or an empty table.
     if (is.null(data_to_display) || nrow(data_to_display) == 0) {
       return(DT::datatable(
         data.frame("Message" = "No data available based on current selection."),
-        options = list(dom = 't'), # 't' hides all controls, showing only the table body
+        options = list(dom = 't'),
         rownames = FALSE
       ))
     }
     
     DT::datatable(
-      data_to_display, # Use the output of your reactive expression
+      data_to_display,
       options = list(
-        # Set the 'Buttons' extension
         extensions = 'Buttons',
-        
-        # Place dom and buttons inside the options list
-        dom = 'Bfrtip', 
+        dom = 'Bfrtip',
         buttons = list('csv', 'excel', 'pdf', 'print'),
-        
-        pageLength = 10,       # Number of rows to display per page
-        lengthMenu = c(5, 10, 15, 20), # Options for number of rows per page
-        searching = TRUE,      # Enable search box
-        filter = "top",        # Add filter inputs below column headers
-        paging = TRUE,         # Enable pagination
-        info = TRUE,           # Display table information
-        ordering = TRUE        # Enable column sorting
+        pageLength = 10,
+        lengthMenu = c(5, 10, 15, 20),
+        searching = TRUE,
+        filter = "top",
+        paging = TRUE,
+        info = TRUE,
+        ordering = TRUE
       ),
-      rownames = FALSE # Do not display row names
+      rownames = FALSE
     )
   })
   
