@@ -487,68 +487,6 @@ body.dashboard-bg::before {
   background-color: #f9f9f9;
 }
 
-/* ===== BRANDED LOADING OVERLAY ===== */
-.loading-overlay {
-  position: fixed;
-  top: 0; left: 0;
-  width: 100%;
-  height: 100%;
-  background: #ffffff; /* DepEd dark blue overlay */
-  display: none; /* hidden by default */
-  align-items: center;
-  justify-content: center;
-  flex-direction: column;
-  z-index: 99999;
-  text-align: center;
-  font-family: 'Poppins', sans-serif;
-}
-
-.loading-logo {
-  width: 150px;
-  height: 150px;
-  animation: logo-spin 2s linear infinite;
-  filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.7));
-}
-
-@keyframes logo-spin {
-  0%   { transform: rotate(0deg) scale(1); }
-  50%  { transform: rotate(180deg) scale(1.05); }
-  100% { transform: rotate(360deg) scale(1); }
-}
-
-/* === CENTERED FULLSCREEN GIF LOADER === */
-.loading-overlay {
-  position: fixed;
-  top: 0; 
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: #ffffff;
-  display: flex;                  /* ✅ makes centering easy */
-  align-items: center;            /* ✅ center vertically */
-  justify-content: center;        /* ✅ center horizontally */
-  flex-direction: column;         /* ✅ stack GIF + text vertically */
-  z-index: 99999;
-  text-align: center;
-}
-
-.loading-gif {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 200px;
-  height: auto;
-  filter: drop-shadow(0 0 15px rgba(255, 255, 255, 0.7));
-}
-
-body.dashboard-bg.loading-active main,
-body.dashboard-bg.loading-active .bslib-page,
-body.dashboard-bg.loading-active .card {
-  filter: blur(3px);
-  transition: filter 0.3s ease-in-out;
-}
-
 /* === AUTO-DROPDOWN ON HOVER === */
 .navbar-nav li.nav-item.dropdown:hover > .dropdown-menu {
   display: block;
@@ -702,13 +640,21 @@ body.dashboard-bg.loading-active .card {
   }
 }
 
-.loading-overlay {
-  backdrop-filter: blur(6px);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  animation: fadeIn 0.5s ease forwards;
+
+/* === FIX LOADING OVERLAY VISIBILITY === */
+#loading-overlay {
+  position: fixed !important;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0,0,0,0.7);
+  display: none;
+  z-index: 100000 !important; /* higher than header/nav */
+  transition: opacity 0.3s ease;
 }
+
+
 
 
 
