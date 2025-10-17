@@ -182,7 +182,9 @@ ui <- page_fluid(
   ),
   
   # Header (always visible)
+  shinyjs::hidden(
   tags$div(
+    id = "app_header", 
     class = "app-header",
     style = "display: flex; align-items: center; gap: 15px; justify-content: center;",
     
@@ -194,7 +196,7 @@ ui <- page_fluid(
       class = "header-title",
       h2("DepEd STRIDE Dashboard"),
       p("STRIDE: Strategic Inventory for Deployment Efficiency")
-    ),
+    )),
     
     # Right logo
     tags$img(src = "HROD LOGO1.png", class = "header-logo-right")
@@ -238,9 +240,11 @@ ui <- page_fluid(
   ),
   
   # Footer (always visible)
+  shinyjs::hidden(
   tags$footer(
+    id = "app_footer",
     class = "app-footer",
-    tags$p("© Based on GMIS (April 2025) and eBEIS (SY 2024–2025)"))
+    tags$p("© Based on GMIS (April 2025) and eBEIS (SY 2024–2025)")))
 )
 
 
@@ -276,6 +280,35 @@ server <- function(input, output, session) {
     # Note: You do not need an 'else' block, as the button won't be visible 
     # unless one of these reactive values is set (thanks to renderUI).
   })
+  
+  # Hide header/footer when not authenticated; show when authenticated
+  observe({
+    # user_status is defined earlier in your server (values: "unauthenticated", "login", "register", "authenticated")
+    if (isTRUE(user_status() == "authenticated")) {
+      shinyjs::show("app_header")
+      shinyjs::show("app_footer")
+    } else {
+      shinyjs::hide("app_header")
+      shinyjs::hide("app_footer")
+    }
+  })
+  
+  observe({
+    mode <- if (user_status() == "authenticated") "app" else "login"
+    session$sendCustomMessage("setLoginMode", ifelse(mode == "login", "login", "app"))
+  })
+  
+  observe({
+    if (user_status() == "authenticated") {
+      shinyjs::show("app_header")
+      shinyjs::show("app_footer")
+    } else {
+      shinyjs::hide("app_header")
+      shinyjs::hide("app_footer")
+    }
+  })
+  
+  
   
   output$StrideLogo <- renderImage({
     image_path <- normalizePath(file.path('www', 'STRIDE logo.png'))
@@ -375,70 +408,7 @@ server <- function(input, output, session) {
       type = "pie", textinfo = "label+percent",
       insidetextorientation = "radial"
     ) |> layout(title = list(text = "School Size Typology (Pie)", x = 0.5))
-  })# --- Authentication ---
-  # Call the shinyauthr::loginServer module
-  # credentials() will be a reactive returning a tibble with user_auth, info, and additional columns from user_base
-  # credentials <- shinyauthr::loginServer(
-  #   id = "login",
-  #   data = user_base,
-  #   user_col = user,
-  #   pwd_col = password_hash, # Use the hashed password column
-  #   sodium_hashed = TRUE,    # Important: tell shinyauthr we are using sodium hashes
-  #   log_out = reactive(logout_init()) # Link to the logout button
-  # )
-  # 
-  # 
-  # 
-  # # --- Reactive Values & Observers ---
-  # # Observe the authentication status
-  # observe({
-  #   auth_status <- credentials()$user_auth
-  #   if (auth_status) {
-  #     # User is authenticated. Let's get their details.
-  #     user_info <- credentials()$info
-  #     # This is a tibble with the user's row
-  #     
-  #     # Ensure user_info is available and has the username
-  #     # (It should if auth_status is TRUE and your user_base is set up correctly)
-  #     if (!is.null(user_info) && "user" %in% names(user_info)) {
-  #       current_username <- user_info$user # Get the username
-  #       
-  #       # --- Always hide the login panel when authenticated ---
-  #       shinyjs::hide(selector = "#login") # Or shinyjs::hide(id = "login-login_ui")
-  #       shinyjs::hide("StrideLogo")
-  #       # --- Conditional logic based on username ---
-  #       if (current_username == "iamdeped") { # <<<< Your specific username condition
-  #         # Authenticated AND username is "user1"
-  #         shinyjs::show("main_content")
-  #         shinyjs::hide("mgmt_content")
-  #       } else {
-  #         
-  #         if (current_username == "depedadmin") {
-  #           # Authenticated BUT username is NOT "user1"
-  #           # This could be user2, user3, etc.
-  #           shinyjs::show("mgmt_content")
-  #           shinyjs::hide("main_content")
-  #           # output$generic_secure_data <- renderPrint({"Generic secure data for other users..."})
-  #         }}}
-  #   } else {
-  #     # User is NOT authenticated (e.g., after logout or initially)
-  #     shinyjs::show(selector = "#login")
-  #     shinyjs::show("StrideLogo")
-  #     shinyjs::hide("main_content")
-  #     shinyjs::hide("mgmt_content")
-  #   }
-  #   
-  #   if (auth_status) {
-  #     shinyjs::runjs('
-  #   $("#loading-overlay").fadeIn(200);
-  #   document.body.classList.remove("login-bg");
-  #   document.body.classList.add("dashboard-bg");
-  # ')
-  #   } else {
-  #     shinyjs::runjs('$("#loading-overlay").hide();')
-  #     shinyjs::runjs('document.body.classList.remove("dashboard-bg");')
-  #     shinyjs::runjs('document.body.classList.add("login-bg");')
-  #   }})
+  })
   
   output$STRIDE_data <- renderUI({
     fluidPage(

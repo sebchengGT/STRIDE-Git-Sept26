@@ -654,6 +654,31 @@ body.dashboard-bg::before {
   transition: opacity 0.3s ease;
 }
 
+/* when login-hidden is present, hide header/footer and move nav up */
+body.login-hidden .app-header,
+body.login-hidden .app-footer {
+  display: none !important;
+}
+
+/* when header hidden, bring navbar to top so it doesn't leave a gap */
+body.login-hidden .bslib-navbar,
+body.login-hidden .navbar {
+  top: 0 !important;
+}
+
+/* Hide header & footer before Shiny finishes initializing */
+.app-header,
+.app-footer {
+  display: none;
+}
+
+/* When Shiny fully loaded and authenticated, show them again */
+body.show-header-footer .app-header,
+body.show-header-footer .app-footer {
+  display: flex !important;
+}
+
+
 
 
 

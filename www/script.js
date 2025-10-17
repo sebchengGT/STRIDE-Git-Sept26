@@ -66,7 +66,7 @@ $(document).on("click", ".nav-link", function() {
       el.style.animation = "none";
       el.offsetHeight; // reflow
       const animName = el.classList.contains("sidebar") ? "sidebarSlideIn" : "bodyFadeIn";
-      el.style.animation = `${animName} 0.6s ease-out`;
+      el.style.animation = `${animName} 2s ease-out`;
     }
   });
 });
@@ -112,6 +112,15 @@ $(document).on("shiny:idle", function() {
   console.log("✅ shiny:idle detected");
   $("#loading-overlay").fadeOut(400);
 });
+
+Shiny.addCustomMessageHandler("setLoginMode", function(mode) {
+  if (mode === "login") {
+    document.body.classList.add("login-hidden");
+  } else {
+    document.body.classList.remove("login-hidden");
+  }
+});
+
 
 
 
