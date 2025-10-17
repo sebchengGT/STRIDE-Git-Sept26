@@ -7,11 +7,8 @@
 #oct 13, 2025
 #eeee
 #updated as of oct 15,2025
-<<<<<<< HEAD
-=======
-#mergetest
-#updated as of oct 17,2025 3:35 pm
->>>>>>> 7020aea8340c69761c7a238fc5170c8a1391f56c
+
+
 library(tidyverse)
 library(DT)
 library(dplyr)
@@ -6994,7 +6991,6 @@ server <- function(input, output, session) {
     }
     
     # --- Prepare grouped data (all regions) ---
-<<<<<<< HEAD
     if (is.null(current_region())) {
       plot_data <- df %>%
         group_by(Region) %>%
@@ -7142,12 +7138,10 @@ server <- function(input, output, session) {
           legend.position = "none"
         )
     }
-=======
     plot_data <- current_filtered_data %>%
       group_by(Region) %>%
       summarise(TeacherShortage = sum(as.numeric(TeacherShortage), na.rm = TRUE),
                 .groups = "drop")
->>>>>>> 7020aea8340c69761c7a238fc5170c8a1391f56c
     
     ggplotly(p, tooltip = "text", source = "A") %>%
       layout(
@@ -7174,11 +7168,8 @@ server <- function(input, output, session) {
       group_by(Division) %>%
       summarise(Count = sum(as.numeric(TeacherShortage), na.rm = TRUE), .groups = 'drop') %>%
       arrange(desc(Count)) %>%
-<<<<<<< HEAD
       slice_head(n = 20)
-=======
       slice_head(n = 20) 
->>>>>>> 7020aea8340c69761c7a238fc5170c8a1391f56c
     
     # --- Create ggplot ---
     p <- ggplot(plot_data,
@@ -7222,7 +7213,6 @@ server <- function(input, output, session) {
       )
   })
   
-<<<<<<< HEAD
   # New observer to handle clicks on the Region bar chart
   observeEvent(event_data("plotly_click", source = "A"), {
     click_data <- event_data("plotly_click", source = "A")
@@ -7273,14 +7263,12 @@ server <- function(input, output, session) {
   #Classroom Shortage
   output$Classroom_Shortage_Region_Graph2 <- renderPlotly({
     
-=======
   #Classroom Shortage
   output$Classroom_Shortage_Region_Graph2 <- renderPlotly({
     
     # Use the reactive filtered data
     current_filtered_data <- LMS
     
->>>>>>> 7020aea8340c69761c7a238fc5170c8a1391f56c
     # --- Empty Data Handling ---
     if (nrow(LMS) == 0) {
       return(ggplotly(ggplot() +
@@ -7288,7 +7276,6 @@ server <- function(input, output, session) {
                         theme_void()))
     }
     
-<<<<<<< HEAD
     if (is.null(current_region())) {
       
       # Prepare the data for plotting
@@ -7376,7 +7363,6 @@ server <- function(input, output, session) {
               legend.position = "none", # No legend needed for single fill
               plot.title = element_text(hjust = 0.5)) # Center the plot title
     }
-=======
     # Prepare the data for plotting
     plot_data <- current_filtered_data %>%
       group_by(Region) %>%
@@ -7402,7 +7388,6 @@ server <- function(input, output, session) {
       theme(axis.text.x = element_text(size = 10, angle = 45, hjust = 1),
             legend.position = "none", # No legend needed for single fill
             plot.title = element_text(hjust = 0.5)) # Center the plot title
->>>>>>> 7020aea8340c69761c7a238fc5170c8a1391f56c
     
     # Convert ggplot to plotly, ensuring custom text is used for hover
     ggplotly(p, tooltip = "text", source = "classroomShortageRegionPlot") %>%
@@ -7763,7 +7748,6 @@ server <- function(input, output, session) {
   
   #LMS
   output$LMS_Nation_Graph2 <- renderPlotly({
-<<<<<<< HEAD
     
     if (is.null(current_region())) {
       full_data <- LMS %>%   
@@ -7930,7 +7914,6 @@ server <- function(input, output, session) {
     }
     
     ggplotly(p, tooltip = "text", source = "LMSplotly") %>%
-=======
     full_data <- LMS %>%   
       rename(
         "With Buildable Space" = Buildable_space,
@@ -7985,7 +7968,6 @@ server <- function(input, output, session) {
       )
     
     ggplotly(p, tooltip = "text") %>%
->>>>>>> 7020aea8340c69761c7a238fc5170c8a1391f56c
       layout(
         hoverlabel = list(bgcolor = "white"),
         margin = list(b = 100)
@@ -21593,7 +21575,7 @@ authentication_server <- function(input, output, session, user_status,
       # Use a bslib::card_body_fill for clean padding
       card_body_fill(
         h5("Sign in with your credentials"),
-        textInput(ns("login_user"), "user@deped.gov.ph"),
+        textInput(ns("login_user"), "DepEd Email"),
         passwordInput(ns("login_pass"), "Password"),
         actionButton(ns("do_login"), "Login", class = "btn-success w-100"), # w-100 for full width
         uiOutput(ns("login_message"))
