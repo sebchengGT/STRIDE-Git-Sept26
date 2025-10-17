@@ -144,7 +144,7 @@ document.addEventListener("DOMContentLoaded", () => {
       bubble.style.transform = "translate(0, 0) scale(1)";
     });
 
-    // Click pulse effect
+    // Click pulse effect1
     bubble.addEventListener("click", () => {
       bubble.style.animation = "pulsePop 0.6s ease";
       setTimeout(() => {

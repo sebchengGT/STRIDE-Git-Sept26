@@ -7,6 +7,7 @@
 #oct 13, 2025
 #eeee
 #updated as of oct 15,2025
+#mergetest
 library(tidyverse)
 library(DT)
 library(dplyr)
@@ -117,8 +118,8 @@ login_register_UI <- function(id) {
         class = "login-left",
         div(
           class = "login-text-box",
-          h2("Welcome to STRIDE"),
-          p("Empowering DepEd Offices with Smarter Data Insights")
+          h2("Department of Education"),
+          p("STRIDE: Education in Motion, Data Precision for Smart Decision.")
         )
       ),
       
@@ -132,7 +133,7 @@ login_register_UI <- function(id) {
           tags$img(src = "logo3.png", class = "login-logo-top"),
           
           # Login Form Inputs (NAMESPACED!)
-          textInput(ns("login_user"), NULL, placeholder = "DepEd Email"),
+          textInput(ns("login_user"), NULL, placeholder = "user@deped.gov.ph"),
           passwordInput(ns("login_pass"), NULL, placeholder = "Password"),
           actionButton(ns("do_login"), "Sign In", class = "btn-login w-100"),
           
@@ -21389,8 +21390,8 @@ server <- function(input, output, session) {
           class = "login-left",
           div(
             class = "login-text-box",
-            h2("Welcome to STRIDE"),
-            p("Empowering DepEd Offices with Smarter Data Insights")
+            h2("Department of Education"),
+            p("STRIDE: Education in Motion, Data Precision for Smart Decision.")
           )
         ),
         
@@ -21401,10 +21402,10 @@ server <- function(input, output, session) {
             class = "login-card",
             
             # Top Logo
-            tags$img(src = "logo3.png", class = "login-logo-top"),
+            tags$img(src = "STRIDE LOGO001.png", class = "login-logo-top"),
             
             # Login Form Inputs (NAMESPACED!)
-            textInput(ns("login_user"), NULL, placeholder = "DepEd Email"),
+            textInput(ns("login_user"), NULL, placeholder = "user@deped.gov.ph"),
             passwordInput(ns("login_pass"), NULL, placeholder = "Password"),
             actionButton(ns("do_login"), "Sign In", class = "btn-login w-100"),
             
@@ -21415,9 +21416,9 @@ server <- function(input, output, session) {
             # Bottom Logos
             div(
               class = "login-logos-bottom",
-              tags$img(src = "DepEd.png", class = "bottom-logo"),
+              tags$img(src = "logo3.png", class = "bottom-logo"),
               tags$img(src = "HROD LOGO1.png", class = "bottom-logo"),
-              tags$img(src = "partner_logo.png", class = "bottom-logo")
+              tags$img(src = "logo2.png", class = "bottom-logo")
             )
           )
         )
@@ -21478,7 +21479,7 @@ authentication_server <- function(input, output, session, user_status,
       # Use a bslib::card_body_fill for clean padding
       card_body_fill(
         h5("Sign in with your credentials"),
-        textInput(ns("login_user"), "DepEd Email"),
+        textInput(ns("login_user"), "user@deped.gov.ph"),
         passwordInput(ns("login_pass"), "Password"),
         actionButton(ns("do_login"), "Login", class = "btn-success w-100"), # w-100 for full width
         uiOutput(ns("login_message"))
