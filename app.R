@@ -101,24 +101,58 @@ user_base <- tibble::tibble(
 login_register_UI <- function(id) {
   ns <- NS(id)
   
-  # Use bslib::card for a contained, stylish panel
-  card(
-    # Use bslib::card_header for a title
-    card_header(
-      class = "bg-dark text-white",
-      "Cloud App Authentication"
-    ),
-    # Content of the card
+  tagList(
+    # Animated grid background
     div(
-      class = "d-flex justify-content-center mb-3", # Use Bootstrap utility classes
-      # The main panel for login/register choice using a tab-like navigation
-      uiOutput(ns("form_selector_ui"))
+      class = "grid-motion-bg",
+      lapply(seq_len(300), function(i) div(class = "grid-dot"))
     ),
     
-    # The actual form (either login or register) displayed inside the card body
-    uiOutput(ns("dynamic_form_ui"))
+    # Main login/register container
+    div(
+      class = "login-container",
+      
+      # LEFT SIDE
+      div(
+        class = "login-left",
+        div(
+          class = "login-text-box",
+          h2("Welcome to STRIDE"),
+          p("Empowering DepEd Offices with Smarter Data Insights")
+        )
+      ),
+      
+      # RIGHT SIDE (Login Form)
+      div(
+        class = "login-right",
+        div(
+          class = "login-card",
+          
+          # Top Logo
+          tags$img(src = "logo3.png", class = "login-logo-top"),
+          
+          # Login Form Inputs (NAMESPACED!)
+          textInput(ns("login_user"), NULL, placeholder = "DepEd Email"),
+          passwordInput(ns("login_pass"), NULL, placeholder = "Password"),
+          actionButton(ns("do_login"), "Sign In", class = "btn-login w-100"),
+          
+          uiOutput(ns("login_message")),
+          br(),
+          actionLink(ns("btn_register"), "Create an account", class = "register-link"),
+          
+          # Bottom Logos
+          div(
+            class = "login-logos-bottom",
+            tags$img(src = "DepEd.png", class = "bottom-logo"),
+            tags$img(src = "HROD LOGO1.png", class = "bottom-logo"),
+            tags$img(src = "partner_logo.png", class = "bottom-logo")
+          )
+        )
+      )
+    )
   )
 }
+
 
 SERVICE_ACCOUNT_FILE <- "service_account.json" 
 
@@ -182,22 +216,25 @@ ui <- page_fluid(
   ),
   
   # Header (always visible)
-  tags$div(
-    class = "app-header",
-    style = "display: flex; align-items: center; gap: 15px; justify-content: center;",
-    
-    # Logo
-    tags$img(src = "logo3.png", class = "header-logo-left"),
-    
-    # Center text
+  shinyjs::hidden(
     tags$div(
-      class = "header-title",
-      h2("DepEd STRIDE Dashboard"),
-      p("STRIDE: Strategic Inventory for Deployment Efficiency")
-    ),
-    
-    # Right logo
-    tags$img(src = "HROD LOGO1.png", class = "header-logo-right")
+      id = "app_header",
+      class = "app-header",
+      style = "display: flex; align-items: center; gap: 15px; justify-content: center;",
+      
+      # Left logo
+      tags$img(src = "logo3.png", class = "header-logo-left"),
+      
+      # Center text
+      tags$div(
+        class = "header-title",
+        h2("DepEd STRIDE"),
+        p("STRIDE: Strategic Inventory for Deployment Efficiency")
+      ),
+      
+      # Right logo
+      tags$img(src = "HROD LOGO1.png", class = "header-logo-right")
+    )
   ),
   
   # 💡 CRITICAL FIX: The dynamic container for login/main app UI
@@ -238,9 +275,11 @@ ui <- page_fluid(
   ),
   
   # Footer (always visible)
-  tags$footer(
-    class = "app-footer",
-    tags$p("© Based on GMIS (April 2025) and eBEIS (SY 2024–2025)"))
+  shinyjs::hidden(
+    tags$footer(
+      id = "app_footer",
+      class = "app-footer",
+      tags$p("© Based on GMIS (April 2025) and eBEIS (SY 2024–2025)")))
 )
 
 
@@ -248,6 +287,63 @@ ui <- page_fluid(
 
 # Define server logic required to draw a histogram
 server <- function(input, output, session) {
+  
+  current_region <- reactiveVal(NULL)
+  current_division <- reactiveVal(NULL)
+  
+  output$backButtonUI <- renderUI({
+    # Only show the button if a region is currently selected
+    if (!is.null(current_region()) || !is.null(current_division())) {
+      actionButton("go_back", "⬅️ Back")
+    }
+  })
+  
+  observeEvent(input$go_back, {
+    
+    # Step 1: If we are viewing a Division breakdown, go back to the Region breakdown
+    if (!is.null(current_division())) {
+      current_division(NULL)
+      cat("State change: Returned to Region view.\n")
+    } 
+    
+    # Step 2: Else, if we are viewing a Region breakdown, go back to the Overall view
+    else if (!is.null(current_region())) {
+      current_region(NULL)
+      cat("State change: Returned to Overall view.\n")
+    }
+    
+    # Note: You do not need an 'else' block, as the button won't be visible 
+    # unless one of these reactive values is set (thanks to renderUI).
+  })
+  
+  # Hide header/footer when not authenticated; show when authenticated
+  observe({
+    # user_status is defined earlier in your server (values: "unauthenticated", "login", "register", "authenticated")
+    if (isTRUE(user_status() == "authenticated")) {
+      shinyjs::show("app_header")
+      shinyjs::show("app_footer")
+    } else {
+      shinyjs::hide("app_header")
+      shinyjs::hide("app_footer")
+    }
+  })
+  
+  observe({
+    mode <- if (user_status() == "authenticated") "app" else "login"
+    session$sendCustomMessage("setLoginMode", ifelse(mode == "login", "login", "app"))
+  })
+  
+  observe({
+    if (user_status() == "authenticated") {
+      shinyjs::show("app_header")
+      shinyjs::show("app_footer")
+    } else {
+      shinyjs::hide("app_header")
+      shinyjs::hide("app_footer")
+    }
+  })
+  
+  
   
   output$StrideLogo <- renderImage({
     image_path <- normalizePath(file.path('www', 'STRIDE logo.png'))
@@ -347,70 +443,7 @@ server <- function(input, output, session) {
       type = "pie", textinfo = "label+percent",
       insidetextorientation = "radial"
     ) |> layout(title = list(text = "School Size Typology (Pie)", x = 0.5))
-  })# --- Authentication ---
-  # Call the shinyauthr::loginServer module
-  # credentials() will be a reactive returning a tibble with user_auth, info, and additional columns from user_base
-  # credentials <- shinyauthr::loginServer(
-  #   id = "login",
-  #   data = user_base,
-  #   user_col = user,
-  #   pwd_col = password_hash, # Use the hashed password column
-  #   sodium_hashed = TRUE,    # Important: tell shinyauthr we are using sodium hashes
-  #   log_out = reactive(logout_init()) # Link to the logout button
-  # )
-  # 
-  # 
-  # 
-  # # --- Reactive Values & Observers ---
-  # # Observe the authentication status
-  # observe({
-  #   auth_status <- credentials()$user_auth
-  #   if (auth_status) {
-  #     # User is authenticated. Let's get their details.
-  #     user_info <- credentials()$info
-  #     # This is a tibble with the user's row
-  #     
-  #     # Ensure user_info is available and has the username
-  #     # (It should if auth_status is TRUE and your user_base is set up correctly)
-  #     if (!is.null(user_info) && "user" %in% names(user_info)) {
-  #       current_username <- user_info$user # Get the username
-  #       
-  #       # --- Always hide the login panel when authenticated ---
-  #       shinyjs::hide(selector = "#login") # Or shinyjs::hide(id = "login-login_ui")
-  #       shinyjs::hide("StrideLogo")
-  #       # --- Conditional logic based on username ---
-  #       if (current_username == "iamdeped") { # <<<< Your specific username condition
-  #         # Authenticated AND username is "user1"
-  #         shinyjs::show("main_content")
-  #         shinyjs::hide("mgmt_content")
-  #       } else {
-  #         
-  #         if (current_username == "depedadmin") {
-  #           # Authenticated BUT username is NOT "user1"
-  #           # This could be user2, user3, etc.
-  #           shinyjs::show("mgmt_content")
-  #           shinyjs::hide("main_content")
-  #           # output$generic_secure_data <- renderPrint({"Generic secure data for other users..."})
-  #         }}}
-  #   } else {
-  #     # User is NOT authenticated (e.g., after logout or initially)
-  #     shinyjs::show(selector = "#login")
-  #     shinyjs::show("StrideLogo")
-  #     shinyjs::hide("main_content")
-  #     shinyjs::hide("mgmt_content")
-  #   }
-  #   
-  #   if (auth_status) {
-  #     shinyjs::runjs('
-  #   $("#loading-overlay").fadeIn(200);
-  #   document.body.classList.remove("login-bg");
-  #   document.body.classList.add("dashboard-bg");
-  # ')
-  #   } else {
-  #     shinyjs::runjs('$("#loading-overlay").hide();')
-  #     shinyjs::runjs('document.body.classList.remove("dashboard-bg");')
-  #     shinyjs::runjs('document.body.classList.add("login-bg");')
-  #   }})
+  })
   
   output$STRIDE_data <- renderUI({
     fluidPage(
@@ -7023,6 +7056,153 @@ server <- function(input, output, session) {
     }
     
     # --- Prepare grouped data (all regions) ---
+    if (is.null(current_region())) {
+      plot_data <- df %>%
+        group_by(Region) %>%
+        summarise(TeacherShortage = sum(as.numeric(TeacherShortage), na.rm = TRUE),
+                  .groups = "drop") %>%
+        arrange(desc(TeacherShortage))
+      
+      # --- Add labels ---
+      plot_data <- plot_data %>%
+        mutate(Label = scales::comma(TeacherShortage))
+      
+      # --- Plot ---
+      p <- ggplot(plot_data,
+                  aes(x = reorder(Region, -TeacherShortage),
+                      y = TeacherShortage,
+                      fill = Region,
+                      text = paste("Region:", Region,
+                                   "<br>Teacher Shortage:", scales::comma(TeacherShortage)))) +
+        geom_bar(stat = "identity", color = "black") +
+        geom_text(aes(label = Label), vjust = -0.5, size = 3.5, color = "black") +
+        labs(
+          title = "Teacher Shortage by Region",
+          x = "Region",
+          y = "Number of Teacher Shortages"
+        ) +
+        scale_y_continuous(labels = scales::comma) +
+        theme_minimal() +
+        theme(
+          plot.title = element_text(hjust = 0.5, size = 14, face = "bold"),
+          axis.text.x = element_text(size = 10, angle = 45, hjust = 1),
+          legend.position = "none"
+        )
+    } else if (is.null(current_division())) {
+      # --- Prepare data for plotting ---
+      # FIX: Use 'df' here instead of 'current_filtered_data' 
+      # to ensure you're filtering the *complete* dataset for the division view.
+      plot_data <- df %>%
+        filter(Region == current_region()) %>%
+        group_by(Division) %>%
+        summarise(Count = sum(as.numeric(TeacherShortage), na.rm = TRUE), .groups = 'drop') %>%
+        arrange(desc(Count)) %>%
+        slice_head(n = 20) 
+      
+      # --- Empty Data Handling for Division Breakdown ---
+      if (nrow(plot_data) == 0) {
+        return(ggplotly(
+          ggplot() +
+            annotate("text", x = 0.5, y = 0.5,
+                     label = paste("No data available for Divisions in", current_region()),
+                     size = 5, color = "red") +
+            theme_void()
+        ))
+      }
+      
+      # --- Create ggplot ---
+      p <- ggplot(plot_data,
+                  aes(x = reorder(Division, -Count),
+                      y = Count,
+                      fill = Division,
+                      text = paste(
+                        "Division: ", Division,
+                        "<br>Teacher Shortage: ", scales::comma(Count)
+                      ))) +
+        geom_bar(stat = "identity", color = "black") +
+        geom_text(data = plot_data,
+                  aes(x = Division, y = Count * 1.05,
+                      label = scales::comma(Count)),
+                  inherit.aes = FALSE,
+                  size = 3.5,
+                  color = "black") +
+        labs(
+          # UPDATE: Make the title dynamic to show the selected region
+          title = paste("Top 20 Divisions by Teacher Shortage in", current_region()), 
+          x = "Division",
+          y = "Teacher Shortage"
+        ) +
+        scale_y_continuous(labels = scales::comma) +
+        theme_minimal() +
+        theme(
+          plot.title = element_text(
+            hjust = 0.5,
+            face = "bold",
+            size = 14,
+            color = "black"    
+          ),
+          axis.text.x = element_text(size = 10, angle = 45, hjust = 1),
+          legend.position = "none"
+        )
+    }
+    else if (!is.null(current_division())){
+      # --- Prepare data for plotting ---
+      # FIX: Use 'df' here instead of 'current_filtered_data' 
+      # to ensure you're filtering the *complete* dataset for the division view.
+      plot_data <- df %>%
+        filter(Region == current_region()) %>%
+        filter(Division == current_division()) %>% 
+        group_by(Legislative.District) %>%
+        summarise(Count = sum(as.numeric(TeacherShortage), na.rm = TRUE), .groups = 'drop') %>%
+        arrange(desc(Count)) %>%
+        slice_head(n = 20) 
+      
+      # --- Empty Data Handling for Division Breakdown ---
+      if (nrow(plot_data) == 0) {
+        return(ggplotly(
+          ggplot() +
+            annotate("text", x = 0.5, y = 0.5,
+                     label = paste("No data available for Divisions in", current_region()),
+                     size = 5, color = "red") +
+            theme_void()
+        ))
+      }
+      
+      # --- Create ggplot ---
+      p <- ggplot(plot_data,
+                  aes(x = reorder(Legislative.District, -Count),
+                      y = Count,
+                      fill = Legislative.District,
+                      text = paste(
+                        "Legislative District: ", Legislative.District,
+                        "<br>Teacher Shortage: ", scales::comma(Count)
+                      ))) +
+        geom_bar(stat = "identity", color = "black") +
+        geom_text(data = plot_data,
+                  aes(x = Legislative.District, y = Count * 1.05,
+                      label = scales::comma(Count)),
+                  inherit.aes = FALSE,
+                  size = 3.5,
+                  color = "black") +
+        labs(
+          # UPDATE: Make the title dynamic to show the selected region
+          title = paste("Top 20 Divisions by Teacher Shortage in", current_region()), 
+          x = "Legislative District",
+          y = "Teacher Shortage"
+        ) +
+        scale_y_continuous(labels = scales::comma) +
+        theme_minimal() +
+        theme(
+          plot.title = element_text(
+            hjust = 0.5,
+            face = "bold",
+            size = 14,
+            color = "black"    
+          ),
+          axis.text.x = element_text(size = 10, angle = 45, hjust = 1),
+          legend.position = "none"
+        )
+    }
     plot_data <- current_filtered_data %>%
       group_by(Region) %>%
       summarise(TeacherShortage = sum(as.numeric(TeacherShortage), na.rm = TRUE),
@@ -7082,6 +7262,7 @@ server <- function(input, output, session) {
       group_by(Division) %>%
       summarise(Count = sum(as.numeric(TeacherShortage), na.rm = TRUE), .groups = 'drop') %>%
       arrange(desc(Count)) %>%
+      slice_head(n = 20)
       slice_head(n = 20) 
     
     # --- Create ggplot ---
@@ -7126,6 +7307,56 @@ server <- function(input, output, session) {
       )
   })
   
+  # New observer to handle clicks on the Region bar chart
+  observeEvent(event_data("plotly_click", source = "A"), {
+    click_data <- event_data("plotly_click", source = "A")
+    
+    # Ensure a click actually occurred and we're on the main region plot (not the division plot)
+    if (!is.null(click_data) && is.null(current_region()) && is.null(current_division())) {
+      
+      # The x-axis value (the name of the region) is typically in the 'x' element of the click data.
+      clicked_index <- click_data$x
+      
+      plot_data <- df %>%
+        group_by(Region) %>%
+        summarise(TeacherShortage = sum(as.numeric(TeacherShortage), na.rm = TRUE),
+                  .groups = "drop") %>%
+        arrange(desc(TeacherShortage))
+      
+      # Update the reactive value, which will trigger the plot to redraw 
+      # using the division breakdown logic.
+      selected_region <- plot_data$Region[clicked_index]
+      
+      current_region(selected_region)
+      
+      # Optional: Print the selected region to the console for debugging
+      cat("Region selected:", selected_region, "\n")
+    }
+    else if (!is.null(click_data) && !is.null(current_region()) && is.null(current_division())) {
+      # The x-axis value (the name of the region) is typically in the 'x' element of the click data.
+      clicked_index <- click_data$x
+      
+      plot_data <- df %>% filter(Region == current_region()) %>% 
+        group_by(Division) %>%
+        summarise(TeacherShortage = sum(as.numeric(TeacherShortage), na.rm = TRUE),
+                  .groups = "drop") %>%
+        arrange(desc(TeacherShortage))
+      
+      # Update the reactive value, which will trigger the plot to redraw 
+      # using the division breakdown logic.
+      selected_division <- plot_data$Division[clicked_index]
+      
+      current_division(selected_division)
+      
+      # Optional: Print the selected region to the console for debugging
+      cat("Division selected:", selected_division, "\n")
+    }
+    
+  })
+  
+  #Classroom Shortage
+  output$Classroom_Shortage_Region_Graph2 <- renderPlotly({
+    
   #Classroom Shortage
   output$Classroom_Shortage_Region_Graph2 <- renderPlotly({
     
@@ -7139,6 +7370,93 @@ server <- function(input, output, session) {
                         theme_void()))
     }
     
+    if (is.null(current_region())) {
+      
+      # Prepare the data for plotting
+      plot_data <- LMS %>%
+        group_by(Region) %>%
+        summarise(Count = sum(as.numeric(Estimated_CL_Shortage), na.rm = TRUE), .groups = 'drop') %>% 
+        arrange(desc(Count))
+      
+      # Create the ggplot
+      p <- ggplot(plot_data,
+                  aes(x = reorder(Region, -Count),
+                      y = Count,
+                      fill = Region,
+                      text = paste("Region: ", Region,
+                                   "<br>Classroom Shortage: ", scales::comma(Count)))) + # Custom tooltip text
+        geom_bar(stat = "identity", color = "black") +
+        geom_text(data = plot_data,
+                  aes(x = Region, y = Count * 1.05, label = scales::comma(Count)), # Modified line
+                  inherit.aes = FALSE,
+                  size = 3.5,
+                  color = "black") +
+        labs(x = "Region",
+             y = "Classroom Shortage") +
+        scale_y_continuous(labels = scales::comma) + # Format y-axis labels as comma-separated numbers
+        theme_minimal() +
+        theme(axis.text.x = element_text(size = 10, angle = 45, hjust = 1),
+              legend.position = "none", # No legend needed for single fill
+              plot.title = element_text(hjust = 0.5)) # Center the plot title
+      
+    } else if (!is.null(current_region()) && is.null(current_division())) {
+      
+      plot_data <- LMS %>%
+        filter(Region == current_region()) %>% 
+        group_by(Division) %>%
+        summarise(Count = sum(as.numeric(Estimated_CL_Shortage), na.rm = TRUE), .groups = 'drop') %>% 
+        arrange(desc(Count))
+      
+      # Create the ggplot
+      p <- ggplot(plot_data,
+                  aes(x = reorder(Division, -Count),
+                      y = Count,
+                      fill = Division,
+                      text = paste("Region: ", Division,
+                                   "<br>Classroom Shortage: ", scales::comma(Count)))) + # Custom tooltip text
+        geom_bar(stat = "identity", color = "black") +
+        geom_text(data = plot_data,
+                  aes(x = Division, y = Count * 1.05, label = scales::comma(Count)), # Modified line
+                  inherit.aes = FALSE,
+                  size = 3.5,
+                  color = "black") +
+        labs(x = "Region",
+             y = "Classroom Shortage") +
+        scale_y_continuous(labels = scales::comma) + # Format y-axis labels as comma-separated numbers
+        theme_minimal() +
+        theme(axis.text.x = element_text(size = 10, angle = 45, hjust = 1),
+              legend.position = "none", # No legend needed for single fill
+              plot.title = element_text(hjust = 0.5)) # Center the plot title
+      
+    } else if (!is.null(current_division())) {
+      plot_data <- LMS %>%
+        filter(Region == current_region()) %>%
+        filter(Division == current_division()) %>% 
+        group_by(Legislative_District) %>%
+        summarise(Count = sum(as.numeric(Estimated_CL_Shortage), na.rm = TRUE), .groups = 'drop') %>% 
+        arrange(desc(Count))
+      
+      # Create the ggplot
+      p <- ggplot(plot_data,
+                  aes(x = reorder(Legislative_District, -Count),
+                      y = Count,
+                      fill = Legislative_District,
+                      text = paste("Region: ", Legislative_District,
+                                   "<br>Classroom Shortage: ", scales::comma(Count)))) + # Custom tooltip text
+        geom_bar(stat = "identity", color = "black") +
+        geom_text(data = plot_data,
+                  aes(x = Legislative_District, y = Count * 1.05, label = scales::comma(Count)), # Modified line
+                  inherit.aes = FALSE,
+                  size = 3.5,
+                  color = "black") +
+        labs(x = "Region",
+             y = "Classroom Shortage") +
+        scale_y_continuous(labels = scales::comma) + # Format y-axis labels as comma-separated numbers
+        theme_minimal() +
+        theme(axis.text.x = element_text(size = 10, angle = 45, hjust = 1),
+              legend.position = "none", # No legend needed for single fill
+              plot.title = element_text(hjust = 0.5)) # Center the plot title
+    }
     # Prepare the data for plotting
     plot_data <- current_filtered_data %>%
       group_by(Region) %>%
@@ -7477,6 +7795,172 @@ server <- function(input, output, session) {
   
   #LMS
   output$LMS_Nation_Graph2 <- renderPlotly({
+    
+    if (is.null(current_region())) {
+      full_data <- LMS %>%   
+        rename(
+          "With Buildable Space" = Buildable_space,
+          "With Excess Classrooms" = With_Excess,
+          "Without Classroom Shortage" = Without_Shortage,
+          "Last Mile Schools" = LMS,
+          "GIDCA" = GIDCA,
+          "With Shortage" = With_Shortage
+        ) %>%
+        pivot_longer(13:18, names_to = "Type", values_to = "Count")
+      
+      # --- Keep only "Last Mile Schools" and aggregate all regions ---
+      plot_data <- full_data %>%
+        filter(Type == "Last Mile Schools") %>%
+        group_by(Region) %>%
+        summarise(
+          Count = sum(as.numeric(Count), na.rm = TRUE),
+          .groups = "drop"
+        ) %>% arrange(desc(Count))
+      
+      # --- Compute national total ---
+      national_total <- sum(plot_data$Count, na.rm = TRUE)
+      
+      # ---  Create the chart ---
+      p <- ggplot(plot_data,
+                  aes(
+                    x = reorder(Region, -Count),
+                    y = Count,
+                    fill = Region,
+                    text = paste(
+                      "Region:", Region,
+                      "<br>Count:", scales::comma(Count)
+                    )
+                  )) +
+        geom_bar(stat = "identity", color = "black", size = 0.25) +
+        geom_text(
+          aes(label = scales::comma(Count), y = Count * 1.05),
+          size = 3.5,
+          color = "black"
+        ) +
+        labs(
+          x = "Region",
+          y = "Number of Last Mile Schools",
+          fill = "Region"
+        ) +
+        scale_y_continuous(labels = scales::comma) +
+        theme_minimal() +
+        theme(
+          plot.title = element_text(hjust = 0.5, size = 14, face = "bold"),
+          axis.text.x = element_text(size = 10, angle = 45, hjust = 1),
+          legend.position = "none"
+        )
+    } else if (!is.null(current_region()) && is.null(current_division())) {
+      full_data <- LMS %>%   
+        rename(
+          "With Buildable Space" = Buildable_space,
+          "With Excess Classrooms" = With_Excess,
+          "Without Classroom Shortage" = Without_Shortage,
+          "Last Mile Schools" = LMS,
+          "GIDCA" = GIDCA,
+          "With Shortage" = With_Shortage
+        ) %>%
+        pivot_longer(13:18, names_to = "Type", values_to = "Count")
+      
+      # --- Keep only "Last Mile Schools" and aggregate all regions ---
+      plot_data <- full_data %>%
+        filter(Type == "Last Mile Schools") %>%
+        filter(Region == current_region()) %>% 
+        group_by(Division) %>%
+        summarise(
+          Count = sum(as.numeric(Count), na.rm = TRUE),
+          .groups = "drop"
+        ) %>% arrange(desc(Count))
+      
+      # --- Compute national total ---
+      national_total <- sum(plot_data$Count, na.rm = TRUE)
+      
+      # ---  Create the chart ---
+      p <- ggplot(plot_data,
+                  aes(
+                    x = reorder(Division, -Count),
+                    y = Count,
+                    fill = Division,
+                    text = paste(
+                      "Division:", Division,
+                      "<br>Count:", scales::comma(Count)
+                    )
+                  )) +
+        geom_bar(stat = "identity", color = "black", size = 0.25) +
+        geom_text(
+          aes(label = scales::comma(Count), y = Count * 1.05),
+          size = 3.5,
+          color = "black"
+        ) +
+        labs(
+          x = "Division",
+          y = "Number of Last Mile Schools",
+          fill = "Division"
+        ) +
+        scale_y_continuous(labels = scales::comma) +
+        theme_minimal() +
+        theme(
+          plot.title = element_text(hjust = 0.5, size = 14, face = "bold"),
+          axis.text.x = element_text(size = 10, angle = 45, hjust = 1),
+          legend.position = "none"
+        )
+    } else if (!is.null(current_division())) {
+      full_data <- LMS %>%   
+        rename(
+          "With Buildable Space" = Buildable_space,
+          "With Excess Classrooms" = With_Excess,
+          "Without Classroom Shortage" = Without_Shortage,
+          "Last Mile Schools" = LMS,
+          "GIDCA" = GIDCA,
+          "With Shortage" = With_Shortage
+        ) %>%
+        pivot_longer(13:18, names_to = "Type", values_to = "Count")
+      
+      # --- Keep only "Last Mile Schools" and aggregate all regions ---
+      plot_data <- full_data %>%
+        filter(Type == "Last Mile Schools") %>%
+        filter(Region == current_region()) %>% 
+        filter(Division == current_division()) %>% 
+        group_by(Legislative_District) %>%
+        summarise(
+          Count = sum(as.numeric(Count), na.rm = TRUE),
+          .groups = "drop"
+        ) %>% arrange(desc(Count))
+      
+      # --- Compute national total ---
+      national_total <- sum(plot_data$Count, na.rm = TRUE)
+      
+      # ---  Create the chart ---
+      p <- ggplot(plot_data,
+                  aes(
+                    x = reorder(Legislative_District, -Count),
+                    y = Count,
+                    fill = Legislative_District,
+                    text = paste(
+                      "Legislative District:", Legislative_District,
+                      "<br>Count:", scales::comma(Count)
+                    )
+                  )) +
+        geom_bar(stat = "identity", color = "black", size = 0.25) +
+        geom_text(
+          aes(label = scales::comma(Count), y = Count * 1.05),
+          size = 3.5,
+          color = "black"
+        ) +
+        labs(
+          x = "Legislative District",
+          y = "Number of Last Mile Schools",
+          fill = "Legislative District"
+        ) +
+        scale_y_continuous(labels = scales::comma) +
+        theme_minimal() +
+        theme(
+          plot.title = element_text(hjust = 0.5, size = 14, face = "bold"),
+          axis.text.x = element_text(size = 10, angle = 45, hjust = 1),
+          legend.position = "none"
+        )
+    }
+    
+    ggplotly(p, tooltip = "text", source = "LMSplotly") %>%
     full_data <- LMS %>%   
       rename(
         "With Buildable Space" = Buildable_space,
@@ -21227,18 +21711,18 @@ server <- function(input, output, session) {
   # Main dynamic UI switch
   output$page_ui <- renderUI({
     status <- user_status()
-    current_user <- authenticated_user() # Retrieve the currently logged-in user
+    current_user <- authenticated_user()  # Retrieve logged-in user
     
+    # ✅ 1. AUTHENTICATED USERS
     if (status == "authenticated" && !is.null(current_user)) {
-      # 1. Get the full user row from the database based on the authenticated username
+      # Get user details
       users_db <- user_database()
       user_row <- users_db[users_db$Email_Address == current_user, ]
       
-      # Ensure the user still exists and has a station
       if (nrow(user_row) == 1) {
-        station <- user_row$Station[1] # Use the Station value
+        station <- user_row$Station[1]
         
-        # 2. Switch UI based on the Station
+        # Switch UI based on station
         if (station == "Central Office") {
           shinyjs::hide("data_input_content")
           shinyjs::show("mgmt_content")
@@ -21248,33 +21732,84 @@ server <- function(input, output, session) {
           shinyjs::hide("main_content")
           shinyjs::hide("mgmt_content")
         } else {
-          # Default UI for other stations (Regional Office, SDO, etc.)
-          # You can add more specific UIs here if needed
-          return(card(card_header("Application Dashboard"), 
-                      h2(paste("Welcome,", station, "User!")), 
-                      actionButton("main_app-logout", "Logout", class = "btn-danger")))
+          return(card(
+            card_header("Application Dashboard"),
+            h2(paste("Welcome,", station, "User!")),
+            actionButton("main_app-logout", "Logout", class = "btn-danger")
+          ))
         }
         return(NULL)
       }
     }
     
-    # If unauthenticated, or user data not found, show login/register
-    # Center the login card on the page when unauthenticated
-    div(
-      class = "d-flex justify-content-center align-items-center", 
-      style = "height: 80vh;", # Use full viewport height for centering
-      div(style = "width: 400px; max-width: 90%;", # Set a max width for the card
-          login_register_UI("auth")
+    # ✅ 2. UNAUTHENTICATED USERS — show login/register page
+    login_register_UI("auth")
+  })
+  
+  
+  login_register_UI <- function(id) {
+    ns <- NS(id)
+    
+    tagList(
+      # Fullscreen bubble background
+      div(
+        class = "bubble-bg",
+        lapply(1:20, function(i) div(class = paste0("bubble b", i)))
+      ),
+      
+      # Main login/register container
+      div(
+        class = "login-container",
+        
+        # LEFT SIDE
+        div(
+          class = "login-left",
+          div(
+            class = "login-text-box",
+            h2("Welcome to STRIDE"),
+            p("Empowering DepEd Offices with Smarter Data Insights")
+          )
+        ),
+        
+        # RIGHT SIDE (Login Form)
+        div(
+          class = "login-right",
+          div(
+            class = "login-card",
+            
+            # Top Logo
+            tags$img(src = "logo3.png", class = "login-logo-top"),
+            
+            # Login Form Inputs (NAMESPACED!)
+            textInput(ns("login_user"), NULL, placeholder = "DepEd Email"),
+            passwordInput(ns("login_pass"), NULL, placeholder = "Password"),
+            actionButton(ns("do_login"), "Sign In", class = "btn-login w-100"),
+            
+            uiOutput(ns("login_message")),
+            br(),
+            actionLink(ns("btn_register"), "Create an account", class = "register-link"),
+            
+            # Bottom Logos
+            div(
+              class = "login-logos-bottom",
+              tags$img(src = "DepEd.png", class = "bottom-logo"),
+              tags$img(src = "HROD LOGO1.png", class = "bottom-logo"),
+              tags$img(src = "partner_logo.png", class = "bottom-logo")
+            )
+          )
+        )
       )
     )
-  })
+  }
+  
   
   # --- Authentication Module (Login/Register Forms) ---
   # CRITICAL FIX: Only call the module ONCE at the start of the server.
   # 💡 NEW: Pass the authenticated_user reactiveVal to the module
   callModule(authentication_server, "auth", 
              user_status, form_choice, SHEET_URL, user_database, db_trigger, 
-             authenticated_user) # Pass the new reactive
+             authenticated_user)
+  # Pass the new reactive
   
   # --- Main App Module ---
   
