@@ -6,6 +6,8 @@
 #TESTINGGGGGGGGGGGGGGGGGGGGGGGGG
 #oct 13, 2025
 #eeee
+#updated as of oct 15,2025
+#mergetest
 #updated as of oct 17,2025 3:35 pm
 library(tidyverse)
 library(DT)
@@ -115,8 +117,48 @@ login_register_UI <- function(id) {
       uiOutput(ns("form_selector_ui"))
     ),
     
-    # The actual form (either login or register) displayed inside the card body
-    uiOutput(ns("dynamic_form_ui"))
+    # Main login/register container
+    div(
+      class = "login-container",
+      
+      # LEFT SIDE
+      div(
+        class = "login-left",
+        div(
+          class = "login-text-box",
+          h2("Department of Education"),
+          p("STRIDE: Education in Motion, Data Precision for Smart Decision.")
+        )
+      ),
+      
+      # RIGHT SIDE (Login Form)
+      div(
+        class = "login-right",
+        div(
+          class = "login-card",
+          
+          # Top Logo
+          tags$img(src = "logo3.png", class = "login-logo-top"),
+          
+          # Login Form Inputs (NAMESPACED!)
+          textInput(ns("login_user"), NULL, placeholder = "user@deped.gov.ph"),
+          passwordInput(ns("login_pass"), NULL, placeholder = "Password"),
+          actionButton(ns("do_login"), "Sign In", class = "btn-login w-100"),
+          
+          uiOutput(ns("login_message")),
+          br(),
+          actionLink(ns("btn_register"), "Create an account", class = "register-link"),
+          
+          # Bottom Logos
+          div(
+            class = "login-logos-bottom",
+            tags$img(src = "DepEd.png", class = "bottom-logo"),
+            tags$img(src = "HROD LOGO1.png", class = "bottom-logo"),
+            tags$img(src = "partner_logo.png", class = "bottom-logo")
+          )
+        )
+      )
+    )
   )
 }
 
@@ -21258,13 +21300,62 @@ server <- function(input, output, session) {
       }
     }
     
-    # If unauthenticated, or user data not found, show login/register
-    # Center the login card on the page when unauthenticated
-    div(
-      class = "d-flex justify-content-center align-items-center", 
-      style = "height: 80vh;", # Use full viewport height for centering
-      div(style = "width: 400px; max-width: 90%;", # Set a max width for the card
-          login_register_UI("auth")
+    # ✅ 2. UNAUTHENTICATED USERS — show login/register page
+    login_register_UI("auth")
+  })
+  
+  
+  login_register_UI <- function(id) {
+    ns <- NS(id)
+    
+    tagList(
+      # Fullscreen bubble background
+      div(
+        class = "bubble-bg",
+        lapply(1:20, function(i) div(class = paste0("bubble b", i)))
+      ),
+      
+      # Main login/register container
+      div(
+        class = "login-container",
+        
+        # LEFT SIDE
+        div(
+          class = "login-left",
+          div(
+            class = "login-text-box",
+            h2("Department of Education"),
+            p("STRIDE: Education in Motion, Data Precision for Smart Decision.")
+          )
+        ),
+        
+        # RIGHT SIDE (Login Form)
+        div(
+          class = "login-right",
+          div(
+            class = "login-card",
+            
+            # Top Logo
+            tags$img(src = "STRIDE LOGO001.png", class = "login-logo-top"),
+            
+            # Login Form Inputs (NAMESPACED!)
+            textInput(ns("login_user"), NULL, placeholder = "user@deped.gov.ph"),
+            passwordInput(ns("login_pass"), NULL, placeholder = "Password"),
+            actionButton(ns("do_login"), "Sign In", class = "btn-login w-100"),
+            
+            uiOutput(ns("login_message")),
+            br(),
+            actionLink(ns("btn_register"), "Create an account", class = "register-link"),
+            
+            # Bottom Logos
+            div(
+              class = "login-logos-bottom",
+              tags$img(src = "logo3.png", class = "bottom-logo"),
+              tags$img(src = "HROD LOGO1.png", class = "bottom-logo"),
+              tags$img(src = "logo2.png", class = "bottom-logo")
+            )
+          )
+        )
       )
     )
   })
@@ -21320,7 +21411,7 @@ authentication_server <- function(input, output, session, user_status,
       # Use a bslib::card_body_fill for clean padding
       card_body_fill(
         h5("Sign in with your credentials"),
-        textInput(ns("login_user"), "DepEd Email"),
+        textInput(ns("login_user"), "user@deped.gov.ph"),
         passwordInput(ns("login_pass"), "Password"),
         actionButton(ns("do_login"), "Login", class = "btn-success w-100"), # w-100 for full width
         uiOutput(ns("login_message"))

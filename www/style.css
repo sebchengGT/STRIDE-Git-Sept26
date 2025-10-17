@@ -947,6 +947,15 @@ body.show-header-footer .app-footer {
   padding: 0 !important;
 }
 
+@media (min-width: 992px) {
+    @media (min-width: 992px) {
+        .login-logo-top {
+            width: 304px;
+            margin-bottom: -18px;
+            margin-top: -50px;
+        }
+    }
+}
 
 
 
