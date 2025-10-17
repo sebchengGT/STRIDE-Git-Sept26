@@ -7,6 +7,11 @@
 #oct 13, 2025
 #eeee
 #updated as of oct 15,2025
+<<<<<<< HEAD
+=======
+#mergetest
+#updated as of oct 17,2025 3:35 pm
+>>>>>>> 7020aea8340c69761c7a238fc5170c8a1391f56c
 library(tidyverse)
 library(DT)
 library(dplyr)
@@ -101,11 +106,18 @@ user_base <- tibble::tibble(
 login_register_UI <- function(id) {
   ns <- NS(id)
   
-  tagList(
-    # Animated grid background
+  # Use bslib::card for a contained, stylish panel
+  card(
+    # Use bslib::card_header for a title
+    card_header(
+      class = "bg-dark text-white",
+      "Cloud App Authentication"
+    ),
+    # Content of the card
     div(
-      class = "grid-motion-bg",
-      lapply(seq_len(300), function(i) div(class = "grid-dot"))
+      class = "d-flex justify-content-center mb-3", # Use Bootstrap utility classes
+      # The main panel for login/register choice using a tab-like navigation
+      uiOutput(ns("form_selector_ui"))
     ),
     
     # Main login/register container
@@ -152,7 +164,6 @@ login_register_UI <- function(id) {
     )
   )
 }
-
 
 SERVICE_ACCOUNT_FILE <- "service_account.json" 
 
@@ -216,25 +227,22 @@ ui <- page_fluid(
   ),
   
   # Header (always visible)
-  shinyjs::hidden(
+  tags$div(
+    class = "app-header",
+    style = "display: flex; align-items: center; gap: 15px; justify-content: center;",
+    
+    # Logo
+    tags$img(src = "logo3.png", class = "header-logo-left"),
+    
+    # Center text
     tags$div(
-      id = "app_header",
-      class = "app-header",
-      style = "display: flex; align-items: center; gap: 15px; justify-content: center;",
-      
-      # Left logo
-      tags$img(src = "logo3.png", class = "header-logo-left"),
-      
-      # Center text
-      tags$div(
-        class = "header-title",
-        h2("DepEd STRIDE"),
-        p("STRIDE: Strategic Inventory for Deployment Efficiency")
-      ),
-      
-      # Right logo
-      tags$img(src = "HROD LOGO1.png", class = "header-logo-right")
-    )
+      class = "header-title",
+      h2("DepEd STRIDE Dashboard"),
+      p("STRIDE: Strategic Inventory for Deployment Efficiency")
+    ),
+    
+    # Right logo
+    tags$img(src = "HROD LOGO1.png", class = "header-logo-right")
   ),
   
   # 💡 CRITICAL FIX: The dynamic container for login/main app UI
@@ -275,11 +283,9 @@ ui <- page_fluid(
   ),
   
   # Footer (always visible)
-  shinyjs::hidden(
-    tags$footer(
-      id = "app_footer",
-      class = "app-footer",
-      tags$p("© Based on GMIS (April 2025) and eBEIS (SY 2024–2025)")))
+  tags$footer(
+    class = "app-footer",
+    tags$p("© Based on GMIS (April 2025) and eBEIS (SY 2024–2025)"))
 )
 
 
@@ -287,63 +293,6 @@ ui <- page_fluid(
 
 # Define server logic required to draw a histogram
 server <- function(input, output, session) {
-  
-  current_region <- reactiveVal(NULL)
-  current_division <- reactiveVal(NULL)
-  
-  output$backButtonUI <- renderUI({
-    # Only show the button if a region is currently selected
-    if (!is.null(current_region()) || !is.null(current_division())) {
-      actionButton("go_back", "⬅️ Back")
-    }
-  })
-  
-  observeEvent(input$go_back, {
-    
-    # Step 1: If we are viewing a Division breakdown, go back to the Region breakdown
-    if (!is.null(current_division())) {
-      current_division(NULL)
-      cat("State change: Returned to Region view.\n")
-    } 
-    
-    # Step 2: Else, if we are viewing a Region breakdown, go back to the Overall view
-    else if (!is.null(current_region())) {
-      current_region(NULL)
-      cat("State change: Returned to Overall view.\n")
-    }
-    
-    # Note: You do not need an 'else' block, as the button won't be visible 
-    # unless one of these reactive values is set (thanks to renderUI).
-  })
-  
-  # Hide header/footer when not authenticated; show when authenticated
-  observe({
-    # user_status is defined earlier in your server (values: "unauthenticated", "login", "register", "authenticated")
-    if (isTRUE(user_status() == "authenticated")) {
-      shinyjs::show("app_header")
-      shinyjs::show("app_footer")
-    } else {
-      shinyjs::hide("app_header")
-      shinyjs::hide("app_footer")
-    }
-  })
-  
-  observe({
-    mode <- if (user_status() == "authenticated") "app" else "login"
-    session$sendCustomMessage("setLoginMode", ifelse(mode == "login", "login", "app"))
-  })
-  
-  observe({
-    if (user_status() == "authenticated") {
-      shinyjs::show("app_header")
-      shinyjs::show("app_footer")
-    } else {
-      shinyjs::hide("app_header")
-      shinyjs::hide("app_footer")
-    }
-  })
-  
-  
   
   output$StrideLogo <- renderImage({
     image_path <- normalizePath(file.path('www', 'STRIDE logo.png'))
@@ -443,7 +392,70 @@ server <- function(input, output, session) {
       type = "pie", textinfo = "label+percent",
       insidetextorientation = "radial"
     ) |> layout(title = list(text = "School Size Typology (Pie)", x = 0.5))
-  })
+  })# --- Authentication ---
+  # Call the shinyauthr::loginServer module
+  # credentials() will be a reactive returning a tibble with user_auth, info, and additional columns from user_base
+  # credentials <- shinyauthr::loginServer(
+  #   id = "login",
+  #   data = user_base,
+  #   user_col = user,
+  #   pwd_col = password_hash, # Use the hashed password column
+  #   sodium_hashed = TRUE,    # Important: tell shinyauthr we are using sodium hashes
+  #   log_out = reactive(logout_init()) # Link to the logout button
+  # )
+  # 
+  # 
+  # 
+  # # --- Reactive Values & Observers ---
+  # # Observe the authentication status
+  # observe({
+  #   auth_status <- credentials()$user_auth
+  #   if (auth_status) {
+  #     # User is authenticated. Let's get their details.
+  #     user_info <- credentials()$info
+  #     # This is a tibble with the user's row
+  #     
+  #     # Ensure user_info is available and has the username
+  #     # (It should if auth_status is TRUE and your user_base is set up correctly)
+  #     if (!is.null(user_info) && "user" %in% names(user_info)) {
+  #       current_username <- user_info$user # Get the username
+  #       
+  #       # --- Always hide the login panel when authenticated ---
+  #       shinyjs::hide(selector = "#login") # Or shinyjs::hide(id = "login-login_ui")
+  #       shinyjs::hide("StrideLogo")
+  #       # --- Conditional logic based on username ---
+  #       if (current_username == "iamdeped") { # <<<< Your specific username condition
+  #         # Authenticated AND username is "user1"
+  #         shinyjs::show("main_content")
+  #         shinyjs::hide("mgmt_content")
+  #       } else {
+  #         
+  #         if (current_username == "depedadmin") {
+  #           # Authenticated BUT username is NOT "user1"
+  #           # This could be user2, user3, etc.
+  #           shinyjs::show("mgmt_content")
+  #           shinyjs::hide("main_content")
+  #           # output$generic_secure_data <- renderPrint({"Generic secure data for other users..."})
+  #         }}}
+  #   } else {
+  #     # User is NOT authenticated (e.g., after logout or initially)
+  #     shinyjs::show(selector = "#login")
+  #     shinyjs::show("StrideLogo")
+  #     shinyjs::hide("main_content")
+  #     shinyjs::hide("mgmt_content")
+  #   }
+  #   
+  #   if (auth_status) {
+  #     shinyjs::runjs('
+  #   $("#loading-overlay").fadeIn(200);
+  #   document.body.classList.remove("login-bg");
+  #   document.body.classList.add("dashboard-bg");
+  # ')
+  #   } else {
+  #     shinyjs::runjs('$("#loading-overlay").hide();')
+  #     shinyjs::runjs('document.body.classList.remove("dashboard-bg");')
+  #     shinyjs::runjs('document.body.classList.add("login-bg");')
+  #   }})
   
   output$STRIDE_data <- renderUI({
     fluidPage(
@@ -6982,6 +6994,7 @@ server <- function(input, output, session) {
     }
     
     # --- Prepare grouped data (all regions) ---
+<<<<<<< HEAD
     if (is.null(current_region())) {
       plot_data <- df %>%
         group_by(Region) %>%
@@ -7129,6 +7142,12 @@ server <- function(input, output, session) {
           legend.position = "none"
         )
     }
+=======
+    plot_data <- current_filtered_data %>%
+      group_by(Region) %>%
+      summarise(TeacherShortage = sum(as.numeric(TeacherShortage), na.rm = TRUE),
+                .groups = "drop")
+>>>>>>> 7020aea8340c69761c7a238fc5170c8a1391f56c
     
     ggplotly(p, tooltip = "text", source = "A") %>%
       layout(
@@ -7155,7 +7174,11 @@ server <- function(input, output, session) {
       group_by(Division) %>%
       summarise(Count = sum(as.numeric(TeacherShortage), na.rm = TRUE), .groups = 'drop') %>%
       arrange(desc(Count)) %>%
+<<<<<<< HEAD
       slice_head(n = 20)
+=======
+      slice_head(n = 20) 
+>>>>>>> 7020aea8340c69761c7a238fc5170c8a1391f56c
     
     # --- Create ggplot ---
     p <- ggplot(plot_data,
@@ -7199,6 +7222,7 @@ server <- function(input, output, session) {
       )
   })
   
+<<<<<<< HEAD
   # New observer to handle clicks on the Region bar chart
   observeEvent(event_data("plotly_click", source = "A"), {
     click_data <- event_data("plotly_click", source = "A")
@@ -7249,6 +7273,14 @@ server <- function(input, output, session) {
   #Classroom Shortage
   output$Classroom_Shortage_Region_Graph2 <- renderPlotly({
     
+=======
+  #Classroom Shortage
+  output$Classroom_Shortage_Region_Graph2 <- renderPlotly({
+    
+    # Use the reactive filtered data
+    current_filtered_data <- LMS
+    
+>>>>>>> 7020aea8340c69761c7a238fc5170c8a1391f56c
     # --- Empty Data Handling ---
     if (nrow(LMS) == 0) {
       return(ggplotly(ggplot() +
@@ -7256,6 +7288,7 @@ server <- function(input, output, session) {
                         theme_void()))
     }
     
+<<<<<<< HEAD
     if (is.null(current_region())) {
       
       # Prepare the data for plotting
@@ -7343,6 +7376,33 @@ server <- function(input, output, session) {
               legend.position = "none", # No legend needed for single fill
               plot.title = element_text(hjust = 0.5)) # Center the plot title
     }
+=======
+    # Prepare the data for plotting
+    plot_data <- current_filtered_data %>%
+      group_by(Region) %>%
+      summarise(Count = sum(as.numeric(Estimated_CL_Shortage), na.rm = TRUE), .groups = 'drop')
+    
+    # Create the ggplot
+    p <- ggplot(plot_data,
+                aes(x = reorder(Region, -Count),
+                    y = Count,
+                    fill = Region,
+                    text = paste("Region: ", Region,
+                                 "<br>Classroom Shortage: ", scales::comma(Count)))) + # Custom tooltip text
+      geom_bar(stat = "identity", color = "black") +
+      geom_text(data = plot_data,
+                aes(x = Region, y = Count * 1.05, label = scales::comma(Count)), # Modified line
+                inherit.aes = FALSE,
+                size = 3.5,
+                color = "black") +
+      labs(x = "Region",
+           y = "Classroom Shortage") +
+      scale_y_continuous(labels = scales::comma) + # Format y-axis labels as comma-separated numbers
+      theme_minimal() +
+      theme(axis.text.x = element_text(size = 10, angle = 45, hjust = 1),
+            legend.position = "none", # No legend needed for single fill
+            plot.title = element_text(hjust = 0.5)) # Center the plot title
+>>>>>>> 7020aea8340c69761c7a238fc5170c8a1391f56c
     
     # Convert ggplot to plotly, ensuring custom text is used for hover
     ggplotly(p, tooltip = "text", source = "classroomShortageRegionPlot") %>%
@@ -7703,6 +7763,7 @@ server <- function(input, output, session) {
   
   #LMS
   output$LMS_Nation_Graph2 <- renderPlotly({
+<<<<<<< HEAD
     
     if (is.null(current_region())) {
       full_data <- LMS %>%   
@@ -7869,6 +7930,62 @@ server <- function(input, output, session) {
     }
     
     ggplotly(p, tooltip = "text", source = "LMSplotly") %>%
+=======
+    full_data <- LMS %>%   
+      rename(
+        "With Buildable Space" = Buildable_space,
+        "With Excess Classrooms" = With_Excess,
+        "Without Classroom Shortage" = Without_Shortage,
+        "Last Mile Schools" = LMS,
+        "GIDCA" = GIDCA,
+        "With Shortage" = With_Shortage
+      ) %>%
+      pivot_longer(13:18, names_to = "Type", values_to = "Count")
+    
+    # --- Keep only "Last Mile Schools" and aggregate all regions ---
+    plot_data <- full_data %>%
+      filter(Type == "Last Mile Schools") %>%
+      group_by(Region) %>%
+      summarise(
+        Count = sum(as.numeric(Count), na.rm = TRUE),
+        .groups = "drop"
+      )
+    
+    # --- Compute national total ---
+    national_total <- sum(plot_data$Count, na.rm = TRUE)
+    
+    # ---  Create the chart ---
+    p <- ggplot(plot_data,
+                aes(
+                  x = reorder(Region, -Count),
+                  y = Count,
+                  fill = Region,
+                  text = paste(
+                    "Region:", Region,
+                    "<br>Count:", scales::comma(Count)
+                  )
+                )) +
+      geom_bar(stat = "identity", color = "black", size = 0.25) +
+      geom_text(
+        aes(label = scales::comma(Count), y = Count * 1.05),
+        size = 3.5,
+        color = "black"
+      ) +
+      labs(
+        x = "Region",
+        y = "Number of Last Mile Schools",
+        fill = "Region"
+      ) +
+      scale_y_continuous(labels = scales::comma) +
+      theme_minimal() +
+      theme(
+        plot.title = element_text(hjust = 0.5, size = 14, face = "bold"),
+        axis.text.x = element_text(size = 10, angle = 45, hjust = 1),
+        legend.position = "none"
+      )
+    
+    ggplotly(p, tooltip = "text") %>%
+>>>>>>> 7020aea8340c69761c7a238fc5170c8a1391f56c
       layout(
         hoverlabel = list(bgcolor = "white"),
         margin = list(b = 100)
@@ -21334,18 +21451,18 @@ server <- function(input, output, session) {
   # Main dynamic UI switch
   output$page_ui <- renderUI({
     status <- user_status()
-    current_user <- authenticated_user()  # Retrieve logged-in user
+    current_user <- authenticated_user() # Retrieve the currently logged-in user
     
-    # ✅ 1. AUTHENTICATED USERS
     if (status == "authenticated" && !is.null(current_user)) {
-      # Get user details
+      # 1. Get the full user row from the database based on the authenticated username
       users_db <- user_database()
       user_row <- users_db[users_db$Email_Address == current_user, ]
       
+      # Ensure the user still exists and has a station
       if (nrow(user_row) == 1) {
-        station <- user_row$Station[1]
+        station <- user_row$Station[1] # Use the Station value
         
-        # Switch UI based on station
+        # 2. Switch UI based on the Station
         if (station == "Central Office") {
           shinyjs::hide("data_input_content")
           shinyjs::show("mgmt_content")
@@ -21355,11 +21472,11 @@ server <- function(input, output, session) {
           shinyjs::hide("main_content")
           shinyjs::hide("mgmt_content")
         } else {
-          return(card(
-            card_header("Application Dashboard"),
-            h2(paste("Welcome,", station, "User!")),
-            actionButton("main_app-logout", "Logout", class = "btn-danger")
-          ))
+          # Default UI for other stations (Regional Office, SDO, etc.)
+          # You can add more specific UIs here if needed
+          return(card(card_header("Application Dashboard"), 
+                      h2(paste("Welcome,", station, "User!")), 
+                      actionButton("main_app-logout", "Logout", class = "btn-danger")))
         }
         return(NULL)
       }
@@ -21423,16 +21540,14 @@ server <- function(input, output, session) {
         )
       )
     )
-  }
-  
+  })
   
   # --- Authentication Module (Login/Register Forms) ---
   # CRITICAL FIX: Only call the module ONCE at the start of the server.
   # 💡 NEW: Pass the authenticated_user reactiveVal to the module
   callModule(authentication_server, "auth", 
              user_status, form_choice, SHEET_URL, user_database, db_trigger, 
-             authenticated_user)
-  # Pass the new reactive
+             authenticated_user) # Pass the new reactive
   
   # --- Main App Module ---
   
