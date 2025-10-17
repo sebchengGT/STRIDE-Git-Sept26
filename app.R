@@ -7,7 +7,6 @@
 #oct 13, 2025
 #eeee
 #updated as of oct 15,2025
-#mergetest
 library(tidyverse)
 library(DT)
 library(dplyr)
@@ -118,8 +117,8 @@ login_register_UI <- function(id) {
         class = "login-left",
         div(
           class = "login-text-box",
-          h2("Department of Education"),
-          p("STRIDE: Education in Motion, Data Precision for Smart Decision.")
+          h2("STRIDE"),
+          p("Education in Motion. Data Precision. Smart Decision.")
         )
       ),
       
@@ -133,7 +132,7 @@ login_register_UI <- function(id) {
           tags$img(src = "logo3.png", class = "login-logo-top"),
           
           # Login Form Inputs (NAMESPACED!)
-          textInput(ns("login_user"), NULL, placeholder = "user@deped.gov.ph"),
+          textInput(ns("login_user"), NULL, placeholder = "DepEd Email"),
           passwordInput(ns("login_pass"), NULL, placeholder = "Password"),
           actionButton(ns("do_login"), "Sign In", class = "btn-login w-100"),
           
@@ -922,6 +921,7 @@ server <- function(input, output, session) {
                      nav_spacer(),
                      nav_panel(
                        title = "Regional Level",
+                       uiOutput("backButtonUI"),
                        plotlyOutput("school_count_regional_graph", height = 500)
                      ),
                      nav_panel(
@@ -940,6 +940,7 @@ server <- function(input, output, session) {
                      nav_spacer(),
                      nav_panel(
                        title = "Regional Level",
+                       uiOutput("backButtonUI"),
                        plotlyOutput("SOSSS_Region_Typology", height = 500)
                      ),
                      nav_panel(
@@ -958,6 +959,7 @@ server <- function(input, output, session) {
                      nav_spacer(),
                      nav_panel(
                        title = "Regional Level",
+                       uiOutput("backButtonUI"),
                        plotlyOutput("Classroom_Shortage_Region_Graph", height = 500)
                      ),
                      nav_panel(
@@ -976,6 +978,7 @@ server <- function(input, output, session) {
                      nav_spacer(),
                      nav_panel(
                        title = "Regional Level",
+                       uiOutput("backButtonUI"),
                        plotlyOutput("LMS_Nation_Graph", height = 500)
                      ),
                      nav_panel(
@@ -990,6 +993,7 @@ server <- function(input, output, session) {
                      nav_spacer(),
                      nav_panel(
                        title = "Regional Level",
+                       uiOutput("backButtonUI"),
                        plotlyOutput("Teacher_Shortage_Regional_Graph", height = 500)
                      ),
                      nav_panel(
@@ -1004,6 +1008,7 @@ server <- function(input, output, session) {
                      nav_spacer(),
                      nav_panel(
                        title = "Regional Level",
+                       uiOutput("backButtonUI"),
                        plotlyOutput("School_Principal_Regional_Graph", height = 500)
                      ),
                      nav_panel(
@@ -1022,6 +1027,7 @@ server <- function(input, output, session) {
                      nav_spacer(),
                      nav_panel(
                        title = "Regional Level",
+                       uiOutput("backButtonUI"),
                        plotlyOutput("AOII_Regional_Graph", height = 500)
                      ),
                      nav_panel(
@@ -1040,6 +1046,7 @@ server <- function(input, output, session) {
                      nav_spacer(),
                      nav_panel(
                        title = "Regional Level",
+                       uiOutput("backButtonUI"),
                        plotlyOutput("PDOI_Regional_Graph", height = 500)
                      ),
                      nav_panel(
@@ -1996,36 +2003,18 @@ server <- function(input, output, session) {
               pickerInput("School_Data_Toggles", strong("School Information Data Toggles"), 
                           choices = c("School Size Typology" = "School.Size.Typology", 
                                       "Curricular Offering" = "Modified.COC"),
-                          multiple = TRUE,
-                          options = pickerOptions(
-                            `actions-box` = TRUE,
-                            dropupAuto = FALSE,
-                            dropup = FALSE
-                          )
-              ),
+                          multiple = TRUE, options = list(`actions-box` = TRUE)),
               
               pickerInput("Teaching_Data_Toggles", strong("Teaching Data Toggles"), 
                           choices = c("Total Teachers" = "TotalTeachers", 
                                       "Teacher Excess" = "Total.Excess", 
                                       "Teacher Shortage" = "Total.Shortage"),
-                          multiple = TRUE,
-                          options = pickerOptions(
-                            `actions-box` = TRUE,
-                            dropupAuto = FALSE,
-                            dropup = FALSE
-                          )
-              ),
+                          multiple = TRUE, options = list(`actions-box` = TRUE)),
               
               pickerInput("NTP_Data_Toggles", strong("Non-teaching Data Toggles"), 
                           choices = c("COS" = "Outlier.Status", 
                                       "AOII Clustering Status" = "Clustering.Status"),
-                          multiple = TRUE,
-                          options = pickerOptions(
-                            `actions-box` = TRUE,
-                            dropupAuto = FALSE,
-                            dropup = FALSE
-                          )
-              ),
+                          multiple = TRUE, options = list(`actions-box` = TRUE)),
               
               pickerInput("Enrolment_Data_Toggles", strong("Enrolment Data Toggles"), 
                           choices = c("Total Enrolment" = "TotalEnrolment", "Kinder" = "Kinder", 
@@ -2034,26 +2023,14 @@ server <- function(input, output, session) {
                                       "Grade 7" = "G7", "Grade 8" = "G8", 
                                       "Grade 9" = "G9", "Grade 10" = "G10", 
                                       "Grade 11" = "G11", "Grade 12" = "G12"),
-                          multiple = TRUE,
-                          options = pickerOptions(
-                            `actions-box` = TRUE,
-                            dropupAuto = FALSE,
-                            dropup = FALSE
-                          )
-              ),
+                          multiple = TRUE, options = list(`actions-box` = TRUE)),
               
               pickerInput("Specialization_Data_Toggles", strong("Specialization Data Toggles"), 
                           choices = c("English" = "English", "Mathematics" = "Mathematics", 
                                       "Science" = "Science", 
                                       "Biological Sciences" = "Biological.Sciences", 
                                       "Physical Sciences" = "Physical.Sciences"),
-                          multiple = TRUE,
-                          options = pickerOptions(
-                            `actions-box` = TRUE,
-                            dropupAuto = FALSE,
-                            dropup = FALSE
-                          )
-              ),
+                          multiple = TRUE, options = list(`actions-box` = TRUE)),
               
               pickerInput("EFD_Data_Toggles", strong("Infrastructure Data Toggles"), 
                           choices = c("Number of Buildings" = "Buildings", 
@@ -2070,12 +2047,7 @@ server <- function(input, output, session) {
                                       "School Building Priority Index" = "SBPI", 
                                       "Total Seats" = "Total.Seats.2023.2024", 
                                       "Total Seats Shortage" = "Total.Seats.Shortage.2023.2024"),
-                          multiple = TRUE,
-                          options = pickerOptions(
-                            `actions-box` = TRUE,
-                            dropupAuto = FALSE,
-                            dropup = FALSE
-                          ))
+                          multiple = TRUE, options = list(`actions-box` = TRUE))
             ),
             layout_columns(
               card(
@@ -2256,72 +2228,22 @@ server <- function(input, output, session) {
         icon = bs_icon("map"),
         layout_sidebar(
           sidebar = sidebar(
-            width = 375,
+            width = 375, # Extend sidebar width by 25%
             title = "Resource Mapping Filters",
             
             # --- Data Filters Card for Resource Mapping ---
-            card(
-              height = 400,
-              card_header(tags$b("Data Filters")),
-              
-              # Region Picker
-              pickerInput(
-                inputId = "resource_map_region",
-                label = "Region:",
-                choices = c(
-                  "Region I" = "Region I","Region II" = "Region II","Region III" = "Region III",
-                  "Region IV-A" = "Region IV-A","MIMAROPA" = "MIMAROPA","Region V" = "Region V",
-                  "Region VI" = "Region VI","NIR" = "NIR","Region VII" = "Region VII",
-                  "Region VIII" = "Region VIII","Region IX" = "Region IX","Region X" = "Region X",
-                  "Region XI" = "Region XI","Region XII" = "Region XII","CARAGA" = "CARAGA",
-                  "CAR" = "CAR","NCR" = "NCR"
-                ),
-                selected = "Region I",
-                multiple = FALSE,
-                options = list(
-                  `actions-box` = FALSE,
-                  `none-selected-text` = "Select a region",
-                  dropupAuto = FALSE,
-                  dropup = FALSE
-                )
-              ),
-              
-              # Division Picker
-              pickerInput(
-                inputId = "Resource_SDO",
-                label = "Select a Division:",
-                choices = NULL,
-                selected = NULL,
-                multiple = FALSE,
-                options = list(
-                  `actions-box` = FALSE,
-                  `none-selected-text` = "Select a division",
-                  dropupAuto = FALSE,
-                  dropup = FALSE
-                )
-              ),
-              
-              # District Picker
-              pickerInput(
-                inputId = "Resource_LegDist",
-                label = "Select Legislative District(s):",
-                choices = NULL,
-                selected = NULL,
-                multiple = TRUE,
-                options = list(
-                  `actions-box` = TRUE,
-                  `none-selected-text` = "Select one or more districts",
-                  dropupAuto = FALSE,
-                  dropup = FALSE
-                )
-              ),
-              
-              input_task_button("Mapping_Run", strong("Show Selection"), class = "btn-warning")
+            card(height = 400,
+                 card_header(tags$b("Data Filters")), # NEW: Card header for filters
+                 selectInput("resource_map_region", "Region:",
+                             choices = c("Region I" = "Region I","Region II" = "Region II","Region III" = "Region III","Region IV-A" = "Region IV-A","MIMAROPA" = "MIMAROPA","Region V" = "Region V","Region VI" = "Region VI","NIR" = "NIR","Region VII" = "Region VII","Region VIII" = "Region VIII","Region IX" = "Region IX","Region X" = "Region X","Region XI" = "Region XI","Region XII" = "Region XII","CARAGA" = "CARAGA","CAR" = "CAR","NCR" = "NCR"),
+                             selected = "Region I"),
+                 uiOutput("resource_map_division"),
+                 uiOutput("resource_map_legislative_district"),
+                 input_task_button("Mapping_Run", strong("Show Selection"), class = "btn-warning"),
             ),
-            
             hr(),
             
-            # Resource Types
+            # Radio Buttons for resource types
             card(
               card_header(tags$b("Resource Types")),
               radioButtons(
@@ -2341,13 +2263,14 @@ server <- function(input, output, session) {
             )
           ),
           
-          # Main Panel
+          # 2. Main Panel: This is now a single uiOutput that will be rendered dynamically
           mainPanel(
             width = 12,
-            uiOutput("dynamic_resource_panel")
+            uiOutput("dynamic_resource_panel") # This will be generated by renderUI on the server
           )
         )
       ),
+      
       # --- Last Top-Level Tab: About ---
       nav_panel(
         title = tags$b("About"),
@@ -2421,6 +2344,7 @@ server <- function(input, output, session) {
             # --- Start of Tabset (now ABOVE the summary cards) ---
             navset_tab(
               nav_panel("Regional Breakdown",
+                        uiOutput("backButtonUI"),
                         plotlyOutput("Teaching_Deployment_Region_Graph")
               ),
               nav_panel("Priority Divisions",
@@ -2606,6 +2530,7 @@ server <- function(input, output, session) {
                 navset_tab(
                   # Tab 1: Regional Classroom Breakdown (Your existing content)
                   nav_panel("Regional Breakdown",
+                            uiOutput("backButtonUI"),
                             plotlyOutput("Classroom_Shortage_Region_Graph2")
                   ),
                   # Tab 2: Division Classroom Shortage Breakdown (The new tab)
@@ -2681,6 +2606,7 @@ server <- function(input, output, session) {
               # --- Tabset ---
               navset_tab(
                 nav_panel("Regional Breakdown",
+                          uiOutput("backButtonUI"),
                           plotlyOutput("Ind_Regional_Graph")
                 ),
                 nav_panel("Priority Divisions",
@@ -2915,6 +2841,7 @@ server <- function(input, output, session) {
                 navset_tab(
                   # Tab 1: Regional Breakdown (Your existing content)
                   nav_panel("Regional Breakdown",
+                            uiOutput("backButtonUI"),
                             plotlyOutput("LMS_Nation_Graph2")
                   ),
                   # Tab 2: Division Breakdown (The new tab)
@@ -2984,64 +2911,53 @@ server <- function(input, output, session) {
     filtered_division <- c(df[df$Region==input$cloud_dashboard_region_filter,"Division"])
     selectInput("cloud_Dashboard_SDO",HTML(paste0("Division ", em(style = "font-size: 0.8em;", "(for Legislative District data):"))), filtered_division, selected = filtered_division[1])})
   
-  # --- Update Division Picker when Region changes ---
-  observeEvent(input$resource_map_region, {
-    req(input$resource_map_region)  # make sure region exists
+  # --- Division UI ---
+  output$resource_map_division <- renderUI({
+    filtered_division <- c(df[df$Region == input$resource_map_region, "Division"])
     
-    filtered_division <- unique(df[df$Region == input$resource_map_region, "Division"])
-    filtered_division <- filtered_division[!is.na(filtered_division) & filtered_division != ""]
-    
-    shinyWidgets::updatePickerInput(
-      session = session,
-      inputId = "Resource_SDO",
+    selectInput(
+      "Resource_SDO",
+      "Select a Division:",
       choices = filtered_division,
-      selected = if (length(filtered_division) > 0) filtered_division[1] else NULL
-    )
-    
-    # Reset district when region changes
-    shinyWidgets::updatePickerInput(
-      session = session,
-      inputId = "Resource_LegDist",
-      choices = NULL,
-      selected = NULL
+      selected = filtered_division[1]
     )
   })
   
-  # --- Update District Picker when Division changes ---
-  observeEvent(input$Resource_SDO, {
-    req(input$Resource_SDO)
-    
-    filtered_district <- unique(df[df$Division == input$Resource_SDO, "Legislative.District"])
-    filtered_district <- filtered_district[!is.na(filtered_district) & filtered_district != ""]
-    
-    shinyWidgets::updatePickerInput(
-      session = session,
-      inputId = "Resource_LegDist",
-      choices = filtered_district,
-      selected = if (length(filtered_district) > 0) filtered_district[1] else NULL
-    )
-  })
+  output$explorer_division<- renderUI({
+    filtered_division <- c(df[df$Region==input$explorer_region,"Division"])
+    selectInput("Explorer_SDO","Select a Division:", filtered_division, selected = filtered_division[1])})
   
-  # --- Delay default setting until UI & df are ready ---
-  observe({
-    # Wait until df exists and has Region I data
-    req(df)
-    invalidateLater(500, session)  # keeps checking until successful
+  # --- Legislative District UI ---
+  output$resource_map_legislative_district <- renderUI({
     
-    if (!is.null(input$resource_map_region) && input$resource_map_region == "Region I") {
-      filtered_division <- unique(df[df$Region == "Region I", "Division"])
-      filtered_division <- filtered_division[!is.na(filtered_division) & filtered_division != ""]
-      
-      if (length(filtered_division) > 0) {
-        shinyWidgets::updatePickerInput(
-          session = session,
-          inputId = "Resource_SDO",
-          choices = filtered_division,
-          selected = filtered_division[1]
+    if (is.null(input$Resource_SDO) || input$Resource_SDO == "Select Input") {
+      pickerInput(
+        inputId = "Resource_LegDist",
+        label = "Select Legislative District(s):",
+        choices = "Select Input",
+        selected = NULL,
+        multiple = TRUE,
+        options = list(
+          `actions-box` = TRUE,
+          `none-selected-text` = "Select one or more districts"
         )
-      }
+      )
+    } else {
+      filtered_district <- unique(df[df$Division == input$Resource_SDO, "Legislative.District"])
+      pickerInput(
+        inputId = "Resource_LegDist",
+        label = "Select Legislative District(s):",
+        choices = filtered_district,
+        selected = filtered_district[1], # or `selected = filtered_district` to select all by default
+        multiple = TRUE,
+        options = list(
+          `actions-box` = TRUE,
+          `none-selected-text` = "Select one or more districts"
+        )
+      )
     }
   })
+  
   
   # Reactive value to store uploaded data
   uploaded_data <- reactiveVal(NULL)
@@ -3117,6 +3033,7 @@ server <- function(input, output, session) {
                  # Changed to plotlyOutput
                  card(full_screen = TRUE,
                       card_header(strong("Regional School Count Data"),
+                                  uiOutput("backButtonUI"),
                                   plotlyOutput("school_count_regional_graph", height = 500))),
                  card(full_screen = TRUE,
                       card_header(strong("SDO School Count Data"),
@@ -3143,6 +3060,7 @@ server <- function(input, output, session) {
                  # Uncomment and adjust if you need a national data table as a plotly table
                  card(full_screen = TRUE,
                       card_header(strong("Regional Classroom Shortage Data"),
+                                  uiOutput("backButtonUI"),
                                   plotlyOutput("Classroom_Shortage_Region_Graph", height = 500))),
                  card(full_screen = TRUE,
                       card_header(strong("SDO Classroom Shortage Data"),
@@ -3165,6 +3083,7 @@ server <- function(input, output, session) {
                  # Uncomment and adjust if you need a national data table as a plotly table
                  card(full_screen = TRUE,
                       card_header(strong("Regional LMS Data"),
+                                  uiOutput("backButtonUI"),
                                   plotlyOutput("LMS_Nation_Graph", height = 500))),
                  card(full_screen = TRUE,
                       card_header(strong("SDO LMS Data"),
@@ -3197,6 +3116,7 @@ server <- function(input, output, session) {
                  # Uncomment and adjust if you need a national data table as a plotly table
                  card(full_screen = TRUE,
                       card_header(strong("Regional SOSSS Typology Data"),
+                                  uiOutput("backButtonUI"),
                                   plotlyOutput("SOSSS_Region_Typology", height = 500))),
                  card(full_screen = TRUE,
                       card_header(strong("SDO SOSSS Typology Data"),
@@ -3224,6 +3144,7 @@ server <- function(input, output, session) {
                  col_widths = c(12,6,6,12),
                  card(full_screen = TRUE,
                       card_header(strong("Regional School Principal Shortage Data"),
+                                  uiOutput("backButtonUI"),
                                   plotlyOutput("School_Principal_Regional_Graph", height = 500))),
                  card(full_screen = TRUE,
                       card_header(strong("SDO School Principal Shortage Data"),
@@ -3253,6 +3174,7 @@ server <- function(input, output, session) {
                  # Uncomment and adjust if you need a national data table as a plotly table
                  card(full_screen = TRUE,
                       card_header(strong("Regional Teacher Shortage Data"),
+                                  uiOutput("backButtonUI"),
                                   plotlyOutput("Teacher_Shortage_Regional_Graph", height = 500))),
                  card(full_screen = TRUE,
                       card_header(strong("SDO Teacher Shortage Data"),
@@ -3278,6 +3200,7 @@ server <- function(input, output, session) {
                  # Uncomment and adjust if you need a national data table as a plotly table
                  card(full_screen = TRUE,
                       card_header(strong("Regional AO II Deployment Data"),
+                                  uiOutput("backButtonUI"),
                                   plotlyOutput("AOII_Regional_Graph", height = 500))),
                  card(full_screen = TRUE,
                       card_header(strong("SDO AO II Deployment Data"),
@@ -3301,6 +3224,7 @@ server <- function(input, output, session) {
                  # Uncomment and adjust if you need a national data table as a plotly table
                  card(full_screen = TRUE,
                       card_header(strong("Regional PDO I Deployment Data"),
+                                  uiOutput("backButtonUI"),
                                   plotlyOutput("PDOI_Regional_Graph", height = 500))),
                  card(full_screen = TRUE,
                       card_header(strong("SDO PDO I Deployment Data"),
@@ -3350,6 +3274,7 @@ server <- function(input, output, session) {
                layout_columns(
                  card(full_screen = TRUE,
                       card_header(strong("Regional Data"),
+                                  uiOutput("backButtonUI"),
                                   plotlyOutput("enrolment_regional_graph", height = 500))))
              )
            },
@@ -3358,6 +3283,7 @@ server <- function(input, output, session) {
                layout_columns(
                  card(full_screen = TRUE,
                       card_header(strong("Regional Data"),
+                                  uiOutput("backButtonUI"),
                                   plotlyOutput("sned_regional_graph", height = 500)))
                )
              )
@@ -3367,6 +3293,7 @@ server <- function(input, output, session) {
                layout_columns(
                  card(full_screen = TRUE,
                       card_header(strong("Regional Data"),
+                                  uiOutput("backButtonUI"),
                                   plotlyOutput("ip_regional_graph", height = 500)))
                )
              )
@@ -3376,6 +3303,7 @@ server <- function(input, output, session) {
                layout_columns(
                  card(full_screen = TRUE,
                       card_header(strong("Regional Data"),
+                                  uiOutput("backButtonUI"),
                                   plotlyOutput("muslim_regional_graph", height = 500)))
                )
              )
@@ -7042,11 +6970,8 @@ server <- function(input, output, session) {
   # --- Teaching Deployment: Regional Breakdown Graph ---
   output$Teaching_Deployment_Region_Graph <- renderPlotly({
     
-    # --- Use the full dataset instead of the filtered one ---
-    current_filtered_data <- df  
-    
     # --- Empty Data Handling ---
-    if (nrow(current_filtered_data) == 0) {
+    if (nrow(df) == 0) {
       return(ggplotly(
         ggplot() +
           annotate("text", x = 0.5, y = 0.5,
@@ -7204,38 +7129,8 @@ server <- function(input, output, session) {
           legend.position = "none"
         )
     }
-    plot_data <- current_filtered_data %>%
-      group_by(Region) %>%
-      summarise(TeacherShortage = sum(as.numeric(TeacherShortage), na.rm = TRUE),
-                .groups = "drop")
     
-    # --- Add labels ---
-    plot_data <- plot_data %>%
-      mutate(Label = scales::comma(TeacherShortage))
-    
-    # --- Plot ---
-    p <- ggplot(plot_data,
-                aes(x = reorder(Region, -TeacherShortage),
-                    y = TeacherShortage,
-                    fill = Region,
-                    text = paste("Region:", Region,
-                                 "<br>Teacher Shortage:", scales::comma(TeacherShortage)))) +
-      geom_bar(stat = "identity", color = "black") +
-      geom_text(aes(label = Label), vjust = -0.5, size = 3.5, color = "black") +
-      labs(
-        title = "Teacher Shortage by Region",
-        x = "Region",
-        y = "Number of Teacher Shortages"
-      ) +
-      scale_y_continuous(labels = scales::comma) +
-      theme_minimal() +
-      theme(
-        plot.title = element_text(hjust = 0.5, size = 14, face = "bold"),
-        axis.text.x = element_text(size = 10, angle = 45, hjust = 1),
-        legend.position = "none"
-      )
-    
-    ggplotly(p, tooltip = "text") %>%
+    ggplotly(p, tooltip = "text", source = "A") %>%
       layout(
         hoverlabel = list(bgcolor = "white"),
         margin = list(b = 100)
@@ -7245,11 +7140,8 @@ server <- function(input, output, session) {
   # --- Teaching Deployment: Priority Division Graph ---
   output$Teaching_Deployment_Division_Graph1 <- renderPlotly({
     
-    # --- Use the full dataset  ---
-    current_filtered_data <- df
-    
     # --- Empty Data Handling ---
-    if (nrow(current_filtered_data) == 0) {
+    if (nrow(df) == 0) {
       return(ggplotly(
         ggplot() +
           annotate("text", x = 0.5, y = 0.5,
@@ -7259,12 +7151,11 @@ server <- function(input, output, session) {
     }
     
     # --- Prepare data for plotting ---
-    plot_data <- current_filtered_data %>%
+    plot_data <- df %>%
       group_by(Division) %>%
       summarise(Count = sum(as.numeric(TeacherShortage), na.rm = TRUE), .groups = 'drop') %>%
       arrange(desc(Count)) %>%
       slice_head(n = 20)
-      slice_head(n = 20) 
     
     # --- Create ggplot ---
     p <- ggplot(plot_data,
@@ -7294,7 +7185,7 @@ server <- function(input, output, session) {
           hjust = 0.5,
           face = "bold",
           size = 14,
-          color = "black"   
+          color = "black"
         ),
         axis.text.x = element_text(size = 10, angle = 45, hjust = 1),
         legend.position = "none"
@@ -7358,14 +7249,8 @@ server <- function(input, output, session) {
   #Classroom Shortage
   output$Classroom_Shortage_Region_Graph2 <- renderPlotly({
     
-  #Classroom Shortage
-  output$Classroom_Shortage_Region_Graph2 <- renderPlotly({
-    
-    # Use the reactive filtered data
-    current_filtered_data <- LMS
-    
     # --- Empty Data Handling ---
-    if (nrow(current_filtered_data) == 0) {
+    if (nrow(LMS) == 0) {
       return(ggplotly(ggplot() +
                         annotate("text", x = 0.5, y = 0.5, label = "No data for selected regions/divisions") +
                         theme_void()))
@@ -7458,37 +7343,59 @@ server <- function(input, output, session) {
               legend.position = "none", # No legend needed for single fill
               plot.title = element_text(hjust = 0.5)) # Center the plot title
     }
-    # Prepare the data for plotting
-    plot_data <- current_filtered_data %>%
-      group_by(Region) %>%
-      summarise(Count = sum(as.numeric(Estimated_CL_Shortage), na.rm = TRUE), .groups = 'drop')
-    
-    # Create the ggplot
-    p <- ggplot(plot_data,
-                aes(x = reorder(Region, -Count),
-                    y = Count,
-                    fill = Region,
-                    text = paste("Region: ", Region,
-                                 "<br>Classroom Shortage: ", scales::comma(Count)))) + # Custom tooltip text
-      geom_bar(stat = "identity", color = "black") +
-      geom_text(data = plot_data,
-                aes(x = Region, y = Count * 1.05, label = scales::comma(Count)), # Modified line
-                inherit.aes = FALSE,
-                size = 3.5,
-                color = "black") +
-      labs(x = "Region",
-           y = "Classroom Shortage") +
-      scale_y_continuous(labels = scales::comma) + # Format y-axis labels as comma-separated numbers
-      theme_minimal() +
-      theme(axis.text.x = element_text(size = 10, angle = 45, hjust = 1),
-            legend.position = "none", # No legend needed for single fill
-            plot.title = element_text(hjust = 0.5)) # Center the plot title
     
     # Convert ggplot to plotly, ensuring custom text is used for hover
     ggplotly(p, tooltip = "text", source = "classroomShortageRegionPlot") %>%
       layout(hoverlabel = list(bgcolor = "white"),
              # Adjust margins to prevent labels from being cut off if needed
              margin = list(b = 100)) # Increase bottom margin for x-axis labels
+  })
+  
+  observeEvent(event_data("plotly_click", source = "classroomShortageRegionPlot"), {
+    click_data <- event_data("plotly_click", source = "classroomShortageRegionPlot")
+    
+    # Ensure a click actually occurred and we're on the main region plot (not the division plot)
+    if (!is.null(click_data) && is.null(current_region()) && is.null(current_division())) {
+      
+      # The x-axis value (the name of the region) is typically in the 'x' element of the click data.
+      clicked_index <- click_data$x
+      
+      plot_data <- LMS %>%
+        group_by(Region) %>%
+        summarise(Count = sum(as.numeric(Estimated_CL_Shortage), na.rm = TRUE), .groups = 'drop') %>% 
+        arrange(desc(Count))
+      
+      # Update the reactive value, which will trigger the plot to redraw 
+      # using the division breakdown logic.
+      selected_region <- plot_data$Region[clicked_index]
+      
+      ## in the table plot_data-- look for the Region column [ and then get the [value of the clicked_index] row ]
+      
+      current_region(selected_region)
+      
+      # Optional: Print the selected region to the console for debugging
+      cat("Region selected:", selected_region, "\n")
+    }
+    else if (!is.null(click_data) && !is.null(current_region()) && is.null(current_division())) {
+      # The x-axis value (the name of the region) is typically in the 'x' element of the click data.
+      clicked_index <- click_data$x
+      
+      plot_data <- LMS %>%
+        filter(Region == current_region()) %>%
+        group_by(Division) %>%
+        summarise(Count = sum(as.numeric(Estimated_CL_Shortage), na.rm = TRUE), .groups = 'drop') %>% 
+        arrange(desc(Count))
+      
+      # Update the reactive value, which will trigger the plot to redraw 
+      # using the division breakdown logic.
+      selected_division <- plot_data$Division[clicked_index]
+      
+      current_division(selected_division)
+      
+      # Optional: Print the selected region to the console for debugging
+      cat("Division selected:", selected_division, "\n")
+    }
+    
   })
   
   output$Classroom_Shortage_Division_Graph2 <- renderPlotly({
@@ -7962,65 +7869,88 @@ server <- function(input, output, session) {
     }
     
     ggplotly(p, tooltip = "text", source = "LMSplotly") %>%
-    full_data <- LMS %>%   
-      rename(
-        "With Buildable Space" = Buildable_space,
-        "With Excess Classrooms" = With_Excess,
-        "Without Classroom Shortage" = Without_Shortage,
-        "Last Mile Schools" = LMS,
-        "GIDCA" = GIDCA,
-        "With Shortage" = With_Shortage
-      ) %>%
-      pivot_longer(13:18, names_to = "Type", values_to = "Count")
-    
-    # --- Keep only "Last Mile Schools" and aggregate all regions ---
-    plot_data <- full_data %>%
-      filter(Type == "Last Mile Schools") %>%
-      group_by(Region) %>%
-      summarise(
-        Count = sum(as.numeric(Count), na.rm = TRUE),
-        .groups = "drop"
-      )
-    
-    # --- Compute national total ---
-    national_total <- sum(plot_data$Count, na.rm = TRUE)
-    
-    # ---  Create the chart ---
-    p <- ggplot(plot_data,
-                aes(
-                  x = reorder(Region, -Count),
-                  y = Count,
-                  fill = Region,
-                  text = paste(
-                    "Region:", Region,
-                    "<br>Count:", scales::comma(Count)
-                  )
-                )) +
-      geom_bar(stat = "identity", color = "black", size = 0.25) +
-      geom_text(
-        aes(label = scales::comma(Count), y = Count * 1.05),
-        size = 3.5,
-        color = "black"
-      ) +
-      labs(
-        x = "Region",
-        y = "Number of Last Mile Schools",
-        fill = "Region"
-      ) +
-      scale_y_continuous(labels = scales::comma) +
-      theme_minimal() +
-      theme(
-        plot.title = element_text(hjust = 0.5, size = 14, face = "bold"),
-        axis.text.x = element_text(size = 10, angle = 45, hjust = 1),
-        legend.position = "none"
-      )
-    
-    ggplotly(p, tooltip = "text") %>%
       layout(
         hoverlabel = list(bgcolor = "white"),
         margin = list(b = 100)
       ) %>%
       style(hoverinfo = "text")
+  })
+  
+  observeEvent(event_data("plotly_click", source = "LMSplotly"), {
+    click_data <- event_data("plotly_click", source = "LMSplotly")
+    
+    # Ensure a click actually occurred and we're on the main region plot (not the division plot)
+    if (!is.null(click_data) && is.null(current_region()) && is.null(current_division())) {
+      
+      # The x-axis value (the name of the region) is typically in the 'x' element of the click data.
+      clicked_index <- click_data$x
+      
+      full_data <- LMS %>%   
+        rename(
+          "With Buildable Space" = Buildable_space,
+          "With Excess Classrooms" = With_Excess,
+          "Without Classroom Shortage" = Without_Shortage,
+          "Last Mile Schools" = LMS,
+          "GIDCA" = GIDCA,
+          "With Shortage" = With_Shortage
+        ) %>%
+        pivot_longer(13:18, names_to = "Type", values_to = "Count")
+      
+      # --- Keep only "Last Mile Schools" and aggregate all regions ---
+      plot_data <- full_data %>%
+        filter(Type == "Last Mile Schools") %>%
+        group_by(Region) %>%
+        summarise(
+          Count = sum(as.numeric(Count), na.rm = TRUE),
+          .groups = "drop"
+        ) %>% arrange(desc(Count))
+      
+      # Update the reactive value, which will trigger the plot to redraw 
+      # using the division breakdown logic.
+      selected_region <- plot_data$Region[clicked_index]
+      
+      ## in the table plot_data-- look for the Region column [ and then get the [value of the clicked_index] row ]
+      
+      current_region(selected_region)
+      
+      # Optional: Print the selected region to the console for debugging
+      cat("Region selected:", selected_region, "\n")
+    }
+    else if (!is.null(click_data) && !is.null(current_region()) && is.null(current_division())) {
+      # The x-axis value (the name of the region) is typically in the 'x' element of the click data.
+      clicked_index <- click_data$x
+      
+      full_data <- LMS %>%   
+        rename(
+          "With Buildable Space" = Buildable_space,
+          "With Excess Classrooms" = With_Excess,
+          "Without Classroom Shortage" = Without_Shortage,
+          "Last Mile Schools" = LMS,
+          "GIDCA" = GIDCA,
+          "With Shortage" = With_Shortage
+        ) %>%
+        pivot_longer(13:18, names_to = "Type", values_to = "Count")
+      
+      # --- Keep only "Last Mile Schools" and aggregate all regions ---
+      plot_data <- full_data %>%
+        filter(Type == "Last Mile Schools") %>%
+        filter(Region == current_region()) %>% 
+        group_by(Division) %>%
+        summarise(
+          Count = sum(as.numeric(Count), na.rm = TRUE),
+          .groups = "drop"
+        ) %>% arrange(desc(Count))
+      
+      # Update the reactive value, which will trigger the plot to redraw 
+      # using the division breakdown logic.
+      selected_division <- plot_data$Division[clicked_index]
+      
+      current_division(selected_division)
+      
+      # Optional: Print the selected region to the console for debugging
+      cat("Division selected:", selected_division, "\n")
+    }
+    
   })
   
   output$LMS_Division_Graph2 <- renderPlotly({
@@ -8326,101 +8256,73 @@ server <- function(input, output, session) {
   
   output$LMS_Dataset  <- DT::renderDT(server = TRUE, {
     
-    data_to_display <- LMS %>%
-      filter(LMS == 1) %>%
-      select(
-        Region,
-        Division,
-        School_Name,
-        Total_Enrollment,
-        Instructional_Rooms,
-        Estimated_CL_Shortage,
-        Buildable_space
-      ) %>%
-      rename(
-        "School Name" = School_Name,
-        "Total Enrolment" = Total_Enrollment,
-        "Number of Classrooms" = Instructional_Rooms,
-        "Estimated Classroom Shortage" = Estimated_CL_Shortage,
-        "Buildable Space" = Buildable_space
-      ) %>%
-      # ✅ Convert 0/1 values to Yes/No for Buildable Space
-      mutate(`Buildable Space` = ifelse(`Buildable Space` == 1, "Yes", "No"))
+    data_to_display <- LMS %>% filter(LMS == 1) %>% select(Region, Division, School_Name, Total_Enrollment,Instructional_Rooms, Estimated_CL_Shortage, Buildable_space) %>% rename("School Name" = School_Name,"Total Enrolment" = Total_Enrollment, "Number of Classrooms" = Instructional_Rooms, "Estimated Classroom Shortage" = Estimated_CL_Shortage, "Buildable Space" = Buildable_space)
     
-    # Handle empty data
+    # You might want to add a check for NULL or empty data if filtered_school_data_division()
+    # could return such states and you want to display a message or an empty table.
     if (is.null(data_to_display) || nrow(data_to_display) == 0) {
       return(DT::datatable(
         data.frame("Message" = "No data available based on current selection."),
-        options = list(dom = 't'),
+        options = list(dom = 't'), # 't' hides all controls, showing only the table body
         rownames = FALSE
       ))
     }
     
-    # Render DataTable
     DT::datatable(
-      data_to_display,
+      data_to_display, # Use the output of your reactive expression
       options = list(
+        # Set the 'Buttons' extension
         extensions = 'Buttons',
-        dom = 'Bfrtip',
+        
+        # Place dom and buttons inside the options list
+        dom = 'Bfrtip', 
         buttons = list('csv', 'excel', 'pdf', 'print'),
-        pageLength = 10,
-        lengthMenu = c(5, 10, 15, 20),
-        searching = TRUE,
-        filter = "top",
-        paging = TRUE,
-        info = TRUE,
-        ordering = TRUE
+        
+        pageLength = 10,       # Number of rows to display per page
+        lengthMenu = c(5, 10, 15, 20), # Options for number of rows per page
+        searching = TRUE,      # Enable search box
+        filter = "top",        # Add filter inputs below column headers
+        paging = TRUE,         # Enable pagination
+        info = TRUE,           # Display table information
+        ordering = TRUE        # Enable column sorting
       ),
-      rownames = FALSE
+      rownames = FALSE # Do not display row names
     )
   })
   
-  
   output$Classroom_Shortage_Dataset  <- DT::renderDT(server = TRUE, {
     
-    data_to_display <- LMS %>%
-      select(
-        Region,
-        Division,
-        School_Name,
-        Total_Enrollment,
-        Instructional_Rooms,
-        Estimated_CL_Shortage,
-        Buildable_space
-      ) %>%
-      rename(
-        "School Name" = School_Name,
-        "Total Enrolment" = Total_Enrollment,
-        "Number of Classrooms" = Instructional_Rooms,
-        "Estimated Classroom Shortage" = Estimated_CL_Shortage,
-        "Buildable Space" = Buildable_space
-      ) %>%
-      # ✅ Convert 0/1 to Yes/No for Buildable Space
-      mutate(`Buildable Space` = ifelse(`Buildable Space` == 1, "Yes", "No"))
+    data_to_display <- LMS %>% select(Region, Division, School_Name, Total_Enrollment,Instructional_Rooms, Estimated_CL_Shortage, Buildable_space) %>% rename("School Name" = School_Name,"Total Enrolment" = Total_Enrollment, "Number of Classrooms" = Instructional_Rooms, "Estimated Classroom Shortage" = Estimated_CL_Shortage, "Buildable Space" = Buildable_space)
     
+    # You might want to add a check for NULL or empty data if filtered_school_data_division()
+    # could return such states and you want to display a message or an empty table.
     if (is.null(data_to_display) || nrow(data_to_display) == 0) {
       return(DT::datatable(
         data.frame("Message" = "No data available based on current selection."),
-        options = list(dom = 't'),
+        options = list(dom = 't'), # 't' hides all controls, showing only the table body
         rownames = FALSE
       ))
     }
     
     DT::datatable(
-      data_to_display,
+      data_to_display, # Use the output of your reactive expression
       options = list(
+        # Set the 'Buttons' extension
         extensions = 'Buttons',
-        dom = 'Bfrtip',
+        
+        # Place dom and buttons inside the options list
+        dom = 'Bfrtip', 
         buttons = list('csv', 'excel', 'pdf', 'print'),
-        pageLength = 10,
-        lengthMenu = c(5, 10, 15, 20),
-        searching = TRUE,
-        filter = "top",
-        paging = TRUE,
-        info = TRUE,
-        ordering = TRUE
+        
+        pageLength = 10,       # Number of rows to display per page
+        lengthMenu = c(5, 10, 15, 20), # Options for number of rows per page
+        searching = TRUE,      # Enable search box
+        filter = "top",        # Add filter inputs below column headers
+        paging = TRUE,         # Enable pagination
+        info = TRUE,           # Display table information
+        ordering = TRUE        # Enable column sorting
       ),
-      rownames = FALSE
+      rownames = FALSE # Do not display row names
     )
   })
   
@@ -9940,7 +9842,7 @@ server <- function(input, output, session) {
       }
     })
     
-    
+    output$TeacherShortage_Table <- DT::renderDT(server = TRUE, {datatable(dfreact_TS() %>% select("School.Name","TeacherShortage","TeacherExcess") %>% rename("School" = School.Name, "Shortage" = TeacherShortage, "Excess" = TeacherExcess), extension = 'Buttons', rownames = FALSE, options = list(scrollX = TRUE, pageLength = 5, columnDefs = list(list(className = 'dt-center', targets ="_all")), dom = 'Bfrtip', buttons = list('csv','excel','pdf','print')))})
     
     output$a <- renderValueBox({
       valueBox(tags$p(strong(SDO[which(SDO$Region==RegRCT & SDO$Division==SDORCT1),"FillUpRate"]), style = "font-family: Poppins; font-size: 20px; color: #111111; text-align: center;"), subtitle = NULL)
@@ -9977,22 +9879,6 @@ server <- function(input, output, session) {
   
   
   observeEvent(input$Mapping_Run, {
-    req(df)
-    
-    # --- Apply filters ---
-    filtered_data <- df
-    if (!is.null(input$resource_map_region) && input$resource_map_region != "")
-      filtered_data <- filtered_data[filtered_data$Region == input$resource_map_region, ]
-    if (!is.null(input$Resource_SDO) && input$Resource_SDO != "")
-      filtered_data <- filtered_data[filtered_data$Division == input$Resource_SDO, ]
-    if (!is.null(input$Resource_LegDist) && length(input$Resource_LegDist) > 0)
-      filtered_data <- filtered_data[filtered_data$Legislative.District %in% input$Resource_LegDist, ]
-    
-    # --- Check before mapping ---
-    if (nrow(filtered_data) == 0) {
-      showNotification("⚠️ No data available for selected filters.", type = "warning")
-      return(NULL)
-    }
     
     output$TeacherShortage_Mapping <- renderLeaflet({
       p = colorFactor(palette = c("red","deepskyblue","green"),domain = c("Shortage","Excess","Balanced"), ordered = T)
@@ -10202,7 +10088,7 @@ server <- function(input, output, session) {
         )
     })
     
-    
+    ### MAINREACT SECTION ###
     
     RegRCT <- input$resource_map_region
     SDORCT1 <- input$Resource_SDO
@@ -10325,13 +10211,25 @@ server <- function(input, output, session) {
     })
     
     
-    output$LMSTable <- DT::renderDT({
+    output$LMSTable <- renderDT(server = TRUE, {
       
-      # Prepare data
+      # # Apply Division filter only if not "Select Input"
+      # if (!is.null(input$Resource_SDO) && input$Resource_SDO != "Select Input") {
+      #   df1() <- df1() %>% filter(Division == input$Resource_SDO)
+      # }
+      # 
+      # # Apply District filter only if not "Select Input"
+      # if (!is.null(input$Resource_LegDist) && input$Resource_LegDist != "Select Input") {
+      #   df1() <- df1() %>% filter(LD == input$Resource_LegDist)
+      # }
+      
+      # Final select
       finalLMS <- df1() %>%
+        # 1. Convert Buildable_space from 1/0 to "Yes"/"No"
         dplyr::mutate(
           Buildable_space = dplyr::if_else(Buildable_space == 1, "Yes", "No")
         ) %>%
+        # 2. Select the desired columns
         dplyr::select(
           School_Name,
           Total_Enrollment,
@@ -10339,47 +10237,25 @@ server <- function(input, output, session) {
           Estimated_CL_Shortage,
           Buildable_space
         ) %>%
+        # 3. Rename columns for display
         dplyr::rename(
           "School Name" = School_Name,
-          "Total Enrolment" = Total_Enrollment,
+          "Total Enrolment" = Total_Enrollment,,
           "Classrooms Inventory" = Instructional_Rooms,
           "Classroom Shortage" = Estimated_CL_Shortage,
           "Buildable Space" = Buildable_space
         )
       
-      # Handle empty or null data
-      if (is.null(finalLMS) || nrow(finalLMS) == 0) {
-        return(DT::datatable(
-          data.frame("Message" = "No data available based on current selection."),
-          options = list(dom = 't', scrollX = TRUE),
-          rownames = FALSE
-        ))
-      }
-      
-      # Render DataTable
-      DT::datatable(
+      datatable(
         finalLMS,
-        extensions = c("Buttons", "FixedHeader"),
-        options = list(
-          scrollX = TRUE,
-          autoWidth = TRUE,
-          fixedHeader = TRUE,
-          pageLength = 10,
-          dom = 'Bfrtip',
-          buttons = list(
-            list(extend = "csv", exportOptions = list(modifier = list(page = "all"))),
-            list(extend = "excel", exportOptions = list(modifier = list(page = "all"))),
-            list(extend = "pdf", exportOptions = list(modifier = list(page = "all"))),
-            list(extend = "print", exportOptions = list(modifier = list(page = "all")))
-          ),
-          columnDefs = list(list(className = 'dt-center', targets = "_all"))
-        ),
-        filter = 'top',        # 🔹 filter row at top
-        selection = 'single',  # 🔹 single-row selection
+        options = list(scrollX = TRUE, pageLength = 10, dom = 'Bfrtip',
+                       buttons = list('csv', 'excel', 'pdf', 'print'), columnDefs = list(list(className = 'dt-center', targets = "_all"))),
+        selection = "single",  # allow single row selection
+        extension = 'Buttons',
         rownames = FALSE,
-        callback = DT::JS("window.dispatchEvent(new Event('resize'));")  # 🔹 fixes column width on resize/fullscreen
+        callback = JS("window.dispatchEvent(new Event('resize'));") # Final closing parenthesis was missing
       )
-    }, server = FALSE)  # 🔹 client-side for full export
+    })
     
     
     NetShortage <- df %>% select(Region,Division,Level,TeacherShortage,TeacherExcess) %>%
@@ -10561,49 +10437,7 @@ server <- function(input, output, session) {
       }
     })
     
-    output$TeacherShortage_Table <- DT::renderDT({
-      
-      data_to_display <- dfreact_TS() %>%
-        select(School.Name, TeacherShortage, TeacherExcess) %>%
-        rename(
-          "School" = School.Name,
-          "Shortage" = TeacherShortage,
-          "Excess" = TeacherExcess
-        )
-      
-      # Handle empty or NULL data gracefully
-      if (is.null(data_to_display) || nrow(data_to_display) == 0) {
-        return(DT::datatable(
-          data.frame("Message" = "No data available based on current selection."),
-          options = list(dom = 't', scrollX = TRUE),
-          rownames = FALSE
-        ))
-      }
-      
-      DT::datatable(
-        data_to_display,
-        extensions = c("Buttons", "FixedHeader"),
-        options = list(
-          scrollX = TRUE,
-          autoWidth = TRUE,
-          fixedHeader = TRUE,
-          pageLength = 10,
-          dom = 'Bfrtip',
-          buttons = list(
-            list(extend = "csv", exportOptions = list(modifier = list(page = "all"))),
-            list(extend = "excel", exportOptions = list(modifier = list(page = "all"))),
-            list(extend = "pdf", exportOptions = list(modifier = list(page = "all"))),
-            list(extend = "print", exportOptions = list(modifier = list(page = "all")))
-          ),
-          columnDefs = list(list(className = 'dt-center', targets = "_all"))
-        ),
-        filter = 'top',        # ✅ enables filters at the top of each column
-        selection = 'multiple',
-        rownames = FALSE
-      )
-    }, server = FALSE)   # ✅ server disabled for full export/print access
-    
-    
+    output$TeacherShortage_Table <- DT::renderDT(server = TRUE, {datatable(dfreact_TS() %>% select("School.Name","TeacherShortage","TeacherExcess") %>% rename("School" = School.Name, "Shortage" = TeacherShortage, "Excess" = TeacherExcess), extension = 'Buttons', rownames = FALSE, options = list(scrollX = TRUE, pageLength = 5, columnDefs = list(list(className = 'dt-center', targets ="_all")), dom = 'Bfrtip', buttons = list('csv','excel','pdf','print')))})
     
     output$a <- renderValueBox({
       valueBox(tags$p(strong(SDO[which(SDO$Region==RegRCT & SDO$Division==SDORCT1),"FillUpRate"]), style = "font-family: Poppins; font-size: 20px; color: #111111; text-align: center;"), subtitle = NULL)
@@ -10768,45 +10602,7 @@ server <- function(input, output, session) {
       }
     })
     
-    output$SHSListTable <- DT::renderDT({
-      data_to_display <- dfreact_SHS() %>%
-        select(School.Name, TotalEnrolment) %>%
-        rename(
-          "School" = School.Name,
-          "Total Enrolment" = TotalEnrolment
-        )
-      
-      # Handle empty data
-      if (is.null(data_to_display) || nrow(data_to_display) == 0) {
-        return(DT::datatable(
-          data.frame("Message" = "No data available based on current selection."),
-          options = list(dom = 't', scrollX = TRUE),
-          rownames = FALSE
-        ))
-      }
-      
-      DT::datatable(
-        data_to_display,
-        extensions = c("Buttons", "FixedHeader"),
-        options = list(
-          scrollX = TRUE,
-          autoWidth = TRUE,
-          fixedHeader = TRUE,
-          pageLength = 5,
-          dom = 'Bfrtip',
-          buttons = list(
-            list(extend = "csv", exportOptions = list(modifier = list(page = "all"))),
-            list(extend = "excel", exportOptions = list(modifier = list(page = "all"))),
-            list(extend = "pdf", exportOptions = list(modifier = list(page = "all"))),
-            list(extend = "print", exportOptions = list(modifier = list(page = "all")))
-          ),
-          columnDefs = list(list(className = 'dt-center', targets = "_all"))
-        ),
-        filter = 'top',    
-        selection = 'single',
-        rownames = FALSE
-      )
-    }, server = FALSE)
+    output$SHSListTable <- DT::renderDT(server = FALSE, {datatable(dfreact_SHS() %>% select("School.Name", "TotalEnrolment") %>% rename("School" = School.Name, "Total Enrolment" = TotalEnrolment), extension = 'Buttons', rownames = FALSE, options = list(scrollX = TRUE, pageLength = 5, columnDefs = list(list(className = 'dt-center', targets ="_all")), dom = 'Bfrtip', buttons = list('csv','excel','pdf','print')))})
     
     output$SHSCount <- renderValueBox({
       valueBox(tags$p(strong(nrow(mainreactSHS)), style = "font-size: 100%; text-align: center;"), subtitle = NULL)})
@@ -10874,47 +10670,14 @@ server <- function(input, output, session) {
       }
     })
     
-    output$FacTable <- DT::renderDT({
-      
-      data_to_display <- dfreact_fac() %>%
-        arrange(FundingYear) %>%
-        select(Region, Division, School.Name, FundingYear, Allocation) %>%
-        rename(
-          "School" = School.Name,
-          "Funding Year" = FundingYear
-        )
-      
-      # Handle empty or null data
-      if (is.null(data_to_display) || nrow(data_to_display) == 0) {
-        return(DT::datatable(
-          data.frame("Message" = "No data available based on current selection."),
-          options = list(dom = 't', scrollX = TRUE),
-          rownames = FALSE
-        ))
-      }
-      
-      DT::datatable(
-        data_to_display,
-        extensions = c("Buttons", "FixedHeader"),
-        options = list(
-          scrollX = TRUE,
-          autoWidth = TRUE,
-          fixedHeader = TRUE,
-          pageLength = 10,
-          dom = 'Bfrtip',
-          buttons = list(
-            list(extend = "csv", exportOptions = list(modifier = list(page = "all"))),
-            list(extend = "excel", exportOptions = list(modifier = list(page = "all"))),
-            list(extend = "pdf", exportOptions = list(modifier = list(page = "all"))),
-            list(extend = "print", exportOptions = list(modifier = list(page = "all")))
-          ),
-          columnDefs = list(list(className = 'dt-center', targets = "_all"))
-        ),
-        filter = 'top',
-        selection = 'single',
-        rownames = FALSE
-      )
-    }, server = FALSE)
+    output$FacTable <- DT::renderDT(server = FALSE, {
+      datatable(dfreact_fac() %>% 
+                  select("Region","Division","School.Name","FundingYear","Allocation") %>%
+                  rename("School" = School.Name, "Funding Year" = FundingYear),
+                extension = 'Buttons',
+                rownames = FALSE,
+                options = list(scrollX = TRUE, pageLength = 10, columnDefs = list(list(className = 'dt-center', targets ="_all")), dom = 'Bfrtip', buttons = list('csv','excel','pdf','print')))
+    })
     
     color_palette_cong <- colorFactor(
       palette = c("red", "green", "blue"),
@@ -10952,36 +10715,16 @@ server <- function(input, output, session) {
       }
     })
     
-    output$CongestTable <- DT::renderDT({
-      datatable(
-        dfreact_cong() %>%
-          select(Region, Division, School.Name, Instructional.Rooms.2023.2024, Enrolment.2023.2024, Congestion.Index) %>%
-          rename(
-            "School" = School.Name,
-            "Instructional Rooms" = Instructional.Rooms.2023.2024,
-            "Total Enrolment" = Enrolment.2023.2024,
-            "Congestion Index" = Congestion.Index
-          ),
-        extensions = c("Buttons", "FixedHeader"),
-        options = list(
-          scrollX = TRUE,
-          autoWidth = TRUE,
-          fixedHeader = TRUE,
-          pageLength = 10,
-          dom = 'Bfrtip',
-          buttons = list(
-            list(extend = "csv", exportOptions = list(modifier = list(page = "all"))),
-            list(extend = "excel", exportOptions = list(modifier = list(page = "all"))),
-            list(extend = "pdf", exportOptions = list(modifier = list(page = "all"))),
-            list(extend = "print", exportOptions = list(modifier = list(page = "all")))
-          ),
-          columnDefs = list(list(className = 'dt-center', targets = "_all"))
-        ),
-        filter = 'top',
-        selection = 'multiple',
-        rownames = FALSE
-      )
-    }) })
+    output$CongestTable <- DT::renderDT(server = FALSE, {
+      datatable(dfreact_cong() %>% 
+                  select("Region","Division","School.Name","Instructional.Rooms.2023.2024","Enrolment.2023.2024","Congestion.Index") %>%
+                  rename("School" = School.Name, "Instructional Rooms" = Instructional.Rooms.2023.2024, "Total Enrolment" = Enrolment.2023.2024, "Congestion Index" = Congestion.Index),
+                extension = 'Buttons',
+                rownames = FALSE,
+                options = list(scrollX = TRUE, pageLength = 10, columnDefs = list(list(className = 'dt-center', targets ="_all")), dom = 'Bfrtip', buttons = list('csv','excel','pdf','print')))
+    })
+    
+  })
   
   observeEvent(input$LMSTable_rows_selected, {
     
@@ -11300,189 +11043,102 @@ server <- function(input, output, session) {
     
   }, ignoreNULL = TRUE, ignoreInit = TRUE)
   
-  # --- Reactive Filter for GMIS Data (handles CSV + filtering) ---
-  filtered_GMIS <- reactive({
-    # --- Read CSV ---
-    dfGMIS <- read.csv("GMIS-FillingUpPerPosition-2025.csv")
+  #plantilla position observe
+  observe({
+    req(input$RegionGMIS, input$SDOGMIS, input$PosSelGMIS)  # ensures all inputs exist
     
-    # --- Handle deselect-all / empty pickers ---
-    if (is.null(input$RegionGMIS) || length(input$RegionGMIS) == 0 ||
-        is.null(input$SDOGMIS)   || length(input$SDOGMIS) == 0 ||
-        is.null(input$PosSelGMIS) || length(input$PosSelGMIS) == 0) {
-      return(list(
-        stacked = tibble::tibble(),
-        table = tibble::tibble()
-      ))
-    }
+    dfGMIS <- read.csv("GMIS-FillingUpPerPosition-2025.csv")
     
     RegGMISRCT <- input$RegionGMIS
     SDOGMISRCT <- input$SDOGMIS
     PosSelGMISRCT <- input$PosSelGMIS
     
-    # --- Summary for stacked bar chart ---
-    stacked_data <- dfGMIS %>%
+    # 1. Filter and transform
+    GMISDiv <- dfGMIS %>%
       filter(GMIS.Region %in% RegGMISRCT) %>%
-      filter(GMIS.Division %in% SDOGMISRCT) %>%
       filter(Position %in% PosSelGMISRCT) %>%
+      filter(GMIS.Division %in% SDOGMISRCT) %>%
       group_by(Position) %>%
       summarise(
-        Filled = sum(Total.Filled, na.rm = TRUE),
-        Unfilled = sum(Total.Unfilled, na.rm = TRUE),
-        .groups = "drop"
+        Filled = sum(Total.Filled),
+        Unfilled = sum(Total.Unfilled, na.rm = TRUE)
       ) %>%
-      # --- Ensure all selected positions appear, even if missing or zero ---
-      right_join(
-        tibble(Position = PosSelGMISRCT),
-        by = "Position"
-      ) %>%
-      mutate(
-        Filled = ifelse(is.na(Filled), 0, Filled),
-        Unfilled = ifelse(is.na(Unfilled), 0, Unfilled)
-      ) %>%
-      tidyr::pivot_longer(
-        cols = c("Filled", "Unfilled"),
-        names_to = "Status",
-        values_to = "Count"
-      )
+      pivot_longer(cols = c("Filled", "Unfilled"), names_to = "Status", values_to = "Count")
     
-    # --- Summary for DataTable ---
-    table_data <- dfGMIS %>%
-      filter(GMIS.Region %in% RegGMISRCT) %>%
-      filter(GMIS.Division %in% SDOGMISRCT) %>%
-      filter(Position %in% PosSelGMISRCT) %>%
-      group_by(GMIS.Region, GMIS.Division, Position) %>%
-      summarise(
-        Filled = sum(Total.Filled, na.rm = TRUE),
-        Unfilled = sum(Total.Unfilled, na.rm = TRUE),
-        Authorized = sum(Total.Authorized, na.rm = TRUE),
-        .groups = "drop"
-      ) %>%
-      # --- Keep even zero positions ---
-      right_join(
-        tibble(Position = PosSelGMISRCT),
-        by = "Position"
-      ) %>%
-      mutate(
-        Region = ifelse(is.na(GMIS.Region), "", GMIS.Region),
-        Division = ifelse(is.na(GMIS.Division), "", GMIS.Division),
-        Filled = ifelse(is.na(Filled), 0, Filled),
-        Unfilled = ifelse(is.na(Unfilled), 0, Unfilled),
-        Authorized = ifelse(is.na(Authorized), 0, Authorized),
-        `Filling Up Rate (%)` = ifelse(Authorized > 0, round(Filled / Authorized * 100, 2), 0)
-      ) %>%
-      select(Region, Division, Position, Filled, Unfilled, Authorized, `Filling Up Rate (%)`)
-    
-    # --- Return both summaries ---
-    list(
-      stacked = stacked_data,
-      table = table_data
-    )
-  })
-  
-  
-  # --- Render Plotly Chart ---
-  output$GMISTable <- renderPlotly({
-    plot_data_stacked <- filtered_GMIS()$stacked
-    
-    # --- Handle no selection ---
-    if (is.null(plot_data_stacked) || nrow(plot_data_stacked) == 0) {
-      empty_plot <- ggplot() +
-        theme_void() +
-        annotate(
-          "text", x = 0.5, y = 0.5,
-          label = "No data selected",
-          size = 6, color = "gray50", hjust = 0.5, vjust = 0.5
-        )
-      return(ggplotly(empty_plot) %>% layout(hoverlabel = list(bgcolor = "white")))
-    }
-    
-    # --- Compute totals for labels ---
-    plot_data_totals <- plot_data_stacked %>%
-      group_by(Position) %>%
-      summarise(TotalCount = sum(Count), .groups = "drop")
-    
-    # --- Define colors ---
-    category_colors <- c("Filled" = "blue", "Unfilled" = "red")
-    
-    # --- Build the plot ---
-    p <- ggplot(plot_data_stacked, aes(
-      x = factor(Position),
-      y = Count,
-      fill = factor(Status, levels = c("Unfilled", "Filled")),
-      text = paste(
-        "Position: ", Position,
-        "<br>Status: ", Status,
-        "<br>Count: ", Count
-      )
-    )) +
-      geom_bar(stat = "identity", position = "stack") +
-      geom_text(
-        data = plot_data_totals,
-        aes(x = Position, y = TotalCount * 1.05, label = scales::comma(TotalCount)),
-        inherit.aes = FALSE,
-        size = 3.5,
-        color = "black"
-      ) +
-      labs(x = "Position", y = "Count") +
-      scale_y_continuous(labels = scales::comma) +
-      scale_fill_manual(name = "Legend", values = category_colors) +
-      theme_minimal() +
-      theme(legend.position = "bottom")
-    
-    ggplotly(p, tooltip = "text", source = "stackedBarPlot") %>%
-      layout(hoverlabel = list(bgcolor = "white"))
-  })
-  
-  
-  # --- Render DataTable ---
-  output$GMISTable1 <- renderDataTable({
-    dfGMIS <- read.csv("GMIS-FillingUpPerPosition-2025.csv")
-    table_data <- filtered_GMIS()$table
-    
-    # --- When deselect-all or no data, keep headers and show "No data available in table" ---
-    if (is.null(table_data) || nrow(table_data) == 0) {
-      empty_df <- dfGMIS %>%
-        transmute(
-          Region = GMIS.Region,
-          Division = GMIS.Division,
-          Position,
-          Filled = Total.Filled,
-          Unfilled = Total.Unfilled,
-          Authorized = Total.Authorized,
-          `Filling Up Rate (%)` = round(Total.Filled / Total.Authorized * 100, 2)
-        ) %>%
-        dplyr::slice(0)
+    # --- Plot ---
+    output$GMISTable <- renderPlotly({
+      plot_data_stacked <- GMISDiv
+      plot_data_totals <- plot_data_stacked %>%
+        group_by(Position) %>%
+        summarise(TotalCount = sum(Count))
       
-      return(DT::datatable(
-        empty_df,
+      category_colors <- c("Filled" = "blue", "Unfilled" = "red")
+      
+      p <- ggplot(plot_data_stacked, aes(
+        x = factor(Position),
+        y = Count,
+        fill = factor(Status, levels = c("Unfilled", "Filled")),
+        text = paste("Position: ", Position,
+                     "<br>Category: ", Status,
+                     "<br>Total", Count)
+      )) +
+        geom_bar(stat = "identity", position = "stack") +
+        geom_text(
+          data = plot_data_totals,
+          aes(x = Position, y = TotalCount * 1.05, label = scales::comma(TotalCount)),
+          inherit.aes = FALSE,
+          size = 3.5,
+          color = "black"
+        ) +
+        labs(x = "Position", y = "Count") +
+        scale_y_continuous(labels = scales::comma) +
+        scale_fill_manual(name = "Legend", values = category_colors) +
+        theme_minimal() +
+        theme(legend.position = "bottom")
+      
+      ggplotly(p, tooltip = "text", source = "stackedBarPlot") %>%
+        layout(hoverlabel = list(bgcolor = "white"))
+    })
+    
+    # --- DataTable ---
+    output$GMISTable1 <- renderDataTable({
+      GMISDiv2 <- dfGMIS %>%
+        filter(GMIS.Region %in% RegGMISRCT) %>%
+        filter(Position %in% PosSelGMISRCT) %>%
+        filter(GMIS.Division %in% SDOGMISRCT) %>%
+        group_by(GMIS.Region, GMIS.Division, Position) %>%
+        summarise(
+          Filled = sum(Total.Filled),
+          Unfilled = sum(Total.Unfilled, na.rm = TRUE),
+          Authorized = sum(Total.Authorized)
+        ) %>%
+        mutate(Filling.Up.Rate = round(Filled / Authorized, digits = 4) * 100) %>%
+        mutate(Filling.Up.Rate = sprintf("%.2f", `Filling.Up.Rate`)) %>%
+        rename("Division" = GMIS.Division, "Filling Up Rate" = `Filling.Up.Rate`)
+      
+      req(GMISDiv2)
+      
+      DT::datatable(
+        GMISDiv2, # Adds filter boxes to the top of each column
         filter = "top",
         extensions = "FixedHeader",
         options = list(
-          fixedHeader = list(header = TRUE, footer = FALSE),
-          scrollY = "300px",
-          scrollCollapse = TRUE,
-          columnDefs = list(list(className = 'dt-center', targets = '_all')),
-          rownames = FALSE,
-          language = list(emptyTable = "No data available in table")
-        )
-      ))
-    }
-    
-    # --- Render normal data table ---
-    DT::datatable(
-      table_data,
-      filter = "top",
-      extensions = "FixedHeader",
-      options = list(
-        fixedHeader = list(header = TRUE, footer = FALSE),
-        scrollY = "300px",
-        scrollCollapse = TRUE,
-        columnDefs = list(list(className = 'dt-center', targets = '_all')),
-        rownames = FALSE
-      )
-    )
+          fixedHeader = list(
+            header = TRUE,
+            footer = FALSE),
+          GMISDiv2,
+          filter = "top",
+          extensions = "FixedHeader",
+          options = list(
+            fixedHeader = list(header = TRUE, footer = FALSE),
+            scrollY = "300px",
+            scrollCollapse = TRUE,
+            columnDefs = list(list(className = 'dt-center', targets = '_all')),
+            rownames = FALSE
+          )
+        ))
+    })
   })
-  
   
   
   observeEvent(input$SHSListTable_rows_selected, {
@@ -11518,41 +11174,7 @@ server <- function(input, output, session) {
     
     SHSIndustries <- region_selected %>% filter(School.Name %in% rowschool) %>% select("Company","Sector","Distance") %>% rename("Distance in KM" = Distance)
     
-    output$dataTableSHS <- DT::renderDT({
-      data_to_display <- SHSIndustries
-      
-      # Handle empty or missing data
-      if (is.null(data_to_display) || nrow(data_to_display) == 0) {
-        return(DT::datatable(
-          data.frame("Message" = "Select a school to view nearby industries."),
-          options = list(dom = 't', scrollX = TRUE),
-          rownames = FALSE
-        ))
-      }
-      
-      DT::datatable(
-        data_to_display,
-        extensions = c("Buttons", "FixedHeader", "FixedColumns"),
-        options = list(
-          scrollX = TRUE,
-          autoWidth = TRUE,
-          fixedHeader = TRUE,
-          fixedColumns = list(leftColumns = 2),
-          pageLength = 10,
-          dom = 'Bfrtip',
-          buttons = list(
-            list(extend = "csv", exportOptions = list(modifier = list(page = "all"))),
-            list(extend = "excel", exportOptions = list(modifier = list(page = "all"))),
-            list(extend = "pdf", exportOptions = list(modifier = list(page = "all"))),
-            list(extend = "print", exportOptions = list(modifier = list(page = "all")))
-          ),
-          columnDefs = list(list(className = 'dt-center', targets = "_all"))
-        ),
-        filter = 'top',     
-        selection = 'multiple',
-        rownames = FALSE
-      )
-    }, server = FALSE)
+    output$dataTableSHS <- DT::renderDT({datatable(SHSIndustries, extensions = "FixedColumns", options = list(fixedColumns = list(leftColumns = 2), columnDefs = list(list(className = 'dt-center', targets ="_all")), rownames = FALSE))})
     
     output$AccoCount <- renderValueBox({
       valueBox(tags$p(strong(sum(SHSIndustries$Sector == "Manufacturing and Engineering")), style = "font-size: 100%; text-align: center;"), subtitle = NULL)})
@@ -21767,8 +21389,8 @@ server <- function(input, output, session) {
           class = "login-left",
           div(
             class = "login-text-box",
-            h2("Department of Education"),
-            p("STRIDE: Education in Motion, Data Precision for Smart Decision.")
+            h2("STRIDE"),
+            p("Education in Motion. Data Precision. Smaart Decision.")
           )
         ),
         
