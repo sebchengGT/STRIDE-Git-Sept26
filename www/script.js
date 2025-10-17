@@ -121,6 +121,38 @@ Shiny.addCustomMessageHandler("setLoginMode", function(mode) {
   }
 });
 
+// === INTERACTIVE BUBBLES ===
+document.addEventListener("DOMContentLoaded", () => {
+  const bubbles = document.querySelectorAll(".bubble");
+
+  bubbles.forEach((bubble) => {
+    // Random animation delay so they don't move in sync
+    bubble.style.animationDelay = `${Math.random() * 8}s`;
+
+    // Random slow float speed
+    bubble.style.animationDuration = `${10 + Math.random() * 10}s`;
+
+    // Hover effect: tilt slightly toward cursor
+    bubble.addEventListener("mousemove", (e) => {
+      const rect = bubble.getBoundingClientRect();
+      const x = e.clientX - rect.left - rect.width / 2;
+      const y = e.clientY - rect.top - rect.height / 2;
+      bubble.style.transform = `translate(${x / 10}px, ${y / 10}px) scale(1.1)`;
+    });
+
+    bubble.addEventListener("mouseleave", () => {
+      bubble.style.transform = "translate(0, 0) scale(1)";
+    });
+
+    // Click pulse effect
+    bubble.addEventListener("click", () => {
+      bubble.style.animation = "pulsePop 0.6s ease";
+      setTimeout(() => {
+        bubble.style.animation = `gentleFloat ${10 + Math.random() * 10}s ease-in-out infinite`;
+      }, 600);
+    });
+  });
+});
 
 
 

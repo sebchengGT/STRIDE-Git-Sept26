@@ -101,24 +101,58 @@ user_base <- tibble::tibble(
 login_register_UI <- function(id) {
   ns <- NS(id)
   
-  # Use bslib::card for a contained, stylish panel
-  card(
-    # Use bslib::card_header for a title
-    card_header(
-      class = "bg-dark text-white",
-      "Cloud App Authentication"
-    ),
-    # Content of the card
+  tagList(
+    # Animated grid background
     div(
-      class = "d-flex justify-content-center mb-3", # Use Bootstrap utility classes
-      # The main panel for login/register choice using a tab-like navigation
-      uiOutput(ns("form_selector_ui"))
+      class = "grid-motion-bg",
+      lapply(seq_len(300), function(i) div(class = "grid-dot"))
     ),
     
-    # The actual form (either login or register) displayed inside the card body
-    uiOutput(ns("dynamic_form_ui"))
+    # Main login/register container
+    div(
+      class = "login-container",
+      
+      # LEFT SIDE
+      div(
+        class = "login-left",
+        div(
+          class = "login-text-box",
+          h2("Welcome to STRIDE"),
+          p("Empowering DepEd Offices with Smarter Data Insights")
+        )
+      ),
+      
+      # RIGHT SIDE (Login Form)
+      div(
+        class = "login-right",
+        div(
+          class = "login-card",
+          
+          # Top Logo
+          tags$img(src = "logo3.png", class = "login-logo-top"),
+          
+          # Login Form Inputs (NAMESPACED!)
+          textInput(ns("login_user"), NULL, placeholder = "DepEd Email"),
+          passwordInput(ns("login_pass"), NULL, placeholder = "Password"),
+          actionButton(ns("do_login"), "Sign In", class = "btn-login w-100"),
+          
+          uiOutput(ns("login_message")),
+          br(),
+          actionLink(ns("btn_register"), "Create an account", class = "register-link"),
+          
+          # Bottom Logos
+          div(
+            class = "login-logos-bottom",
+            tags$img(src = "DepEd.png", class = "bottom-logo"),
+            tags$img(src = "HROD LOGO1.png", class = "bottom-logo"),
+            tags$img(src = "partner_logo.png", class = "bottom-logo")
+          )
+        )
+      )
+    )
   )
 }
+
 
 SERVICE_ACCOUNT_FILE <- "service_account.json" 
 
@@ -183,23 +217,24 @@ ui <- page_fluid(
   
   # Header (always visible)
   shinyjs::hidden(
-  tags$div(
-    id = "app_header", 
-    class = "app-header",
-    style = "display: flex; align-items: center; gap: 15px; justify-content: center;",
-    
-    # Logo
-    tags$img(src = "logo3.png", class = "header-logo-left"),
-    
-    # Center text
     tags$div(
-      class = "header-title",
-      h2("DepEd STRIDE Dashboard"),
-      p("STRIDE: Strategic Inventory for Deployment Efficiency")
-    )),
-    
-    # Right logo
-    tags$img(src = "HROD LOGO1.png", class = "header-logo-right")
+      id = "app_header",
+      class = "app-header",
+      style = "display: flex; align-items: center; gap: 15px; justify-content: center;",
+      
+      # Left logo
+      tags$img(src = "logo3.png", class = "header-logo-left"),
+      
+      # Center text
+      tags$div(
+        class = "header-title",
+        h2("DepEd STRIDE"),
+        p("STRIDE: Strategic Inventory for Deployment Efficiency")
+      ),
+      
+      # Right logo
+      tags$img(src = "HROD LOGO1.png", class = "header-logo-right")
+    )
   ),
   
   # 💡 CRITICAL FIX: The dynamic container for login/main app UI
@@ -21299,18 +21334,18 @@ server <- function(input, output, session) {
   # Main dynamic UI switch
   output$page_ui <- renderUI({
     status <- user_status()
-    current_user <- authenticated_user() # Retrieve the currently logged-in user
+    current_user <- authenticated_user()  # Retrieve logged-in user
     
+    # ✅ 1. AUTHENTICATED USERS
     if (status == "authenticated" && !is.null(current_user)) {
-      # 1. Get the full user row from the database based on the authenticated username
+      # Get user details
       users_db <- user_database()
       user_row <- users_db[users_db$Email_Address == current_user, ]
       
-      # Ensure the user still exists and has a station
       if (nrow(user_row) == 1) {
-        station <- user_row$Station[1] # Use the Station value
+        station <- user_row$Station[1]
         
-        # 2. Switch UI based on the Station
+        # Switch UI based on station
         if (station == "Central Office") {
           shinyjs::hide("data_input_content")
           shinyjs::show("mgmt_content")
@@ -21320,33 +21355,84 @@ server <- function(input, output, session) {
           shinyjs::hide("main_content")
           shinyjs::hide("mgmt_content")
         } else {
-          # Default UI for other stations (Regional Office, SDO, etc.)
-          # You can add more specific UIs here if needed
-          return(card(card_header("Application Dashboard"), 
-                      h2(paste("Welcome,", station, "User!")), 
-                      actionButton("main_app-logout", "Logout", class = "btn-danger")))
+          return(card(
+            card_header("Application Dashboard"),
+            h2(paste("Welcome,", station, "User!")),
+            actionButton("main_app-logout", "Logout", class = "btn-danger")
+          ))
         }
         return(NULL)
       }
     }
     
-    # If unauthenticated, or user data not found, show login/register
-    # Center the login card on the page when unauthenticated
-    div(
-      class = "d-flex justify-content-center align-items-center", 
-      style = "height: 80vh;", # Use full viewport height for centering
-      div(style = "width: 400px; max-width: 90%;", # Set a max width for the card
-          login_register_UI("auth")
+    # ✅ 2. UNAUTHENTICATED USERS — show login/register page
+    login_register_UI("auth")
+  })
+  
+  
+  login_register_UI <- function(id) {
+    ns <- NS(id)
+    
+    tagList(
+      # Fullscreen bubble background
+      div(
+        class = "bubble-bg",
+        lapply(1:20, function(i) div(class = paste0("bubble b", i)))
+      ),
+      
+      # Main login/register container
+      div(
+        class = "login-container",
+        
+        # LEFT SIDE
+        div(
+          class = "login-left",
+          div(
+            class = "login-text-box",
+            h2("Welcome to STRIDE"),
+            p("Empowering DepEd Offices with Smarter Data Insights")
+          )
+        ),
+        
+        # RIGHT SIDE (Login Form)
+        div(
+          class = "login-right",
+          div(
+            class = "login-card",
+            
+            # Top Logo
+            tags$img(src = "logo3.png", class = "login-logo-top"),
+            
+            # Login Form Inputs (NAMESPACED!)
+            textInput(ns("login_user"), NULL, placeholder = "DepEd Email"),
+            passwordInput(ns("login_pass"), NULL, placeholder = "Password"),
+            actionButton(ns("do_login"), "Sign In", class = "btn-login w-100"),
+            
+            uiOutput(ns("login_message")),
+            br(),
+            actionLink(ns("btn_register"), "Create an account", class = "register-link"),
+            
+            # Bottom Logos
+            div(
+              class = "login-logos-bottom",
+              tags$img(src = "DepEd.png", class = "bottom-logo"),
+              tags$img(src = "HROD LOGO1.png", class = "bottom-logo"),
+              tags$img(src = "partner_logo.png", class = "bottom-logo")
+            )
+          )
+        )
       )
     )
-  })
+  }
+  
   
   # --- Authentication Module (Login/Register Forms) ---
   # CRITICAL FIX: Only call the module ONCE at the start of the server.
   # 💡 NEW: Pass the authenticated_user reactiveVal to the module
   callModule(authentication_server, "auth", 
              user_status, form_choice, SHEET_URL, user_database, db_trigger, 
-             authenticated_user) # Pass the new reactive
+             authenticated_user)
+  # Pass the new reactive
   
   # --- Main App Module ---
   
