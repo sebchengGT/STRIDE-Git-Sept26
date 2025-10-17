@@ -276,10 +276,10 @@ ui <- page_fluid(
   
   # Footer (always visible)
   shinyjs::hidden(
-  tags$footer(
-    id = "app_footer",
-    class = "app-footer",
-    tags$p("© Based on GMIS (April 2025) and eBEIS (SY 2024–2025)")))
+    tags$footer(
+      id = "app_footer",
+      class = "app-footer",
+      tags$p("© Based on GMIS (April 2025) and eBEIS (SY 2024–2025)")))
 )
 
 
@@ -6966,7 +6966,7 @@ server <- function(input, output, session) {
       style(hoverinfo = "text")
   })
   
-
+  
   # --- Teaching Deployment: Regional Breakdown Graph ---
   output$Teaching_Deployment_Region_Graph <- renderPlotly({
     
@@ -6983,37 +6983,37 @@ server <- function(input, output, session) {
     
     # --- Prepare grouped data (all regions) ---
     if (is.null(current_region())) {
-    plot_data <- df %>%
-      group_by(Region) %>%
-      summarise(TeacherShortage = sum(as.numeric(TeacherShortage), na.rm = TRUE),
-                .groups = "drop") %>%
-      arrange(desc(TeacherShortage))
-    
-    # --- Add labels ---
-    plot_data <- plot_data %>%
-      mutate(Label = scales::comma(TeacherShortage))
-    
-    # --- Plot ---
-    p <- ggplot(plot_data,
-                aes(x = reorder(Region, -TeacherShortage),
-                    y = TeacherShortage,
-                    fill = Region,
-                    text = paste("Region:", Region,
-                                 "<br>Teacher Shortage:", scales::comma(TeacherShortage)))) +
-      geom_bar(stat = "identity", color = "black") +
-      geom_text(aes(label = Label), vjust = -0.5, size = 3.5, color = "black") +
-      labs(
-        title = "Teacher Shortage by Region",
-        x = "Region",
-        y = "Number of Teacher Shortages"
-      ) +
-      scale_y_continuous(labels = scales::comma) +
-      theme_minimal() +
-      theme(
-        plot.title = element_text(hjust = 0.5, size = 14, face = "bold"),
-        axis.text.x = element_text(size = 10, angle = 45, hjust = 1),
-        legend.position = "none"
-      )
+      plot_data <- df %>%
+        group_by(Region) %>%
+        summarise(TeacherShortage = sum(as.numeric(TeacherShortage), na.rm = TRUE),
+                  .groups = "drop") %>%
+        arrange(desc(TeacherShortage))
+      
+      # --- Add labels ---
+      plot_data <- plot_data %>%
+        mutate(Label = scales::comma(TeacherShortage))
+      
+      # --- Plot ---
+      p <- ggplot(plot_data,
+                  aes(x = reorder(Region, -TeacherShortage),
+                      y = TeacherShortage,
+                      fill = Region,
+                      text = paste("Region:", Region,
+                                   "<br>Teacher Shortage:", scales::comma(TeacherShortage)))) +
+        geom_bar(stat = "identity", color = "black") +
+        geom_text(aes(label = Label), vjust = -0.5, size = 3.5, color = "black") +
+        labs(
+          title = "Teacher Shortage by Region",
+          x = "Region",
+          y = "Number of Teacher Shortages"
+        ) +
+        scale_y_continuous(labels = scales::comma) +
+        theme_minimal() +
+        theme(
+          plot.title = element_text(hjust = 0.5, size = 14, face = "bold"),
+          axis.text.x = element_text(size = 10, angle = 45, hjust = 1),
+          legend.position = "none"
+        )
     } else if (is.null(current_division())) {
       # --- Prepare data for plotting ---
       # FIX: Use 'df' here instead of 'current_filtered_data' 
@@ -7139,7 +7139,7 @@ server <- function(input, output, session) {
   
   # --- Teaching Deployment: Priority Division Graph ---
   output$Teaching_Deployment_Division_Graph1 <- renderPlotly({
-
+    
     # --- Empty Data Handling ---
     if (nrow(df) == 0) {
       return(ggplotly(
@@ -7149,14 +7149,14 @@ server <- function(input, output, session) {
           theme_void()
       ))
     }
-
+    
     # --- Prepare data for plotting ---
     plot_data <- df %>%
       group_by(Division) %>%
       summarise(Count = sum(as.numeric(TeacherShortage), na.rm = TRUE), .groups = 'drop') %>%
       arrange(desc(Count)) %>%
       slice_head(n = 20)
-
+    
     # --- Create ggplot ---
     p <- ggplot(plot_data,
                 aes(x = reorder(Division, -Count),
@@ -7190,7 +7190,7 @@ server <- function(input, output, session) {
         axis.text.x = element_text(size = 10, angle = 45, hjust = 1),
         legend.position = "none"
       )
-
+    
     # --- Convert ggplot to Plotly ---
     ggplotly(p, tooltip = "text", source = "teachingDeploymentDivisionPlot") %>%
       layout(
@@ -7243,12 +7243,12 @@ server <- function(input, output, session) {
       # Optional: Print the selected region to the console for debugging
       cat("Division selected:", selected_division, "\n")
     }
-
+    
   })
   
   #Classroom Shortage
   output$Classroom_Shortage_Region_Graph2 <- renderPlotly({
-
+    
     # --- Empty Data Handling ---
     if (nrow(LMS) == 0) {
       return(ggplotly(ggplot() +
@@ -7257,34 +7257,34 @@ server <- function(input, output, session) {
     }
     
     if (is.null(current_region())) {
-    
-    # Prepare the data for plotting
-    plot_data <- LMS %>%
-      group_by(Region) %>%
-      summarise(Count = sum(as.numeric(Estimated_CL_Shortage), na.rm = TRUE), .groups = 'drop') %>% 
-      arrange(desc(Count))
-    
-    # Create the ggplot
-    p <- ggplot(plot_data,
-                aes(x = reorder(Region, -Count),
-                    y = Count,
-                    fill = Region,
-                    text = paste("Region: ", Region,
-                                 "<br>Classroom Shortage: ", scales::comma(Count)))) + # Custom tooltip text
-      geom_bar(stat = "identity", color = "black") +
-      geom_text(data = plot_data,
-                aes(x = Region, y = Count * 1.05, label = scales::comma(Count)), # Modified line
-                inherit.aes = FALSE,
-                size = 3.5,
-                color = "black") +
-      labs(x = "Region",
-           y = "Classroom Shortage") +
-      scale_y_continuous(labels = scales::comma) + # Format y-axis labels as comma-separated numbers
-      theme_minimal() +
-      theme(axis.text.x = element_text(size = 10, angle = 45, hjust = 1),
-            legend.position = "none", # No legend needed for single fill
-            plot.title = element_text(hjust = 0.5)) # Center the plot title
-    
+      
+      # Prepare the data for plotting
+      plot_data <- LMS %>%
+        group_by(Region) %>%
+        summarise(Count = sum(as.numeric(Estimated_CL_Shortage), na.rm = TRUE), .groups = 'drop') %>% 
+        arrange(desc(Count))
+      
+      # Create the ggplot
+      p <- ggplot(plot_data,
+                  aes(x = reorder(Region, -Count),
+                      y = Count,
+                      fill = Region,
+                      text = paste("Region: ", Region,
+                                   "<br>Classroom Shortage: ", scales::comma(Count)))) + # Custom tooltip text
+        geom_bar(stat = "identity", color = "black") +
+        geom_text(data = plot_data,
+                  aes(x = Region, y = Count * 1.05, label = scales::comma(Count)), # Modified line
+                  inherit.aes = FALSE,
+                  size = 3.5,
+                  color = "black") +
+        labs(x = "Region",
+             y = "Classroom Shortage") +
+        scale_y_continuous(labels = scales::comma) + # Format y-axis labels as comma-separated numbers
+        theme_minimal() +
+        theme(axis.text.x = element_text(size = 10, angle = 45, hjust = 1),
+              legend.position = "none", # No legend needed for single fill
+              plot.title = element_text(hjust = 0.5)) # Center the plot title
+      
     } else if (!is.null(current_region()) && is.null(current_division())) {
       
       plot_data <- LMS %>%
@@ -7343,7 +7343,7 @@ server <- function(input, output, session) {
               legend.position = "none", # No legend needed for single fill
               plot.title = element_text(hjust = 0.5)) # Center the plot title
     }
-      
+    
     # Convert ggplot to plotly, ensuring custom text is used for hover
     ggplotly(p, tooltip = "text", source = "classroomShortageRegionPlot") %>%
       layout(hoverlabel = list(bgcolor = "white"),
@@ -7705,58 +7705,58 @@ server <- function(input, output, session) {
   output$LMS_Nation_Graph2 <- renderPlotly({
     
     if (is.null(current_region())) {
-    full_data <- LMS %>%   
-      rename(
-        "With Buildable Space" = Buildable_space,
-        "With Excess Classrooms" = With_Excess,
-        "Without Classroom Shortage" = Without_Shortage,
-        "Last Mile Schools" = LMS,
-        "GIDCA" = GIDCA,
-        "With Shortage" = With_Shortage
-      ) %>%
-      pivot_longer(13:18, names_to = "Type", values_to = "Count")
-    
-    # --- Keep only "Last Mile Schools" and aggregate all regions ---
-    plot_data <- full_data %>%
-      filter(Type == "Last Mile Schools") %>%
-      group_by(Region) %>%
-      summarise(
-        Count = sum(as.numeric(Count), na.rm = TRUE),
-        .groups = "drop"
-      ) %>% arrange(desc(Count))
-    
-    # --- Compute national total ---
-    national_total <- sum(plot_data$Count, na.rm = TRUE)
-    
-    # ---  Create the chart ---
-    p <- ggplot(plot_data,
-                aes(
-                  x = reorder(Region, -Count),
-                  y = Count,
-                  fill = Region,
-                  text = paste(
-                    "Region:", Region,
-                    "<br>Count:", scales::comma(Count)
-                  )
-                )) +
-      geom_bar(stat = "identity", color = "black", size = 0.25) +
-      geom_text(
-        aes(label = scales::comma(Count), y = Count * 1.05),
-        size = 3.5,
-        color = "black"
-      ) +
-      labs(
-        x = "Region",
-        y = "Number of Last Mile Schools",
-        fill = "Region"
-      ) +
-      scale_y_continuous(labels = scales::comma) +
-      theme_minimal() +
-      theme(
-        plot.title = element_text(hjust = 0.5, size = 14, face = "bold"),
-        axis.text.x = element_text(size = 10, angle = 45, hjust = 1),
-        legend.position = "none"
-      )
+      full_data <- LMS %>%   
+        rename(
+          "With Buildable Space" = Buildable_space,
+          "With Excess Classrooms" = With_Excess,
+          "Without Classroom Shortage" = Without_Shortage,
+          "Last Mile Schools" = LMS,
+          "GIDCA" = GIDCA,
+          "With Shortage" = With_Shortage
+        ) %>%
+        pivot_longer(13:18, names_to = "Type", values_to = "Count")
+      
+      # --- Keep only "Last Mile Schools" and aggregate all regions ---
+      plot_data <- full_data %>%
+        filter(Type == "Last Mile Schools") %>%
+        group_by(Region) %>%
+        summarise(
+          Count = sum(as.numeric(Count), na.rm = TRUE),
+          .groups = "drop"
+        ) %>% arrange(desc(Count))
+      
+      # --- Compute national total ---
+      national_total <- sum(plot_data$Count, na.rm = TRUE)
+      
+      # ---  Create the chart ---
+      p <- ggplot(plot_data,
+                  aes(
+                    x = reorder(Region, -Count),
+                    y = Count,
+                    fill = Region,
+                    text = paste(
+                      "Region:", Region,
+                      "<br>Count:", scales::comma(Count)
+                    )
+                  )) +
+        geom_bar(stat = "identity", color = "black", size = 0.25) +
+        geom_text(
+          aes(label = scales::comma(Count), y = Count * 1.05),
+          size = 3.5,
+          color = "black"
+        ) +
+        labs(
+          x = "Region",
+          y = "Number of Last Mile Schools",
+          fill = "Region"
+        ) +
+        scale_y_continuous(labels = scales::comma) +
+        theme_minimal() +
+        theme(
+          plot.title = element_text(hjust = 0.5, size = 14, face = "bold"),
+          axis.text.x = element_text(size = 10, angle = 45, hjust = 1),
+          legend.position = "none"
+        )
     } else if (!is.null(current_region()) && is.null(current_division())) {
       full_data <- LMS %>%   
         rename(
@@ -7867,7 +7867,7 @@ server <- function(input, output, session) {
           legend.position = "none"
         )
     }
-      
+    
     ggplotly(p, tooltip = "text", source = "LMSplotly") %>%
       layout(
         hoverlabel = list(bgcolor = "white"),
@@ -9879,7 +9879,7 @@ server <- function(input, output, session) {
   
   
   observeEvent(input$Mapping_Run, {
-     
+    
     output$TeacherShortage_Mapping <- renderLeaflet({
       p = colorFactor(palette = c("red","deepskyblue","green"),domain = c("Shortage","Excess","Balanced"), ordered = T)
       leaflet() %>%
@@ -21558,7 +21558,7 @@ authentication_server <- function(input, output, session, user_status,
       session$sendCustomMessage("showLoader", "Welcome to Stride...")
       print(">>> showLoader triggered")
       later::later(function() {
-      session$sendCustomMessage("hideLoader", NULL)
+        session$sendCustomMessage("hideLoader", NULL)
       }, 2) # 💡 CRITICAL: Store the logged-in username
       
       # Clear the login fields on success
