@@ -66,7 +66,7 @@ $(document).on("click", ".nav-link", function() {
       el.style.animation = "none";
       el.offsetHeight; // reflow
       const animName = el.classList.contains("sidebar") ? "sidebarSlideIn" : "bodyFadeIn";
-      el.style.animation = `${animName} 0.6s ease-out`;
+      el.style.animation = `${animName} 2s ease-out`;
     }
   });
 });
@@ -111,6 +111,47 @@ $(document).on("shiny:idle", function() {
 $(document).on("shiny:idle", function() {
   console.log("✅ shiny:idle detected");
   $("#loading-overlay").fadeOut(400);
+});
+
+Shiny.addCustomMessageHandler("setLoginMode", function(mode) {
+  if (mode === "login") {
+    document.body.classList.add("login-hidden");
+  } else {
+    document.body.classList.remove("login-hidden");
+  }
+});
+
+// === INTERACTIVE BUBBLES ===
+document.addEventListener("DOMContentLoaded", () => {
+  const bubbles = document.querySelectorAll(".bubble");
+
+  bubbles.forEach((bubble) => {
+    // Random animation delay so they don't move in sync
+    bubble.style.animationDelay = `${Math.random() * 8}s`;
+
+    // Random slow float speed
+    bubble.style.animationDuration = `${10 + Math.random() * 10}s`;
+
+    // Hover effect: tilt slightly toward cursor
+    bubble.addEventListener("mousemove", (e) => {
+      const rect = bubble.getBoundingClientRect();
+      const x = e.clientX - rect.left - rect.width / 2;
+      const y = e.clientY - rect.top - rect.height / 2;
+      bubble.style.transform = `translate(${x / 10}px, ${y / 10}px) scale(1.1)`;
+    });
+
+    bubble.addEventListener("mouseleave", () => {
+      bubble.style.transform = "translate(0, 0) scale(1)";
+    });
+
+    // Click pulse effect1
+    bubble.addEventListener("click", () => {
+      bubble.style.animation = "pulsePop 0.6s ease";
+      setTimeout(() => {
+        bubble.style.animation = `gentleFloat ${10 + Math.random() * 10}s ease-in-out infinite`;
+      }, 600);
+    });
+  });
 });
 
 
