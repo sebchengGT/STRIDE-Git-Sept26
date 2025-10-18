@@ -496,7 +496,7 @@ server <- function(input, output, session) {
         summarise(TotalSchools = n(), .groups = 'drop')
       
       p <- plot_ly(data = plot_data, x = ~Legislative.District, y = ~TotalSchools, type = 'bar') %>% # No source on the last level
-        layout(title = paste("Schools in", state$division), yaxis = list(title = "Number of Schools",tickformat = ","), xaxis = list(title = "Legislative District", tickangle = -45))
+        layout(title = paste("Schools in", state$division), yaxis = list(title = "Number of Schools",tickformat = ","), xaxis = list(title = "Legislative District", tickangle = -45,  categoryorder = "total descending"))
     }
     p
   })
@@ -623,7 +623,7 @@ server <- function(input, output, session) {
         summarise(TotalShortage = sum(Estimated_CL_Shortage, na.rm = TRUE), .groups = 'drop')
       
       p <- plot_ly(data = plot_data, x = ~Legislative.District, y = ~TotalShortage, type = 'bar') %>% # No source
-        layout(title = paste("Classroom Shortage in", state$division), yaxis = list(title = "Total Shortage",tickformat = ","), xaxis = list(title = "Legislative District", tickangle = -45))
+        layout(title = paste("Classroom Shortage in", state$division), yaxis = list(title = "Total Shortage",tickformat = ","), xaxis = list(title = "Legislative District", tickangle = -45,  categoryorder = "total descending"))
     }
     p
   })
@@ -660,7 +660,7 @@ server <- function(input, output, session) {
         summarise(Count = n(), .groups = 'drop')
       
       p <- plot_ly(data = plot_data, x = ~Legislative.District, y = ~Count, type = 'bar') %>% # No source
-        layout(title = paste("LMS in", state$division), yaxis = list(title = "Number of LMS",tickformat = ","), xaxis = list(title = "Legislative District", tickangle = -45))
+        layout(title = paste("LMS in", state$division), yaxis = list(title = "Number of LMS",tickformat = ","), xaxis = list(title = "Legislative District", tickangle = -45,  categoryorder = "total descending"))
     }
     p
   })
@@ -696,7 +696,7 @@ server <- function(input, output, session) {
         summarise(TotalShortage = sum(TeacherShortage, na.rm = TRUE), .groups = 'drop')
       
       p <- plot_ly(data = plot_data, x = ~Legislative.District, y = ~TotalShortage, type = 'bar') %>% # No source
-        layout(title = paste("Teacher Shortage in", state$division), yaxis = list(title = "Total Teacher Shortage",tickformat = ","), xaxis = list(title = "Legislative District", tickangle = -45))
+        layout(title = paste("Teacher Shortage in", state$division), yaxis = list(title = "Total Teacher Shortage",tickformat = ","), xaxis = list(title = "Legislative District", tickangle = -45,  categoryorder = "total descending"))
     }
     p
   })
@@ -733,7 +733,7 @@ server <- function(input, output, session) {
         summarise(Count = n(), .groups = 'drop')
       
       p <- plot_ly(data = plot_data, x = ~Legislative.District, y = ~Count, type = 'bar') %>% # No source
-        layout(title = paste("Schools w/o Principal in", state$division), yaxis = list(title = "Number of Schools",tickformat = ","), xaxis = list(title = "Legislative District", tickangle = -45))
+        layout(title = paste("Schools w/o Principal in", state$division), yaxis = list(title = "Number of Schools",tickformat = ","), xaxis = list(title = "Legislative District", tickangle = -45,  categoryorder = "total descending"))
     }
     p
   })
