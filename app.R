@@ -249,6 +249,34 @@ ui <- page_fluid(
 # Define server logic required to draw a histogram
 server <- function(input, output, session) {
   
+  current_region <- reactiveVal(NULL)
+  current_division <- reactiveVal(NULL)
+  
+  output$backButtonUI <- renderUI({
+    # Only show the button if a region is currently selected
+    if (!is.null(current_region()) || !is.null(current_division())) {
+      actionButton("go_back", "⬅️ Back")
+    }
+  })
+  
+  observeEvent(input$go_back, {
+    
+    # Step 1: If we are viewing a Division breakdown, go back to the Region breakdown
+    if (!is.null(current_division())) {
+      current_division(NULL)
+      cat("State change: Returned to Region view.\n")
+    } 
+    
+    # Step 2: Else, if we are viewing a Region breakdown, go back to the Overall view
+    else if (!is.null(current_region())) {
+      current_region(NULL)
+      cat("State change: Returned to Overall view.\n")
+    }
+    
+    # Note: You do not need an 'else' block, as the button won't be visible 
+    # unless one of these reactive values is set (thanks to renderUI).
+  })
+  
   output$StrideLogo <- renderImage({
     image_path <- normalizePath(file.path('www', 'STRIDE logo.png'))
     list(
@@ -888,6 +916,7 @@ server <- function(input, output, session) {
                      nav_spacer(),
                      nav_panel(
                        title = "Regional Level",
+                       uiOutput("backButtonUI"),
                        plotlyOutput("school_count_regional_graph", height = 500)
                      ),
                      nav_panel(
@@ -906,6 +935,7 @@ server <- function(input, output, session) {
                      nav_spacer(),
                      nav_panel(
                        title = "Regional Level",
+                       uiOutput("backButtonUI"),
                        plotlyOutput("SOSSS_Region_Typology", height = 500)
                      ),
                      nav_panel(
@@ -924,6 +954,7 @@ server <- function(input, output, session) {
                      nav_spacer(),
                      nav_panel(
                        title = "Regional Level",
+                       uiOutput("backButtonUI"),
                        plotlyOutput("Classroom_Shortage_Region_Graph", height = 500)
                      ),
                      nav_panel(
@@ -942,6 +973,7 @@ server <- function(input, output, session) {
                      nav_spacer(),
                      nav_panel(
                        title = "Regional Level",
+                       uiOutput("backButtonUI"),
                        plotlyOutput("LMS_Nation_Graph", height = 500)
                      ),
                      nav_panel(
@@ -956,6 +988,7 @@ server <- function(input, output, session) {
                      nav_spacer(),
                      nav_panel(
                        title = "Regional Level",
+                       uiOutput("backButtonUI"),
                        plotlyOutput("Teacher_Shortage_Regional_Graph", height = 500)
                      ),
                      nav_panel(
@@ -970,6 +1003,7 @@ server <- function(input, output, session) {
                      nav_spacer(),
                      nav_panel(
                        title = "Regional Level",
+                       uiOutput("backButtonUI"),
                        plotlyOutput("School_Principal_Regional_Graph", height = 500)
                      ),
                      nav_panel(
@@ -2387,6 +2421,7 @@ server <- function(input, output, session) {
             # --- Start of Tabset (now ABOVE the summary cards) ---
             navset_tab(
               nav_panel("Regional Breakdown",
+                        uiOutput("backButtonUI"),
                         plotlyOutput("Teaching_Deployment_Region_Graph")
               ),
               nav_panel("Priority Divisions",
@@ -2572,6 +2607,7 @@ server <- function(input, output, session) {
                 navset_tab(
                   # Tab 1: Regional Classroom Breakdown (Your existing content)
                   nav_panel("Regional Breakdown",
+                            uiOutput("backButtonUI"),
                             plotlyOutput("Classroom_Shortage_Region_Graph2")
                   ),
                   # Tab 2: Division Classroom Shortage Breakdown (The new tab)
@@ -2881,6 +2917,7 @@ server <- function(input, output, session) {
                 navset_tab(
                   # Tab 1: Regional Breakdown (Your existing content)
                   nav_panel("Regional Breakdown",
+                            uiOutput("backButtonUI"),
                             plotlyOutput("LMS_Nation_Graph2")
                   ),
                   # Tab 2: Division Breakdown (The new tab)
@@ -7008,11 +7045,8 @@ server <- function(input, output, session) {
   # --- Teaching Deployment: Regional Breakdown Graph ---
   output$Teaching_Deployment_Region_Graph <- renderPlotly({
     
-    # --- Use the full dataset instead of the filtered one ---
-    current_filtered_data <- df  
-    
     # --- Empty Data Handling ---
-    if (nrow(current_filtered_data) == 0) {
+    if (nrow(df) == 0) {
       return(ggplotly(
         ggplot() +
           annotate("text", x = 0.5, y = 0.5,
@@ -7023,42 +7057,205 @@ server <- function(input, output, session) {
     }
     
     # --- Prepare grouped data (all regions) ---
-    plot_data <- current_filtered_data %>%
-      group_by(Region) %>%
-      summarise(TeacherShortage = sum(as.numeric(TeacherShortage), na.rm = TRUE),
-                .groups = "drop")
+    if (is.null(current_region())) {
+      plot_data <- df %>%
+        group_by(Region) %>%
+        summarise(TeacherShortage = sum(as.numeric(TeacherShortage), na.rm = TRUE),
+                  .groups = "drop") %>%
+        arrange(desc(TeacherShortage))
+      
+      # --- Add labels ---
+      plot_data <- plot_data %>%
+        mutate(Label = scales::comma(TeacherShortage))
+      
+      # --- Plot ---
+      p <- ggplot(plot_data,
+                  aes(x = reorder(Region, -TeacherShortage),
+                      y = TeacherShortage,
+                      fill = Region,
+                      text = paste("Region:", Region,
+                                   "<br>Teacher Shortage:", scales::comma(TeacherShortage)))) +
+        geom_bar(stat = "identity", color = "black") +
+        geom_text(aes(label = Label), vjust = -0.5, size = 3.5, color = "black") +
+        labs(
+          title = "Teacher Shortage by Region",
+          x = "Region",
+          y = "Number of Teacher Shortages"
+        ) +
+        scale_y_continuous(labels = scales::comma) +
+        theme_minimal() +
+        theme(
+          plot.title = element_text(hjust = 0.5, size = 14, face = "bold"),
+          axis.text.x = element_text(size = 10, angle = 45, hjust = 1),
+          legend.position = "none"
+        )
+    } else if (is.null(current_division())) {
+      # --- Prepare data for plotting ---
+      # FIX: Use 'df' here instead of 'current_filtered_data' 
+      # to ensure you're filtering the *complete* dataset for the division view.
+      plot_data <- df %>%
+        filter(Region == current_region()) %>%
+        group_by(Division) %>%
+        summarise(Count = sum(as.numeric(TeacherShortage), na.rm = TRUE), .groups = 'drop') %>%
+        arrange(desc(Count)) %>%
+        slice_head(n = 20) 
+      
+      # --- Empty Data Handling for Division Breakdown ---
+      if (nrow(plot_data) == 0) {
+        return(ggplotly(
+          ggplot() +
+            annotate("text", x = 0.5, y = 0.5,
+                     label = paste("No data available for Divisions in", current_region()),
+                     size = 5, color = "red") +
+            theme_void()
+        ))
+      }
+      
+      # --- Create ggplot ---
+      p <- ggplot(plot_data,
+                  aes(x = reorder(Division, -Count),
+                      y = Count,
+                      fill = Division,
+                      text = paste(
+                        "Division: ", Division,
+                        "<br>Teacher Shortage: ", scales::comma(Count)
+                      ))) +
+        geom_bar(stat = "identity", color = "black") +
+        geom_text(data = plot_data,
+                  aes(x = Division, y = Count * 1.05,
+                      label = scales::comma(Count)),
+                  inherit.aes = FALSE,
+                  size = 3.5,
+                  color = "black") +
+        labs(
+          # UPDATE: Make the title dynamic to show the selected region
+          title = paste("Top 20 Divisions by Teacher Shortage in", current_region()), 
+          x = "Division",
+          y = "Teacher Shortage"
+        ) +
+        scale_y_continuous(labels = scales::comma) +
+        theme_minimal() +
+        theme(
+          plot.title = element_text(
+            hjust = 0.5,
+            face = "bold",
+            size = 14,
+            color = "black"    
+          ),
+          axis.text.x = element_text(size = 10, angle = 45, hjust = 1),
+          legend.position = "none"
+        )
+    }
+    else if (!is.null(current_division())){
+      # --- Prepare data for plotting ---
+      # FIX: Use 'df' here instead of 'current_filtered_data' 
+      # to ensure you're filtering the *complete* dataset for the division view.
+      plot_data <- df %>%
+        filter(Region == current_region()) %>%
+        filter(Division == current_division()) %>% 
+        group_by(Legislative.District) %>%
+        summarise(Count = sum(as.numeric(TeacherShortage), na.rm = TRUE), .groups = 'drop') %>%
+        arrange(desc(Count)) %>%
+        slice_head(n = 20) 
+      
+      # --- Empty Data Handling for Division Breakdown ---
+      if (nrow(plot_data) == 0) {
+        return(ggplotly(
+          ggplot() +
+            annotate("text", x = 0.5, y = 0.5,
+                     label = paste("No data available for Divisions in", current_region()),
+                     size = 5, color = "red") +
+            theme_void()
+        ))
+      }
+      
+      # --- Create ggplot ---
+      p <- ggplot(plot_data,
+                  aes(x = reorder(Legislative.District, -Count),
+                      y = Count,
+                      fill = Legislative.District,
+                      text = paste(
+                        "Legislative District: ", Legislative.District,
+                        "<br>Teacher Shortage: ", scales::comma(Count)
+                      ))) +
+        geom_bar(stat = "identity", color = "black") +
+        geom_text(data = plot_data,
+                  aes(x = Legislative.District, y = Count * 1.05,
+                      label = scales::comma(Count)),
+                  inherit.aes = FALSE,
+                  size = 3.5,
+                  color = "black") +
+        labs(
+          # UPDATE: Make the title dynamic to show the selected region
+          title = paste("Top 20 Divisions by Teacher Shortage in", current_region()), 
+          x = "Legislative District",
+          y = "Teacher Shortage"
+        ) +
+        scale_y_continuous(labels = scales::comma) +
+        theme_minimal() +
+        theme(
+          plot.title = element_text(
+            hjust = 0.5,
+            face = "bold",
+            size = 14,
+            color = "black"    
+          ),
+          axis.text.x = element_text(size = 10, angle = 45, hjust = 1),
+          legend.position = "none"
+        )
+    }
     
-    # --- Add labels ---
-    plot_data <- plot_data %>%
-      mutate(Label = scales::comma(TeacherShortage))
-    
-    # --- Plot ---
-    p <- ggplot(plot_data,
-                aes(x = reorder(Region, -TeacherShortage),
-                    y = TeacherShortage,
-                    fill = Region,
-                    text = paste("Region:", Region,
-                                 "<br>Teacher Shortage:", scales::comma(TeacherShortage)))) +
-      geom_bar(stat = "identity", color = "black") +
-      geom_text(aes(label = Label), vjust = -0.5, size = 3.5, color = "black") +
-      labs(
-        title = "Teacher Shortage by Region",
-        x = "Region",
-        y = "Number of Teacher Shortages"
-      ) +
-      scale_y_continuous(labels = scales::comma) +
-      theme_minimal() +
-      theme(
-        plot.title = element_text(hjust = 0.5, size = 14, face = "bold"),
-        axis.text.x = element_text(size = 10, angle = 45, hjust = 1),
-        legend.position = "none"
-      )
-    
-    ggplotly(p, tooltip = "text") %>%
+    ggplotly(p, tooltip = "text", source = "A") %>%
       layout(
         hoverlabel = list(bgcolor = "white"),
         margin = list(b = 100)
       )
+  })
+  
+  observeEvent(event_data("plotly_click", source = "A"), {
+    click_data <- event_data("plotly_click", source = "A")
+    
+    # Ensure a click actually occurred and we're on the main region plot (not the division plot)
+    if (!is.null(click_data) && is.null(current_region()) && is.null(current_division())) {
+      
+      # The x-axis value (the name of the region) is typically in the 'x' element of the click data.
+      clicked_index <- click_data$x
+      
+      plot_data <- df %>%
+        group_by(Region) %>%
+        summarise(TeacherShortage = sum(as.numeric(TeacherShortage), na.rm = TRUE),
+                  .groups = "drop") %>%
+        arrange(desc(TeacherShortage))
+      
+      # Update the reactive value, which will trigger the plot to redraw 
+      # using the division breakdown logic.
+      selected_region <- plot_data$Region[clicked_index]
+      
+      current_region(selected_region)
+      
+      # Optional: Print the selected region to the console for debugging
+      cat("Region selected:", selected_region, "\n")
+    }
+    else if (!is.null(click_data) && !is.null(current_region()) && is.null(current_division())) {
+      # The x-axis value (the name of the region) is typically in the 'x' element of the click data.
+      clicked_index <- click_data$x
+      
+      plot_data <- df %>% filter(Region == current_region()) %>% 
+        group_by(Division) %>%
+        summarise(TeacherShortage = sum(as.numeric(TeacherShortage), na.rm = TRUE),
+                  .groups = "drop") %>%
+        arrange(desc(TeacherShortage))
+      
+      # Update the reactive value, which will trigger the plot to redraw 
+      # using the division breakdown logic.
+      selected_division <- plot_data$Division[clicked_index]
+      
+      current_division(selected_division)
+      
+      # Optional: Print the selected region to the console for debugging
+      cat("Division selected:", selected_division, "\n")
+    }
+    
   })
   
   # --- Teaching Deployment: Priority Division Graph ---
@@ -7129,47 +7326,153 @@ server <- function(input, output, session) {
   #Classroom Shortage
   output$Classroom_Shortage_Region_Graph2 <- renderPlotly({
     
-    # Use the reactive filtered data
-    current_filtered_data <- LMS
-    
     # --- Empty Data Handling ---
-    if (nrow(current_filtered_data) == 0) {
+    if (nrow(LMS) == 0) {
       return(ggplotly(ggplot() +
                         annotate("text", x = 0.5, y = 0.5, label = "No data for selected regions/divisions") +
                         theme_void()))
     }
     
-    # Prepare the data for plotting
-    plot_data <- current_filtered_data %>%
-      group_by(Region) %>%
-      summarise(Count = sum(as.numeric(Estimated_CL_Shortage), na.rm = TRUE), .groups = 'drop')
-    
-    # Create the ggplot
-    p <- ggplot(plot_data,
-                aes(x = reorder(Region, -Count),
-                    y = Count,
-                    fill = Region,
-                    text = paste("Region: ", Region,
-                                 "<br>Classroom Shortage: ", scales::comma(Count)))) + # Custom tooltip text
-      geom_bar(stat = "identity", color = "black") +
-      geom_text(data = plot_data,
-                aes(x = Region, y = Count * 1.05, label = scales::comma(Count)), # Modified line
-                inherit.aes = FALSE,
-                size = 3.5,
-                color = "black") +
-      labs(x = "Region",
-           y = "Classroom Shortage") +
-      scale_y_continuous(labels = scales::comma) + # Format y-axis labels as comma-separated numbers
-      theme_minimal() +
-      theme(axis.text.x = element_text(size = 10, angle = 45, hjust = 1),
-            legend.position = "none", # No legend needed for single fill
-            plot.title = element_text(hjust = 0.5)) # Center the plot title
+    if (is.null(current_region())) {
+      
+      # Prepare the data for plotting
+      plot_data <- LMS %>%
+        group_by(Region) %>%
+        summarise(Count = sum(as.numeric(Estimated_CL_Shortage), na.rm = TRUE), .groups = 'drop') %>% 
+        arrange(desc(Count))
+      
+      # Create the ggplot
+      p <- ggplot(plot_data,
+                  aes(x = reorder(Region, -Count),
+                      y = Count,
+                      fill = Region,
+                      text = paste("Region: ", Region,
+                                   "<br>Classroom Shortage: ", scales::comma(Count)))) + # Custom tooltip text
+        geom_bar(stat = "identity", color = "black") +
+        geom_text(data = plot_data,
+                  aes(x = Region, y = Count * 1.05, label = scales::comma(Count)), # Modified line
+                  inherit.aes = FALSE,
+                  size = 3.5,
+                  color = "black") +
+        labs(x = "Region",
+             y = "Classroom Shortage") +
+        scale_y_continuous(labels = scales::comma) + # Format y-axis labels as comma-separated numbers
+        theme_minimal() +
+        theme(axis.text.x = element_text(size = 10, angle = 45, hjust = 1),
+              legend.position = "none", # No legend needed for single fill
+              plot.title = element_text(hjust = 0.5)) # Center the plot title
+      
+    } else if (!is.null(current_region()) && is.null(current_division())) {
+      
+      plot_data <- LMS %>%
+        filter(Region == current_region()) %>% 
+        group_by(Division) %>%
+        summarise(Count = sum(as.numeric(Estimated_CL_Shortage), na.rm = TRUE), .groups = 'drop') %>% 
+        arrange(desc(Count))
+      
+      # Create the ggplot
+      p <- ggplot(plot_data,
+                  aes(x = reorder(Division, -Count),
+                      y = Count,
+                      fill = Division,
+                      text = paste("Region: ", Division,
+                                   "<br>Classroom Shortage: ", scales::comma(Count)))) + # Custom tooltip text
+        geom_bar(stat = "identity", color = "black") +
+        geom_text(data = plot_data,
+                  aes(x = Division, y = Count * 1.05, label = scales::comma(Count)), # Modified line
+                  inherit.aes = FALSE,
+                  size = 3.5,
+                  color = "black") +
+        labs(x = "Region",
+             y = "Classroom Shortage") +
+        scale_y_continuous(labels = scales::comma) + # Format y-axis labels as comma-separated numbers
+        theme_minimal() +
+        theme(axis.text.x = element_text(size = 10, angle = 45, hjust = 1),
+              legend.position = "none", # No legend needed for single fill
+              plot.title = element_text(hjust = 0.5)) # Center the plot title
+      
+    } else if (!is.null(current_division())) {
+      plot_data <- LMS %>%
+        filter(Region == current_region()) %>%
+        filter(Division == current_division()) %>% 
+        group_by(Legislative_District) %>%
+        summarise(Count = sum(as.numeric(Estimated_CL_Shortage), na.rm = TRUE), .groups = 'drop') %>% 
+        arrange(desc(Count))
+      
+      # Create the ggplot
+      p <- ggplot(plot_data,
+                  aes(x = reorder(Legislative_District, -Count),
+                      y = Count,
+                      fill = Legislative_District,
+                      text = paste("Region: ", Legislative_District,
+                                   "<br>Classroom Shortage: ", scales::comma(Count)))) + # Custom tooltip text
+        geom_bar(stat = "identity", color = "black") +
+        geom_text(data = plot_data,
+                  aes(x = Legislative_District, y = Count * 1.05, label = scales::comma(Count)), # Modified line
+                  inherit.aes = FALSE,
+                  size = 3.5,
+                  color = "black") +
+        labs(x = "Region",
+             y = "Classroom Shortage") +
+        scale_y_continuous(labels = scales::comma) + # Format y-axis labels as comma-separated numbers
+        theme_minimal() +
+        theme(axis.text.x = element_text(size = 10, angle = 45, hjust = 1),
+              legend.position = "none", # No legend needed for single fill
+              plot.title = element_text(hjust = 0.5)) # Center the plot title
+    }
     
     # Convert ggplot to plotly, ensuring custom text is used for hover
     ggplotly(p, tooltip = "text", source = "classroomShortageRegionPlot") %>%
       layout(hoverlabel = list(bgcolor = "white"),
              # Adjust margins to prevent labels from being cut off if needed
              margin = list(b = 100)) # Increase bottom margin for x-axis labels
+  })
+  
+  observeEvent(event_data("plotly_click", source = "classroomShortageRegionPlot"), {
+    click_data <- event_data("plotly_click", source = "classroomShortageRegionPlot")
+    
+    # Ensure a click actually occurred and we're on the main region plot (not the division plot)
+    if (!is.null(click_data) && is.null(current_region()) && is.null(current_division())) {
+      
+      # The x-axis value (the name of the region) is typically in the 'x' element of the click data.
+      clicked_index <- click_data$x
+      
+      plot_data <- LMS %>%
+        group_by(Region) %>%
+        summarise(Count = sum(as.numeric(Estimated_CL_Shortage), na.rm = TRUE), .groups = 'drop') %>% 
+        arrange(desc(Count))
+      
+      # Update the reactive value, which will trigger the plot to redraw 
+      # using the division breakdown logic.
+      selected_region <- plot_data$Region[clicked_index]
+      
+      ## in the table plot_data-- look for the Region column [ and then get the [value of the clicked_index] row ]
+      
+      current_region(selected_region)
+      
+      # Optional: Print the selected region to the console for debugging
+      cat("Region selected:", selected_region, "\n")
+    }
+    else if (!is.null(click_data) && !is.null(current_region()) && is.null(current_division())) {
+      # The x-axis value (the name of the region) is typically in the 'x' element of the click data.
+      clicked_index <- click_data$x
+      
+      plot_data <- LMS %>%
+        filter(Region == current_region()) %>%
+        group_by(Division) %>%
+        summarise(Count = sum(as.numeric(Estimated_CL_Shortage), na.rm = TRUE), .groups = 'drop') %>% 
+        arrange(desc(Count))
+      
+      # Update the reactive value, which will trigger the plot to redraw 
+      # using the division breakdown logic.
+      selected_division <- plot_data$Division[clicked_index]
+      
+      current_division(selected_division)
+      
+      # Optional: Print the selected region to the console for debugging
+      cat("Division selected:", selected_division, "\n")
+    }
+    
   })
   
   output$Classroom_Shortage_Division_Graph2 <- renderPlotly({
@@ -7215,7 +7518,7 @@ server <- function(input, output, session) {
             plot.title = element_text(hjust = 0.5)) # Center the plot title
     
     # Convert ggplot to plotly, ensuring custom text is used for hover
-    ggplotly(p, tooltip = "text", source = "classroomShortageRegionPlot") %>%
+    ggplotly(p, tooltip = "text", source = "classroomShortageRegionPlot2") %>%
       layout(hoverlabel = list(bgcolor = "white"),
              # Adjust margins to prevent labels from being cut off if needed
              margin = list(b = 100)) # Increase bottom margin for x-axis labels
@@ -7477,65 +7780,254 @@ server <- function(input, output, session) {
   
   #LMS
   output$LMS_Nation_Graph2 <- renderPlotly({
-    full_data <- LMS %>%   
-      rename(
-        "With Buildable Space" = Buildable_space,
-        "With Excess Classrooms" = With_Excess,
-        "Without Classroom Shortage" = Without_Shortage,
-        "Last Mile Schools" = LMS,
-        "GIDCA" = GIDCA,
-        "With Shortage" = With_Shortage
-      ) %>%
-      pivot_longer(13:18, names_to = "Type", values_to = "Count")
     
-    # --- Keep only "Last Mile Schools" and aggregate all regions ---
-    plot_data <- full_data %>%
-      filter(Type == "Last Mile Schools") %>%
-      group_by(Region) %>%
-      summarise(
-        Count = sum(as.numeric(Count), na.rm = TRUE),
-        .groups = "drop"
-      )
+    if (is.null(current_region())) {
+      full_data <- LMS %>%   
+        rename(
+          "With Buildable Space" = Buildable_space,
+          "With Excess Classrooms" = With_Excess,
+          "Without Classroom Shortage" = Without_Shortage,
+          "Last Mile Schools" = LMS,
+          "GIDCA" = GIDCA,
+          "With Shortage" = With_Shortage
+        ) %>%
+        pivot_longer(13:18, names_to = "Type", values_to = "Count")
+      
+      # --- Keep only "Last Mile Schools" and aggregate all regions ---
+      plot_data <- full_data %>%
+        filter(Type == "Last Mile Schools") %>%
+        group_by(Region) %>%
+        summarise(
+          Count = sum(as.numeric(Count), na.rm = TRUE),
+          .groups = "drop"
+        ) %>% arrange(desc(Count))
+      
+      # --- Compute national total ---
+      national_total <- sum(plot_data$Count, na.rm = TRUE)
+      
+      # ---  Create the chart ---
+      p <- ggplot(plot_data,
+                  aes(
+                    x = reorder(Region, -Count),
+                    y = Count,
+                    fill = Region,
+                    text = paste(
+                      "Region:", Region,
+                      "<br>Count:", scales::comma(Count)
+                    )
+                  )) +
+        geom_bar(stat = "identity", color = "black", size = 0.25) +
+        geom_text(
+          aes(label = scales::comma(Count), y = Count * 1.05),
+          size = 3.5,
+          color = "black"
+        ) +
+        labs(
+          x = "Region",
+          y = "Number of Last Mile Schools",
+          fill = "Region"
+        ) +
+        scale_y_continuous(labels = scales::comma) +
+        theme_minimal() +
+        theme(
+          plot.title = element_text(hjust = 0.5, size = 14, face = "bold"),
+          axis.text.x = element_text(size = 10, angle = 45, hjust = 1),
+          legend.position = "none"
+        )
+    } else if (!is.null(current_region()) && is.null(current_division())) {
+      full_data <- LMS %>%   
+        rename(
+          "With Buildable Space" = Buildable_space,
+          "With Excess Classrooms" = With_Excess,
+          "Without Classroom Shortage" = Without_Shortage,
+          "Last Mile Schools" = LMS,
+          "GIDCA" = GIDCA,
+          "With Shortage" = With_Shortage
+        ) %>%
+        pivot_longer(13:18, names_to = "Type", values_to = "Count")
+      
+      # --- Keep only "Last Mile Schools" and aggregate all regions ---
+      plot_data <- full_data %>%
+        filter(Type == "Last Mile Schools") %>%
+        filter(Region == current_region()) %>% 
+        group_by(Division) %>%
+        summarise(
+          Count = sum(as.numeric(Count), na.rm = TRUE),
+          .groups = "drop"
+        ) %>% arrange(desc(Count))
+      
+      # --- Compute national total ---
+      national_total <- sum(plot_data$Count, na.rm = TRUE)
+      
+      # ---  Create the chart ---
+      p <- ggplot(plot_data,
+                  aes(
+                    x = reorder(Division, -Count),
+                    y = Count,
+                    fill = Division,
+                    text = paste(
+                      "Division:", Division,
+                      "<br>Count:", scales::comma(Count)
+                    )
+                  )) +
+        geom_bar(stat = "identity", color = "black", size = 0.25) +
+        geom_text(
+          aes(label = scales::comma(Count), y = Count * 1.05),
+          size = 3.5,
+          color = "black"
+        ) +
+        labs(
+          x = "Division",
+          y = "Number of Last Mile Schools",
+          fill = "Division"
+        ) +
+        scale_y_continuous(labels = scales::comma) +
+        theme_minimal() +
+        theme(
+          plot.title = element_text(hjust = 0.5, size = 14, face = "bold"),
+          axis.text.x = element_text(size = 10, angle = 45, hjust = 1),
+          legend.position = "none"
+        )
+    } else if (!is.null(current_division())) {
+      full_data <- LMS %>%   
+        rename(
+          "With Buildable Space" = Buildable_space,
+          "With Excess Classrooms" = With_Excess,
+          "Without Classroom Shortage" = Without_Shortage,
+          "Last Mile Schools" = LMS,
+          "GIDCA" = GIDCA,
+          "With Shortage" = With_Shortage
+        ) %>%
+        pivot_longer(13:18, names_to = "Type", values_to = "Count")
+      
+      # --- Keep only "Last Mile Schools" and aggregate all regions ---
+      plot_data <- full_data %>%
+        filter(Type == "Last Mile Schools") %>%
+        filter(Region == current_region()) %>% 
+        filter(Division == current_division()) %>% 
+        group_by(Legislative_District) %>%
+        summarise(
+          Count = sum(as.numeric(Count), na.rm = TRUE),
+          .groups = "drop"
+        ) %>% arrange(desc(Count))
+      
+      # --- Compute national total ---
+      national_total <- sum(plot_data$Count, na.rm = TRUE)
+      
+      # ---  Create the chart ---
+      p <- ggplot(plot_data,
+                  aes(
+                    x = reorder(Legislative_District, -Count),
+                    y = Count,
+                    fill = Legislative_District,
+                    text = paste(
+                      "Legislative District:", Legislative_District,
+                      "<br>Count:", scales::comma(Count)
+                    )
+                  )) +
+        geom_bar(stat = "identity", color = "black", size = 0.25) +
+        geom_text(
+          aes(label = scales::comma(Count), y = Count * 1.05),
+          size = 3.5,
+          color = "black"
+        ) +
+        labs(
+          x = "Legislative District",
+          y = "Number of Last Mile Schools",
+          fill = "Legislative District"
+        ) +
+        scale_y_continuous(labels = scales::comma) +
+        theme_minimal() +
+        theme(
+          plot.title = element_text(hjust = 0.5, size = 14, face = "bold"),
+          axis.text.x = element_text(size = 10, angle = 45, hjust = 1),
+          legend.position = "none"
+        )
+    }
     
-    # --- Compute national total ---
-    national_total <- sum(plot_data$Count, na.rm = TRUE)
-    
-    # ---  Create the chart ---
-    p <- ggplot(plot_data,
-                aes(
-                  x = reorder(Region, -Count),
-                  y = Count,
-                  fill = Region,
-                  text = paste(
-                    "Region:", Region,
-                    "<br>Count:", scales::comma(Count)
-                  )
-                )) +
-      geom_bar(stat = "identity", color = "black", size = 0.25) +
-      geom_text(
-        aes(label = scales::comma(Count), y = Count * 1.05),
-        size = 3.5,
-        color = "black"
-      ) +
-      labs(
-        x = "Region",
-        y = "Number of Last Mile Schools",
-        fill = "Region"
-      ) +
-      scale_y_continuous(labels = scales::comma) +
-      theme_minimal() +
-      theme(
-        plot.title = element_text(hjust = 0.5, size = 14, face = "bold"),
-        axis.text.x = element_text(size = 10, angle = 45, hjust = 1),
-        legend.position = "none"
-      )
-    
-    ggplotly(p, tooltip = "text") %>%
+    ggplotly(p, tooltip = "text", source = "LMSplotly") %>%
       layout(
         hoverlabel = list(bgcolor = "white"),
         margin = list(b = 100)
       ) %>%
       style(hoverinfo = "text")
+  })
+  
+  observeEvent(event_data("plotly_click", source = "LMSplotly"), {
+    click_data <- event_data("plotly_click", source = "LMSplotly")
+    
+    # Ensure a click actually occurred and we're on the main region plot (not the division plot)
+    if (!is.null(click_data) && is.null(current_region()) && is.null(current_division())) {
+      
+      # The x-axis value (the name of the region) is typically in the 'x' element of the click data.
+      clicked_index <- click_data$x
+      
+      full_data <- LMS %>%   
+        rename(
+          "With Buildable Space" = Buildable_space,
+          "With Excess Classrooms" = With_Excess,
+          "Without Classroom Shortage" = Without_Shortage,
+          "Last Mile Schools" = LMS,
+          "GIDCA" = GIDCA,
+          "With Shortage" = With_Shortage
+        ) %>%
+        pivot_longer(13:18, names_to = "Type", values_to = "Count")
+      
+      # --- Keep only "Last Mile Schools" and aggregate all regions ---
+      plot_data <- full_data %>%
+        filter(Type == "Last Mile Schools") %>%
+        group_by(Region) %>%
+        summarise(
+          Count = sum(as.numeric(Count), na.rm = TRUE),
+          .groups = "drop"
+        ) %>% arrange(desc(Count))
+      
+      # Update the reactive value, which will trigger the plot to redraw 
+      # using the division breakdown logic.
+      selected_region <- plot_data$Region[clicked_index]
+      
+      ## in the table plot_data-- look for the Region column [ and then get the [value of the clicked_index] row ]
+      
+      current_region(selected_region)
+      
+      # Optional: Print the selected region to the console for debugging
+      cat("Region selected:", selected_region, "\n")
+    }
+    else if (!is.null(click_data) && !is.null(current_region()) && is.null(current_division())) {
+      # The x-axis value (the name of the region) is typically in the 'x' element of the click data.
+      clicked_index <- click_data$x
+      
+      full_data <- LMS %>%   
+        rename(
+          "With Buildable Space" = Buildable_space,
+          "With Excess Classrooms" = With_Excess,
+          "Without Classroom Shortage" = Without_Shortage,
+          "Last Mile Schools" = LMS,
+          "GIDCA" = GIDCA,
+          "With Shortage" = With_Shortage
+        ) %>%
+        pivot_longer(13:18, names_to = "Type", values_to = "Count")
+      
+      # --- Keep only "Last Mile Schools" and aggregate all regions ---
+      plot_data <- full_data %>%
+        filter(Type == "Last Mile Schools") %>%
+        filter(Region == current_region()) %>% 
+        group_by(Division) %>%
+        summarise(
+          Count = sum(as.numeric(Count), na.rm = TRUE),
+          .groups = "drop"
+        ) %>% arrange(desc(Count))
+      
+      # Update the reactive value, which will trigger the plot to redraw 
+      # using the division breakdown logic.
+      selected_division <- plot_data$Division[clicked_index]
+      
+      current_division(selected_division)
+      
+      # Optional: Print the selected region to the console for debugging
+      cat("Division selected:", selected_division, "\n")
+    }
+    
   })
   
   output$LMS_Division_Graph2 <- renderPlotly({
