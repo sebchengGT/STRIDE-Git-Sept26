@@ -289,10 +289,10 @@ server <- function(input, output, session) {
     
     if (is.null(current_state$region)) {
       # First drill-down: from national to region
-      drilldown_state(list(region = click_data$x, division = NULL))
+      drilldown_state(list(region = click_data$y, division = NULL))
     } else if (is.null(current_state$division)) {
       # Second drill-down: from region to division
-      drilldown_state(list(region = current_state$region, division = click_data$x))
+      drilldown_state(list(region = current_state$region, division = click_data$y))
     }
   })
   
@@ -466,6 +466,7 @@ server <- function(input, output, session) {
   
   # --- Plot Rendering ---
   
+  # Total Schools Plot (Drilldown)
   output$totalschools_plot_erdb <- renderPlotly({
     state <- drilldown_state()
     
@@ -475,8 +476,23 @@ server <- function(input, output, session) {
         group_by(Region) %>%
         summarise(TotalSchools = n(), .groups = 'drop')
       
-      p <- plot_ly(data = plot_data, x = ~Region, y = ~TotalSchools, type = 'bar', source = "drilldown_source") %>%
-        layout(title = "Total Schools by Region", yaxis = list(title = "Number of Schools",tickformat = ","), xaxis = list(title = "", tickangle = -45,  categoryorder = "total descending"))
+      max_schools <- max(plot_data$TotalSchools, na.rm = TRUE)
+      
+      p <- plot_ly(
+        data = plot_data, 
+        y = ~Region,                # Flipped: Category on Y-axis
+        x = ~TotalSchools,          # Flipped: Value on X-axis
+        type = 'bar', 
+        source = "drilldown_source",
+        text = ~TotalSchools,       # Added: Text label value
+        texttemplate = '%{x:,.0f}', # Added: Format text (comma, 0 decimals)
+        textposition = 'outside'    # Added: Place text outside bar
+      ) %>%
+        layout(
+          title = "Total Schools by Region", 
+          xaxis = list(title = "Number of Schools", tickformat = ",", range = c(0, max_schools * 1.15)), # Swapped to xaxis
+          yaxis = list(title = "", categoryorder = "total descending", autorange = "reversed") # Swapped to yaxis, removed tickangle, added autorange
+        )
       
     } else if (is.null(state$division)) {
       # Regional View -> Group by Division
@@ -485,8 +501,23 @@ server <- function(input, output, session) {
         group_by(Division) %>%
         summarise(TotalSchools = n(), .groups = 'drop')
       
-      p <- plot_ly(data = plot_data, x = ~Division, y = ~TotalSchools, type = 'bar', source = "drilldown_source") %>%
-        layout(title = paste("Schools in", state$region), yaxis = list(title = "Number of Schools",tickformat = ","), xaxis = list(title = "", tickangle = -45, categoryorder = "total descending"))
+      max_schools <- max(plot_data$TotalSchools, na.rm = TRUE)
+      
+      p <- plot_ly(
+        data = plot_data, 
+        y = ~Division,              # Flipped: Category on Y-axis
+        x = ~TotalSchools,          # Flipped: Value on X-axis
+        type = 'bar', 
+        source = "drilldown_source",
+        text = ~TotalSchools,       # Added
+        texttemplate = '%{x:,.0f}', # Added
+        textposition = 'outside'    # Added
+      ) %>%
+        layout(
+          title = paste("Schools in", state$region), 
+          xaxis = list(title = "Number of Schools", tickformat = ",", range = c(0, max_schools * 1.15)), # Swapped
+          yaxis = list(title = "", categoryorder = "total descending", autorange = "reversed") # Swapped
+        )
       
     } else {
       # Divisional View -> Group by Legislative District
@@ -495,13 +526,27 @@ server <- function(input, output, session) {
         group_by(Legislative.District) %>%
         summarise(TotalSchools = n(), .groups = 'drop')
       
-      p <- plot_ly(data = plot_data, x = ~Legislative.District, y = ~TotalSchools, type = 'bar') %>% # No source on the last level
-        layout(title = paste("Schools in", state$division), yaxis = list(title = "Number of Schools",tickformat = ","), xaxis = list(title = "Legislative District", tickangle = -45,  categoryorder = "total descending"))
+      max_schools <- max(plot_data$TotalSchools, na.rm = TRUE)
+      
+      p <- plot_ly(
+        data = plot_data, 
+        y = ~Legislative.District,  # Flipped: Category on Y-axis
+        x = ~TotalSchools,          # Flipped: Value on X-axis
+        type = 'bar',
+        text = ~TotalSchools,       # Added
+        texttemplate = '%{x:,.0f}', # Added
+        textposition = 'outside'    # Added
+      ) %>% 
+        layout(
+          title = paste("Schools in", state$division), 
+          xaxis = list(title = "Number of Schools", tickformat = ",", range = c(0, max_schools * 1.15)), # Swapped
+          yaxis = list(title = "Legislative District", categoryorder = "total descending", autorange = "reversed") # Swapped
+        )
     }
     p
   })
   
-  # By Curricular Offering (Pie Chart)
+  # By Curricular Offering (Pie Chart) - No changes
   output$curricular_plot_erdb <- renderPlotly({
     state <- drilldown_state()
     
@@ -533,7 +578,6 @@ server <- function(input, output, session) {
   })
   
   # By School Size Typology (Bar Chart)
-  # By School Size Typology (Bar Chart)
   output$typology_plot_erdb <- renderPlotly({
     state <- drilldown_state()
     
@@ -551,6 +595,8 @@ server <- function(input, output, session) {
       group_by(School.Size.Typology) %>%
       summarise(Count = n(), .groups = 'drop')
     
+    max_schools <- max(typology_data$Count, na.rm = TRUE)
+    
     # 3. Define title based on state (UNCHANGED)
     title_text <- if (is.null(state$region)) {
       "By School Size (National)"
@@ -560,34 +606,28 @@ server <- function(input, output, session) {
       paste("By School Size (", state$division, ")")
     }
     
-    # 4. Create and customize the plot (FIXED)
+    # 4. Create and customize the plot (MODIFIED)
     plot_ly(
       data = typology_data,
-      x = ~School.Size.Typology,
-      y = ~Count,
+      y = ~School.Size.Typology,  # Flipped: Category on Y-axis
+      x = ~Count,                 # Flipped: Value on X-axis
       type = 'bar',
-      # FIX: Remove the overlapping text labels on the bars.
-      # Setting text = NULL prevents the labels from being rendered.
-      text = NULL,
-      # Kept: Your clear custom hover template.
+      text = ~Count,              # Added: Use Count for text
+      texttemplate = '%{x:,.0f}',  # Added: Format text
+      textposition = 'outside',   # Added: Place text outside
       hovertemplate = paste(
-        "%{x}, %{y:,}", # X value, comma, Y value with comma format
-        "<extra></extra>" # Removes the default trace information
+        "%{y}, %{x:,}", # Flipped: Use y for category, x for value
+        "<extra></extra>" 
       )
     ) %>%
       layout(
         title = title_text,
-        xaxis = list(
-          title = "",
-          tickangle = -45,
-          categoryorder = "array",
-          # Ensure categories are ordered correctly for school sizes
-          categoryarray = c("Very Small", "Small", "Medium", "Large", "Very Large", "Extremely Large", "Mega")
-        ),
-        yaxis = list(
+        yaxis = list(              # Swapped to yaxis
+          title = "", categoryorder = "total descending", autorange = "reversed"),
+        xaxis = list(              # Swapped to xaxis
           title = "Number of Schools",
-          # Use comma formatting
-          tickformat = ","
+          tickformat = ",",
+          range = c(0, max_schools *1.15)
         )
       )
   })
@@ -602,8 +642,23 @@ server <- function(input, output, session) {
         group_by(Region) %>%
         summarise(TotalShortage = sum(Estimated_CL_Shortage, na.rm = TRUE), .groups = 'drop')
       
-      p <- plot_ly(data = plot_data, x = ~Region, y = ~TotalShortage, type = 'bar', source = "drilldown_source") %>%
-        layout(title = "Classroom Shortage by Region", yaxis = list(title = "Total Shortage",tickformat = ","), xaxis = list(title = "", categoryorder = "total descending"))
+      max_schools <- max(plot_data$TotalShortage, na.rm = TRUE)
+      
+      p <- plot_ly(
+        data = plot_data, 
+        y = ~Region,                # Flipped
+        x = ~TotalShortage,         # Flipped
+        type = 'bar', 
+        source = "drilldown_source",
+        text = ~TotalShortage,      # Added
+        texttemplate = '%{x:,.0f}',# Added
+        textposition = 'outside'   # Added
+      ) %>%
+        layout(
+          title = "Classroom Shortage by Region", 
+          xaxis = list(title = "Total Shortage", tickformat = ",", range = c(0, max_schools * 1.15)), # Swapped
+          yaxis = list(title = "", categoryorder = "total descending", autorange = "reversed") # Swapped
+        )
       
     } else if (is.null(state$division)) {
       # Regional View -> Group by Division
@@ -612,8 +667,24 @@ server <- function(input, output, session) {
         group_by(Division) %>%
         summarise(TotalShortage = sum(Estimated_CL_Shortage, na.rm = TRUE), .groups = 'drop')
       
-      p <- plot_ly(data = plot_data, x = ~Division, y = ~TotalShortage, type = 'bar', source = "drilldown_source") %>%
-        layout(title = paste("Classroom Shortage in", state$region), yaxis = list(title = "Total Shortage",tickformat = ","), xaxis = list(title = "", tickangle = -45, categoryorder = "total descending"))
+      max_schools <- max(plot_data$TotalShortage, na.rm = TRUE)
+      
+      
+      p <- plot_ly(
+        data = plot_data, 
+        y = ~Division,              # Flipped
+        x = ~TotalShortage,         # Flipped
+        type = 'bar', 
+        source = "drilldown_source",
+        text = ~TotalShortage,      # Added
+        texttemplate = '%{x:,.0f}',# Added
+        textposition = 'outside'   # Added
+      ) %>%
+        layout(
+          title = paste("Classroom Shortage in", state$region), 
+          xaxis = list(title = "Total Shortage", tickformat = ",", range = c(0, max_schools * 1.15)), # Swapped
+          yaxis = list(title = "", categoryorder = "total descending", autorange = "reversed") # Swapped
+        )
       
     } else {
       # Divisional View -> Group by Legislative District
@@ -622,8 +693,23 @@ server <- function(input, output, session) {
         group_by(Legislative.District) %>%
         summarise(TotalShortage = sum(Estimated_CL_Shortage, na.rm = TRUE), .groups = 'drop')
       
-      p <- plot_ly(data = plot_data, x = ~Legislative.District, y = ~TotalShortage, type = 'bar') %>% # No source
-        layout(title = paste("Classroom Shortage in", state$division), yaxis = list(title = "Total Shortage",tickformat = ","), xaxis = list(title = "Legislative District", tickangle = -45,  categoryorder = "total descending"))
+      max_schools <- max(plot_data$TotalShortage, na.rm = TRUE)
+      
+      
+      p <- plot_ly(
+        data = plot_data, 
+        y = ~Legislative.District,  # Flipped
+        x = ~TotalShortage,         # Flipped
+        type = 'bar',
+        text = ~TotalShortage,      # Added
+        texttemplate = '%{x:,.0f}',# Added
+        textposition = 'outside'   # Added
+      ) %>% 
+        layout(
+          title = paste("Classroom Shortage in", state$division), 
+          xaxis = list(title = "Total Shortage", tickformat = ",", range = c(0, max_schools * 1.15)), # Swapped
+          yaxis = list(title = "Legislative District", categoryorder = "total descending", autorange = "reversed") # Swapped
+        )
     }
     p
   })
@@ -639,8 +725,24 @@ server <- function(input, output, session) {
         group_by(Region) %>%
         summarise(Count = n(), .groups = 'drop')
       
-      p <- plot_ly(data = plot_data, x = ~Region, y = ~Count, type = 'bar', source = "drilldown_source") %>%
-        layout(title = "LMS by Region", yaxis = list(title = "Number of LMS",tickformat = ","), xaxis = list(title = "", tickangle = -45, categoryorder = "total descending"))
+      max_schools <- max(plot_data$Count, na.rm = TRUE)
+      
+      
+      p <- plot_ly(
+        data = plot_data, 
+        y = ~Region,                # Flipped
+        x = ~Count,                 # Flipped
+        type = 'bar', 
+        source = "drilldown_source",
+        text = ~Count,              # Added
+        texttemplate = '%{x:,.0f}',# Added
+        textposition = 'outside'   # Added
+      ) %>%
+        layout(
+          title = "LMS by Region", 
+          xaxis = list(title = "Number of LMS", tickformat = ",", range = c(0, max_schools * 1.15)), # Swapped
+          yaxis = list(title = "", categoryorder = "total descending", autorange = "reversed") # Swapped
+        )
       
     } else if (is.null(state$division)) {
       # Regional View -> Group by Division
@@ -649,8 +751,23 @@ server <- function(input, output, session) {
         group_by(Division) %>%
         summarise(Count = n(), .groups = 'drop')
       
-      p <- plot_ly(data = plot_data, x = ~Division, y = ~Count, type = 'bar', source = "drilldown_source") %>%
-        layout(title = paste("LMS in", state$region), yaxis = list(title = "Number of LMS",tickformat = ","), xaxis = list(title = "", tickangle = -45, categoryorder = "total descending"))
+      max_schools <- max(plot_data$Count, na.rm = TRUE)
+      
+      p <- plot_ly(
+        data = plot_data, 
+        y = ~Division,              # Flipped
+        x = ~Count,                 # Flipped
+        type = 'bar', 
+        source = "drilldown_source",
+        text = ~Count,              # Added
+        texttemplate = '%{x:,.0f}',# Added
+        textposition = 'outside'   # Added
+      ) %>%
+        layout(
+          title = paste("LMS in", state$region), 
+          xaxis = list(title = "Number of LMS", tickformat = ",", range = c(0, max_schools * 1.15)), # Swapped
+          yaxis = list(title = "", categoryorder = "total descending", autorange = "reversed") # Swapped
+        )
       
     } else {
       # Divisional View -> Group by Legislative District
@@ -659,8 +776,22 @@ server <- function(input, output, session) {
         group_by(Legislative.District) %>%
         summarise(Count = n(), .groups = 'drop')
       
-      p <- plot_ly(data = plot_data, x = ~Legislative.District, y = ~Count, type = 'bar') %>% # No source
-        layout(title = paste("LMS in", state$division), yaxis = list(title = "Number of LMS",tickformat = ","), xaxis = list(title = "Legislative District", tickangle = -45,  categoryorder = "total descending"))
+      max_schools <- max(plot_data$Count, na.rm = TRUE)
+      
+      p <- plot_ly(
+        data = plot_data, 
+        y = ~Legislative.District,  # Flipped
+        x = ~Count,                 # Flipped
+        type = 'bar',
+        text = ~Count,              # Added
+        texttemplate = '%{x:,.0f}',# Added
+        textposition = 'outside'   # Added
+      ) %>% 
+        layout(
+          title = paste("LMS in", state$division), 
+          xaxis = list(title = "Number of LMS", tickformat = ",", range = c(0, max_schools * 1.15)), # Swapped
+          yaxis = list(title = "Legislative District", categoryorder = "total descending", autorange = "reversed") # Swapped
+        )
     }
     p
   })
@@ -675,8 +806,24 @@ server <- function(input, output, session) {
         group_by(Region) %>%
         summarise(TotalShortage = sum(TeacherShortage, na.rm = TRUE), .groups = 'drop')
       
-      p <- plot_ly(data = plot_data, x = ~Region, y = ~TotalShortage, type = 'bar', source = "drilldown_source") %>%
-        layout(title = "Teacher Shortage by Region", yaxis = list(title = "Total Teacher Shortage",tickformat = ","), xaxis = list(title = "", tickangle = -45, categoryorder = "total descending"))
+      max_schools <- max(plot_data$TotalShortage, na.rm = TRUE)
+      
+      
+      p <- plot_ly(
+        data = plot_data, 
+        y = ~Region,                # Flipped
+        x = ~TotalShortage,         # Flipped
+        type = 'bar', 
+        source = "drilldown_source",
+        text = ~TotalShortage,      # Added
+        texttemplate = '%{x:,.0f}',# Added
+        textposition = 'outside'   # Added
+      ) %>%
+        layout(
+          title = "Teacher Shortage by Region", 
+          xaxis = list(title = "Total Teacher Shortage", tickformat = ",", range = c(0, max_schools * 1.15)), # Swapped
+          yaxis = list(title = "", categoryorder = "total descending", autorange = "reversed") # Swapped
+        )
       
     } else if (is.null(state$division)) {
       # Regional View -> Group by Division
@@ -685,8 +832,23 @@ server <- function(input, output, session) {
         group_by(Division) %>%
         summarise(TotalShortage = sum(TeacherShortage, na.rm = TRUE), .groups = 'drop')
       
-      p <- plot_ly(data = plot_data, x = ~Division, y = ~TotalShortage, type = 'bar', source = "drilldown_source") %>%
-        layout(title = paste("Teacher Shortage in", state$region), yaxis = list(title = "Total Teacher Shortage",tickformat = ","), xaxis = list(title = "", tickangle = -45, categoryorder = "total descending"))
+      max_schools <- max(plot_data$TotalShortage, na.rm = TRUE)
+      
+      p <- plot_ly(
+        data = plot_data, 
+        y = ~Division,              # Flipped
+        x = ~TotalShortage,         # Flipped
+        type = 'bar', 
+        source = "drilldown_source",
+        text = ~TotalShortage,      # Added
+        texttemplate = '%{x:,.0f}',# Added
+        textposition = 'outside'   # Added
+      ) %>%
+        layout(
+          title = paste("Teacher Shortage in", state$region), 
+          xaxis = list(title = "Total Teacher Shortage", tickformat = ",", range = c(0, max_schools * 1.15)), # Swapped
+          yaxis = list(title = "", categoryorder = "total descending", autorange = "reversed") # Swapped
+        )
       
     } else {
       # Divisional View -> Group by Legislative District
@@ -695,8 +857,22 @@ server <- function(input, output, session) {
         group_by(Legislative.District) %>%
         summarise(TotalShortage = sum(TeacherShortage, na.rm = TRUE), .groups = 'drop')
       
-      p <- plot_ly(data = plot_data, x = ~Legislative.District, y = ~TotalShortage, type = 'bar') %>% # No source
-        layout(title = paste("Teacher Shortage in", state$division), yaxis = list(title = "Total Teacher Shortage",tickformat = ","), xaxis = list(title = "Legislative District", tickangle = -45,  categoryorder = "total descending"))
+      max_schools <- max(plot_data$TotalShortage, na.rm = TRUE)
+      
+      p <- plot_ly(
+        data = plot_data, 
+        y = ~Legislative.District,  # Flipped
+        x = ~TotalShortage,         # Flipped
+        type = 'bar',
+        text = ~TotalShortage,      # Added
+        texttemplate = '%{x:,.0f}',# Added
+        textposition = 'outside'   # Added
+      ) %>% 
+        layout(
+          title = paste("Teacher Shortage in", state$division), 
+          xaxis = list(title = "Total Teacher Shortage", tickformat = ",", range = c(0, max_schools * 1.15)), # Swapped
+          yaxis = list(title = "Legislative District", categoryorder = "total descending", autorange = "reversed") # Swapped
+        )
     }
     p
   })
@@ -712,8 +888,23 @@ server <- function(input, output, session) {
         group_by(Region) %>%
         summarise(Count = n(), .groups = 'drop')
       
-      p <- plot_ly(data = plot_data, x = ~Region, y = ~Count, type = 'bar', source = "drilldown_source") %>%
-        layout(title = "Schools w/o Principal by Region", yaxis = list(title = "Number of Schools",tickformat = ","), xaxis = list(title = "", tickangle = -45, categoryorder = "total descending"))
+      max_schools <- max(plot_data$Count, na.rm = TRUE)
+      
+      p <- plot_ly(
+        data = plot_data, 
+        y = ~Region,                # Flipped
+        x = ~Count,                 # Flipped
+        type = 'bar', 
+        source = "drilldown_source",
+        text = ~Count,              # Added
+        texttemplate = '%{x:,.0f}',# Added
+        textposition = 'outside'   # Added
+      ) %>%
+        layout(
+          title = "Schools w/o Principal by Region", 
+          xaxis = list(title = "Number of Schools", tickformat = ",", range = c(0, max_schools * 1.15)), # Swapped
+          yaxis = list(title = "", categoryorder = "total descending", autorange = "reversed") # Swapped
+        )
       
     } else if (is.null(state$division)) {
       # Regional View -> Group by Division
@@ -722,8 +913,23 @@ server <- function(input, output, session) {
         group_by(Division) %>%
         summarise(Count = n(), .groups = 'drop')
       
-      p <- plot_ly(data = plot_data, x = ~Division, y = ~Count, type = 'bar', source = "drilldown_source") %>%
-        layout(title = paste("Schools w/o Principal in", state$region), yaxis = list(title = "Number of Schools",tickformat = ","), xaxis = list(title = "", tickangle = -45, categoryorder = "total descending"))
+      max_schools <- max(plot_data$Count, na.rm = TRUE)
+      
+      p <- plot_ly(
+        data = plot_data, 
+        y = ~Division,              # Flipped
+        x = ~Count,                 # Flipped
+        type = 'bar', 
+        source = "drilldown_source",
+        text = ~Count,              # Added
+        texttemplate = '%{x:,.0f}',# Added
+        textposition = 'outside'   # Added
+      ) %>%
+        layout(
+          title = paste("Schools w/o Principal in", state$region), 
+          xaxis = list(title = "Number of Schools", tickformat = ",", range = c(0, max_schools * 1.15)), # Swapped
+          yaxis = list(title = "", categoryorder = "total descending", autorange = "reversed") # Swapped
+        )
       
     } else {
       # Divisional View -> Group by Legislative District
@@ -732,8 +938,22 @@ server <- function(input, output, session) {
         group_by(Legislative.District) %>%
         summarise(Count = n(), .groups = 'drop')
       
-      p <- plot_ly(data = plot_data, x = ~Legislative.District, y = ~Count, type = 'bar') %>% # No source
-        layout(title = paste("Schools w/o Principal in", state$division), yaxis = list(title = "Number of Schools",tickformat = ","), xaxis = list(title = "Legislative District", tickangle = -45,  categoryorder = "total descending"))
+      max_schools <- max(plot_data$Count, na.rm = TRUE)
+      
+      p <- plot_ly(
+        data = plot_data, 
+        y = ~Legislative.District,  # Flipped
+        x = ~Count,                 # Flipped
+        type = 'bar',
+        text = ~Count,              # Added
+        texttemplate = '%{x:,.0f}',# Added
+        textposition = 'outside'   # Added
+      ) %>% 
+        layout(
+          title = paste("Schools w/o Principal in", state$division), 
+          xaxis = list(title = "Number of Schools", tickformat = ",", range = c(0, max_schools * 1.15)), # Swapped
+          yaxis = list(title = "Legislative District", categoryorder = "total descending", autorange = "reversed") # Swapped
+        )
     }
     p
   })
@@ -772,14 +992,22 @@ server <- function(input, output, session) {
     
     plot_ly(
       data,
-      x = ~Category, y = ~Count,
-      type = "bar", marker = list(color = "#002D62")
+      y = ~Category,  # Flipped
+      x = ~Count,     # Flipped
+      type = "bar", 
+      marker = list(color = "#002D62"),
+      text = ~Count,              # Added
+      texttemplate = '%{x:,.0f}',# Added
+      textposition = 'outside'   # Added
     ) |>
-      layout(title = list(text = "Curricular Offering Distribution", x = 0.5),
-             xaxis = list(title = ""), yaxis = list(title = "Number of Schools"))
+      layout(
+        title = list(text = "Curricular Offering Distribution", x = 0.5),
+        yaxis = list(title = "", autorange = "reversed"), # Swapped, added autorange
+        xaxis = list(title = "Number of Schools") # Swapped
+      )
   })
   
-  # --- Curricular Offering Pie Chart ---
+  # --- Curricular Offering Pie Chart --- (No changes)
   output$Curricular_Offering_Pie <- renderPlotly({
     data <- data.frame(
       Category = c("Purely ES", "JHS with SHS", "ES and JHS (K to 10)",
@@ -795,7 +1023,7 @@ server <- function(input, output, session) {
     ) |> layout(title = list(text = "Curricular Offering (Pie)", x = 0.5))
   })
   
-  # --- Toggle visibility for Curricular Offering graphs ---
+  # --- Toggle visibility for Curricular Offering graphs --- (No changes)
   observeEvent(input$show_curricular_graphs, {
     if (input$show_curricular_graphs %% 2 == 1) {
       shinyjs::show("curricular_graphs")
@@ -816,14 +1044,24 @@ server <- function(input, output, session) {
     
     plot_ly(
       data,
-      x = ~Size, y = ~Count,
-      type = "bar", marker = list(color = "#0074D9")
+      y = ~Size,  # Flipped
+      x = ~Count, # Flipped
+      type = "bar", 
+      marker = list(color = "#0074D9"),
+      text = ~Count,              # Added
+      texttemplate = '%{x:,.0f}',# Added
+      textposition = 'outside'   # Added
     ) |>
-      layout(title = list(text = "School Size Typology Distribution", x = 0.5),
-             xaxis = list(title = ""), yaxis = list(title = "Number of Schools"))
+      layout(
+        title = list(text = "School Size Typology Distribution", x = 0.5),
+        yaxis = list(            # Swapped
+          title = "", categoryorder = "total descending", autorange = "reversed"
+        ), 
+        xaxis = list(title = "Number of Schools") # Swapped
+      )
   })
   
-  # --- School Size Typology Pie Chart ---
+  # --- School Size Typology Pie Chart --- (No changes)
   output$School_Size_Typology_Pie <- renderPlotly({
     data <- data.frame(
       Size = c("Very Small", "Small", "Medium", "Large",
@@ -837,7 +1075,9 @@ server <- function(input, output, session) {
       type = "pie", textinfo = "label+percent",
       insidetextorientation = "radial"
     ) |> layout(title = list(text = "School Size Typology (Pie)", x = 0.5))
-  })# --- Authentication ---
+  })
+  
+  # --- Authentication ---
   # Call the shinyauthr::loginServer module
   # credentials() will be a reactive returning a tibble with user_auth, info, and additional columns from user_base
   # credentials <- shinyauthr::loginServer(
@@ -1229,17 +1469,17 @@ server <- function(input, output, session) {
           # -- Row 1 --
           layout_columns(
             col_widths = c(4, 4, 4),
-            card(card_header("Number of Schools (Click to Drill Down)"), plotlyOutput("totalschools_plot_erdb"), height = "320px"),
-            card(card_header("Curricular Offering"), plotlyOutput("curricular_plot_erdb"), height = "320px"),
-            card(card_header("School Size Typology"), plotlyOutput("typology_plot_erdb"), height = "320px")
+            card(card_header("Number of Schools (Click to Drill Down)"), plotlyOutput("totalschools_plot_erdb"), height = "420px"),
+            card(card_header("Curricular Offering"), plotlyOutput("curricular_plot_erdb"), height = "420px"),
+            card(card_header("School Size Typology"), plotlyOutput("typology_plot_erdb"), height = "420px")
           ),
           # -- Row 2 --
           layout_columns(
             col_widths = c(3, 3, 3, 3),
-            card(card_header("Classroom Shortage"), plotlyOutput("classroomshortage_plot_erdb"), height = "320px"),
-            card(card_header("Last Mile Schools"), plotlyOutput("LMS_plot_erdb"), height = "320px"),
-            card(card_header("Teacher Shortage"), plotlyOutput("teachershortage_plot_erdb"), height = "320px"),
-            card(card_header("School Principal Shortage"), plotlyOutput("principalshortage_plot_erdb"), height = "320px")
+            card(card_header("Classroom Shortage"), plotlyOutput("classroomshortage_plot_erdb"), height = "420px"),
+            card(card_header("Last Mile Schools"), plotlyOutput("LMS_plot_erdb"), height = "420px"),
+            card(card_header("Teacher Shortage"), plotlyOutput("teachershortage_plot_erdb"), height = "420px"),
+            card(card_header("School Principal Shortage"), plotlyOutput("principalshortage_plot_erdb"), height = "420px")
           ),
             hr(),
             card(full_screen = TRUE,
