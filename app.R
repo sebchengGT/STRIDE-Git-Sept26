@@ -8,6 +8,10 @@
 #eeee
 #updated as of oct 15,2025
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> e1a3efc9bd8a9495fe832605139703ee13db7a88
 library(tidyverse)
 library(DT)
 library(dplyr)
@@ -7054,7 +7058,10 @@ server <- function(input, output, session) {
     }
     
     # --- Prepare grouped data (all regions) ---
+<<<<<<< HEAD
 
+=======
+>>>>>>> e1a3efc9bd8a9495fe832605139703ee13db7a88
     if (is.null(current_region())) {
       plot_data <- df %>%
         group_by(Region) %>%
@@ -7202,12 +7209,18 @@ server <- function(input, output, session) {
           legend.position = "none"
         )
     }
+<<<<<<< HEAD
 
+=======
+>>>>>>> e1a3efc9bd8a9495fe832605139703ee13db7a88
     plot_data <- current_filtered_data %>%
       group_by(Region) %>%
       summarise(TeacherShortage = sum(as.numeric(TeacherShortage), na.rm = TRUE),
                 .groups = "drop")
+<<<<<<< HEAD
 
+=======
+>>>>>>> e1a3efc9bd8a9495fe832605139703ee13db7a88
     
     ggplotly(p, tooltip = "text", source = "A") %>%
       layout(
@@ -7234,7 +7247,13 @@ server <- function(input, output, session) {
       group_by(Division) %>%
       summarise(Count = sum(as.numeric(TeacherShortage), na.rm = TRUE), .groups = 'drop') %>%
       arrange(desc(Count)) %>%
+<<<<<<< HEAD
 
+=======
+      slice_head(n = 20)
+      slice_head(n = 20) 
+    
+>>>>>>> e1a3efc9bd8a9495fe832605139703ee13db7a88
     # --- Create ggplot ---
     p <- ggplot(plot_data,
                 aes(x = reorder(Division, -Count),
@@ -7277,7 +7296,10 @@ server <- function(input, output, session) {
       )
   })
   
+<<<<<<< HEAD
 
+=======
+>>>>>>> e1a3efc9bd8a9495fe832605139703ee13db7a88
   # New observer to handle clicks on the Region bar chart
   observeEvent(event_data("plotly_click", source = "A"), {
     click_data <- event_data("plotly_click", source = "A")
@@ -7326,12 +7348,21 @@ server <- function(input, output, session) {
   })
   
   #Classroom Shortage
+<<<<<<< HEAD
+=======
+  output$Classroom_Shortage_Region_Graph2 <- renderPlotly({
+    
+>>>>>>> e1a3efc9bd8a9495fe832605139703ee13db7a88
   #Classroom Shortage
   output$Classroom_Shortage_Region_Graph2 <- renderPlotly({
     
     # Use the reactive filtered data
     current_filtered_data <- LMS
+<<<<<<< HEAD
 
+=======
+    
+>>>>>>> e1a3efc9bd8a9495fe832605139703ee13db7a88
     # --- Empty Data Handling ---
     if (nrow(LMS) == 0) {
       return(ggplotly(ggplot() +
@@ -7339,7 +7370,10 @@ server <- function(input, output, session) {
                         theme_void()))
     }
     
+<<<<<<< HEAD
 
+=======
+>>>>>>> e1a3efc9bd8a9495fe832605139703ee13db7a88
     if (is.null(current_region())) {
       
       # Prepare the data for plotting
@@ -7427,7 +7461,10 @@ server <- function(input, output, session) {
               legend.position = "none", # No legend needed for single fill
               plot.title = element_text(hjust = 0.5)) # Center the plot title
     }
+<<<<<<< HEAD
 
+=======
+>>>>>>> e1a3efc9bd8a9495fe832605139703ee13db7a88
     # Prepare the data for plotting
     plot_data <- current_filtered_data %>%
       group_by(Region) %>%
@@ -7813,7 +7850,10 @@ server <- function(input, output, session) {
   
   #LMS
   output$LMS_Nation_Graph2 <- renderPlotly({
+<<<<<<< HEAD
 
+=======
+>>>>>>> e1a3efc9bd8a9495fe832605139703ee13db7a88
     
     if (is.null(current_region())) {
       full_data <- LMS %>%   
@@ -7980,7 +8020,10 @@ server <- function(input, output, session) {
     }
     
     ggplotly(p, tooltip = "text", source = "LMSplotly") %>%
+<<<<<<< HEAD
 
+=======
+>>>>>>> e1a3efc9bd8a9495fe832605139703ee13db7a88
     full_data <- LMS %>%   
       rename(
         "With Buildable Space" = Buildable_space,
@@ -8035,7 +8078,10 @@ server <- function(input, output, session) {
       )
     
     ggplotly(p, tooltip = "text") %>%
+<<<<<<< HEAD
 
+=======
+>>>>>>> e1a3efc9bd8a9495fe832605139703ee13db7a88
       layout(
         hoverlabel = list(bgcolor = "white"),
         margin = list(b = 100)
@@ -21644,7 +21690,7 @@ authentication_server <- function(input, output, session, user_status,
       # Use a bslib::card_body_fill for clean padding
       card_body_fill(
         h5("Sign in with your credentials"),
-        textInput(ns("login_user"), "user@deped.gov.ph"),
+        textInput(ns("login_user"), "DepEd Email"),
         passwordInput(ns("login_pass"), "Password"),
         actionButton(ns("do_login"), "Login", class = "btn-success w-100"), # w-100 for full width
         uiOutput(ns("login_message"))
