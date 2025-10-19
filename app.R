@@ -89,6 +89,121 @@ cloud_v3 <- read_parquet("Cloud_Consolidated_v3.parquet")
 #Data Explorer 
 ThirdLevel <- read.csv("2025-Third Level Officials DepEd-cleaned.csv", stringsAsFactors = FALSE)
 
+# Priority Divisions
+
+priority_df <- df %>%
+  group_by(Division) %>%
+  summarise(Count_TeacherShortage = sum(as.numeric(TeacherShortage), na.rm = TRUE), .groups = 'drop') %>%
+  arrange(desc(Count_TeacherShortage)) %>%
+  mutate(Rank_TeacherShortage = row_number())
+
+priority_classroom <- LMS %>%
+  group_by(Division) %>%
+  summarise(Count_ClassroomShortage = sum(as.numeric(Estimated_CL_Shortage), na.rm = TRUE), .groups = 'drop') %>%
+  arrange(desc(Count_ClassroomShortage)) %>%
+  mutate(Rank_ClassroomShortage = row_number())
+
+priority_SP <- uni %>% # Using base uni data
+  filter(Designation != "School Principal") %>% # Applying original filter
+  group_by(Division) %>%
+  summarise(Count_SPShortage = n(), .groups = 'drop') %>%
+  arrange(desc(Count_SPShortage)) %>%
+  mutate(Rank_SPShortage = row_number())
+
+full_data <- LMS %>%
+  rename(
+    "With Buildable Space" = Buildable_space,
+    "With Excess Classrooms" = With_Excess,
+    "Without Classroom Shortage" = Without_Shortage,
+    "Last Mile Schools" = LMS,
+    "GIDCA" = GIDCA,
+    "With Shortage" = With_Shortage
+  ) %>%
+  pivot_longer(13:18, names_to = "Type", values_to = "Count")
+
+# --- Keep only "Last Mile Schools", aggregate, and add rank ---
+plot_LMS <- full_data %>%
+  filter(Type == "Last Mile Schools") %>%
+  group_by(Division) %>%
+  summarise(
+    Count_LastMileSchools = sum(as.numeric(Count), na.rm = TRUE),
+    .groups = "drop"
+  ) %>%
+  # Sort and rank
+  arrange(desc(Count_LastMileSchools)) %>%
+  mutate(Rank_LastMileSchools = row_number())
+
+# Full join priority_df and priority_classroom
+combined_df <- full_join(
+  priority_df,
+  priority_classroom,
+  by = "Division"
+)
+
+# Full join the result with plot_LMS
+full_priority_div <- full_join(
+  combined_df,
+  plot_LMS,
+  by = "Division"
+)
+
+# Full join the result with priority_SP
+full_priority_div_sp <- full_join(
+  full_priority_div,
+  priority_SP,
+  by = "Division"
+) %>%
+  # Rename columns to friendly names
+  rename(
+    "Teacher Shortage" = Count_TeacherShortage,
+    "Teacher Shortage Rank" = Rank_TeacherShortage,
+    "Classroom Shortage" = Count_ClassroomShortage,
+    "Classroom Shortage Rank" = Rank_ClassroomShortage,
+    "Last Mile Schools" = Count_LastMileSchools,
+    "Last Mile Schools Rank" = Rank_LastMileSchools,
+    "School Principal Shortage" = Count_SPShortage,
+    "School Principal Shortage Rank" = Rank_SPShortage
+  ) %>%
+  # Select and order the columns logically
+  select(
+    Division,
+    "Teacher Shortage",
+    "School Principal Shortage",
+    "Classroom Shortage",
+    "Last Mile Schools",
+    "Teacher Shortage Rank",
+    "School Principal Shortage Rank",
+    "Classroom Shortage Rank",
+    "Last Mile Schools Rank"
+  ) %>%
+  
+  # Sort by Division (optional but often helpful)
+  arrange(Division)
+
+# View the final combined data
+# print(full_priority_div_sp, n = 50) # Print more rows if needed
+# 
+# full_priority_div_sp <- full_priority_div_sp %>%
+#   gt() %>% # 1. Initialize the gt table object
+#   tab_style( # 2. Apply a style
+#     style = cell_fill(color = "#f0f8ff"), # 3. Set a light blue background fill
+#     locations = cells_body( # 4. Apply it to the data cells...
+#       columns = c( # 5. ...of these specific columns
+#         "Teacher Shortage Rank",
+#         "School Principal Shortage Rank",
+#         "Classroom Shortage Rank",
+#         "Last Mile Schools Rank"
+#       )
+#     )
+#   ) %>%
+#   # (Optional) Add a title to make the table look even better
+#   tab_header(
+#     title = "Priority Data by Division",
+#     subtitle = "With Shortages and Ranks"
+#   )
+
+
+
 
 user_base <- tibble::tibble(
   user = c("iamdeped", "depedadmin"),
@@ -1484,16 +1599,17 @@ server <- function(input, output, session) {
             hr(),
             card(full_screen = TRUE,
                  height = 800,
-                 card_header("School Database"),
-                 navset_card_pill(
-                   nav_spacer(),
-                   nav_panel(
-                     title = "School-level Data (SY 2024-2025)",
-                     dataTableOutput("regprof_DT")),
-                   nav_panel(
-                     title = "Classroom Data (SY 2023-2024)",
-                     dataTableOutput("regprof_DT_CL")),
-                 ))),
+                 card_header("Priority Divisions"),
+                 dataTableOutput("priority_division_erdb"))
+                 # navset_card_pill(
+                 #   nav_spacer(),
+                 #   nav_panel(
+                 #     title = "School-level Data (SY 2024-2025)",
+                 #     dataTableOutput("regprof_DT")),
+                 #   nav_panel(
+                 #     title = "Classroom Data (SY 2023-2024)",
+                 #     dataTableOutput("regprof_DT_CL")),
+                 ),
         # HROD panel
         # nav_panel(
         #   title = "Education Resource Information", # Your existing HROD content
@@ -2824,31 +2940,31 @@ server <- function(input, output, session) {
         ),
         
         hr(),
-        
+        # 
         # --- Accordion only for summary cards ---
         accordion(
           open = "Deployment Summary by Level",
-          
-          accordion_panel(
-            title = "Deployment Summary by Level",
-            icon = bsicons::bs_icon("bar-chart-fill"),
-            
-            # --- Start of Tabset (now ABOVE the summary cards) ---
-            navset_tab(
-              nav_panel("Regional Breakdown",
-                        uiOutput("backButtonUI"),
-                        plotlyOutput("Teaching_Deployment_Region_Graph")
-              ),
-              nav_panel("Priority Divisions",
-                        plotlyOutput("Teaching_Deployment_Division_Graph1")
-              ),
-              nav_panel("Dataset",
-                        dataTableOutput("Teaching_Deployment_Dataset")
-              )
-            ),
-            # --- End of Tabset ---
-            
-            hr(),
+        #   
+        #   accordion_panel(
+        #     title = "Deployment Summary by Level",
+        #     icon = bsicons::bs_icon("bar-chart-fill"),
+        #     
+        #     # --- Start of Tabset (now ABOVE the summary cards) ---
+        #     navset_tab(
+        #       nav_panel("Regional Breakdown",
+        #                 uiOutput("backButtonUI"),
+        #                 plotlyOutput("Teaching_Deployment_Region_Graph")
+        #       ),
+        #       nav_panel("Priority Divisions",
+        #                 plotlyOutput("Teaching_Deployment_Division_Graph1")
+        #       ),
+        #       nav_panel("Dataset",
+        #                 dataTableOutput("Teaching_Deployment_Dataset")
+        #       )
+        #     ),
+        #     # --- End of Tabset ---
+        #     
+        #     hr(),
             
             # --- Summary Cards ---
             layout_column_wrap(
@@ -2874,8 +2990,7 @@ server <- function(input, output, session) {
                 valueBoxOutput("e")
               )
             )
-          )
-        ),
+          ),
         
         hr(),
         
@@ -3009,29 +3124,29 @@ server <- function(input, output, session) {
             title = "National Classroom Inventory Overview",
             icon = bsicons::bs_icon("bar-chart-fill"),
             layout_columns(
-              card(
-                full_screen = TRUE,
-                card_header(
-                  tagList(
-                    strong("Classroom Shortage Breakdown"),
-                    tags$br(),
-                    tags$em("(n = 165,443)")
-                  )
-                ),
-                # Start of Tabset
-                navset_tab(
-                  # Tab 1: Regional Classroom Breakdown (Your existing content)
-                  nav_panel("Regional Breakdown",
-                            uiOutput("backButtonUI"),
-                            plotlyOutput("Classroom_Shortage_Region_Graph2")
-                  ),
-                  # Tab 2: Division Classroom Shortage Breakdown (The new tab)
-                  nav_panel("Priority Divisions",
-                            plotlyOutput("Classroom_Shortage_Division_Graph2")
-                  ),
-                  nav_panel("Dataset",
-                            dataTableOutput("Classroom_Shortage_Dataset"))
-                )),
+              # card(
+              #   full_screen = TRUE,
+              #   card_header(
+              #     tagList(
+              #       strong("Classroom Shortage Breakdown"),
+              #       tags$br(),
+              #       tags$em("(n = 165,443)")
+              #     )
+              #   ),
+              #   # Start of Tabset
+              #   navset_tab(
+              #     # Tab 1: Regional Classroom Breakdown (Your existing content)
+              #     nav_panel("Regional Breakdown",
+              #               uiOutput("backButtonUI"),
+              #               plotlyOutput("Classroom_Shortage_Region_Graph2")
+              #     ),
+              #     # Tab 2: Division Classroom Shortage Breakdown (The new tab)
+              #     nav_panel("Priority Divisions",
+              #               plotlyOutput("Classroom_Shortage_Division_Graph2")
+              #     ),
+              #     nav_panel("Dataset",
+              #               dataTableOutput("Classroom_Shortage_Dataset"))
+              #   )),
               # End of Tabset
               
               card(
@@ -3084,33 +3199,33 @@ server <- function(input, output, session) {
             title = "Industry Summary",
             icon = bsicons::bs_icon("bar-chart"),
             
-            # --- Industry Distribution Overview Card placed FIRST ---
-            card(
-              full_screen = TRUE,
-              card_header(
-                tagList(
-                  strong("Industry Breakdown"),
-                  tags$br(),
-                  tags$em("(n = )")
-                )
-              ),
-              
-              # --- Tabset ---
-              navset_tab(
-                nav_panel("Regional Breakdown",
-                          plotlyOutput("Ind_Regional_Graph")
-                ),
-                nav_panel("Priority Divisions",
-                          plotlyOutput("Ind_Division_Graph")
-                ),
-                nav_panel("Dataset",
-                          dataTableOutput("Ind_Dataset")
-                )
-              )
-            ),
+            # # --- Industry Distribution Overview Card placed FIRST ---
+            # card(
+            #   full_screen = TRUE,
+            #   card_header(
+            #     tagList(
+            #       strong("Industry Breakdown"),
+            #       tags$br(),
+            #       tags$em("(n = )")
+            #     )
+            #   ),
+            #   
+            #   # --- Tabset ---
+            #   navset_tab(
+            #     nav_panel("Regional Breakdown",
+            #               plotlyOutput("Ind_Regional_Graph")
+            #     ),
+            #     nav_panel("Priority Divisions",
+            #               plotlyOutput("Ind_Division_Graph")
+            #     ),
+            #     nav_panel("Dataset",
+            #               dataTableOutput("Ind_Dataset")
+            #     )
+            #   )
+            # ),
             
-            # --- Divider line for better separation ---
-            hr(),
+            # # --- Divider line for better separation ---
+            # hr(),
             
             # --- Summary Counts ---
             layout_column_wrap(
@@ -3319,30 +3434,30 @@ server <- function(input, output, session) {
             title = "National and Regional Breakdown",
             icon = bsicons::bs_icon("bar-chart"),
             layout_columns(
-              card(
-                full_screen = TRUE,
-                card_header(
-                  tagList(
-                    strong("Breakdown of Last Mile Schools"),
-                    tags$br(),
-                    tags$em("(n = 9,100)")
-                  )
-                ),
-                # Start of Tabset
-                navset_tab(
-                  # Tab 1: Regional Breakdown (Your existing content)
-                  nav_panel("Regional Breakdown",
-                            uiOutput("backButtonUI"),
-                            plotlyOutput("LMS_Nation_Graph2")
-                  ),
-                  # Tab 2: Division Breakdown (The new tab)
-                  nav_panel("Priority Divisions",
-                            plotlyOutput("LMS_Division_Graph2")
-                  ),
-                  nav_panel("Dataset",
-                            dataTableOutput("LMS_Dataset")
-                  )
-                )),
+              # card(
+              #   full_screen = TRUE,
+              #   card_header(
+              #     tagList(
+              #       strong("Breakdown of Last Mile Schools"),
+              #       tags$br(),
+              #       tags$em("(n = 9,100)")
+              #     )
+              #   ),
+              #   # Start of Tabset
+              #   navset_tab(
+              #     # Tab 1: Regional Breakdown (Your existing content)
+              #     nav_panel("Regional Breakdown",
+              #               uiOutput("backButtonUI"),
+              #               plotlyOutput("LMS_Nation_Graph2")
+              #     ),
+              #     # Tab 2: Division Breakdown (The new tab)
+              #     nav_panel("Priority Divisions",
+              #               plotlyOutput("LMS_Division_Graph2")
+              #     ),
+              #     nav_panel("Dataset",
+              #               dataTableOutput("LMS_Dataset")
+              #     )
+              #   )),
               card(
                 card_header(strong("Total Last Mile Schools by Region")),
                 valueBoxOutput("LMS_Total_Region")
@@ -13924,6 +14039,64 @@ server <- function(input, output, session) {
     DT::datatable(
       data_to_display,
       options = list(pageLength = 10, scrollX = TRUE),
+      filter = 'top',
+      selection = 'multiple',
+      rownames = FALSE
+    )
+  })
+  
+  output$priority_division_erdb <- DT::renderDT({
+    data_to_display <- full_priority_div_sp 
+    
+    if (is.null(data_to_display) || nrow(data_to_display) == 0) {
+      return(DT::datatable(
+        data.frame("Message" = "No data available based on current selection."),
+        options = list(dom = 't', scrollX = TRUE, fixedColumns = list(leftColumns = 5)),
+        rownames = FALSE
+      ))
+    }
+    
+    DT::datatable(
+      data_to_display,
+      extensions = c("FixedHeader", "FixedColumns", "Buttons"),
+      options = list(
+        pageLength = 10, 
+        scrollX = TRUE,
+        scrollY = 400,
+        fixedHeader = TRUE,
+        fixedColumns = list(leftColumns = 5),
+        dom = 'Bfrtip',
+        buttons = list(
+          list(extend = "csv", exportOptions = list(modifier = list(page = "all"))),
+          list(extend = "excel", exportOptions = list(modifier = list(page = "all"))),
+          list(extend = "print", exportOptions = list(modifier = list(page = "all")))
+        ),
+        
+        # --- NEW CODE ADDED HERE ---
+        columnDefs = list(
+          list(
+            # Apply this rule to columns 5, 6, 7, and 8 (0-indexed)
+            targets = c(5, 6, 7, 8), 
+            # Use a JS function to render the data
+            render = JS(
+              "function(data, type, row, meta) {",
+              "  // 'type' can be 'display', 'sort', 'filter', etc.",
+              "  // We only want to change the 'display' data",
+              "  if (type === 'display' && data !== null && !isNaN(data)) {",
+              "    var s = ['th', 'st', 'nd', 'rd'];",
+              "    var v = data % 100;",
+              "    return data + (s[(v - 20) % 10] || s[v] || s[0]);",
+              "  } else {",
+              "    // For all other types (like 'sort'), use the raw data",
+              "    return data;",
+              "  }",
+              "}"
+            )
+          )
+        )
+        # --- END OF NEW CODE ---
+        
+      ),
       filter = 'top',
       selection = 'multiple',
       rownames = FALSE
