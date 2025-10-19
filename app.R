@@ -152,7 +152,10 @@ full_priority_div_sp <- full_join(
   full_priority_div,
   priority_SP,
   by = "Division"
-) %>%
+) %>% 
+  left_join(uni %>% select(Region,Division), by = "Division") %>% 
+  distinct() %>%
+  
   # Rename columns to friendly names
   rename(
     "Teacher Shortage" = Count_TeacherShortage,
@@ -164,13 +167,19 @@ full_priority_div_sp <- full_join(
     "School Principal Shortage" = Count_SPShortage,
     "School Principal Shortage Rank" = Rank_SPShortage
   ) %>%
-  # Select and order the columns logically
+  
+  # Select and order the columns logically (All Counts, then All Ranks)
   select(
+    Region,
     Division,
+    
+    # --- All Counts (Non-Rank) Columns ---
     "Teacher Shortage",
     "School Principal Shortage",
     "Classroom Shortage",
     "Last Mile Schools",
+    
+    # --- All Rank Columns ---
     "Teacher Shortage Rank",
     "School Principal Shortage Rank",
     "Classroom Shortage Rank",
@@ -548,24 +557,44 @@ server <- function(input, output, session) {
     )
   })
   
+  output$total_LMS_erdb <- renderValueBox({
+    # 1. Filter the data, then use nrow() to get the single count.
+    count <- filtered_data_LMS_erdb() %>%
+      filter(LMS == 1) %>%
+      nrow()
+    
+    # 2. Render the value box
+    make_value_box_no_icon(
+      title = "Total Last Mile Schools",
+      value = scales::comma(count),
+      color_class = "#FFFFFF"
+    )
+  })
+  
   # 4. Total Classroom Shortage (Light Orange Warning)
   output$total_classroom_shortage_erdb <- renderValueBox({
     shortage <- sum(filtered_data_LMS_erdb()$Estimated_CL_Shortage, na.rm = TRUE)
     make_value_box_no_icon(
-      title = "Classroom Shortage (Deficit)",
+      title = "Classroom Shortage",
       value = scales::comma(shortage),
       color_class = "#FFE5CC" 
     )
   })
   
-  # 5. Total Teachers (Dark Teal Background with White Text)
-  output$total_teachers_erdb <- renderValueBox({
-    count <- sum(filtered_data_df_erdb()$TotalTeachers, na.rm = TRUE)
+  output$SP_Shortage_erdb <- renderValueBox({
+    # 1. Access the reactive data once
+    data_uni <- filtered_data_uni_erdb()
+    
+    # 2. Count the number of TRUE values where Designation is NOT "School Principal".
+    #    Using sum() on a logical vector (TRUE/FALSE) is the Base R way to count.
+    count <- sum(data_uni$Designation != "School Principal", na.rm = TRUE)
+    
+    # 3. Render the value box
     make_value_box_no_icon(
-      title = "Total Active Teachers",
+      title = "School Principal Shortage",
       value = scales::comma(count),
       color_class = "#00796B", 
-      text_color = "#FFFFFF"  
+      text_color = "#FFFFFF" 
     )
   })
   
@@ -573,7 +602,7 @@ server <- function(input, output, session) {
   output$total_teacher_shortage_erdb <- renderValueBox({
     shortage <- sum(filtered_data_df_erdb()$TeacherShortage, na.rm = TRUE)
     make_value_box_no_icon(
-      title = "Teacher Shortage (Deficit)",
+      title = "Teacher Shortage",
       value = scales::comma(shortage),
       color_class = "#F8D7DA" 
     )
@@ -1567,15 +1596,16 @@ server <- function(input, output, session) {
             ),
             # 2. Use layout_column_wrap for perfect 6-column responsiveness
             layout_column_wrap(
-              width = 1/6, 
+              width = 1/7, 
               
               # 3. Use the modern valueBoxOutput
               valueBoxOutput("total_schools_erdb", width = 12),           # width=12 ensures it takes full column space
               valueBoxOutput("total_enrolment_erdb", width = 12),
               valueBoxOutput("total_classrooms_erdb", width = 12),
               valueBoxOutput("total_classroom_shortage_erdb", width = 12),
-              valueBoxOutput("total_teachers_erdb", width = 12),
-              valueBoxOutput("total_teacher_shortage_erdb", width = 12)
+              valueBoxOutput("total_LMS_erdb", width = 12),
+              valueBoxOutput("total_teacher_shortage_erdb", width = 12),
+              valueBoxOutput("SP_Shortage_erdb", width = 12)
             )
           ),
           
@@ -10447,14 +10477,14 @@ server <- function(input, output, session) {
     RegRCT <- input$resource_map_region
     SDORCT1 <- input$Resource_SDO
     DistRCT1 <- input$Resource_LegDist
-    Lev <- input$resource_map_level
+    LevRCT1 <- input$resource_map_level
     
-    mainreact1 <- df %>% filter(Region == RegRCT) %>% filter(Division == SDORCT1) %>% filter(Legislative.District == DistRCT1) %>% filter(Level == Lev) %>% arrange(desc(TeacherShortage))
+    mainreact1 <- df %>% filter(Region == RegRCT) %>% filter(Division == SDORCT1) %>% filter(Legislative.District == DistRCT1) %>% filter(Level == LevRCT1) %>% arrange(desc(TeacherShortage))
     
     NetShortage <- df %>% select(Region,Division,Level,TeacherShortage,TeacherExcess) %>%
       pivot_longer(cols = c(TeacherShortage, TeacherExcess), names_to = "Inventory", values_to = "Count") %>% mutate(Count=as.numeric(Count)) %>% na.omit(Count) %>% group_by(Region, Division,Level, Inventory) %>% summarize(Count = sum(Count)) %>% pivot_wider(names_from = "Inventory", values_from = "Count") %>% mutate(NetShortage=TeacherShortage-TeacherExcess) %>% mutate(NetShortage = ifelse(NetShortage < 0, 0, NetShortage))
     
-    SDONetShortage <- NetShortage %>% filter(Region == RegRCT) %>% filter(Division == SDORCT1) %>% filter(Level == Lev)
+    SDONetShortage <- NetShortage %>% filter(Region == RegRCT) %>% filter(Division == SDORCT1) %>% filter(Level == LevRCT1)
     
     values_teacher_shortage <- paste(mainreact1$School.Name,"<br>Teacher Excess:", mainreact1$TeacherExcess,"<br>Teacher Shortage:", mainreact1$TeacherShortage) %>% lapply(htmltools::HTML)
     
@@ -10744,14 +10774,14 @@ server <- function(input, output, session) {
     RegRCT <- input$resource_map_region
     SDORCT1 <- input$Resource_SDO
     DistRCT1 <- input$Resource_LegDist
-    Lev <- input$resource_map_level
+    LevRCT1 <- input$resource_map_level
     TypeEFD <- input$EFD_Type
     
     mainreact1 <- df %>%
       filter(Region == RegRCT) %>%
       filter(Division == SDORCT1) %>%
       filter(Legislative.District %in% DistRCT1) %>% 
-      filter(Level == Lev) %>%
+      filter(Level == LevRCT1) %>%
       arrange(desc(TeacherShortage))
     
     mainreactreg <- df %>% filter(Region == RegRCT)
@@ -10762,8 +10792,8 @@ server <- function(input, output, session) {
       filter(Region == RegRCT) %>% 
       filter(Division == SDORCT1) %>% 
       filter(Legislative.District %in% DistRCT1)   
-    mainreactlevreg <- df %>% filter(Region == RegRCT) %>% filter(Level == Lev)
-    mainreactlevdiv <- df %>% filter(Region == RegRCT) %>% filter(Division == SDORCT1) %>% filter(Level == Lev)
+    mainreactlevreg <- df %>% filter(Region == RegRCT) %>% filter(Level == LevRCT1)
+    mainreactlevdiv <- df %>% filter(Region == RegRCT) %>% filter(Division == SDORCT1) %>% filter(Level == LevRCT1)
     mainreactCR <- uni %>% 
       filter(Region == RegRCT) %>% 
       filter(Division == SDORCT1) %>% 
@@ -10922,7 +10952,7 @@ server <- function(input, output, session) {
     NetShortage <- df %>% select(Region,Division,Level,TeacherShortage,TeacherExcess) %>%
       pivot_longer(cols = c(TeacherShortage, TeacherExcess), names_to = "Inventory", values_to = "Count") %>% mutate(Count=as.numeric(Count)) %>% na.omit(Count) %>% group_by(Region, Division,Level, Inventory) %>% summarize(Count = sum(Count)) %>% pivot_wider(names_from = "Inventory", values_from = "Count") %>% mutate(NetShortage=TeacherShortage-TeacherExcess) %>% mutate(NetShortage = ifelse(NetShortage < 0, 0, NetShortage))
     
-    SDONetShortage <- NetShortage %>% filter(Region == RegRCT) %>% filter(Division == SDORCT1) %>% filter(Level == Lev)
+    SDONetShortage <- NetShortage %>% filter(Region == RegRCT) %>% filter(Division == SDORCT1) %>% filter(Level == LevRCT1)
     
     values_teacher_shortage <- paste(mainreact1$School.Name,"<br>Teacher Excess:", mainreact1$TeacherExcess,"<br>Teacher Shortage:", mainreact1$TeacherShortage) %>% lapply(htmltools::HTML)
     
@@ -11707,7 +11737,7 @@ server <- function(input, output, session) {
     RegRCT <- input$resource_map_region
     SDORCT1 <- input$Resource_SDO
     DistRCT1 <- input$Resource_LegDist
-    Lev <- input$resource_map_level
+    LevRCT1 <- input$resource_map_level
     TypeEFD <- input$EFD_Type
     
     mainreactEFD <- EFDMP %>% 
@@ -11781,9 +11811,9 @@ server <- function(input, output, session) {
     RegRCT <- input$resource_map_region
     SDORCT1 <- input$Resource_SDO
     DistRCT1 <- input$Resource_LegDist
-    Lev <- input$resource_map_level
+    LevRCT1 <- input$resource_map_level
     
-    mainreact1 <- df %>% filter(Region == RegRCT) %>% filter(Division == SDORCT1) %>% filter(Legislative.District == DistRCT1) %>% filter(Level == Lev) %>% arrange(desc(TeacherShortage))
+    mainreact1 <- df %>% filter(Region == RegRCT) %>% filter(Division == SDORCT1) %>% filter(Legislative.District == DistRCT1) %>% filter(Level == LevRCT1) %>% arrange(desc(TeacherShortage))
     
     SDOfillup <- SDO[which(SDO$Division==SDORCT1),"FillUpRate"]
     Unfilled <- SDO[which(SDO$Division==SDORCT1),"Unfilled"]
@@ -11791,7 +11821,7 @@ server <- function(input, output, session) {
     NetShortage <- df %>% select(Region,Division,Level,TeacherShortage,TeacherExcess) %>%
       pivot_longer(cols = c(TeacherExcess, TeacherShortage), names_to = "Inventory", values_to = "Count") %>% mutate(Count=as.numeric(Count)) %>% na.omit(Count) %>% group_by(Region, Division,Level, Inventory) %>% summarize(Count = sum(Count)) %>% pivot_wider(names_from = "Inventory", values_from = "Count") %>% mutate(NetShortage=TeacherShortage-TeacherExcess) %>% mutate(NetShortage = ifelse(NetShortage < 0, 0, NetShortage))
     
-    SDONetShortage <- NetShortage %>% filter(Region == RegRCT) %>% filter(Division == SDORCT1) %>% filter(Level == Lev)
+    SDONetShortage <- NetShortage %>% filter(Region == RegRCT) %>% filter(Division == SDORCT1) %>% filter(Level == LevRCT1)
     
     
     df1 <- reactive({
@@ -12027,7 +12057,7 @@ server <- function(input, output, session) {
     RegRCT <- input$resource_map_region
     SDORCT1 <- input$Resource_SDO
     DistRCT1 <- input$Resource_LegDist
-    Lev <- input$resource_map_level
+    LevRCT1 <- input$resource_map_level
     TypeEFD <- input$EFD_Type
     
     region_selected <- IndALL %>% filter(Region == RegRCT) %>% arrange(Distance)
@@ -14076,7 +14106,7 @@ server <- function(input, output, session) {
         columnDefs = list(
           list(
             # Apply this rule to columns 5, 6, 7, and 8 (0-indexed)
-            targets = c(5, 6, 7, 8), 
+            targets = c(6, 7, 8, 9), 
             # Use a JS function to render the data
             render = JS(
               "function(data, type, row, meta) {",
