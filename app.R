@@ -7,11 +7,7 @@
 #oct 13, 2025
 #eeee
 #updated as of oct 15,2025
-<<<<<<< HEAD
-=======
-#mergetest
-#updated as of oct 17,2025 3:35 pm
->>>>>>> 7020aea8340c69761c7a238fc5170c8a1391f56c
+
 library(tidyverse)
 library(DT)
 library(dplyr)
@@ -227,23 +223,27 @@ ui <- page_fluid(
   ),
   
   # Header (always visible)
-  tags$div(
-    class = "app-header",
-    style = "display: flex; align-items: center; gap: 15px; justify-content: center;",
-    
-    # Logo
-    tags$img(src = "logo3.png", class = "header-logo-left"),
-    
-    # Center text
+  shinyjs::hidden(
     tags$div(
-      class = "header-title",
-      h2("DepEd STRIDE Dashboard"),
-      p("STRIDE: Strategic Inventory for Deployment Efficiency")
-    ),
-    
-    # Right logo
-    tags$img(src = "HROD LOGO1.png", class = "header-logo-right")
+      id = "app_header",
+      class = "app-header",
+      style = "display: flex; align-items: center; gap: 15px; justify-content: center;",
+      
+      # Left logo
+      tags$img(src = "logo3.png", class = "header-logo-left"),
+      
+      # Center text
+      tags$div(
+        class = "header-title",
+        h2("DepEd STRIDE"),
+        p("STRIDE: Strategic Inventory for Deployment Efficiency")
+      ),
+      
+      # Right logo
+      tags$img(src = "HROD LOGO1.png", class = "header-logo-right")
+    )
   ),
+  
   
   # 💡 CRITICAL FIX: The dynamic container for login/main app UI
   uiOutput("page_ui"),
@@ -283,9 +283,12 @@ ui <- page_fluid(
   ),
   
   # Footer (always visible)
-  tags$footer(
-    class = "app-footer",
-    tags$p("© Based on GMIS (April 2025) and eBEIS (SY 2024–2025)"))
+  # Footer (always visible)
+  shinyjs::hidden(
+    tags$footer(
+      id = "app_footer",
+      class = "app-footer",
+      tags$p("© Based on GMIS (April 2025) and eBEIS (SY 2024–2025)")))
 )
 
 
@@ -293,6 +296,63 @@ ui <- page_fluid(
 
 # Define server logic required to draw a histogram
 server <- function(input, output, session) {
+  
+  
+  current_region <- reactiveVal(NULL)
+  current_division <- reactiveVal(NULL)
+  
+  output$backButtonUI <- renderUI({
+    # Only show the button if a region is currently selected
+    if (!is.null(current_region()) || !is.null(current_division())) {
+      actionButton("go_back", "⬅️ Back")
+    }
+  })
+  
+  observeEvent(input$go_back, {
+    
+    # Step 1: If we are viewing a Division breakdown, go back to the Region breakdown
+    if (!is.null(current_division())) {
+      current_division(NULL)
+      cat("State change: Returned to Region view.\n")
+    } 
+    
+    # Step 2: Else, if we are viewing a Region breakdown, go back to the Overall view
+    else if (!is.null(current_region())) {
+      current_region(NULL)
+      cat("State change: Returned to Overall view.\n")
+    }
+    
+    # Note: You do not need an 'else' block, as the button won't be visible 
+    # unless one of these reactive values is set (thanks to renderUI).
+  })
+  
+  # Hide header/footer when not authenticated; show when authenticated
+  observe({
+    # user_status is defined earlier in your server (values: "unauthenticated", "login", "register", "authenticated")
+    if (isTRUE(user_status() == "authenticated")) {
+      shinyjs::show("app_header")
+      shinyjs::show("app_footer")
+    } else {
+      shinyjs::hide("app_header")
+      shinyjs::hide("app_footer")
+    }
+  })
+  
+  observe({
+    mode <- if (user_status() == "authenticated") "app" else "login"
+    session$sendCustomMessage("setLoginMode", ifelse(mode == "login", "login", "app"))
+  })
+  
+  observe({
+    if (user_status() == "authenticated") {
+      shinyjs::show("app_header")
+      shinyjs::show("app_footer")
+    } else {
+      shinyjs::hide("app_header")
+      shinyjs::hide("app_footer")
+    }
+  })
+  
   
   output$StrideLogo <- renderImage({
     image_path <- normalizePath(file.path('www', 'STRIDE logo.png'))
@@ -6994,7 +7054,7 @@ server <- function(input, output, session) {
     }
     
     # --- Prepare grouped data (all regions) ---
-<<<<<<< HEAD
+
     if (is.null(current_region())) {
       plot_data <- df %>%
         group_by(Region) %>%
@@ -7142,12 +7202,12 @@ server <- function(input, output, session) {
           legend.position = "none"
         )
     }
-=======
+
     plot_data <- current_filtered_data %>%
       group_by(Region) %>%
       summarise(TeacherShortage = sum(as.numeric(TeacherShortage), na.rm = TRUE),
                 .groups = "drop")
->>>>>>> 7020aea8340c69761c7a238fc5170c8a1391f56c
+
     
     ggplotly(p, tooltip = "text", source = "A") %>%
       layout(
@@ -7174,12 +7234,7 @@ server <- function(input, output, session) {
       group_by(Division) %>%
       summarise(Count = sum(as.numeric(TeacherShortage), na.rm = TRUE), .groups = 'drop') %>%
       arrange(desc(Count)) %>%
-<<<<<<< HEAD
-      slice_head(n = 20)
-=======
-      slice_head(n = 20) 
->>>>>>> 7020aea8340c69761c7a238fc5170c8a1391f56c
-    
+
     # --- Create ggplot ---
     p <- ggplot(plot_data,
                 aes(x = reorder(Division, -Count),
@@ -7222,7 +7277,7 @@ server <- function(input, output, session) {
       )
   })
   
-<<<<<<< HEAD
+
   # New observer to handle clicks on the Region bar chart
   observeEvent(event_data("plotly_click", source = "A"), {
     click_data <- event_data("plotly_click", source = "A")
@@ -7271,16 +7326,12 @@ server <- function(input, output, session) {
   })
   
   #Classroom Shortage
-  output$Classroom_Shortage_Region_Graph2 <- renderPlotly({
-    
-=======
   #Classroom Shortage
   output$Classroom_Shortage_Region_Graph2 <- renderPlotly({
     
     # Use the reactive filtered data
     current_filtered_data <- LMS
-    
->>>>>>> 7020aea8340c69761c7a238fc5170c8a1391f56c
+
     # --- Empty Data Handling ---
     if (nrow(LMS) == 0) {
       return(ggplotly(ggplot() +
@@ -7288,7 +7339,7 @@ server <- function(input, output, session) {
                         theme_void()))
     }
     
-<<<<<<< HEAD
+
     if (is.null(current_region())) {
       
       # Prepare the data for plotting
@@ -7376,7 +7427,7 @@ server <- function(input, output, session) {
               legend.position = "none", # No legend needed for single fill
               plot.title = element_text(hjust = 0.5)) # Center the plot title
     }
-=======
+
     # Prepare the data for plotting
     plot_data <- current_filtered_data %>%
       group_by(Region) %>%
@@ -7402,7 +7453,6 @@ server <- function(input, output, session) {
       theme(axis.text.x = element_text(size = 10, angle = 45, hjust = 1),
             legend.position = "none", # No legend needed for single fill
             plot.title = element_text(hjust = 0.5)) # Center the plot title
->>>>>>> 7020aea8340c69761c7a238fc5170c8a1391f56c
     
     # Convert ggplot to plotly, ensuring custom text is used for hover
     ggplotly(p, tooltip = "text", source = "classroomShortageRegionPlot") %>%
@@ -7763,7 +7813,7 @@ server <- function(input, output, session) {
   
   #LMS
   output$LMS_Nation_Graph2 <- renderPlotly({
-<<<<<<< HEAD
+
     
     if (is.null(current_region())) {
       full_data <- LMS %>%   
@@ -7930,7 +7980,7 @@ server <- function(input, output, session) {
     }
     
     ggplotly(p, tooltip = "text", source = "LMSplotly") %>%
-=======
+
     full_data <- LMS %>%   
       rename(
         "With Buildable Space" = Buildable_space,
@@ -7985,7 +8035,7 @@ server <- function(input, output, session) {
       )
     
     ggplotly(p, tooltip = "text") %>%
->>>>>>> 7020aea8340c69761c7a238fc5170c8a1391f56c
+
       layout(
         hoverlabel = list(bgcolor = "white"),
         margin = list(b = 100)
@@ -21507,7 +21557,7 @@ server <- function(input, output, session) {
           div(
             class = "login-text-box",
             h2("STRIDE"),
-            p("Education in Motion. Data Precision. Smaart Decision.")
+            p("Education in motion. Data Precision. Smart Decision.")
           )
         ),
         
@@ -21540,7 +21590,8 @@ server <- function(input, output, session) {
         )
       )
     )
-  })
+  }
+  
   
   # --- Authentication Module (Login/Register Forms) ---
   # CRITICAL FIX: Only call the module ONCE at the start of the server.
