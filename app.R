@@ -67,7 +67,7 @@ DBMProp <- read.csv("DBM-Proposal.csv") # Teacher Shortage Data
 EFDDB <- read.csv("EFD-DataBuilder-2025.csv")
 EFDMP <- read_parquet("EFD-Masterlist.parquet")
 EFD_Projects <- read.csv("EFD-ProgramsList-Aug2025.csv") %>% mutate(Allocation = as.numeric(Allocation)) %>% mutate(Completion = as.numeric(Completion)) %>% filter(FundingYear >= 2020)
-LMS <- read_parquet("EFD-LMS-GIDCA-NSBI2023.parquet") %>% mutate(Region = case_when(Region == "Region IV-B" ~ "MIMAROPA", TRUE ~ Region)) %>% mutate(With_Shortage = case_when(Estimated_CL_Shortage > 0 ~ 1, TRUE ~ 0)) %>% left_join(uni %>% select(SchoolID,Legislative.District), by = c("School_ID" = "SchoolID"))
+LMS <- read_parquet("EFD-LMS-GIDCA-NSBI2023.parquet") %>% mutate(Region = case_when(Region == "Region IV-B" ~ "MIMAROPA", TRUE ~ Region)) %>% mutate(With_Shortage = case_when(Estimated_CL_Shortage > 0 ~ 1, TRUE ~ 0))
 geojson_data <- geojson_read("gadm41_PHL_1.json", what = "sp")
 geojson_table <- as.data.frame(geojson_data)
 regprov <- read.csv("RegProv.Congestion.csv")
@@ -88,130 +88,6 @@ cloud_v3 <- read_parquet("Cloud_Consolidated_v3.parquet")
 
 #Data Explorer 
 ThirdLevel <- read.csv("2025-Third Level Officials DepEd-cleaned.csv", stringsAsFactors = FALSE)
-
-# Priority Divisions
-
-priority_df <- df %>%
-  group_by(Division) %>%
-  summarise(Count_TeacherShortage = sum(as.numeric(TeacherShortage), na.rm = TRUE), .groups = 'drop') %>%
-  arrange(desc(Count_TeacherShortage)) %>%
-  mutate(Rank_TeacherShortage = row_number())
-
-priority_classroom <- LMS %>%
-  group_by(Division) %>%
-  summarise(Count_ClassroomShortage = sum(as.numeric(Estimated_CL_Shortage), na.rm = TRUE), .groups = 'drop') %>%
-  arrange(desc(Count_ClassroomShortage)) %>%
-  mutate(Rank_ClassroomShortage = row_number())
-
-priority_SP <- uni %>% # Using base uni data
-  filter(Designation != "School Principal") %>% # Applying original filter
-  group_by(Division) %>%
-  summarise(Count_SPShortage = n(), .groups = 'drop') %>%
-  arrange(desc(Count_SPShortage)) %>%
-  mutate(Rank_SPShortage = row_number())
-
-full_data <- LMS %>%
-  rename(
-    "With Buildable Space" = Buildable_space,
-    "With Excess Classrooms" = With_Excess,
-    "Without Classroom Shortage" = Without_Shortage,
-    "Last Mile Schools" = LMS,
-    "GIDCA" = GIDCA,
-    "With Shortage" = With_Shortage
-  ) %>%
-  pivot_longer(13:18, names_to = "Type", values_to = "Count")
-
-# --- Keep only "Last Mile Schools", aggregate, and add rank ---
-plot_LMS <- full_data %>%
-  filter(Type == "Last Mile Schools") %>%
-  group_by(Division) %>%
-  summarise(
-    Count_LastMileSchools = sum(as.numeric(Count), na.rm = TRUE),
-    .groups = "drop"
-  ) %>%
-  # Sort and rank
-  arrange(desc(Count_LastMileSchools)) %>%
-  mutate(Rank_LastMileSchools = row_number())
-
-# Full join priority_df and priority_classroom
-combined_df <- full_join(
-  priority_df,
-  priority_classroom,
-  by = "Division"
-)
-
-# Full join the result with plot_LMS
-full_priority_div <- full_join(
-  combined_df,
-  plot_LMS,
-  by = "Division"
-)
-
-# Full join the result with priority_SP
-full_priority_div_sp <- full_join(
-  full_priority_div,
-  priority_SP,
-  by = "Division"
-) %>% 
-  left_join(uni %>% select(Region,Division), by = "Division") %>% 
-  distinct() %>%
-  
-  # Rename columns to friendly names
-  rename(
-    "Teacher Shortage" = Count_TeacherShortage,
-    "Teacher Shortage Rank" = Rank_TeacherShortage,
-    "Classroom Shortage" = Count_ClassroomShortage,
-    "Classroom Shortage Rank" = Rank_ClassroomShortage,
-    "Last Mile Schools" = Count_LastMileSchools,
-    "Last Mile Schools Rank" = Rank_LastMileSchools,
-    "School Principal Shortage" = Count_SPShortage,
-    "School Principal Shortage Rank" = Rank_SPShortage
-  ) %>%
-  
-  # Select and order the columns logically (All Counts, then All Ranks)
-  select(
-    Region,
-    Division,
-    
-    # --- All Counts (Non-Rank) Columns ---
-    "Teacher Shortage",
-    "School Principal Shortage",
-    "Classroom Shortage",
-    "Last Mile Schools",
-    
-    # --- All Rank Columns ---
-    "Teacher Shortage Rank",
-    "School Principal Shortage Rank",
-    "Classroom Shortage Rank",
-    "Last Mile Schools Rank"
-  ) %>%
-  
-  # Sort by Division (optional but often helpful)
-  arrange(Division)
-
-# View the final combined data
-# print(full_priority_div_sp, n = 50) # Print more rows if needed
-# 
-# full_priority_div_sp <- full_priority_div_sp %>%
-#   gt() %>% # 1. Initialize the gt table object
-#   tab_style( # 2. Apply a style
-#     style = cell_fill(color = "#f0f8ff"), # 3. Set a light blue background fill
-#     locations = cells_body( # 4. Apply it to the data cells...
-#       columns = c( # 5. ...of these specific columns
-#         "Teacher Shortage Rank",
-#         "School Principal Shortage Rank",
-#         "Classroom Shortage Rank",
-#         "Last Mile Schools Rank"
-#       )
-#     )
-#   ) %>%
-#   # (Optional) Add a title to make the table look even better
-#   tab_header(
-#     title = "Priority Data by Division",
-#     subtitle = "With Shortages and Ranks"
-#   )
-
-
 
 
 user_base <- tibble::tibble(
@@ -373,33 +249,26 @@ ui <- page_fluid(
 # Define server logic required to draw a histogram
 server <- function(input, output, session) {
   
-  current_region <- reactiveVal(NULL)
-  current_division <- reactiveVal(NULL)
+  output$StrideLogo <- renderImage({
+    image_path <- normalizePath(file.path('www', 'STRIDE logo.png'))
+    list(
+      src = image_path,  # Path relative to the www directory
+      contentType = "image/png",
+      alt = "STRIDE logo",
+      width = "100%",
+      height = "auto"
+      # You can also set width and height here, e.g., width = 400,
+      # or control them in the imageOutput in the UI.
+    )
+  }, deleteFile = FALSE)
+  # deleteFile = FALSE is important for pre-existing static files
   
-  output$backButtonUI <- renderUI({
-    # Only show the button if a region is currently selected
-    if (!is.null(current_region()) || !is.null(current_division())) {
-      actionButton("go_back", "⬅️ Back")
-    }
-  })
   
-  observeEvent(input$go_back, {
-    
-    # Step 1: If we are viewing a Division breakdown, go back to the Region breakdown
-    if (!is.null(current_division())) {
-      current_division(NULL)
-      cat("State change: Returned to Region view.\n")
-    } 
-    
-    # Step 2: Else, if we are viewing a Region breakdown, go back to the Overall view
-    else if (!is.null(current_region())) {
-      current_region(NULL)
-      cat("State change: Returned to Overall view.\n")
-    }
-    
-    # Note: You do not need an 'else' block, as the button won't be visible 
-    # unless one of these reactive values is set (thanks to renderUI).
-  })
+  # Call the shinyauthr::logoutServer module
+  # logout_init <- shinyauthr::logoutServer(
+  #   id = "logout",
+  #   active = reactive(credentials()$user_auth) # Logout button active only when logged in
+  # )
   
   ### DRILL DOWN SERVER ###
   
@@ -1102,6 +971,320 @@ server <- function(input, output, session) {
     p
   })
   
+  output$Teaching_Deployment_Division_Graph1 <- renderPlotly({
+    # --- Use the full dataset ---
+    current_filtered_data <- df
+    
+    # --- Empty Data Handling ---
+    if (nrow(current_filtered_data) == 0) {
+      return(plotly_empty() %>% 
+               layout(title = "No data for selected regions/divisions"))
+    }
+    
+    # --- Prepare data for plotting ---
+    plot_data <- current_filtered_data %>%
+      group_by(Division) %>%
+      summarise(Count = sum(as.numeric(TeacherShortage), na.rm = TRUE), .groups = 'drop') %>%
+      arrange(desc(Count)) %>%
+      slice_head(n = 20)
+    
+    # --- Create native Plotly chart ---
+    max_count <- max(plot_data$Count, na.rm = TRUE)
+    
+    p <- plot_ly(
+      data = plot_data,
+      y = ~reorder(Division, Count), # Division on Y-axis, sorted ascending (plotly reverses)
+      x = ~Count,                    # Count on X-axis
+      type = 'bar',
+      source = "teachingDeploymentDivisionPlot",
+      name = "Teacher Shortage",
+      # Use Plotly attributes for text labels
+      text = ~scales::comma(Count),
+      texttemplate = '%{text}',
+      textposition = 'outside',
+      # Custom hovertext
+      hovertemplate = paste(
+        "Division: %{y}<br>",
+        "Teacher Shortage: %{x:,0f}<extra></extra>"
+      )
+    ) %>%
+      layout(
+        title = list(text = "Top 20 Divisions by Teacher Shortage (Teaching Deployment)", 
+                     x = 0.5, font = list(size = 14, family = "sans-serif")),
+        xaxis = list(title = "Teacher Shortage", tickformat = ",", 
+                     range = c(0, max_count * 1.15)),
+        yaxis = list(title = "", categoryorder = "total ascending"), # Plotly reverses the order by default
+        hoverlabel = list(bgcolor = "white"),
+        margin = list(l = 100) # Left margin for division names
+      )
+    
+    return(p)
+  })
+  
+  output$Classroom_Shortage_Division_Graph2 <- renderPlotly({
+    # Use the reactive filtered data
+    current_filtered_data <- LMS
+    
+    # --- Empty Data Handling ---
+    if (nrow(current_filtered_data) == 0) {
+      return(plotly_empty() %>% 
+               layout(title = "No data for selected regions/divisions"))
+    }
+    
+    # Prepare the data for plotting
+    plot_data <- current_filtered_data %>%
+      group_by(Division) %>%
+      summarise(Count = sum(as.numeric(Estimated_CL_Shortage), na.rm = TRUE), .groups = 'drop') %>%
+      arrange(desc(Count)) %>%
+      slice_head(n = 20)
+    
+    # --- Create native Plotly chart ---
+    max_count <- max(plot_data$Count, na.rm = TRUE)
+    
+    p <- plot_ly(
+      data = plot_data,
+      y = ~reorder(Division, Count), # Division on Y-axis, sorted ascending
+      x = ~Count,                    # Count on X-axis
+      type = 'bar',
+      source = "classroomShortageRegionPlot",
+      name = "Classroom Shortage",
+      # Use Plotly attributes for text labels
+      text = ~scales::comma(Count),
+      texttemplate = '%{text}',
+      textposition = 'outside',
+      # Custom hovertext
+      hovertemplate = paste(
+        "Division: %{y}<br>",
+        "Classroom Shortage: %{x:,0f}<extra></extra>"
+      )
+    ) %>%
+      layout(
+        title = list(text = "Top 20 Divisions by Classroom Shortage", 
+                     x = 0.5, font = list(size = 14, family = "sans-serif")),
+        xaxis = list(title = "Classroom Shortage", tickformat = ",", 
+                     range = c(0, max_count * 1.15)),
+        yaxis = list(title = "", categoryorder = "total ascending"),
+        hoverlabel = list(bgcolor = "white"),
+        margin = list(l = 100)
+      )
+    
+    return(p)
+  })
+  
+  output$LMS_Division_Graph2 <- renderPlotly({
+    full_data <- LMS %>%
+      rename(
+        "With Buildable Space" = Buildable_space,
+        "With Excess Classrooms" = With_Excess,
+        "Without Classroom Shortage" = Without_Shortage,
+        "Last Mile Schools" = LMS,
+        "GIDCA" = GIDCA,
+        "With Shortage" = With_Shortage
+      ) %>%
+      pivot_longer(13:18, names_to = "Type", values_to = "Count")
+    
+    # --- Keep only "Last Mile Schools" and aggregate all regions ---
+    plot_data <- full_data %>%
+      filter(Type == "Last Mile Schools") %>%
+      group_by(Division) %>%
+      summarise(
+        Count = sum(as.numeric(Count), na.rm = TRUE),
+        .groups = "drop"
+      ) %>%
+      arrange(desc(Count)) %>%
+      slice_head(n = 20)
+    
+    # --- Create native Plotly chart ---
+    max_count <- max(plot_data$Count, na.rm = TRUE)
+    
+    p <- plot_ly(
+      data = plot_data,
+      y = ~reorder(Division, Count), # Division on Y-axis, sorted ascending
+      x = ~Count,                    # Count on X-axis
+      type = 'bar',
+      source = "LMSDivisionPlot", # Changed source for uniqueness
+      name = "Last Mile Schools",
+      # Use Plotly attributes for text labels
+      text = ~scales::comma(Count),
+      texttemplate = '%{text}',
+      textposition = 'outside',
+      # Custom hovertext
+      hovertemplate = paste(
+        "Division: %{y}<br>",
+        "Count: %{x:,0f}<extra></extra>"
+      )
+    ) %>%
+      layout(
+        title = list(text = "Top 20 Divisions by Last Mile Schools", 
+                     x = 0.5, font = list(size = 14, family = "sans-serif")),
+        xaxis = list(title = "Number of Last Mile Schools", tickformat = ",", 
+                     range = c(0, max_count * 1.15)),
+        yaxis = list(title = "", categoryorder = "total ascending"),
+        hoverlabel = list(bgcolor = "white"),
+        margin = list(l = 100)
+      ) %>%
+      style(hoverinfo = "text")
+    
+    return(p)
+  })
+  
+  # output$priority_division_erdb <- DT::renderDT({
+  #   
+  #   priority_df <- df %>%
+  #     group_by(Division) %>%
+  #     summarise(Count_TeacherShortage = sum(as.numeric(TeacherShortage), na.rm = TRUE), .groups = 'drop') %>%
+  #     arrange(desc(Count_TeacherShortage)) %>%
+  #     mutate(Rank_TeacherShortage = row_number())
+  #   
+  #   priority_classroom <- LMS %>%
+  #     group_by(Division) %>%
+  #     summarise(Count_ClassroomShortage = sum(as.numeric(Estimated_CL_Shortage), na.rm = TRUE), .groups = 'drop') %>%
+  #     arrange(desc(Count_ClassroomShortage)) %>%
+  #     mutate(Rank_ClassroomShortage = row_number())
+  #   
+  #   priority_SP <- uni %>% # Using base uni data
+  #     filter(Designation != "School Principal") %>% # Applying original filter
+  #     group_by(Division) %>%
+  #     summarise(Count_SPShortage = n(), .groups = 'drop') %>%
+  #     arrange(desc(Count_SPShortage)) %>%
+  #     mutate(Rank_SPShortage = row_number())
+  #   
+  #   full_data <- LMS %>%
+  #     rename(
+  #       "With Buildable Space" = Buildable_space,
+  #       "With Excess Classrooms" = With_Excess,
+  #       "Without Classroom Shortage" = Without_Shortage,
+  #       "Last Mile Schools" = LMS,
+  #       "GIDCA" = GIDCA,
+  #       "With Shortage" = With_Shortage
+  #     ) %>%
+  #     pivot_longer(13:18, names_to = "Type", values_to = "Count")
+  #   
+  #   # --- Keep only "Last Mile Schools", aggregate, and add rank ---
+  #   plot_LMS <- full_data %>%
+  #     filter(Type == "Last Mile Schools") %>%
+  #     group_by(Division) %>%
+  #     summarise(
+  #       Count_LastMileSchools = sum(as.numeric(Count), na.rm = TRUE),
+  #       .groups = "drop"
+  #     ) %>%
+  #     # Sort and rank
+  #     arrange(desc(Count_LastMileSchools)) %>%
+  #     mutate(Rank_LastMileSchools = row_number())
+  #   
+  #   # Full join priority_df and priority_classroom
+  #   combined_df <- full_join(
+  #     priority_df,
+  #     priority_classroom,
+  #     by = "Division"
+  #   )
+  #   
+  #   # Full join the result with plot_LMS
+  #   full_priority_div <- full_join(
+  #     combined_df,
+  #     plot_LMS,
+  #     by = "Division"
+  #   )
+  #   
+  #   # Full join the result with priority_SP
+  #   full_priority_div_sp <- full_join(
+  #     full_priority_div,
+  #     priority_SP,
+  #     by = "Division"
+  #   ) %>% 
+  #     left_join(uni %>% select(Region,Division), by = "Division") %>% 
+  #     distinct() %>%
+  #     
+  #     # Rename columns to friendly names
+  #     rename(
+  #       "Teacher Shortage" = Count_TeacherShortage,
+  #       "Teacher Shortage Rank" = Rank_TeacherShortage,
+  #       "Classroom Shortage" = Count_ClassroomShortage,
+  #       "Classroom Shortage Rank" = Rank_ClassroomShortage,
+  #       "Last Mile Schools" = Count_LastMileSchools,
+  #       "Last Mile Schools Rank" = Rank_LastMileSchools,
+  #       "School Principal Shortage" = Count_SPShortage,
+  #       "School Principal Shortage Rank" = Rank_SPShortage
+  #     ) %>%
+  #     
+  #     # Select and order the columns logically (All Counts, then All Ranks)
+  #     select(
+  #       Region,
+  #       Division,
+  #       
+  #       # --- All Counts (Non-Rank) Columns ---
+  #       "Teacher Shortage",
+  #       "School Principal Shortage",
+  #       "Classroom Shortage",
+  #       "Last Mile Schools",
+  #       
+  #       # --- All Rank Columns ---
+  #       "Teacher Shortage Rank",
+  #       "School Principal Shortage Rank",
+  #       "Classroom Shortage Rank",
+  #       "Last Mile Schools Rank"
+  #     ) %>%
+  #     
+  #     # Sort by Division (optional but often helpful)
+  #     arrange(Division)
+  #   
+  #   data_to_display <- full_priority_div_sp 
+  #   
+  #   if (is.null(data_to_display) || nrow(data_to_display) == 0) {
+  #     return(DT::datatable(
+  #       data.frame("Message" = "No data available based on current selection."),
+  #       options = list(dom = 't', scrollX = TRUE, fixedColumns = list(leftColumns = 5)),
+  #       rownames = FALSE
+  #     ))
+  #   }
+  #   
+  #   DT::datatable(
+  #     data_to_display,
+  #     extensions = c("FixedHeader", "FixedColumns", "Buttons"),
+  #     options = list(
+  #       pageLength = 10, 
+  #       scrollX = TRUE,
+  #       scrollY = 400,
+  #       fixedHeader = TRUE,
+  #       fixedColumns = list(leftColumns = 5),
+  #       dom = 'Bfrtip',
+  #       buttons = list(
+  #         list(extend = "csv", exportOptions = list(modifier = list(page = "all"))),
+  #         list(extend = "excel", exportOptions = list(modifier = list(page = "all"))),
+  #         list(extend = "print", exportOptions = list(modifier = list(page = "all")))
+  #       ),
+  #       
+  #       # --- NEW CODE ADDED HERE ---
+  #       columnDefs = list(
+  #         list(
+  #           # Apply this rule to columns 5, 6, 7, and 8 (0-indexed)
+  #           targets = c(6, 7, 8, 9), 
+  #           # Use a JS function to render the data
+  #           render = JS(
+  #             "function(data, type, row, meta) {",
+  #             "  // 'type' can be 'display', 'sort', 'filter', etc.",
+  #             "  // We only want to change the 'display' data",
+  #             "  if (type === 'display' && data !== null && !isNaN(data)) {",
+  #             "    var s = ['th', 'st', 'nd', 'rd'];",
+  #             "    var v = data % 100;",
+  #             "    return data + (s[(v - 20) % 10] || s[v] || s[0]);",
+  #             "  } else {",
+  #             "    // For all other types (like 'sort'), use the raw data",
+  #             "    return data;",
+  #             "  }",
+  #             "}"
+  #           )
+  #         )
+  #       )
+  #       # --- END OF NEW CODE ---
+  #       
+  #     ),
+  #     filter = 'top',
+  #     selection = 'multiple',
+  #     rownames = FALSE
+  #   )
+  # })
+  
   
   output$StrideLogo <- renderImage({
     image_path <- normalizePath(file.path('www', 'STRIDE logo.png'))
@@ -1125,103 +1308,179 @@ server <- function(input, output, session) {
   # )
   
   
-  # --- Curricular Offering Bar Chart ---
-  output$Curricular_Offering_Bar <- renderPlotly({
-    data <- data.frame(
-      Category = c("Purely ES", "JHS with SHS", "ES and JHS (K to 10)",
-                   "Purely JHS", "All Offering (K to 12)", "Purely SHS"),
-      Count = c(35036, 6598, 1690, 1367, 832, 262),
-      marker = list(color = "#0072B2")
-    )
-    
-    plot_ly(
-      data,
-      y = ~Category,  # Flipped
-      x = ~Count,     # Flipped
-      type = "bar", 
-      marker = list(color = "#002D62"),
-      text = ~Count,              # Added
-      texttemplate = '%{x:,.0f}',# Added
-      textposition = 'outside'   # Added
-    ) |>
-      layout(
-        title = list(text = "Curricular Offering Distribution", x = 0.5),
-        yaxis = list(title = "", autorange = "reversed"), # Swapped, added autorange
-        xaxis = list(title = "Number of Schools") # Swapped
-      )
-  })
-  
-  # --- Curricular Offering Pie Chart --- (No changes)
-  output$Curricular_Offering_Pie <- renderPlotly({
-    data <- data.frame(
-      Category = c("Purely ES", "JHS with SHS", "ES and JHS (K to 10)",
-                   "Purely JHS", "All Offering (K to 12)", "Purely SHS"),
-      Count = c(35036, 6598, 1690, 1367, 832, 262),
-      marker = list(color = "#D9534F")
-    )
-    
-    plot_ly(
-      data,
-      labels = ~Category, values = ~Count, type = "pie",
-      textinfo = "label+percent", insidetextorientation = "radial"
-    ) |> layout(title = list(text = "Curricular Offering (Pie)", x = 0.5))
-  })
-  
-  # --- Toggle visibility for Curricular Offering graphs --- (No changes)
-  observeEvent(input$show_curricular_graphs, {
-    if (input$show_curricular_graphs %% 2 == 1) {
-      shinyjs::show("curricular_graphs")
-      updateActionButton(session, "show_curricular_graphs", label = "Hide Graphs")
-    } else {
-      shinyjs::hide("curricular_graphs")
-      updateActionButton(session, "show_curricular_graphs", label = "Show Graphs")
-    }
-  })
-  
-  # --- School Size Typology Bar Chart ---
-  output$School_Size_Typology_Bar <- renderPlotly({
-    data <- data.frame(
-      Size = c("Very Small", "Small", "Medium", "Large",
-               "Very Large", "Extremely Large", "Mega"),
-      Count = c(24976, 10105, 5726, 4210, 727, 38, 3)
-    )
-    
-    plot_ly(
-      data,
-      y = ~Size,  # Flipped
-      x = ~Count, # Flipped
-      type = "bar", 
-      marker = list(color = "#0074D9"),
-      text = ~Count,              # Added
-      texttemplate = '%{x:,.0f}',# Added
-      textposition = 'outside'   # Added
-    ) |>
-      layout(
-        title = list(text = "School Size Typology Distribution", x = 0.5),
-        yaxis = list(            # Swapped
-          title = "", categoryorder = "total descending", autorange = "reversed"
-        ), 
-        xaxis = list(title = "Number of Schools") # Swapped
-      )
-  })
-  
-  # --- School Size Typology Pie Chart --- (No changes)
-  output$School_Size_Typology_Pie <- renderPlotly({
-    data <- data.frame(
-      Size = c("Very Small", "Small", "Medium", "Large",
-               "Very Large", "Extremely Large", "Mega"),
-      Count = c(24976, 10105, 5726, 4210, 727, 38, 3)
-    )
-    
-    plot_ly(
-      data,
-      labels = ~Size, values = ~Count,
-      type = "pie", textinfo = "label+percent",
-      insidetextorientation = "radial"
-    ) |> layout(title = list(text = "School Size Typology (Pie)", x = 0.5))
-  })
-  
-  # --- Authentication ---
+  # # --- Curricular Offering Bar Chart ---
+  # output$Curricular_Offering_Bar <- renderPlotly({
+  #   data <- data.frame(
+  #     Category = c("Purely ES", "JHS with SHS", "ES and JHS (K to 10)",
+  #                  "Purely JHS", "All Offering (K to 12)", "Purely SHS"),
+  #     Count = c(35036, 6598, 1690, 1367, 832, 262),
+  #     marker = list(color = "#0072B2")
+  #   )
+  #   
+  #   plot_ly(
+  #     data,
+  #     y = ~Category,  # Flipped
+  #     x = ~Count,     # Flipped
+  #     type = "bar", 
+  #     marker = list(color = "#002D62"),
+  #     text = ~Count,              # Added
+  #     texttemplate = '%{x:,.0f}',# Added
+  #     textposition = 'outside'   # Added
+  #   ) |>
+  #     layout(
+  #       title = list(text = "Curricular Offering Distribution", x = 0.5),
+  #       yaxis = list(title = "", autorange = "reversed"), # Swapped, added autorange
+  #       xaxis = list(title = "Number of Schools") # Swapped
+  #     )
+  # })
+  # 
+  # # --- Curricular Offering Pie Chart --- (No changes)
+  # output$Curricular_Offering_Pie <- renderPlotly({
+  #   data <- data.frame(
+  #     Category = c("Purely ES", "JHS with SHS", "ES and JHS (K to 10)",
+  #                  "Purely JHS", "All Offering (K to 12)", "Purely SHS"),
+  #     Count = c(35036, 6598, 1690, 1367, 832, 262),
+  #     marker = list(color = "#D9534F")
+  #   )
+  #   
+  #   plot_ly(
+  #     data,
+  #     labels = ~Category, values = ~Count, type = "pie",
+  #     textinfo = "label+percent", insidetextorientation = "radial"
+  #   ) |> layout(title = list(text = "Curricular Offering (Pie)", x = 0.5))
+  # })
+  # 
+  # # --- Toggle visibility for Curricular Offering graphs --- (No changes)
+  # observeEvent(input$show_curricular_graphs, {
+  #   if (input$show_curricular_graphs %% 2 == 1) {
+  #     shinyjs::show("curricular_graphs")
+  #     updateActionButton(session, "show_curricular_graphs", label = "Hide Graphs")
+  #   } else {
+  #     shinyjs::hide("curricular_graphs")
+  #     updateActionButton(session, "show_curricular_graphs", label = "Show Graphs")
+  #   }
+  # })
+  # 
+  # # --- School Size Typology Bar Chart ---
+  # output$School_Size_Typology_Bar <- renderPlotly({
+  #   data <- data.frame(
+  #     Size = c("Very Small", "Small", "Medium", "Large",
+  #              "Very Large", "Extremely Large", "Mega"),
+  #     Count = c(24976, 10105, 5726, 4210, 727, 38, 3)
+  #   )
+  #   
+  #   plot_ly(
+  #     data,
+  #     y = ~Size,  # Flipped
+  #     x = ~Count, # Flipped
+  #     type = "bar", 
+  #     marker = list(color = "#0074D9"),
+  #     text = ~Count,              # Added
+  #     texttemplate = '%{x:,.0f}',# Added
+  #     textposition = 'outside'   # Added
+  #   ) |>
+  #     layout(
+  #       title = list(text = "School Size Typology Distribution", x = 0.5),
+  #       yaxis = list(            # Swapped
+  #         title = "", categoryorder = "total descending", autorange = "reversed"
+  #       ), 
+  #       xaxis = list(title = "Number of Schools") # Swapped
+  #     )
+  # })
+  # 
+  # # --- School Size Typology Pie Chart --- (No changes)
+  # output$School_Size_Typology_Pie <- renderPlotly({
+  #   data <- data.frame(
+  #     Size = c("Very Small", "Small", "Medium", "Large",
+  #              "Very Large", "Extremely Large", "Mega"),
+  #     Count = c(24976, 10105, 5726, 4210, 727, 38, 3)
+  #   )
+  #   
+  #   plot_ly(
+  #     data,
+  #     labels = ~Size, values = ~Count,
+  #     type = "pie", textinfo = "label+percent",
+  #     insidetextorientation = "radial"
+  #   ) |> layout(title = list(text = "School Size Typology (Pie)", x = 0.5))
+  # })
+  # 
+  # # --- Curricular Offering Bar Chart ---
+  # output$Curricular_Offering_Bar <- renderPlotly({
+  #   data <- data.frame(
+  #     Category = c("Purely ES", "JHS with SHS", "ES and JHS (K to 10)",
+  #                  "Purely JHS", "All Offering (K to 12)", "Purely SHS"),
+  #     Count = c(35036, 6598, 1690, 1367, 832, 262),
+  #     marker = list(color = "#0072B2")
+  #   )
+  #   
+  #   plot_ly(
+  #     data,
+  #     x = ~Category, y = ~Count,
+  #     type = "bar", marker = list(color = "#002D62")
+  #   ) |>
+  #     layout(title = list(text = "Curricular Offering Distribution", x = 0.5),
+  #            xaxis = list(title = ""), yaxis = list(title = "Number of Schools"))
+  # })
+  # 
+  # # --- Curricular Offering Pie Chart ---
+  # output$Curricular_Offering_Pie <- renderPlotly({
+  #   data <- data.frame(
+  #     Category = c("Purely ES", "JHS with SHS", "ES and JHS (K to 10)",
+  #                  "Purely JHS", "All Offering (K to 12)", "Purely SHS"),
+  #     Count = c(35036, 6598, 1690, 1367, 832, 262),
+  #     marker = list(color = "#D9534F")
+  #   )
+  #   
+  #   plot_ly(
+  #     data,
+  #     labels = ~Category, values = ~Count, type = "pie",
+  #     textinfo = "label+percent", insidetextorientation = "radial"
+  #   ) |> layout(title = list(text = "Curricular Offering (Pie)", x = 0.5))
+  # })
+  # 
+  # # --- Toggle visibility for Curricular Offering graphs ---
+  # observeEvent(input$show_curricular_graphs, {
+  #   if (input$show_curricular_graphs %% 2 == 1) {
+  #     shinyjs::show("curricular_graphs")
+  #     updateActionButton(session, "show_curricular_graphs", label = "Hide Graphs")
+  #   } else {
+  #     shinyjs::hide("curricular_graphs")
+  #     updateActionButton(session, "show_curricular_graphs", label = "Show Graphs")
+  #   }
+  # })
+  # 
+  # # --- School Size Typology Bar Chart ---
+  # output$School_Size_Typology_Bar <- renderPlotly({
+  #   data <- data.frame(
+  #     Size = c("Very Small", "Small", "Medium", "Large",
+  #              "Very Large", "Extremely Large", "Mega"),
+  #     Count = c(24976, 10105, 5726, 4210, 727, 38, 3)
+  #   )
+  #   
+  #   plot_ly(
+  #     data,
+  #     x = ~Size, y = ~Count,
+  #     type = "bar", marker = list(color = "#0074D9")
+  #   ) |>
+  #     layout(title = list(text = "School Size Typology Distribution", x = 0.5),
+  #            xaxis = list(title = ""), yaxis = list(title = "Number of Schools"))
+  # })
+  # 
+  # # --- School Size Typology Pie Chart ---
+  # output$School_Size_Typology_Pie <- renderPlotly({
+  #   data <- data.frame(
+  #     Size = c("Very Small", "Small", "Medium", "Large",
+  #              "Very Large", "Extremely Large", "Mega"),
+  #     Count = c(24976, 10105, 5726, 4210, 727, 38, 3)
+  #   )
+  #   
+  #   plot_ly(
+  #     data,
+  #     labels = ~Size, values = ~Count,
+  #     type = "pie", textinfo = "label+percent",
+  #     insidetextorientation = "radial"
+  #   ) |> layout(title = list(text = "School Size Typology (Pie)", x = 0.5))
+  # })# --- Authentication ---
   # Call the shinyauthr::loginServer module
   # credentials() will be a reactive returning a tibble with user_auth, info, and additional columns from user_base
   # credentials <- shinyauthr::loginServer(
@@ -1626,20 +1885,51 @@ server <- function(input, output, session) {
             card(card_header("Teacher Shortage"), plotlyOutput("teachershortage_plot_erdb"), height = "420px"),
             card(card_header("School Principal Shortage"), plotlyOutput("principalshortage_plot_erdb"), height = "420px")
           ),
-            hr(),
-            card(full_screen = TRUE,
-                 height = 800,
-                 card_header("Priority Divisions"),
-                 dataTableOutput("priority_division_erdb"))
-                 # navset_card_pill(
-                 #   nav_spacer(),
-                 #   nav_panel(
-                 #     title = "School-level Data (SY 2024-2025)",
-                 #     dataTableOutput("regprof_DT")),
-                 #   nav_panel(
-                 #     title = "Classroom Data (SY 2023-2024)",
-                 #     dataTableOutput("regprof_DT_CL")),
-                 ),
+          hr(),
+        card(
+          full_screen = TRUE,
+          height = 800,
+          card_header("Priority Divisions"),
+          
+          # --- NEW CODE: Use layout_column_wrap to format the plots ---
+          layout_column_wrap(
+            width = 1/3, # This tells R to fit 3 items per row (1/3 of the width each)
+            heights_equal = "row", # Ensures all plots in the row have the same height
+
+            # Plot Outputs (These will be arranged based on the 'width' setting)
+            # Card for the first plot
+            card(
+              full_screen = TRUE,
+              card_header("Teacher Deployment Priorities"),
+              plotlyOutput("Teaching_Deployment_Division_Graph1")
+            ),
+
+            # Card for the second plot
+            card(
+              full_screen = TRUE,
+              card_header("Classroom Shortage Priorities"),
+              plotlyOutput("Classroom_Shortage_Division_Graph2")
+            ),
+
+            # Card for the third plot
+            card(
+              full_screen = TRUE,
+              card_header("Last Mile School Priorities"),
+              plotlyOutput("LMS_Division_Graph2")
+            )
+          )
+           # dataTableOutput("priority_division_erdb")
+        )),
+              
+        #   navset_card_pill(
+        #     nav_spacer(),
+        #     nav_panel(
+        #       title = "School-level Data (SY 2024-2025)",
+        #       dataTableOutput("regprof_DT")),
+        #     nav_panel(
+        #       title = "Classroom Data (SY 2023-2024)",
+        #       dataTableOutput("regprof_DT_CL")),
+        # ),
         # HROD panel
         # nav_panel(
         #   title = "Education Resource Information", # Your existing HROD content
@@ -2970,31 +3260,30 @@ server <- function(input, output, session) {
         ),
         
         hr(),
-        # 
+        
         # --- Accordion only for summary cards ---
         accordion(
           open = "Deployment Summary by Level",
-        #   
-        #   accordion_panel(
-        #     title = "Deployment Summary by Level",
-        #     icon = bsicons::bs_icon("bar-chart-fill"),
-        #     
-        #     # --- Start of Tabset (now ABOVE the summary cards) ---
-        #     navset_tab(
-        #       nav_panel("Regional Breakdown",
-        #                 uiOutput("backButtonUI"),
-        #                 plotlyOutput("Teaching_Deployment_Region_Graph")
-        #       ),
-        #       nav_panel("Priority Divisions",
-        #                 plotlyOutput("Teaching_Deployment_Division_Graph1")
-        #       ),
-        #       nav_panel("Dataset",
-        #                 dataTableOutput("Teaching_Deployment_Dataset")
-        #       )
-        #     ),
-        #     # --- End of Tabset ---
-        #     
-        #     hr(),
+          
+          accordion_panel(
+            title = "Deployment Summary by Level",
+            icon = bsicons::bs_icon("bar-chart-fill"),
+            
+            # --- Start of Tabset (now ABOVE the summary cards) ---
+            navset_tab(
+              nav_panel("Regional Breakdown",
+                        plotlyOutput("Teaching_Deployment_Region_Graph")
+              ),
+              # nav_panel("Priority Divisions",
+              #           plotlyOutput("Teaching_Deployment_Division_Graph1")
+              # ),
+              nav_panel("Dataset",
+                        dataTableOutput("Teaching_Deployment_Dataset")
+              )
+            ),
+            # --- End of Tabset ---
+            
+            hr(),
             
             # --- Summary Cards ---
             layout_column_wrap(
@@ -3020,7 +3309,8 @@ server <- function(input, output, session) {
                 valueBoxOutput("e")
               )
             )
-          ),
+          )
+        ),
         
         hr(),
         
@@ -3154,29 +3444,28 @@ server <- function(input, output, session) {
             title = "National Classroom Inventory Overview",
             icon = bsicons::bs_icon("bar-chart-fill"),
             layout_columns(
-              # card(
-              #   full_screen = TRUE,
-              #   card_header(
-              #     tagList(
-              #       strong("Classroom Shortage Breakdown"),
-              #       tags$br(),
-              #       tags$em("(n = 165,443)")
-              #     )
-              #   ),
-              #   # Start of Tabset
-              #   navset_tab(
-              #     # Tab 1: Regional Classroom Breakdown (Your existing content)
-              #     nav_panel("Regional Breakdown",
-              #               uiOutput("backButtonUI"),
-              #               plotlyOutput("Classroom_Shortage_Region_Graph2")
-              #     ),
-              #     # Tab 2: Division Classroom Shortage Breakdown (The new tab)
-              #     nav_panel("Priority Divisions",
-              #               plotlyOutput("Classroom_Shortage_Division_Graph2")
-              #     ),
-              #     nav_panel("Dataset",
-              #               dataTableOutput("Classroom_Shortage_Dataset"))
-              #   )),
+              card(
+                full_screen = TRUE,
+                card_header(
+                  tagList(
+                    strong("Classroom Shortage Breakdown"),
+                    tags$br(),
+                    tags$em("(n = 165,443)")
+                  )
+                ),
+                # Start of Tabset
+                navset_tab(
+                  # Tab 1: Regional Classroom Breakdown (Your existing content)
+                  nav_panel("Regional Breakdown",
+                            plotlyOutput("Classroom_Shortage_Region_Graph2")
+                  ),
+                  # Tab 2: Division Classroom Shortage Breakdown (The new tab)
+                  # nav_panel("Priority Divisions",
+                  #           plotlyOutput("Classroom_Shortage_Division_Graph2")
+                  # ),
+                  nav_panel("Dataset",
+                            dataTableOutput("Classroom_Shortage_Dataset"))
+                )),
               # End of Tabset
               
               card(
@@ -3229,33 +3518,33 @@ server <- function(input, output, session) {
             title = "Industry Summary",
             icon = bsicons::bs_icon("bar-chart"),
             
-            # # --- Industry Distribution Overview Card placed FIRST ---
-            # card(
-            #   full_screen = TRUE,
-            #   card_header(
-            #     tagList(
-            #       strong("Industry Breakdown"),
-            #       tags$br(),
-            #       tags$em("(n = )")
-            #     )
-            #   ),
-            #   
-            #   # --- Tabset ---
-            #   navset_tab(
-            #     nav_panel("Regional Breakdown",
-            #               plotlyOutput("Ind_Regional_Graph")
-            #     ),
-            #     nav_panel("Priority Divisions",
-            #               plotlyOutput("Ind_Division_Graph")
-            #     ),
-            #     nav_panel("Dataset",
-            #               dataTableOutput("Ind_Dataset")
-            #     )
-            #   )
-            # ),
+            # --- Industry Distribution Overview Card placed FIRST ---
+            card(
+              full_screen = TRUE,
+              card_header(
+                tagList(
+                  strong("Industry Breakdown"),
+                  tags$br(),
+                  tags$em("(n = )")
+                )
+              ),
+              
+              # --- Tabset ---
+              navset_tab(
+                nav_panel("Regional Breakdown",
+                          plotlyOutput("Ind_Regional_Graph")
+                ),
+                # nav_panel("Priority Divisions",
+                #           plotlyOutput("Ind_Division_Graph")
+                # ),
+                nav_panel("Dataset",
+                          dataTableOutput("Ind_Dataset")
+                )
+              )
+            ),
             
-            # # --- Divider line for better separation ---
-            # hr(),
+            # --- Divider line for better separation ---
+            hr(),
             
             # --- Summary Counts ---
             layout_column_wrap(
@@ -3464,30 +3753,29 @@ server <- function(input, output, session) {
             title = "National and Regional Breakdown",
             icon = bsicons::bs_icon("bar-chart"),
             layout_columns(
-              # card(
-              #   full_screen = TRUE,
-              #   card_header(
-              #     tagList(
-              #       strong("Breakdown of Last Mile Schools"),
-              #       tags$br(),
-              #       tags$em("(n = 9,100)")
-              #     )
-              #   ),
-              #   # Start of Tabset
-              #   navset_tab(
-              #     # Tab 1: Regional Breakdown (Your existing content)
-              #     nav_panel("Regional Breakdown",
-              #               uiOutput("backButtonUI"),
-              #               plotlyOutput("LMS_Nation_Graph2")
-              #     ),
-              #     # Tab 2: Division Breakdown (The new tab)
-              #     nav_panel("Priority Divisions",
-              #               plotlyOutput("LMS_Division_Graph2")
-              #     ),
-              #     nav_panel("Dataset",
-              #               dataTableOutput("LMS_Dataset")
-              #     )
-              #   )),
+              card(
+                full_screen = TRUE,
+                card_header(
+                  tagList(
+                    strong("Breakdown of Last Mile Schools"),
+                    tags$br(),
+                    tags$em("(n = 9,100)")
+                  )
+                ),
+                # Start of Tabset
+                navset_tab(
+                  # Tab 1: Regional Breakdown (Your existing content)
+                  nav_panel("Regional Breakdown",
+                            plotlyOutput("LMS_Nation_Graph2")
+                  ),
+                  # # Tab 2: Division Breakdown (The new tab)
+                  # nav_panel("Priority Divisions",
+                  #           plotlyOutput("LMS_Division_Graph2")
+                  # ),
+                  nav_panel("Dataset",
+                            dataTableOutput("LMS_Dataset")
+                  )
+                )),
               card(
                 card_header(strong("Total Last Mile Schools by Region")),
                 valueBoxOutput("LMS_Total_Region")
@@ -7605,8 +7893,11 @@ server <- function(input, output, session) {
   # --- Teaching Deployment: Regional Breakdown Graph ---
   output$Teaching_Deployment_Region_Graph <- renderPlotly({
     
+    # --- Use the full dataset instead of the filtered one ---
+    current_filtered_data <- df  
+    
     # --- Empty Data Handling ---
-    if (nrow(df) == 0) {
+    if (nrow(current_filtered_data) == 0) {
       return(ggplotly(
         ggplot() +
           annotate("text", x = 0.5, y = 0.5,
@@ -7617,425 +7908,47 @@ server <- function(input, output, session) {
     }
     
     # --- Prepare grouped data (all regions) ---
-    if (is.null(current_region())) {
-      plot_data <- df %>%
-        group_by(Region) %>%
-        summarise(TeacherShortage = sum(as.numeric(TeacherShortage), na.rm = TRUE),
-                  .groups = "drop") %>%
-        arrange(desc(TeacherShortage))
-      
-      # --- Add labels ---
-      plot_data <- plot_data %>%
-        mutate(Label = scales::comma(TeacherShortage))
-      
-      # --- Plot ---
-      p <- ggplot(plot_data,
-                  aes(x = reorder(Region, -TeacherShortage),
-                      y = TeacherShortage,
-                      fill = Region,
-                      text = paste("Region:", Region,
-                                   "<br>Teacher Shortage:", scales::comma(TeacherShortage)))) +
-        geom_bar(stat = "identity", color = "black") +
-        geom_text(aes(label = Label), vjust = -0.5, size = 3.5, color = "black") +
-        labs(
-          title = "Teacher Shortage by Region",
-          x = "Region",
-          y = "Number of Teacher Shortages"
-        ) +
-        scale_y_continuous(labels = scales::comma) +
-        theme_minimal() +
-        theme(
-          plot.title = element_text(hjust = 0.5, size = 14, face = "bold"),
-          axis.text.x = element_text(size = 10, angle = 45, hjust = 1),
-          legend.position = "none"
-        )
-    } else if (is.null(current_division())) {
-      # --- Prepare data for plotting ---
-      # FIX: Use 'df' here instead of 'current_filtered_data' 
-      # to ensure you're filtering the *complete* dataset for the division view.
-      plot_data <- df %>%
-        filter(Region == current_region()) %>%
-        group_by(Division) %>%
-        summarise(Count = sum(as.numeric(TeacherShortage), na.rm = TRUE), .groups = 'drop') %>%
-        arrange(desc(Count)) %>%
-        slice_head(n = 20) 
-      
-      # --- Empty Data Handling for Division Breakdown ---
-      if (nrow(plot_data) == 0) {
-        return(ggplotly(
-          ggplot() +
-            annotate("text", x = 0.5, y = 0.5,
-                     label = paste("No data available for Divisions in", current_region()),
-                     size = 5, color = "red") +
-            theme_void()
-        ))
-      }
-      
-      # --- Create ggplot ---
-      p <- ggplot(plot_data,
-                  aes(x = reorder(Division, -Count),
-                      y = Count,
-                      fill = Division,
-                      text = paste(
-                        "Division: ", Division,
-                        "<br>Teacher Shortage: ", scales::comma(Count)
-                      ))) +
-        geom_bar(stat = "identity", color = "black") +
-        geom_text(data = plot_data,
-                  aes(x = Division, y = Count * 1.05,
-                      label = scales::comma(Count)),
-                  inherit.aes = FALSE,
-                  size = 3.5,
-                  color = "black") +
-        labs(
-          # UPDATE: Make the title dynamic to show the selected region
-          title = paste("Top 20 Divisions by Teacher Shortage in", current_region()), 
-          x = "Division",
-          y = "Teacher Shortage"
-        ) +
-        scale_y_continuous(labels = scales::comma) +
-        theme_minimal() +
-        theme(
-          plot.title = element_text(
-            hjust = 0.5,
-            face = "bold",
-            size = 14,
-            color = "black"    
-          ),
-          axis.text.x = element_text(size = 10, angle = 45, hjust = 1),
-          legend.position = "none"
-        )
-    }
-    else if (!is.null(current_division())){
-      # --- Prepare data for plotting ---
-      # FIX: Use 'df' here instead of 'current_filtered_data' 
-      # to ensure you're filtering the *complete* dataset for the division view.
-      plot_data <- df %>%
-        filter(Region == current_region()) %>%
-        filter(Division == current_division()) %>% 
-        group_by(Legislative.District) %>%
-        summarise(Count = sum(as.numeric(TeacherShortage), na.rm = TRUE), .groups = 'drop') %>%
-        arrange(desc(Count)) %>%
-        slice_head(n = 20) 
-      
-      # --- Empty Data Handling for Division Breakdown ---
-      if (nrow(plot_data) == 0) {
-        return(ggplotly(
-          ggplot() +
-            annotate("text", x = 0.5, y = 0.5,
-                     label = paste("No data available for Divisions in", current_region()),
-                     size = 5, color = "red") +
-            theme_void()
-        ))
-      }
-      
-      # --- Create ggplot ---
-      p <- ggplot(plot_data,
-                  aes(x = reorder(Legislative.District, -Count),
-                      y = Count,
-                      fill = Legislative.District,
-                      text = paste(
-                        "Legislative District: ", Legislative.District,
-                        "<br>Teacher Shortage: ", scales::comma(Count)
-                      ))) +
-        geom_bar(stat = "identity", color = "black") +
-        geom_text(data = plot_data,
-                  aes(x = Legislative.District, y = Count * 1.05,
-                      label = scales::comma(Count)),
-                  inherit.aes = FALSE,
-                  size = 3.5,
-                  color = "black") +
-        labs(
-          # UPDATE: Make the title dynamic to show the selected region
-          title = paste("Top 20 Divisions by Teacher Shortage in", current_region()), 
-          x = "Legislative District",
-          y = "Teacher Shortage"
-        ) +
-        scale_y_continuous(labels = scales::comma) +
-        theme_minimal() +
-        theme(
-          plot.title = element_text(
-            hjust = 0.5,
-            face = "bold",
-            size = 14,
-            color = "black"    
-          ),
-          axis.text.x = element_text(size = 10, angle = 45, hjust = 1),
-          legend.position = "none"
-        )
-    }
-    
-    ggplotly(p, tooltip = "text", source = "TeachingDeployment_Mapping") %>%
-      layout(
-        hoverlabel = list(bgcolor = "white"),
-        margin = list(b = 100)
-      )
-  })
-  
-  observeEvent(event_data("plotly_click", source = "TeachingDeployment_Mapping"), {
-    click_data <- event_data("plotly_click", source = "TeachingDeployment_Mapping")
-    
-    # Ensure a click actually occurred and we're on the main region plot (not the division plot)
-    if (!is.null(click_data) && is.null(current_region()) && is.null(current_division())) {
-      
-      # The x-axis value (the name of the region) is typically in the 'x' element of the click data.
-      clicked_index <- click_data$x
-      
-      plot_data <- df %>%
-        group_by(Region) %>%
-        summarise(TeacherShortage = sum(as.numeric(TeacherShortage), na.rm = TRUE),
-                  .groups = "drop") %>%
-        arrange(desc(TeacherShortage))
-      
-      # Update the reactive value, which will trigger the plot to redraw 
-      # using the division breakdown logic.
-      selected_region <- plot_data$Region[clicked_index]
-      
-      current_region(selected_region)
-      
-      # Optional: Print the selected region to the console for debugging
-      cat("Region selected:", selected_region, "\n")
-    }
-    else if (!is.null(click_data) && !is.null(current_region()) && is.null(current_division())) {
-      # The x-axis value (the name of the region) is typically in the 'x' element of the click data.
-      clicked_index <- click_data$x
-      
-      plot_data <- df %>% filter(Region == current_region()) %>% 
-        group_by(Division) %>%
-        summarise(TeacherShortage = sum(as.numeric(TeacherShortage), na.rm = TRUE),
-                  .groups = "drop") %>%
-        arrange(desc(TeacherShortage))
-      
-      # Update the reactive value, which will trigger the plot to redraw 
-      # using the division breakdown logic.
-      selected_division <- plot_data$Division[clicked_index]
-      
-      current_division(selected_division)
-      
-      # Optional: Print the selected region to the console for debugging
-      cat("Division selected:", selected_division, "\n")
-    }
-    
-  })
-  
-  # --- Teaching Deployment: Priority Division Graph ---
-  output$Teaching_Deployment_Division_Graph1 <- renderPlotly({
-    
-    # --- Use the full dataset  ---
-    current_filtered_data <- df
-    
-    # --- Empty Data Handling ---
-    if (nrow(current_filtered_data) == 0) {
-      return(ggplotly(
-        ggplot() +
-          annotate("text", x = 0.5, y = 0.5,
-                   label = "No data for selected regions/divisions") +
-          theme_void()
-      ))
-    }
-    
-    # --- Prepare data for plotting ---
     plot_data <- current_filtered_data %>%
-      group_by(Division) %>%
-      summarise(Count = sum(as.numeric(TeacherShortage), na.rm = TRUE), .groups = 'drop') %>%
-      arrange(desc(Count)) %>%
-      slice_head(n = 20) 
+      group_by(Region) %>%
+      summarise(TeacherShortage = sum(as.numeric(TeacherShortage), na.rm = TRUE),
+                .groups = "drop")
     
-    # --- Create ggplot ---
+    # --- Add labels ---
+    plot_data <- plot_data %>%
+      mutate(Label = scales::comma(TeacherShortage))
+    
+    # --- Plot ---
     p <- ggplot(plot_data,
-                aes(x = reorder(Division, -Count),
-                    y = Count,
-                    fill = Division,
-                    text = paste(
-                      "Division: ", Division,
-                      "<br>Teacher Shortage: ", scales::comma(Count)
-                    ))) +
+                aes(x = reorder(Region, -TeacherShortage),
+                    y = TeacherShortage,
+                    fill = Region,
+                    text = paste("Region:", Region,
+                                 "<br>Teacher Shortage:", scales::comma(TeacherShortage)))) +
       geom_bar(stat = "identity", color = "black") +
-      geom_text(data = plot_data,
-                aes(x = Division, y = Count * 1.05,
-                    label = scales::comma(Count)),
-                inherit.aes = FALSE,
-                size = 3.5,
-                color = "black") +
+      geom_text(aes(label = Label), vjust = -0.5, size = 3.5, color = "black") +
       labs(
-        title = "Top 20 Divisions by Teacher Shortage (Teaching Deployment)",
-        x = "Division",
-        y = "Teacher Shortage"
+        title = "Teacher Shortage by Region",
+        x = "Region",
+        y = "Number of Teacher Shortages"
       ) +
       scale_y_continuous(labels = scales::comma) +
       theme_minimal() +
       theme(
-        plot.title = element_text(
-          hjust = 0.5,
-          face = "bold",
-          size = 14,
-          color = "black"   
-        ),
+        plot.title = element_text(hjust = 0.5, size = 14, face = "bold"),
         axis.text.x = element_text(size = 10, angle = 45, hjust = 1),
         legend.position = "none"
       )
     
-    # --- Convert ggplot to Plotly ---
-    ggplotly(p, tooltip = "text", source = "teachingDeploymentDivisionPlot") %>%
+    ggplotly(p, tooltip = "text") %>%
       layout(
         hoverlabel = list(bgcolor = "white"),
         margin = list(b = 100)
       )
   })
   
+  
   #Classroom Shortage
   output$Classroom_Shortage_Region_Graph2 <- renderPlotly({
-    
-    # --- Empty Data Handling ---
-    if (nrow(LMS) == 0) {
-      return(ggplotly(ggplot() +
-                        annotate("text", x = 0.5, y = 0.5, label = "No data for selected regions/divisions") +
-                        theme_void()))
-    }
-    
-    if (is.null(current_region())) {
-      
-      # Prepare the data for plotting
-      plot_data <- LMS %>%
-        group_by(Region) %>%
-        summarise(Count = sum(as.numeric(Estimated_CL_Shortage), na.rm = TRUE), .groups = 'drop') %>% 
-        arrange(desc(Count))
-      
-      # Create the ggplot
-      p <- ggplot(plot_data,
-                  aes(x = reorder(Region, -Count),
-                      y = Count,
-                      fill = Region,
-                      text = paste("Region: ", Region,
-                                   "<br>Classroom Shortage: ", scales::comma(Count)))) + # Custom tooltip text
-        geom_bar(stat = "identity", color = "black") +
-        geom_text(data = plot_data,
-                  aes(x = Region, y = Count * 1.05, label = scales::comma(Count)), # Modified line
-                  inherit.aes = FALSE,
-                  size = 3.5,
-                  color = "black") +
-        labs(x = "Region",
-             y = "Classroom Shortage") +
-        scale_y_continuous(labels = scales::comma) + # Format y-axis labels as comma-separated numbers
-        theme_minimal() +
-        theme(axis.text.x = element_text(size = 10, angle = 45, hjust = 1),
-              legend.position = "none", # No legend needed for single fill
-              plot.title = element_text(hjust = 0.5)) # Center the plot title
-      
-    } else if (!is.null(current_region()) && is.null(current_division())) {
-      
-      plot_data <- LMS %>%
-        filter(Region == current_region()) %>% 
-        group_by(Division) %>%
-        summarise(Count = sum(as.numeric(Estimated_CL_Shortage), na.rm = TRUE), .groups = 'drop') %>% 
-        arrange(desc(Count))
-      
-      # Create the ggplot
-      p <- ggplot(plot_data,
-                  aes(x = reorder(Division, -Count),
-                      y = Count,
-                      fill = Division,
-                      text = paste("Region: ", Division,
-                                   "<br>Classroom Shortage: ", scales::comma(Count)))) + # Custom tooltip text
-        geom_bar(stat = "identity", color = "black") +
-        geom_text(data = plot_data,
-                  aes(x = Division, y = Count * 1.05, label = scales::comma(Count)), # Modified line
-                  inherit.aes = FALSE,
-                  size = 3.5,
-                  color = "black") +
-        labs(x = "Region",
-             y = "Classroom Shortage") +
-        scale_y_continuous(labels = scales::comma) + # Format y-axis labels as comma-separated numbers
-        theme_minimal() +
-        theme(axis.text.x = element_text(size = 10, angle = 45, hjust = 1),
-              legend.position = "none", # No legend needed for single fill
-              plot.title = element_text(hjust = 0.5)) # Center the plot title
-      
-    } else if (!is.null(current_division())) {
-      plot_data <- LMS %>%
-        filter(Region == current_region()) %>%
-        filter(Division == current_division()) %>% 
-        group_by(Legislative_District) %>%
-        summarise(Count = sum(as.numeric(Estimated_CL_Shortage), na.rm = TRUE), .groups = 'drop') %>% 
-        arrange(desc(Count))
-      
-      # Create the ggplot
-      p <- ggplot(plot_data,
-                  aes(x = reorder(Legislative_District, -Count),
-                      y = Count,
-                      fill = Legislative_District,
-                      text = paste("Region: ", Legislative_District,
-                                   "<br>Classroom Shortage: ", scales::comma(Count)))) + # Custom tooltip text
-        geom_bar(stat = "identity", color = "black") +
-        geom_text(data = plot_data,
-                  aes(x = Legislative_District, y = Count * 1.05, label = scales::comma(Count)), # Modified line
-                  inherit.aes = FALSE,
-                  size = 3.5,
-                  color = "black") +
-        labs(x = "Region",
-             y = "Classroom Shortage") +
-        scale_y_continuous(labels = scales::comma) + # Format y-axis labels as comma-separated numbers
-        theme_minimal() +
-        theme(axis.text.x = element_text(size = 10, angle = 45, hjust = 1),
-              legend.position = "none", # No legend needed for single fill
-              plot.title = element_text(hjust = 0.5)) # Center the plot title
-    }
-    
-    # Convert ggplot to plotly, ensuring custom text is used for hover
-    ggplotly(p, tooltip = "text", source = "classroomShortageRegionPlot") %>%
-      layout(hoverlabel = list(bgcolor = "white"),
-             # Adjust margins to prevent labels from being cut off if needed
-             margin = list(b = 100)) # Increase bottom margin for x-axis labels
-  })
-  
-  observeEvent(event_data("plotly_click", source = "classroomShortageRegionPlot"), {
-    click_data <- event_data("plotly_click", source = "classroomShortageRegionPlot")
-    
-    # Ensure a click actually occurred and we're on the main region plot (not the division plot)
-    if (!is.null(click_data) && is.null(current_region()) && is.null(current_division())) {
-      
-      # The x-axis value (the name of the region) is typically in the 'x' element of the click data.
-      clicked_index <- click_data$x
-      
-      plot_data <- LMS %>%
-        group_by(Region) %>%
-        summarise(Count = sum(as.numeric(Estimated_CL_Shortage), na.rm = TRUE), .groups = 'drop') %>% 
-        arrange(desc(Count))
-      
-      # Update the reactive value, which will trigger the plot to redraw 
-      # using the division breakdown logic.
-      selected_region <- plot_data$Region[clicked_index]
-      
-      ## in the table plot_data-- look for the Region column [ and then get the [value of the clicked_index] row ]
-      
-      current_region(selected_region)
-      
-      # Optional: Print the selected region to the console for debugging
-      cat("Region selected:", selected_region, "\n")
-    }
-    else if (!is.null(click_data) && !is.null(current_region()) && is.null(current_division())) {
-      # The x-axis value (the name of the region) is typically in the 'x' element of the click data.
-      clicked_index <- click_data$x
-      
-      plot_data <- LMS %>%
-        filter(Region == current_region()) %>%
-        group_by(Division) %>%
-        summarise(Count = sum(as.numeric(Estimated_CL_Shortage), na.rm = TRUE), .groups = 'drop') %>% 
-        arrange(desc(Count))
-      
-      # Update the reactive value, which will trigger the plot to redraw 
-      # using the division breakdown logic.
-      selected_division <- plot_data$Division[clicked_index]
-      
-      current_division(selected_division)
-      
-      # Optional: Print the selected region to the console for debugging
-      cat("Division selected:", selected_division, "\n")
-    }
-    
-  })
-  
-  output$Classroom_Shortage_Division_Graph2 <- renderPlotly({
     
     # Use the reactive filtered data
     current_filtered_data <- LMS
@@ -8048,28 +7961,24 @@ server <- function(input, output, session) {
     }
     
     # Prepare the data for plotting
-    # Ensure 'Estimated_CL_Shortage' is treated as numeric
     plot_data <- current_filtered_data %>%
-      group_by(Division) %>%
-      summarise(Count = sum(as.numeric(Estimated_CL_Shortage), na.rm = TRUE), .groups = 'drop') %>% 
-      arrange(desc(Count)) %>%
-      # Keep only the top 20 rows (divisions)
-      slice_head(n = 20)
+      group_by(Region) %>%
+      summarise(Count = sum(as.numeric(Estimated_CL_Shortage), na.rm = TRUE), .groups = 'drop')
     
     # Create the ggplot
     p <- ggplot(plot_data,
-                aes(x = reorder(Division, -Count),
+                aes(x = reorder(Region, -Count),
                     y = Count,
-                    fill = Division,
-                    text = paste("Division: ", Division,
+                    fill = Region,
+                    text = paste("Region: ", Region,
                                  "<br>Classroom Shortage: ", scales::comma(Count)))) + # Custom tooltip text
       geom_bar(stat = "identity", color = "black") +
       geom_text(data = plot_data,
-                aes(x = Division, y = Count * 1.05, label = scales::comma(Count)), # Modified line
+                aes(x = Region, y = Count * 1.05, label = scales::comma(Count)), # Modified line
                 inherit.aes = FALSE,
                 size = 3.5,
                 color = "black") +
-      labs(x = "Division",
+      labs(x = "Region",
            y = "Classroom Shortage") +
       scale_y_continuous(labels = scales::comma) + # Format y-axis labels as comma-separated numbers
       theme_minimal() +
@@ -8078,7 +7987,7 @@ server <- function(input, output, session) {
             plot.title = element_text(hjust = 0.5)) # Center the plot title
     
     # Convert ggplot to plotly, ensuring custom text is used for hover
-    ggplotly(p, tooltip = "text", source = "classroomShortageRegionPlot2") %>%
+    ggplotly(p, tooltip = "text", source = "classroomShortageRegionPlot") %>%
       layout(hoverlabel = list(bgcolor = "white"),
              # Adjust margins to prevent labels from being cut off if needed
              margin = list(b = 100)) # Increase bottom margin for x-axis labels
@@ -8340,257 +8249,6 @@ server <- function(input, output, session) {
   
   #LMS
   output$LMS_Nation_Graph2 <- renderPlotly({
-    
-    if (is.null(current_region())) {
-      full_data <- LMS %>%   
-        rename(
-          "With Buildable Space" = Buildable_space,
-          "With Excess Classrooms" = With_Excess,
-          "Without Classroom Shortage" = Without_Shortage,
-          "Last Mile Schools" = LMS,
-          "GIDCA" = GIDCA,
-          "With Shortage" = With_Shortage
-        ) %>%
-        pivot_longer(13:18, names_to = "Type", values_to = "Count")
-      
-      # --- Keep only "Last Mile Schools" and aggregate all regions ---
-      plot_data <- full_data %>%
-        filter(Type == "Last Mile Schools") %>%
-        group_by(Region) %>%
-        summarise(
-          Count = sum(as.numeric(Count), na.rm = TRUE),
-          .groups = "drop"
-        ) %>% arrange(desc(Count))
-      
-      # --- Compute national total ---
-      national_total <- sum(plot_data$Count, na.rm = TRUE)
-      
-      # ---  Create the chart ---
-      p <- ggplot(plot_data,
-                  aes(
-                    x = reorder(Region, -Count),
-                    y = Count,
-                    fill = Region,
-                    text = paste(
-                      "Region:", Region,
-                      "<br>Count:", scales::comma(Count)
-                    )
-                  )) +
-        geom_bar(stat = "identity", color = "black", size = 0.25) +
-        geom_text(
-          aes(label = scales::comma(Count), y = Count * 1.05),
-          size = 3.5,
-          color = "black"
-        ) +
-        labs(
-          x = "Region",
-          y = "Number of Last Mile Schools",
-          fill = "Region"
-        ) +
-        scale_y_continuous(labels = scales::comma) +
-        theme_minimal() +
-        theme(
-          plot.title = element_text(hjust = 0.5, size = 14, face = "bold"),
-          axis.text.x = element_text(size = 10, angle = 45, hjust = 1),
-          legend.position = "none"
-        )
-    } else if (!is.null(current_region()) && is.null(current_division())) {
-      full_data <- LMS %>%   
-        rename(
-          "With Buildable Space" = Buildable_space,
-          "With Excess Classrooms" = With_Excess,
-          "Without Classroom Shortage" = Without_Shortage,
-          "Last Mile Schools" = LMS,
-          "GIDCA" = GIDCA,
-          "With Shortage" = With_Shortage
-        ) %>%
-        pivot_longer(13:18, names_to = "Type", values_to = "Count")
-      
-      # --- Keep only "Last Mile Schools" and aggregate all regions ---
-      plot_data <- full_data %>%
-        filter(Type == "Last Mile Schools") %>%
-        filter(Region == current_region()) %>% 
-        group_by(Division) %>%
-        summarise(
-          Count = sum(as.numeric(Count), na.rm = TRUE),
-          .groups = "drop"
-        ) %>% arrange(desc(Count))
-      
-      # --- Compute national total ---
-      national_total <- sum(plot_data$Count, na.rm = TRUE)
-      
-      # ---  Create the chart ---
-      p <- ggplot(plot_data,
-                  aes(
-                    x = reorder(Division, -Count),
-                    y = Count,
-                    fill = Division,
-                    text = paste(
-                      "Division:", Division,
-                      "<br>Count:", scales::comma(Count)
-                    )
-                  )) +
-        geom_bar(stat = "identity", color = "black", size = 0.25) +
-        geom_text(
-          aes(label = scales::comma(Count), y = Count * 1.05),
-          size = 3.5,
-          color = "black"
-        ) +
-        labs(
-          x = "Division",
-          y = "Number of Last Mile Schools",
-          fill = "Division"
-        ) +
-        scale_y_continuous(labels = scales::comma) +
-        theme_minimal() +
-        theme(
-          plot.title = element_text(hjust = 0.5, size = 14, face = "bold"),
-          axis.text.x = element_text(size = 10, angle = 45, hjust = 1),
-          legend.position = "none"
-        )
-    } else if (!is.null(current_division())) {
-      full_data <- LMS %>%   
-        rename(
-          "With Buildable Space" = Buildable_space,
-          "With Excess Classrooms" = With_Excess,
-          "Without Classroom Shortage" = Without_Shortage,
-          "Last Mile Schools" = LMS,
-          "GIDCA" = GIDCA,
-          "With Shortage" = With_Shortage
-        ) %>%
-        pivot_longer(13:18, names_to = "Type", values_to = "Count")
-      
-      # --- Keep only "Last Mile Schools" and aggregate all regions ---
-      plot_data <- full_data %>%
-        filter(Type == "Last Mile Schools") %>%
-        filter(Region == current_region()) %>% 
-        filter(Division == current_division()) %>% 
-        group_by(Legislative_District) %>%
-        summarise(
-          Count = sum(as.numeric(Count), na.rm = TRUE),
-          .groups = "drop"
-        ) %>% arrange(desc(Count))
-      
-      # --- Compute national total ---
-      national_total <- sum(plot_data$Count, na.rm = TRUE)
-      
-      # ---  Create the chart ---
-      p <- ggplot(plot_data,
-                  aes(
-                    x = reorder(Legislative_District, -Count),
-                    y = Count,
-                    fill = Legislative_District,
-                    text = paste(
-                      "Legislative District:", Legislative_District,
-                      "<br>Count:", scales::comma(Count)
-                    )
-                  )) +
-        geom_bar(stat = "identity", color = "black", size = 0.25) +
-        geom_text(
-          aes(label = scales::comma(Count), y = Count * 1.05),
-          size = 3.5,
-          color = "black"
-        ) +
-        labs(
-          x = "Legislative District",
-          y = "Number of Last Mile Schools",
-          fill = "Legislative District"
-        ) +
-        scale_y_continuous(labels = scales::comma) +
-        theme_minimal() +
-        theme(
-          plot.title = element_text(hjust = 0.5, size = 14, face = "bold"),
-          axis.text.x = element_text(size = 10, angle = 45, hjust = 1),
-          legend.position = "none"
-        )
-    }
-    
-    ggplotly(p, tooltip = "text", source = "LMSplotly") %>%
-      layout(
-        hoverlabel = list(bgcolor = "white"),
-        margin = list(b = 100)
-      ) %>%
-      style(hoverinfo = "text")
-  })
-  
-  observeEvent(event_data("plotly_click", source = "LMSplotly"), {
-    click_data <- event_data("plotly_click", source = "LMSplotly")
-    
-    # Ensure a click actually occurred and we're on the main region plot (not the division plot)
-    if (!is.null(click_data) && is.null(current_region()) && is.null(current_division())) {
-      
-      # The x-axis value (the name of the region) is typically in the 'x' element of the click data.
-      clicked_index <- click_data$x
-      
-      full_data <- LMS %>%   
-        rename(
-          "With Buildable Space" = Buildable_space,
-          "With Excess Classrooms" = With_Excess,
-          "Without Classroom Shortage" = Without_Shortage,
-          "Last Mile Schools" = LMS,
-          "GIDCA" = GIDCA,
-          "With Shortage" = With_Shortage
-        ) %>%
-        pivot_longer(13:18, names_to = "Type", values_to = "Count")
-      
-      # --- Keep only "Last Mile Schools" and aggregate all regions ---
-      plot_data <- full_data %>%
-        filter(Type == "Last Mile Schools") %>%
-        group_by(Region) %>%
-        summarise(
-          Count = sum(as.numeric(Count), na.rm = TRUE),
-          .groups = "drop"
-        ) %>% arrange(desc(Count))
-      
-      # Update the reactive value, which will trigger the plot to redraw 
-      # using the division breakdown logic.
-      selected_region <- plot_data$Region[clicked_index]
-      
-      ## in the table plot_data-- look for the Region column [ and then get the [value of the clicked_index] row ]
-      
-      current_region(selected_region)
-      
-      # Optional: Print the selected region to the console for debugging
-      cat("Region selected:", selected_region, "\n")
-    }
-    else if (!is.null(click_data) && !is.null(current_region()) && is.null(current_division())) {
-      # The x-axis value (the name of the region) is typically in the 'x' element of the click data.
-      clicked_index <- click_data$x
-      
-      full_data <- LMS %>%   
-        rename(
-          "With Buildable Space" = Buildable_space,
-          "With Excess Classrooms" = With_Excess,
-          "Without Classroom Shortage" = Without_Shortage,
-          "Last Mile Schools" = LMS,
-          "GIDCA" = GIDCA,
-          "With Shortage" = With_Shortage
-        ) %>%
-        pivot_longer(13:18, names_to = "Type", values_to = "Count")
-      
-      # --- Keep only "Last Mile Schools" and aggregate all regions ---
-      plot_data <- full_data %>%
-        filter(Type == "Last Mile Schools") %>%
-        filter(Region == current_region()) %>% 
-        group_by(Division) %>%
-        summarise(
-          Count = sum(as.numeric(Count), na.rm = TRUE),
-          .groups = "drop"
-        ) %>% arrange(desc(Count))
-      
-      # Update the reactive value, which will trigger the plot to redraw 
-      # using the division breakdown logic.
-      selected_division <- plot_data$Division[clicked_index]
-      
-      current_division(selected_division)
-      
-      # Optional: Print the selected region to the console for debugging
-      cat("Division selected:", selected_division, "\n")
-    }
-    
-  })
-  
-  output$LMS_Division_Graph2 <- renderPlotly({
     full_data <- LMS %>%   
       rename(
         "With Buildable Space" = Buildable_space,
@@ -8605,15 +8263,11 @@ server <- function(input, output, session) {
     # --- Keep only "Last Mile Schools" and aggregate all regions ---
     plot_data <- full_data %>%
       filter(Type == "Last Mile Schools") %>%
-      group_by(Division) %>%
+      group_by(Region) %>%
       summarise(
         Count = sum(as.numeric(Count), na.rm = TRUE),
         .groups = "drop"
-      ) %>%
-      # Sort the data by Count in descending order (highest count first)
-      arrange(desc(Count)) %>%
-      # Keep only the top 25 rows (divisions)
-      slice_head(n = 25)
+      )
     
     # --- Compute national total ---
     national_total <- sum(plot_data$Count, na.rm = TRUE)
@@ -8621,11 +8275,11 @@ server <- function(input, output, session) {
     # ---  Create the chart ---
     p <- ggplot(plot_data,
                 aes(
-                  x = reorder(Division, -Count),
+                  x = reorder(Region, -Count),
                   y = Count,
-                  fill = Division,
+                  fill = Region,
                   text = paste(
-                    "Division:", Division,
+                    "Region:", Region,
                     "<br>Count:", scales::comma(Count)
                   )
                 )) +
@@ -8636,9 +8290,9 @@ server <- function(input, output, session) {
         color = "black"
       ) +
       labs(
-        x = "Division",
+        x = "Region",
         y = "Number of Last Mile Schools",
-        fill = "Division"
+        fill = "Region"
       ) +
       scale_y_continuous(labels = scales::comma) +
       theme_minimal() +
@@ -10477,14 +10131,14 @@ server <- function(input, output, session) {
     RegRCT <- input$resource_map_region
     SDORCT1 <- input$Resource_SDO
     DistRCT1 <- input$Resource_LegDist
-    LevRCT1 <- input$resource_map_level
+    Lev <- input$resource_map_level
     
-    mainreact1 <- df %>% filter(Region == RegRCT) %>% filter(Division == SDORCT1) %>% filter(Legislative.District == DistRCT1) %>% filter(Level == LevRCT1) %>% arrange(desc(TeacherShortage))
+    mainreact1 <- df %>% filter(Region == RegRCT) %>% filter(Division == SDORCT1) %>% filter(Legislative.District == DistRCT1) %>% filter(Level == Lev) %>% arrange(desc(TeacherShortage))
     
     NetShortage <- df %>% select(Region,Division,Level,TeacherShortage,TeacherExcess) %>%
       pivot_longer(cols = c(TeacherShortage, TeacherExcess), names_to = "Inventory", values_to = "Count") %>% mutate(Count=as.numeric(Count)) %>% na.omit(Count) %>% group_by(Region, Division,Level, Inventory) %>% summarize(Count = sum(Count)) %>% pivot_wider(names_from = "Inventory", values_from = "Count") %>% mutate(NetShortage=TeacherShortage-TeacherExcess) %>% mutate(NetShortage = ifelse(NetShortage < 0, 0, NetShortage))
     
-    SDONetShortage <- NetShortage %>% filter(Region == RegRCT) %>% filter(Division == SDORCT1) %>% filter(Level == LevRCT1)
+    SDONetShortage <- NetShortage %>% filter(Region == RegRCT) %>% filter(Division == SDORCT1) %>% filter(Level == Lev)
     
     values_teacher_shortage <- paste(mainreact1$School.Name,"<br>Teacher Excess:", mainreact1$TeacherExcess,"<br>Teacher Shortage:", mainreact1$TeacherShortage) %>% lapply(htmltools::HTML)
     
@@ -10774,14 +10428,14 @@ server <- function(input, output, session) {
     RegRCT <- input$resource_map_region
     SDORCT1 <- input$Resource_SDO
     DistRCT1 <- input$Resource_LegDist
-    LevRCT1 <- input$resource_map_level
+    Lev <- input$resource_map_level
     TypeEFD <- input$EFD_Type
     
     mainreact1 <- df %>%
       filter(Region == RegRCT) %>%
       filter(Division == SDORCT1) %>%
       filter(Legislative.District %in% DistRCT1) %>% 
-      filter(Level == LevRCT1) %>%
+      filter(Level == Lev) %>%
       arrange(desc(TeacherShortage))
     
     mainreactreg <- df %>% filter(Region == RegRCT)
@@ -10792,8 +10446,8 @@ server <- function(input, output, session) {
       filter(Region == RegRCT) %>% 
       filter(Division == SDORCT1) %>% 
       filter(Legislative.District %in% DistRCT1)   
-    mainreactlevreg <- df %>% filter(Region == RegRCT) %>% filter(Level == LevRCT1)
-    mainreactlevdiv <- df %>% filter(Region == RegRCT) %>% filter(Division == SDORCT1) %>% filter(Level == LevRCT1)
+    mainreactlevreg <- df %>% filter(Region == RegRCT) %>% filter(Level == Lev)
+    mainreactlevdiv <- df %>% filter(Region == RegRCT) %>% filter(Division == SDORCT1) %>% filter(Level == Lev)
     mainreactCR <- uni %>% 
       filter(Region == RegRCT) %>% 
       filter(Division == SDORCT1) %>% 
@@ -10952,7 +10606,7 @@ server <- function(input, output, session) {
     NetShortage <- df %>% select(Region,Division,Level,TeacherShortage,TeacherExcess) %>%
       pivot_longer(cols = c(TeacherShortage, TeacherExcess), names_to = "Inventory", values_to = "Count") %>% mutate(Count=as.numeric(Count)) %>% na.omit(Count) %>% group_by(Region, Division,Level, Inventory) %>% summarize(Count = sum(Count)) %>% pivot_wider(names_from = "Inventory", values_from = "Count") %>% mutate(NetShortage=TeacherShortage-TeacherExcess) %>% mutate(NetShortage = ifelse(NetShortage < 0, 0, NetShortage))
     
-    SDONetShortage <- NetShortage %>% filter(Region == RegRCT) %>% filter(Division == SDORCT1) %>% filter(Level == LevRCT1)
+    SDONetShortage <- NetShortage %>% filter(Region == RegRCT) %>% filter(Division == SDORCT1) %>% filter(Level == Lev)
     
     values_teacher_shortage <- paste(mainreact1$School.Name,"<br>Teacher Excess:", mainreact1$TeacherExcess,"<br>Teacher Shortage:", mainreact1$TeacherShortage) %>% lapply(htmltools::HTML)
     
@@ -11737,7 +11391,7 @@ server <- function(input, output, session) {
     RegRCT <- input$resource_map_region
     SDORCT1 <- input$Resource_SDO
     DistRCT1 <- input$Resource_LegDist
-    LevRCT1 <- input$resource_map_level
+    Lev <- input$resource_map_level
     TypeEFD <- input$EFD_Type
     
     mainreactEFD <- EFDMP %>% 
@@ -11811,9 +11465,9 @@ server <- function(input, output, session) {
     RegRCT <- input$resource_map_region
     SDORCT1 <- input$Resource_SDO
     DistRCT1 <- input$Resource_LegDist
-    LevRCT1 <- input$resource_map_level
+    Lev <- input$resource_map_level
     
-    mainreact1 <- df %>% filter(Region == RegRCT) %>% filter(Division == SDORCT1) %>% filter(Legislative.District == DistRCT1) %>% filter(Level == LevRCT1) %>% arrange(desc(TeacherShortage))
+    mainreact1 <- df %>% filter(Region == RegRCT) %>% filter(Division == SDORCT1) %>% filter(Legislative.District == DistRCT1) %>% filter(Level == Lev) %>% arrange(desc(TeacherShortage))
     
     SDOfillup <- SDO[which(SDO$Division==SDORCT1),"FillUpRate"]
     Unfilled <- SDO[which(SDO$Division==SDORCT1),"Unfilled"]
@@ -11821,7 +11475,7 @@ server <- function(input, output, session) {
     NetShortage <- df %>% select(Region,Division,Level,TeacherShortage,TeacherExcess) %>%
       pivot_longer(cols = c(TeacherExcess, TeacherShortage), names_to = "Inventory", values_to = "Count") %>% mutate(Count=as.numeric(Count)) %>% na.omit(Count) %>% group_by(Region, Division,Level, Inventory) %>% summarize(Count = sum(Count)) %>% pivot_wider(names_from = "Inventory", values_from = "Count") %>% mutate(NetShortage=TeacherShortage-TeacherExcess) %>% mutate(NetShortage = ifelse(NetShortage < 0, 0, NetShortage))
     
-    SDONetShortage <- NetShortage %>% filter(Region == RegRCT) %>% filter(Division == SDORCT1) %>% filter(Level == LevRCT1)
+    SDONetShortage <- NetShortage %>% filter(Region == RegRCT) %>% filter(Division == SDORCT1) %>% filter(Level == Lev)
     
     
     df1 <- reactive({
@@ -12057,7 +11711,7 @@ server <- function(input, output, session) {
     RegRCT <- input$resource_map_region
     SDORCT1 <- input$Resource_SDO
     DistRCT1 <- input$Resource_LegDist
-    LevRCT1 <- input$resource_map_level
+    Lev <- input$resource_map_level
     TypeEFD <- input$EFD_Type
     
     region_selected <- IndALL %>% filter(Region == RegRCT) %>% arrange(Distance)
@@ -14069,64 +13723,6 @@ server <- function(input, output, session) {
     DT::datatable(
       data_to_display,
       options = list(pageLength = 10, scrollX = TRUE),
-      filter = 'top',
-      selection = 'multiple',
-      rownames = FALSE
-    )
-  })
-  
-  output$priority_division_erdb <- DT::renderDT({
-    data_to_display <- full_priority_div_sp 
-    
-    if (is.null(data_to_display) || nrow(data_to_display) == 0) {
-      return(DT::datatable(
-        data.frame("Message" = "No data available based on current selection."),
-        options = list(dom = 't', scrollX = TRUE, fixedColumns = list(leftColumns = 5)),
-        rownames = FALSE
-      ))
-    }
-    
-    DT::datatable(
-      data_to_display,
-      extensions = c("FixedHeader", "FixedColumns", "Buttons"),
-      options = list(
-        pageLength = 10, 
-        scrollX = TRUE,
-        scrollY = 400,
-        fixedHeader = TRUE,
-        fixedColumns = list(leftColumns = 5),
-        dom = 'Bfrtip',
-        buttons = list(
-          list(extend = "csv", exportOptions = list(modifier = list(page = "all"))),
-          list(extend = "excel", exportOptions = list(modifier = list(page = "all"))),
-          list(extend = "print", exportOptions = list(modifier = list(page = "all")))
-        ),
-        
-        # --- NEW CODE ADDED HERE ---
-        columnDefs = list(
-          list(
-            # Apply this rule to columns 5, 6, 7, and 8 (0-indexed)
-            targets = c(6, 7, 8, 9), 
-            # Use a JS function to render the data
-            render = JS(
-              "function(data, type, row, meta) {",
-              "  // 'type' can be 'display', 'sort', 'filter', etc.",
-              "  // We only want to change the 'display' data",
-              "  if (type === 'display' && data !== null && !isNaN(data)) {",
-              "    var s = ['th', 'st', 'nd', 'rd'];",
-              "    var v = data % 100;",
-              "    return data + (s[(v - 20) % 10] || s[v] || s[0]);",
-              "  } else {",
-              "    // For all other types (like 'sort'), use the raw data",
-              "    return data;",
-              "  }",
-              "}"
-            )
-          )
-        )
-        # --- END OF NEW CODE ---
-        
-      ),
       filter = 'top',
       selection = 'multiple',
       rownames = FALSE
@@ -22943,6 +22539,7 @@ authentication_server <- function(input, output, session, user_status,
   observeEvent(input$start_over, {
     session$reload()
   })
+  
   
 }
 
