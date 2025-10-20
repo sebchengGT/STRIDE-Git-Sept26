@@ -3033,6 +3033,8 @@ server <- function(input, output, session) {
             sidebar = sidebar(
               width = 350,
               h6("Data Toggles:"),
+              
+              # Region picker
               pickerInput(
                 inputId = "DataBuilder_HROD_Region",
                 label = "Select a Region:",
@@ -3144,9 +3146,8 @@ server <- function(input, output, session) {
             )
           )
         ),
-
-        # --- Nav Panel 2: Third Level Dashboard ---
         
+        # --- Nav Panel 2: Third Level Dashboard ---
         nav_panel(
           title = tags$b("Third Level Dashboard"),
           layout_sidebar(
@@ -3190,42 +3191,169 @@ server <- function(input, output, session) {
                   title = "No Strand Selected",
                   selectedTextFormat = "count > 3",
                   dropupAuto = FALSE,
-                  dropup = FALSE,
-                  
+                  dropup = FALSE
                 ),
                 choicesOpt = list(
                   style = "white-space: normal; word-break: break-word; overflow-wrap: break-word;"
                 )
-                
-              )),
+              )
+            ),
             
             layout_columns(
               card(
                 full_screen = TRUE,
                 style = "
-      width: 100%;
-      max-height: 85vh;      /* responsive height based on viewport */
-      overflow-y: auto;      /* enables scroll inside card */
-      margin-bottom: 20px;   /* prevents footer overlap */
-    ",
+            width: 100%;
+            max-height: 85vh;
+            overflow-y: auto;
+            margin-bottom: 20px;
+          ",
                 card_header(
                   strong("HROD Data Panel"),
                   style = "
-        font-size: 22px;
-        padding: 15px 20px;
-        text-align: center;
-        background-color: #00234d;
-        border-bottom: 2px solid #dee2e6;
-      "
+              font-size: 22px;
+              padding: 15px 20px;
+              text-align: center;
+              background-color: #00234d;
+              border-bottom: 2px solid #dee2e6;
+            "
                 ),
                 card_body(
                   div(
                     style = "
-          padding: 10px;
-          overflow-x: auto;
-          height: calc(85vh - 80px); /* keep table visible within card */
-        ",
+                padding: 10px;
+                overflow-x: auto;
+                height: calc(85vh - 80px);
+              ",
                     dataTableOutput("ThirdLevel_Table")
+                  )
+                )
+              ),
+              col_widths = c(12)
+            )
+          )
+        ),
+        
+        # --- Nav Panel 3: EFD Database ---
+        nav_panel(
+          title = tags$b("EFD Database"),
+          layout_sidebar(
+            sidebar = sidebar(
+              width = 350,
+              h6("EFD Database Filters:"),
+              
+              # Region (single select)
+              pickerInput(
+                inputId = "EFD_Region",
+                label = "Select Region:",
+                choices = sort(unique(EFDDB$Region)),
+                selected = sort(unique(EFDDB$Region))[1],
+                multiple = FALSE,
+                options = pickerOptions(
+                  liveSearch = TRUE,
+                  header = "Select Region",
+                  title = "No Region Selected",
+                  dropupAuto = FALSE,
+                  dropup = FALSE
+                )
+              ),
+              
+              # Division (multi-select)
+              pickerInput(
+                inputId = "EFD_Division",
+                label = "Select Division:",
+                choices = sort(unique(EFDDB$Division)),
+                multiple = TRUE,
+                options = pickerOptions(
+                  `actions-box` = TRUE,
+                  liveSearch = TRUE,
+                  header = "Select Division(s)",
+                  title = "No Division Selected",
+                  dropupAuto = FALSE,
+                  dropup = FALSE
+                )
+              ),
+              
+              # Legislative District (multi-select)
+              pickerInput(
+                inputId = "EFD_LD",
+                label = "Select Legislative District:",
+                choices = sort(unique(EFDDB$Legislative.District)),
+                multiple = TRUE,
+                options = pickerOptions(
+                  `actions-box` = TRUE,
+                  liveSearch = TRUE,
+                  header = "Select Legislative District(s)",
+                  title = "No Legislative District Selected",
+                  dropupAuto = FALSE,
+                  dropup = FALSE
+                )
+              ),
+              
+              # Barangay (multi-select)
+              pickerInput(
+                inputId = "EFD_Barangay",
+                label = "Select Barangay:",
+                choices = sort(unique(EFDDB$Barangay)),
+                multiple = TRUE,
+                options = pickerOptions(
+                  `actions-box` = TRUE,
+                  liveSearch = TRUE,
+                  header = "Select Barangay(s)",
+                  title = "No Barangay Selected",
+                  dropupAuto = FALSE,
+                  dropup = FALSE
+                )
+              ),
+              
+              # EFD Toggles
+              pickerInput(
+                inputId = "EFD_Toggles",
+                label = strong("EFD Data Toggles"),
+                choices = names(EFDDB)[!names(EFDDB) %in% c(
+                  "Region", "Old.Region", "Division", "SchoolID", "School.Name",
+                  "District", "Legislative.District", "Barangay"
+                )],
+                multiple = TRUE,
+                options = pickerOptions(
+                  `actions-box` = TRUE,
+                  liveSearch = TRUE,
+                  header = "Select Data Columns",
+                  title = "No Data Column Selected",
+                  dropupAuto = FALSE,
+                  dropup = FALSE
+                )
+              )
+            ),
+            
+            layout_columns(
+              card(
+                full_screen = TRUE,
+                style = "
+          width: 100%;
+          max-height: 85vh;
+          overflow-y: auto;
+          margin-bottom: 20px;
+        ",
+                card_header(
+                  strong("EFD Database Panel"),
+                  style = "
+            font-size: 22px;
+            padding: 15px 20px;
+            text-align: center;
+            background-color: #00234d;
+            color: white;
+            border-bottom: 2px solid #dee2e6;
+          "
+                ),
+                card_body(
+                  div(
+                    style = "
+              padding: 10px;
+              overflow-x: auto;
+              height: calc(85vh - 80px);
+            ",
+                    dataTableOutput("EFD_Table")
                   )
                 )
               ),
@@ -3234,7 +3362,6 @@ server <- function(input, output, session) {
           )
         )
       ),
-      
       
       
       # --- Quick School Search ---
@@ -9861,9 +9988,127 @@ server <- function(input, output, session) {
     )
   })
   
+  # --- EFD Database Server Logic ---
   
-  output$explorer_efd_data_table <- DT::renderDT(server = TRUE, {datatable(EFDDB %>% filter(Region == input$explorer_efd_region_filter) %>% filter(Division == input$explorer_efd_SDO) %>% arrange(District), extension = 'Buttons', filter = 'top', options = list(scrollX = TRUE, pageLength = 10, columnDefs = list(list(className = 'dt-center', targets ="_all")), rownames = FALSE, dom = 'Bfrtip', buttons = list('csv','excel','print')))})
+  filtered_EFD_reactive <- reactive({
+    df <- EFDDB
+    
+    # Region (single)
+    if (!is.null(input$EFD_Region) && nzchar(input$EFD_Region)) {
+      df <- df %>% filter(Region == input$EFD_Region)
+    }
+    
+    # Division (multi)
+    if (!is.null(input$EFD_Division) && length(input$EFD_Division) > 0) {
+      df <- df %>% filter(Division %in% input$EFD_Division)
+    }
+    
+    # Legislative District (multi)
+    if (!is.null(input$EFD_LD) && length(input$EFD_LD) > 0) {
+      df <- df %>% filter(Legislative.District %in% input$EFD_LD)
+    }
+    
+    # Barangay (multi)
+    if (!is.null(input$EFD_Barangay) && length(input$EFD_Barangay) > 0) {
+      df <- df %>% filter(Barangay %in% input$EFD_Barangay)
+    }
+    
+    df
+  })
   
+  # --- Render DT (Fixed version) ---
+  output$EFD_Table <- DT::renderDT(server = TRUE, {
+    df <- filtered_EFD_reactive()
+    
+    if (is.null(df) || !is.data.frame(df) || nrow(df) == 0) {
+      return(datatable(data.frame(Message = "No data available for current selection.")))
+    }
+    
+    # Handle toggle columns safely
+    selected_cols <- if (!is.null(input$EFD_Toggles) && length(input$EFD_Toggles) > 0) {
+      intersect(input$EFD_Toggles, names(df))
+    } else {
+      character(0)
+    }
+    
+    # Only atomic columns (avoid lists or nested objects)
+    df <- df %>%
+      mutate(across(where(is.list), ~ sapply(., function(x) {
+        if (length(x) == 0) return(NA)
+        paste(as.character(x), collapse = ", ")
+      })))
+    
+    # Clean and select columns
+    base_cols <- c("Region", "Division", "Legislative.District", "Barangay", "School.Name", "SchoolID")
+    base_cols <- base_cols[base_cols %in% names(df)]
+    
+    display_df <- df %>%
+      mutate(across(where(is.character), ~ stringr::str_replace_all(., "ñ", "n"))) %>%
+      select(all_of(base_cols), any_of(selected_cols))
+    
+    datatable(
+      display_df,
+      extension = 'Buttons',
+      filter = 'top',
+      options = list(
+        scrollX = TRUE,
+        fixedColumns = list(leftColumns = 4),
+        pageLength = 10,
+        columnDefs = list(list(className = 'dt-center', targets = "_all")),
+        rownames = FALSE,
+        dom = 'Bfrtip',
+        buttons = list(
+          list(extend = "csv", exportOptions = list(modifier = list(page = "all"))),
+          list(extend = "excel", exportOptions = list(modifier = list(page = "all"))),
+          list(extend = "print", exportOptions = list(modifier = list(page = "all")))
+        )
+      )
+    )
+  })
+  
+  # =====================================================
+  # DYNAMIC CASCADING PICKER UPDATES
+  # =====================================================
+  
+  observeEvent(input$EFD_Region, {
+    region_data <- EFDDB %>% filter(Region == input$EFD_Region)
+    
+    divs <- sort(unique(region_data$Division))
+    updatePickerInput(session, "EFD_Division", choices = divs, selected = divs[1])
+    
+    lds <- sort(unique(region_data$Legislative.District))
+    updatePickerInput(session, "EFD_LD", choices = lds, selected = lds[1])
+    
+    brgys <- sort(unique(region_data$Barangay))
+    updatePickerInput(session, "EFD_Barangay", choices = brgys, selected = brgys[1])
+  }, ignoreNULL = TRUE, ignoreInit = FALSE)
+  
+  observeEvent(input$EFD_Division, {
+    req(input$EFD_Region)
+    div_data <- EFDDB %>%
+      filter(Region == input$EFD_Region, Division %in% input$EFD_Division)
+    
+    lds <- sort(unique(div_data$Legislative.District))
+    updatePickerInput(session, "EFD_LD", choices = lds, selected = lds[1])
+    
+    brgys <- sort(unique(div_data$Barangay))
+    updatePickerInput(session, "EFD_Barangay", choices = brgys, selected = brgys[1])
+  }, ignoreNULL = TRUE)
+  
+  observeEvent(input$EFD_LD, {
+    req(input$EFD_Region)
+    tmp <- EFDDB %>% filter(Region == input$EFD_Region)
+    if (!is.null(input$EFD_Division) && length(input$EFD_Division) > 0) {
+      tmp <- tmp %>% filter(Division %in% input$EFD_Division)
+    }
+    if (!is.null(input$EFD_LD) && length(input$EFD_LD) > 0) {
+      tmp <- tmp %>% filter(Legislative.District %in% input$EFD_LD)
+    }
+    
+    updatePickerInput(session, "EFD_Barangay",
+                      choices = sort(unique(tmp$Barangay)),
+                      selected = sort(unique(tmp$Barangay))[1])
+  }, ignoreNULL = TRUE)
   output$explorer_masterlist_data_table <- DT::renderDT(server = TRUE, {datatable(EFDMP %>% filter(Region == input$explorer_masterlist_region_filter) %>% filter(Division == input$explorer_masterlist_SDO) %>% arrange(desc(FundingYear)) %>% select(Region, Division, District, SchoolID, School.Name,FundingYear,Category,Allocation,Completion,Status), extension = 'Buttons', filter = 'top', options = list(scrollX = TRUE, pageLength = 10, columnDefs = list(list(className = 'dt-center', targets ="_all")), rownames = FALSE, dom = 'Bfrtip', buttons = list('csv','excel','print')))})
   
   output$explorer_efd_division_filter <- renderUI({
