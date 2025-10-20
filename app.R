@@ -6,6 +6,8 @@
 #TESTINGGGGGGGGGGGGGGGGGGGGGGGGG
 #oct 13, 2025
 #eeee
+#kleinudeeeeeeeeeeee
+#uddddd
 #updated as of oct 17,2025 4:27pm
 library(tidyverse)
 library(DT)
@@ -2899,7 +2901,102 @@ server <- function(input, output, session) {
             )
           ))),
       # --- Second Top-Level Tab: Data Explorer --
-      
+      tags$head(
+        tags$style(HTML("
+/* === FINAL FIX: Consistent Bootstrap-select picker design === */
+
+/* --- Text wrapping and internal spacing --- */
+.bootstrap-select .dropdown-menu li a span.text {
+  white-space: normal !important;
+  word-break: break-word !important;
+  display: inline-block !important;
+  overflow-wrap: anywhere !important;
+  line-height: 1.3em !important;
+  padding-right: 10px !important;
+  max-width: 100% !important;
+}
+
+/* --- Scroll area for dropdown content --- */
+.bootstrap-select .dropdown-menu.inner.show {
+  padding-bottom: 0 !important;
+  margin-bottom: 0 !important;
+  max-height: none !important;
+  overflow-y: auto !important;
+}
+
+/* --- Dropdown menu box consistency --- */
+.bootstrap-select .dropdown-menu {
+  min-width: 100% !important;      /* Make all dropdowns same width as picker */
+  width: 100% !important;
+  white-space: normal !important;
+  border-radius: 6px !important;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
+  padding-bottom: 0 !important;
+  overflow: visible !important;
+  max-height: none !important;
+}
+
+/* --- Picker button (main visible area) --- */
+.bootstrap-select .dropdown-toggle {
+  width: 100% !important;
+  background-color: #f2f2f2 !important;
+  color: #333 !important;
+  border: 1px solid #ccc !important;
+  border-radius: 6px !important;
+  text-align: left !important;
+  padding: 6px 10px !important;
+  font-size: 14px !important;
+  font-weight: 400 !important;
+}
+
+/* --- Ensure dropdown opens BELOW picker --- */
+.bootstrap-select.dropup .dropdown-menu,
+.bootstrap-select:not(.dropup) .dropdown-menu {
+  top: 100% !important;
+  bottom: auto !important;
+  transform: none !important;
+}
+
+/* --- Clean hover for navbar dropdowns (still included) --- */
+.navbar .dropdown-menu > li > a:hover,
+.bslib-navbar .dropdown-menu > li > a:hover {
+  background-color: #2c3895 !important;
+  color: white !important;
+}
+
+/* --- Scrollbar styling for long dropdowns --- */
+.bootstrap-select .dropdown-menu.inner::-webkit-scrollbar {
+  width: 8px;
+}
+
+.bootstrap-select .dropdown-menu.inner::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
+}
+
+.bootstrap-select .dropdown-menu.inner::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(0, 0, 0, 0.35);
+}
+
+/* --- Consistent picker height and spacing --- */
+.bootstrap-select {
+  width: 100% !important;
+  margin-bottom: 10px !important;
+}
+
+.bootstrap-select .filter-option-inner-inner {
+  text-overflow: ellipsis !important;
+  overflow: hidden !important;
+  white-space: nowrap !important;
+}
+
+/* --- Prevent dropdown from cutting off --- */
+.bootstrap-select .dropdown-menu.show {
+  z-index: 9999 !important;
+}
+  "))
+      )
+      ,
       nav_menu(
         title = tags$b("Data Explorer"),  # Dropdown menu
         icon = bs_icon("table"),
@@ -2916,7 +3013,7 @@ server <- function(input, output, session) {
                 label = "Select a Region:",
                 choices = sort(unique(uni$Region)),
                 selected = sort(unique(uni$Region)),
-                multiple = TRUE,
+                multiple = FALSE,
                 options = pickerOptions(
                   actionsBox = TRUE,
                   liveSearch = TRUE,
@@ -3022,41 +3119,9 @@ server <- function(input, output, session) {
             )
           )
         ),
-        tags$head(
-          tags$style(HTML("
 
-    /* Allow long option labels to wrap to next line */
-    .bootstrap-select .dropdown-menu li a span.text {
-      white-space: normal !important;
-      word-break: break-word !important;
-      display: inline-block !important;
-    }
-
-    /* ===== NAVBAR DROPDOWN FIX ===== */
-    .navbar .dropdown-menu,
-    .bslib-navbar .dropdown-menu {
-      width: auto !important;
-      min-width: 220px !important;
-      text-align: left !important;
-      white-space: nowrap !important;
-      word-wrap: normal !important;
-      border-radius: 6px !important;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.1) !important;
-      margin-top: 4px !important; /* reduce dropdown gap */
-      margin-bottom: 4px !important;
-    }
-  
-    /* Hover effect */
-    .navbar .dropdown-menu > li > a:hover,
-    .bslib-navbar .dropdown-menu > li > a:hover {
-      background-color: #2c3895 !important;
-      color: white !important;
-    }
-   
-  "))
-        )
-        ,
         # --- Nav Panel 2: Third Level Dashboard ---
+        
         nav_panel(
           title = tags$b("Third Level Dashboard"),
           layout_sidebar(
@@ -3356,15 +3421,15 @@ server <- function(input, output, session) {
             
             # --- Start of Tabset (now ABOVE the summary cards) ---
             navset_tab(
-              nav_panel("Regional Breakdown",
-                        plotlyOutput("Teaching_Deployment_Region_Graph")
-              ),
+              # nav_panel("Regional Breakdown",
+              #           plotlyOutput("Teaching_Deployment_Region_Graph")
+              # ),
               # nav_panel("Priority Divisions",
               #           plotlyOutput("Teaching_Deployment_Division_Graph1")
               # ),
-              nav_panel("Dataset",
-                        dataTableOutput("Teaching_Deployment_Dataset")
-              )
+              # nav_panel("Dataset",
+              #           dataTableOutput("Teaching_Deployment_Dataset")
+              # )
             ),
             # --- End of Tabset ---
             
@@ -3541,9 +3606,9 @@ server <- function(input, output, session) {
                 # Start of Tabset
                 navset_tab(
                   # Tab 1: Regional Classroom Breakdown (Your existing content)
-                  nav_panel("Regional Breakdown",
-                            plotlyOutput("Classroom_Shortage_Region_Graph2")
-                  ),
+                  # nav_panel("Regional Breakdown",
+                  #           plotlyOutput("Classroom_Shortage_Region_Graph2")
+                  # ),
                   # Tab 2: Division Classroom Shortage Breakdown (The new tab)
                   # nav_panel("Priority Divisions",
                   #           plotlyOutput("Classroom_Shortage_Division_Graph2")
@@ -3850,9 +3915,9 @@ server <- function(input, output, session) {
                 # Start of Tabset
                 navset_tab(
                   # Tab 1: Regional Breakdown (Your existing content)
-                  nav_panel("Regional Breakdown",
-                            plotlyOutput("LMS_Nation_Graph2")
-                  ),
+                  # nav_panel("Regional Breakdown",
+                  #           plotlyOutput("LMS_Nation_Graph2")
+                  # ),
                   # # Tab 2: Division Breakdown (The new tab)
                   # nav_panel("Priority Divisions",
                   #           plotlyOutput("LMS_Division_Graph2")
