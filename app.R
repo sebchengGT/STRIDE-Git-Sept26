@@ -35,6 +35,8 @@ library(googlesheets4)
 library(DBI)
 library(RPostgres)
 library(pool)
+library(reactable)
+library(reactablefmtr)
 
 
 # HROD Data Upload
@@ -1128,162 +1130,195 @@ server <- function(input, output, session) {
     return(p)
   })
   
-  # output$priority_division_erdb <- DT::renderDT({
-  #   
-  #   priority_df <- df %>%
-  #     group_by(Division) %>%
-  #     summarise(Count_TeacherShortage = sum(as.numeric(TeacherShortage), na.rm = TRUE), .groups = 'drop') %>%
-  #     arrange(desc(Count_TeacherShortage)) %>%
-  #     mutate(Rank_TeacherShortage = row_number())
-  #   
-  #   priority_classroom <- LMS %>%
-  #     group_by(Division) %>%
-  #     summarise(Count_ClassroomShortage = sum(as.numeric(Estimated_CL_Shortage), na.rm = TRUE), .groups = 'drop') %>%
-  #     arrange(desc(Count_ClassroomShortage)) %>%
-  #     mutate(Rank_ClassroomShortage = row_number())
-  #   
-  #   priority_SP <- uni %>% # Using base uni data
-  #     filter(Designation != "School Principal") %>% # Applying original filter
-  #     group_by(Division) %>%
-  #     summarise(Count_SPShortage = n(), .groups = 'drop') %>%
-  #     arrange(desc(Count_SPShortage)) %>%
-  #     mutate(Rank_SPShortage = row_number())
-  #   
-  #   full_data <- LMS %>%
-  #     rename(
-  #       "With Buildable Space" = Buildable_space,
-  #       "With Excess Classrooms" = With_Excess,
-  #       "Without Classroom Shortage" = Without_Shortage,
-  #       "Last Mile Schools" = LMS,
-  #       "GIDCA" = GIDCA,
-  #       "With Shortage" = With_Shortage
-  #     ) %>%
-  #     pivot_longer(13:18, names_to = "Type", values_to = "Count")
-  #   
-  #   # --- Keep only "Last Mile Schools", aggregate, and add rank ---
-  #   plot_LMS <- full_data %>%
-  #     filter(Type == "Last Mile Schools") %>%
-  #     group_by(Division) %>%
-  #     summarise(
-  #       Count_LastMileSchools = sum(as.numeric(Count), na.rm = TRUE),
-  #       .groups = "drop"
-  #     ) %>%
-  #     # Sort and rank
-  #     arrange(desc(Count_LastMileSchools)) %>%
-  #     mutate(Rank_LastMileSchools = row_number())
-  #   
-  #   # Full join priority_df and priority_classroom
-  #   combined_df <- full_join(
-  #     priority_df,
-  #     priority_classroom,
-  #     by = "Division"
-  #   )
-  #   
-  #   # Full join the result with plot_LMS
-  #   full_priority_div <- full_join(
-  #     combined_df,
-  #     plot_LMS,
-  #     by = "Division"
-  #   )
-  #   
-  #   # Full join the result with priority_SP
-  #   full_priority_div_sp <- full_join(
-  #     full_priority_div,
-  #     priority_SP,
-  #     by = "Division"
-  #   ) %>% 
-  #     left_join(uni %>% select(Region,Division), by = "Division") %>% 
-  #     distinct() %>%
-  #     
-  #     # Rename columns to friendly names
-  #     rename(
-  #       "Teacher Shortage" = Count_TeacherShortage,
-  #       "Teacher Shortage Rank" = Rank_TeacherShortage,
-  #       "Classroom Shortage" = Count_ClassroomShortage,
-  #       "Classroom Shortage Rank" = Rank_ClassroomShortage,
-  #       "Last Mile Schools" = Count_LastMileSchools,
-  #       "Last Mile Schools Rank" = Rank_LastMileSchools,
-  #       "School Principal Shortage" = Count_SPShortage,
-  #       "School Principal Shortage Rank" = Rank_SPShortage
-  #     ) %>%
-  #     
-  #     # Select and order the columns logically (All Counts, then All Ranks)
-  #     select(
-  #       Region,
-  #       Division,
-  #       
-  #       # --- All Counts (Non-Rank) Columns ---
-  #       "Teacher Shortage",
-  #       "School Principal Shortage",
-  #       "Classroom Shortage",
-  #       "Last Mile Schools",
-  #       
-  #       # --- All Rank Columns ---
-  #       "Teacher Shortage Rank",
-  #       "School Principal Shortage Rank",
-  #       "Classroom Shortage Rank",
-  #       "Last Mile Schools Rank"
-  #     ) %>%
-  #     
-  #     # Sort by Division (optional but often helpful)
-  #     arrange(Division)
-  #   
-  #   data_to_display <- full_priority_div_sp 
-  #   
-  #   if (is.null(data_to_display) || nrow(data_to_display) == 0) {
-  #     return(DT::datatable(
-  #       data.frame("Message" = "No data available based on current selection."),
-  #       options = list(dom = 't', scrollX = TRUE, fixedColumns = list(leftColumns = 5)),
-  #       rownames = FALSE
-  #     ))
-  #   }
-  #   
-  #   DT::datatable(
-  #     data_to_display,
-  #     extensions = c("FixedHeader", "FixedColumns", "Buttons"),
-  #     options = list(
-  #       pageLength = 10, 
-  #       scrollX = TRUE,
-  #       scrollY = 400,
-  #       fixedHeader = TRUE,
-  #       fixedColumns = list(leftColumns = 5),
-  #       dom = 'Bfrtip',
-  #       buttons = list(
-  #         list(extend = "csv", exportOptions = list(modifier = list(page = "all"))),
-  #         list(extend = "excel", exportOptions = list(modifier = list(page = "all"))),
-  #         list(extend = "print", exportOptions = list(modifier = list(page = "all")))
-  #       ),
-  #       
-  #       # --- NEW CODE ADDED HERE ---
-  #       columnDefs = list(
-  #         list(
-  #           # Apply this rule to columns 5, 6, 7, and 8 (0-indexed)
-  #           targets = c(6, 7, 8, 9), 
-  #           # Use a JS function to render the data
-  #           render = JS(
-  #             "function(data, type, row, meta) {",
-  #             "  // 'type' can be 'display', 'sort', 'filter', etc.",
-  #             "  // We only want to change the 'display' data",
-  #             "  if (type === 'display' && data !== null && !isNaN(data)) {",
-  #             "    var s = ['th', 'st', 'nd', 'rd'];",
-  #             "    var v = data % 100;",
-  #             "    return data + (s[(v - 20) % 10] || s[v] || s[0]);",
-  #             "  } else {",
-  #             "    // For all other types (like 'sort'), use the raw data",
-  #             "    return data;",
-  #             "  }",
-  #             "}"
-  #           )
-  #         )
-  #       )
-  #       # --- END OF NEW CODE ---
-  #       
-  #     ),
-  #     filter = 'top',
-  #     selection = 'multiple',
-  #     rownames = FALSE
-  #   )
-  # })
+  # In your server.R or server function
+  
+  # --- A. NEW: Create a Reactive Expression for Your Data ---
+  # All your data prep logic now lives here.
+  # This is efficient because the data is prepped only ONCE
+  # and shared by the table and the download button.
+  
+  priority_data_reactive <- reactive({
+    
+    # --- Data Preparation (Your existing code) ---
+    priority_df <- df %>%
+      group_by(Division) %>%
+      summarise(Count_TeacherShortage = sum(as.numeric(TeacherShortage), na.rm = TRUE), .groups = 'drop') %>%
+      arrange(desc(Count_TeacherShortage)) %>%
+      mutate(Rank_TeacherShortage = row_number())
+    
+    priority_classroom <- LMS %>%
+      group_by(Division) %>%
+      summarise(Count_ClassroomShortage = sum(as.numeric(Estimated_CL_Shortage), na.rm = TRUE), .groups = 'drop') %>%
+      arrange(desc(Count_ClassroomShortage)) %>%
+      mutate(Rank_ClassroomShortage = row_number())
+    
+    priority_SP <- uni %>% 
+      filter(Designation != "School Principal") %>% 
+      group_by(Division) %>%
+      summarise(Count_SPShortage = n(), .groups = 'drop') %>%
+      arrange(desc(Count_SPShortage)) %>%
+      mutate(Rank_SPShortage = row_number())
+    
+    priority_LMS <- LMS %>%
+      rename(
+        "With Buildable Space" = Buildable_space,
+        "With Excess Classrooms" = With_Excess,
+        "Without Classroom Shortage" = Without_Shortage,
+        "Last Mile Schools" = LMS,
+        "GIDCA" = GIDCA,
+        "With Shortage" = With_Shortage
+      ) %>%
+      pivot_longer(starts_with(c("With_", "Without_", "Last Mile", "GIDCA")), names_to = "Type", values_to = "Count") %>%
+      filter(Type == "Last Mile Schools") %>%
+      group_by(Division) %>%
+      summarise(
+        Count_LastMileSchools = sum(as.numeric(Count), na.rm = TRUE),
+        .groups = "drop"
+      ) %>%
+      arrange(desc(Count_LastMileSchools)) %>%
+      mutate(Rank_LastMileSchools = row_number())
+    
+    combined_df <- full_join(
+      priority_df,
+      priority_classroom,
+      by = "Division"
+    )
+    
+    full_priority_div <- full_join(
+      combined_df,
+      priority_LMS,
+      by = "Division"
+    )
+    
+    data_to_display <- full_join(
+      full_priority_div,
+      priority_SP,
+      by = "Division"
+    ) %>%
+      left_join(uni %>% select(Region,Division), by = "Division") %>%
+      distinct() %>%
+      
+      # Handle blank/NA Regions
+      mutate(Region = if_else(is.na(Region) | Region == "", "BARMM", Region)) %>%
+      
+      rename(
+        "Teacher Shortage" = Count_TeacherShortage,
+        "Teacher Shortage Rank" = Rank_TeacherShortage,
+        "Classroom Shortage" = Count_ClassroomShortage,
+        "Classroom Shortage Rank" = Rank_ClassroomShortage,
+        "Last Mile Schools" = Count_LastMileSchools,
+        "Last Mile Schools Rank" = Rank_LastMileSchools,
+        "School Principal Shortage" = Count_SPShortage,
+        "School Principal Shortage Rank" = Rank_SPShortage
+      ) %>%
+      select(
+        Region,
+        Division,
+        "Teacher Shortage",
+        "School Principal Shortage",
+        "Classroom Shortage",
+        "Last Mile Schools",
+        "Teacher Shortage Rank",
+        "School Principal Shortage Rank",
+        "Classroom Shortage Rank",
+        "Last Mile Schools Rank"
+      ) %>%
+      arrange(Division)
+    
+    # Return the final data frame
+    return(data_to_display)
+  })
+  
+  
+  # --- B. MODIFIED: Your renderReactable ---
+  # This is now much simpler. It just GETS the data
+  # from the reactive expression above.
+  
+  output$priority_division_erdb <- reactable::renderReactable({
+    
+    # Get the data from our new reactive expression
+    data_to_display <- priority_data_reactive()
+    
+    # --- Custom Rank Formatting Function (Stays here) ---
+    add_rank_suffix <- function(rank) {
+      if (is.null(rank) || is.na(rank)) {
+        return("-")
+      }
+      rank_int <- as.integer(rank)
+      formatted_rank <- paste0(
+        rank_int,
+        case_when(
+          rank_int %in% c(11, 12, 13) ~ "th",
+          rank_int %% 10 == 1 ~ "st",
+          rank_int %% 10 == 2 ~ "nd",
+          rank_int %% 10 == 3 ~ "rd",
+          TRUE ~ "th"
+        )
+      )
+      return(formatted_rank)
+    }
+    
+    # --- reactable Output ---
+    if (is.null(data_to_display) || nrow(data_to_display) == 0) {
+      return(
+        reactable::reactable(
+          data.frame("Message" = "No data available based on current selection."),
+          filterable = FALSE, 
+          searchable = FALSE
+        )
+      )
+    }
+    
+    reactable::reactable(
+      data_to_display,
+      filterable = TRUE,
+      searchable = TRUE,
+      defaultPageSize = 15,
+      
+      # MODIFICATION: Removed 'downloadable = TRUE'
+      showPageSizeOptions = TRUE,
+      pageSizeOptions = c(15, 25, 50, 100),
+      
+      sortable = TRUE,
+      wrap = FALSE,
+      columns = list(
+        "Teacher Shortage" = reactable::colDef(na = "-", sortNALast = TRUE, align = "center"),
+        "School Principal Shortage" = reactable::colDef(na = "-", sortNALast = TRUE, align = "center"),
+        "Classroom Shortage" = reactable::colDef(na = "-", sortNALast = TRUE, align = "center"),
+        "Last Mile Schools" = reactable::colDef(na = "-", sortNALast = TRUE, align = "center"),
+        "Teacher Shortage Rank" = reactable::colDef(cell = function(value, index) { add_rank_suffix(value) }, sortNALast = TRUE, align = "center", width = 120),
+        "School Principal Shortage Rank" = reactable::colDef(cell = function(value, index) { add_rank_suffix(value) }, sortNALast = TRUE, align = "center", width = 120),
+        "Classroom Shortage Rank" = reactable::colDef(cell = function(value, index) { add_rank_suffix(value) }, sortNALast = TRUE, align = "center", width = 120),
+        "Last Mile Schools Rank" = reactable::colDef(cell = function(value, index) { add_rank_suffix(value) }, sortNALast = TRUE, align = "center", width = 120),
+        Region = reactable::colDef(sticky = "left"),
+        Division = reactable::colDef(sticky = "left")
+      )
+    )
+  })
+  
+  # --- C. NEW: Add the downloadHandler ---
+  # This powers the button you made in the UI.
+  # It uses the SAME reactive data.
+  
+  output$download_priority_data <- downloadHandler(
+    
+    # This sets the name of the file the user will download
+    filename = function() {
+      paste0("priority-division-data-", Sys.Date(), ".csv")
+    },
+    
+    # This function writes the data to the file
+    content = function(file) {
+      # Get the data from our reactive expression
+      data_for_csv <- priority_data_reactive()
+      
+      # Write the data to the 'file' path
+      # NOTE: The downloaded CSV will have the raw data
+      # (e.g., numeric ranks "1", "2", not "1st", "2nd")
+      # which is usually what users want for export.
+      readr::write_csv(data_for_csv, file)
+    }
+  )
   
   
   output$StrideLogo <- renderImage({
@@ -1888,7 +1923,6 @@ server <- function(input, output, session) {
           hr(),
         card(
           full_screen = TRUE,
-          height = 800,
           card_header("Priority Divisions"),
           
           # --- NEW CODE: Use layout_column_wrap to format the plots ---
@@ -1916,10 +1950,18 @@ server <- function(input, output, session) {
               full_screen = TRUE,
               card_header("Last Mile School Priorities"),
               plotlyOutput("LMS_Division_Graph2")
-            )
+            )),
+          card(
+            full_screen = TRUE,
+            card_header("SDO Ranking"),
+            height = 800,
+            reactable::reactableOutput("priority_division_erdb"),
+            hr(), # Adds a horizontal line
+            downloadButton(
+              "download_priority_data",  # This is the ID for the server
+              "Download SDO Ranking as CSV", class = "btn-success"   # This is the text on the button
           )
-           # dataTableOutput("priority_division_erdb")
-        )),
+        ))),
               
         #   navset_card_pill(
         #     nav_spacer(),
@@ -10199,6 +10241,11 @@ server <- function(input, output, session) {
   
   observeEvent(input$Mapping_Run, {
     req(df)
+    req(LMS)
+    req(uni)
+    req(input$resource_map_region)
+    req(input$Resource_SDO)
+    req(input$Resource_LegDist)
     
     # --- Apply filters ---
     filtered_data <- df
