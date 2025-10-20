@@ -6,6 +6,8 @@
 #TESTINGGGGGGGGGGGGGGGGGGGGGGGGG
 #oct 13, 2025
 #eeee
+#kleinudeeeeeeeeeeee
+#uddddd
 #updated as of oct 17,2025 4:27pm
 library(tidyverse)
 library(DT)
@@ -100,27 +102,8 @@ user_base <- tibble::tibble(
   name = c("User One", "User Two")
 )
 
-login_register_UI <- function(id) {
-  ns <- NS(id)
-  
-  # Use bslib::card for a contained, stylish panel
-  card(
-    # Use bslib::card_header for a title
-    card_header(
-      class = "bg-dark text-white",
-      "Cloud App Authentication"
-    ),
-    # Content of the card
-    div(
-      class = "d-flex justify-content-center mb-3", # Use Bootstrap utility classes
-      # The main panel for login/register choice using a tab-like navigation
-      uiOutput(ns("form_selector_ui"))
-    ),
-    
-    # The actual form (either login or register) displayed inside the card body
-    uiOutput(ns("dynamic_form_ui"))
-  )
-}
+
+
 
 SERVICE_ACCOUNT_FILE <- "service_account.json" 
 
@@ -184,23 +167,27 @@ ui <- page_fluid(
   ),
   
   # Header (always visible)
-  tags$div(
-    class = "app-header",
-    style = "display: flex; align-items: center; gap: 15px; justify-content: center;",
-    
-    # Logo
-    tags$img(src = "logo3.png", class = "header-logo-left"),
-    
-    # Center text
+  shinyjs::hidden(
     tags$div(
-      class = "header-title",
-      h2("DepEd STRIDE Dashboard"),
-      p("STRIDE: Strategic Inventory for Deployment Efficiency")
-    ),
-    
-    # Right logo
-    tags$img(src = "HROD LOGO1.png", class = "header-logo-right")
+      id = "app_header",
+      class = "app-header",
+      style = "display: flex; align-items: center; gap: 15px; justify-content: center;",
+      
+      # Left logo
+      tags$img(src = "logo3.png", class = "header-logo-left"),
+      
+      # Center text
+      tags$div(
+        class = "header-title",
+        h2("DepEd STRIDE"),
+        p("STRIDE: Strategic Inventory for Deployment Efficiency")
+      ),
+      
+      # Right logo
+      tags$img(src = "HROD LOGO1.png", class = "header-logo-right")
+    )
   ),
+  
   
   # 💡 CRITICAL FIX: The dynamic container for login/main app UI
   uiOutput("page_ui"),
@@ -240,9 +227,11 @@ ui <- page_fluid(
   ),
   
   # Footer (always visible)
-  tags$footer(
-    class = "app-footer",
-    tags$p("© Based on GMIS (April 2025) and eBEIS (SY 2024–2025)"))
+  shinyjs::hidden(
+    tags$footer(
+      id = "app_footer",
+      class = "app-footer",
+      tags$p("© Based on GMIS (April 2025) and eBEIS (SY 2024–2025)")))
 )
 
 
@@ -250,6 +239,62 @@ ui <- page_fluid(
 
 # Define server logic required to draw a histogram
 server <- function(input, output, session) {
+  
+  current_region <- reactiveVal(NULL)
+  current_division <- reactiveVal(NULL)
+  
+  output$backButtonUI <- renderUI({
+    # Only show the button if a region is currently selected
+    if (!is.null(current_region()) || !is.null(current_division())) {
+      actionButton("go_back", "⬅️ Back")
+    }
+  })
+  
+  observeEvent(input$go_back, {
+    
+    # Step 1: If we are viewing a Division breakdown, go back to the Region breakdown
+    if (!is.null(current_division())) {
+      current_division(NULL)
+      cat("State change: Returned to Region view.\n")
+    } 
+    
+    # Step 2: Else, if we are viewing a Region breakdown, go back to the Overall view
+    else if (!is.null(current_region())) {
+      current_region(NULL)
+      cat("State change: Returned to Overall view.\n")
+    }
+    
+    # Note: You do not need an 'else' block, as the button won't be visible 
+    # unless one of these reactive values is set (thanks to renderUI).
+  })
+  
+  # Hide header/footer when not authenticated; show when authenticated
+  observe({
+    # user_status is defined earlier in your server (values: "unauthenticated", "login", "register", "authenticated")
+    if (isTRUE(user_status() == "authenticated")) {
+      shinyjs::show("app_header")
+      shinyjs::show("app_footer")
+    } else {
+      shinyjs::hide("app_header")
+      shinyjs::hide("app_footer")
+    }
+  })
+  
+  observe({
+    mode <- if (user_status() == "authenticated") "app" else "login"
+    session$sendCustomMessage("setLoginMode", ifelse(mode == "login", "login", "app"))
+  })
+  
+  observe({
+    if (user_status() == "authenticated") {
+      shinyjs::show("app_header")
+      shinyjs::show("app_footer")
+    } else {
+      shinyjs::hide("app_header")
+      shinyjs::hide("app_footer")
+    }
+  })
+  
   
   output$StrideLogo <- renderImage({
     image_path <- normalizePath(file.path('www', 'STRIDE logo.png'))
@@ -2856,7 +2901,102 @@ server <- function(input, output, session) {
             )
           ))),
       # --- Second Top-Level Tab: Data Explorer --
-      
+      tags$head(
+        tags$style(HTML("
+/* === FINAL FIX: Consistent Bootstrap-select picker design === */
+
+/* --- Text wrapping and internal spacing --- */
+.bootstrap-select .dropdown-menu li a span.text {
+  white-space: normal !important;
+  word-break: break-word !important;
+  display: inline-block !important;
+  overflow-wrap: anywhere !important;
+  line-height: 1.3em !important;
+  padding-right: 10px !important;
+  max-width: 100% !important;
+}
+
+/* --- Scroll area for dropdown content --- */
+.bootstrap-select .dropdown-menu.inner.show {
+  padding-bottom: 0 !important;
+  margin-bottom: 0 !important;
+  max-height: none !important;
+  overflow-y: auto !important;
+}
+
+/* --- Dropdown menu box consistency --- */
+.bootstrap-select .dropdown-menu {
+  min-width: 100% !important;      /* Make all dropdowns same width as picker */
+  width: 100% !important;
+  white-space: normal !important;
+  border-radius: 6px !important;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
+  padding-bottom: 0 !important;
+  overflow: visible !important;
+  max-height: none !important;
+}
+
+/* --- Picker button (main visible area) --- */
+.bootstrap-select .dropdown-toggle {
+  width: 100% !important;
+  background-color: #f2f2f2 !important;
+  color: #333 !important;
+  border: 1px solid #ccc !important;
+  border-radius: 6px !important;
+  text-align: left !important;
+  padding: 6px 10px !important;
+  font-size: 14px !important;
+  font-weight: 400 !important;
+}
+
+/* --- Ensure dropdown opens BELOW picker --- */
+.bootstrap-select.dropup .dropdown-menu,
+.bootstrap-select:not(.dropup) .dropdown-menu {
+  top: 100% !important;
+  bottom: auto !important;
+  transform: none !important;
+}
+
+/* --- Clean hover for navbar dropdowns (still included) --- */
+.navbar .dropdown-menu > li > a:hover,
+.bslib-navbar .dropdown-menu > li > a:hover {
+  background-color: #2c3895 !important;
+  color: white !important;
+}
+
+/* --- Scrollbar styling for long dropdowns --- */
+.bootstrap-select .dropdown-menu.inner::-webkit-scrollbar {
+  width: 8px;
+}
+
+.bootstrap-select .dropdown-menu.inner::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
+}
+
+.bootstrap-select .dropdown-menu.inner::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(0, 0, 0, 0.35);
+}
+
+/* --- Consistent picker height and spacing --- */
+.bootstrap-select {
+  width: 100% !important;
+  margin-bottom: 10px !important;
+}
+
+.bootstrap-select .filter-option-inner-inner {
+  text-overflow: ellipsis !important;
+  overflow: hidden !important;
+  white-space: nowrap !important;
+}
+
+/* --- Prevent dropdown from cutting off --- */
+.bootstrap-select .dropdown-menu.show {
+  z-index: 9999 !important;
+}
+  "))
+      )
+      ,
       nav_menu(
         title = tags$b("Data Explorer"),  # Dropdown menu
         icon = bs_icon("table"),
@@ -2873,7 +3013,7 @@ server <- function(input, output, session) {
                 label = "Select a Region:",
                 choices = sort(unique(uni$Region)),
                 selected = sort(unique(uni$Region)),
-                multiple = TRUE,
+                multiple = FALSE,
                 options = pickerOptions(
                   actionsBox = TRUE,
                   liveSearch = TRUE,
@@ -2979,41 +3119,9 @@ server <- function(input, output, session) {
             )
           )
         ),
-        tags$head(
-          tags$style(HTML("
 
-    /* Allow long option labels to wrap to next line */
-    .bootstrap-select .dropdown-menu li a span.text {
-      white-space: normal !important;
-      word-break: break-word !important;
-      display: inline-block !important;
-    }
-
-    /* ===== NAVBAR DROPDOWN FIX ===== */
-    .navbar .dropdown-menu,
-    .bslib-navbar .dropdown-menu {
-      width: auto !important;
-      min-width: 220px !important;
-      text-align: left !important;
-      white-space: nowrap !important;
-      word-wrap: normal !important;
-      border-radius: 6px !important;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.1) !important;
-      margin-top: 4px !important; /* reduce dropdown gap */
-      margin-bottom: 4px !important;
-    }
-  
-    /* Hover effect */
-    .navbar .dropdown-menu > li > a:hover,
-    .bslib-navbar .dropdown-menu > li > a:hover {
-      background-color: #2c3895 !important;
-      color: white !important;
-    }
-   
-  "))
-        )
-        ,
         # --- Nav Panel 2: Third Level Dashboard ---
+        
         nav_panel(
           title = tags$b("Third Level Dashboard"),
           layout_sidebar(
@@ -3313,15 +3421,15 @@ server <- function(input, output, session) {
             
             # --- Start of Tabset (now ABOVE the summary cards) ---
             navset_tab(
-              nav_panel("Regional Breakdown",
-                        plotlyOutput("Teaching_Deployment_Region_Graph")
-              ),
+              # nav_panel("Regional Breakdown",
+              #           plotlyOutput("Teaching_Deployment_Region_Graph")
+              # ),
               # nav_panel("Priority Divisions",
               #           plotlyOutput("Teaching_Deployment_Division_Graph1")
               # ),
-              nav_panel("Dataset",
-                        dataTableOutput("Teaching_Deployment_Dataset")
-              )
+              # nav_panel("Dataset",
+              #           dataTableOutput("Teaching_Deployment_Dataset")
+              # )
             ),
             # --- End of Tabset ---
             
@@ -3498,9 +3606,9 @@ server <- function(input, output, session) {
                 # Start of Tabset
                 navset_tab(
                   # Tab 1: Regional Classroom Breakdown (Your existing content)
-                  nav_panel("Regional Breakdown",
-                            plotlyOutput("Classroom_Shortage_Region_Graph2")
-                  ),
+                  # nav_panel("Regional Breakdown",
+                  #           plotlyOutput("Classroom_Shortage_Region_Graph2")
+                  # ),
                   # Tab 2: Division Classroom Shortage Breakdown (The new tab)
                   # nav_panel("Priority Divisions",
                   #           plotlyOutput("Classroom_Shortage_Division_Graph2")
@@ -3807,9 +3915,9 @@ server <- function(input, output, session) {
                 # Start of Tabset
                 navset_tab(
                   # Tab 1: Regional Breakdown (Your existing content)
-                  nav_panel("Regional Breakdown",
-                            plotlyOutput("LMS_Nation_Graph2")
-                  ),
+                  # nav_panel("Regional Breakdown",
+                  #           plotlyOutput("LMS_Nation_Graph2")
+                  # ),
                   # # Tab 2: Division Breakdown (The new tab)
                   # nav_panel("Priority Divisions",
                   #           plotlyOutput("LMS_Division_Graph2")
@@ -21978,20 +22086,36 @@ server <- function(input, output, session) {
   # --- UI Rendering Logic ---
   
   # Main dynamic UI switch
+  # 1️⃣  Define the reusable UI function FIRST
+  login_register_UI <- function(id) {
+    ns <- NS(id)
+    
+    tagList(
+      # Fullscreen bubble background (30 bubbles)
+      div(
+        class = "bubble-bg",
+        lapply(1:30, function(i) div(class = paste0("bubble b", i)))
+      ),
+      
+      # Render the UI produced by the authentication module
+      uiOutput(ns("auth_page"))
+    )
+  }
+  
+  
+  # 2️⃣  Define the main dynamic page switch
   output$page_ui <- renderUI({
     status <- user_status()
-    current_user <- authenticated_user() # Retrieve the currently logged-in user
+    current_user <- authenticated_user()  # Retrieve logged-in user
     
+    # ✅ AUTHENTICATED USERS
     if (status == "authenticated" && !is.null(current_user)) {
-      # 1. Get the full user row from the database based on the authenticated username
       users_db <- user_database()
       user_row <- users_db[users_db$Email_Address == current_user, ]
       
-      # Ensure the user still exists and has a station
       if (nrow(user_row) == 1) {
-        station <- user_row$Station[1] # Use the Station value
+        station <- user_row$Station[1]
         
-        # 2. Switch UI based on the Station
         if (station == "Central Office") {
           shinyjs::hide("data_input_content")
           shinyjs::show("mgmt_content")
@@ -22001,33 +22125,26 @@ server <- function(input, output, session) {
           shinyjs::hide("main_content")
           shinyjs::hide("mgmt_content")
         } else {
-          # Default UI for other stations (Regional Office, SDO, etc.)
-          # You can add more specific UIs here if needed
-          return(card(card_header("Application Dashboard"), 
-                      h2(paste("Welcome,", station, "User!")), 
-                      actionButton("main_app-logout", "Logout", class = "btn-danger")))
+          return(card(
+            card_header("Application Dashboard"),
+            h2(paste("Welcome,", station, "User!")),
+            actionButton("main_app-logout", "Logout", class = "btn-danger")
+          ))
         }
         return(NULL)
       }
     }
     
-    # If unauthenticated, or user data not found, show login/register
-    # Center the login card on the page when unauthenticated
-    div(
-      class = "d-flex justify-content-center align-items-center", 
-      style = "height: 80vh;", # Use full viewport height for centering
-      div(style = "width: 400px; max-width: 90%;", # Set a max width for the card
-          login_register_UI("auth")
-      )
-    )
+    # ✅ UNAUTHENTICATED USERS — show login/register page
+    login_register_UI("auth")
   })
   
-  # --- Authentication Module (Login/Register Forms) ---
-  # CRITICAL FIX: Only call the module ONCE at the start of the server.
-  # 💡 NEW: Pass the authenticated_user reactiveVal to the module
+  
+  # 3️⃣  Activate the authentication module
   callModule(authentication_server, "auth", 
              user_status, form_choice, SHEET_URL, user_database, db_trigger, 
-             authenticated_user) # Pass the new reactive
+             authenticated_user)
+  # Pass the new reactive
   
   # --- Main App Module ---
   
@@ -22043,89 +22160,113 @@ server <- function(input, output, session) {
 # --- Authentication Server (Handles the logic for login and registration) ---
 authentication_server <- function(input, output, session, user_status, 
                                   form_choice, sheet_url, user_database, db_trigger, 
-                                  authenticated_user) { # 💡 NEW: Receive the reactive
+                                  authenticated_user) {
+  ns <- session$ns
   
-  # ... (form_selector_ui and dynamic_form_ui remain mostly the same) ...
-  
-  # 1. UI for selecting Login or Register
-  output$form_selector_ui <- renderUI({
-    list(
-      # The form selector now uses an input group style with btn-group
-      div(
-        class = "btn-group btn-group-toggle",  
-        role = "group",
-        actionButton(session$ns("btn_login"), "Login",  
-                     class = paste0("btn", if (form_choice() == "login") " btn-primary" else " btn-outline-primary")),
-        actionButton(session$ns("btn_register"), "Register",
-                     class = paste0("btn", if (form_choice() == "register") " btn-primary" else " btn-outline-primary"))
-      )
-    )
+  # --- SWITCH BETWEEN LOGIN & REGISTER FORMS ---
+  observeEvent(input$btn_register, {
+    form_choice("register")
   })
   
-  # Handle button clicks to switch forms
-  observeEvent(input$btn_login, form_choice("login"))
-  observeEvent(input$btn_register, form_choice("register"))
+  observeEvent(input$btn_login, {
+    form_choice("login")
+  })
   
-  # 2. Dynamic form rendering (Login or Register)
-  output$dynamic_form_ui <- renderUI({
-    ns <- session$ns
+  # --- MAIN AUTH PAGE UI ---
+  output$auth_page <- renderUI({
     if (form_choice() == "login") {
-      # Use a bslib::card_body_fill for clean padding
-      card_body_fill(
-        h5("Sign in with your credentials"),
-        textInput(ns("login_user"), "DepEd Email"),
-        passwordInput(ns("login_pass"), "Password"),
-        actionButton(ns("do_login"), "Login", class = "btn-success w-100"), # w-100 for full width
-        uiOutput(ns("login_message"))
+      # LOGIN PANEL (namespaced inputs)
+      div(
+        class = "login-container",
+        
+        # LEFT SIDE — tagline
+        div(
+          class = "login-left",
+          div(class = "login-text-box",
+              h2("STRIDE"),
+              p("Education in Motion. Data Precision. Smart Decision.")
+          )
+        ),
+        
+        # RIGHT SIDE — login form
+        div(
+          class = "login-right",
+          div(
+            class = "login-card",
+            
+            # Top Logo
+            tags$img(src = "STRIDE LOGO001.png", class = "login-logo-top"),
+            
+            # Form Inputs (all namespaced!)
+            textInput(ns("login_user"), NULL, placeholder = "DepEd Email"),
+            passwordInput(ns("login_pass"), NULL, placeholder = "Password"),
+            actionButton(ns("do_login"), "Sign In", class = "btn-login w-100"),
+            
+            uiOutput(ns("login_message")),
+            br(),
+            actionLink(ns("btn_register"), "Create an account", class = "register-link"),
+            
+            # Bottom Logos
+            div(
+              class = "login-logos-bottom",
+              tags$img(src = "logo3.png", class = "bottom-logo"),
+              tags$img(src = "HROD LOGO1.png", class = "bottom-logo"),
+              tags$img(src = "logo2.png", class = "bottom-logo")
+            )
+          )
+        )
       )
     } else {
-      card_body_fill(
-        h5("Create a new account"),
-        textInput(ns("reg_user"), "Enter your DepEd Email"), # Label changed here
-        selectInput(
-          ns("govlev"),
-          "Select Station:", 
-          # 👇 FIX: Add an empty string "" as the first value.
-          choices = c("— Select an Option —" = "", 
-                      "Central Office", 
-                      "Regional Office", 
-                      "Schools Division Office", 
-                      "School"), 
-          # You can now completely omit 'selected = ""' or leave it as NULL
-          selected = NULL 
+      # REGISTER PANEL (namespaced inputs)
+      div(
+        class = "login-container",
+        
+        # LEFT SIDE — text
+        div(
+          class = "login-left",
+          div(
+            class = "login-text-box",
+            h2("Create a STRIDE Account"),
+            p("Register your DepEd account to access STRIDE dashboards.")
+          )
         ),
-        uiOutput(ns("station_specific_ui")),
-        passwordInput(ns("reg_pass"), "Choose Password"),
-        passwordInput(ns("reg_pass_confirm"), "Confirm Password"),
-        actionButton(ns("do_register"), "Register Account", class = "btn-success w-100"),
-        uiOutput(ns("register_message"))
+        
+        # RIGHT SIDE — form
+        div(
+          class = "login-right",
+          div(
+            class = "login-card",
+            tags$img(src = "STRIDE LOGO001.png", class = "login-logo-top"),
+            
+            selectInput(ns("govlev"), "Select Station:",
+                        choices = c("— Select an Option —" = "",
+                                    "Central Office", "Regional Office", 
+                                    "Schools Division Office", "School")),
+            
+            uiOutput(ns("station_specific_ui")),
+            
+            textInput(ns("reg_user"), NULL, placeholder = "DepEd Email (@deped.gov.ph)"),
+            passwordInput(ns("reg_pass"), NULL, placeholder = "Password"),
+            passwordInput(ns("reg_pass_confirm"), NULL, placeholder = "Confirm Password"),
+            actionButton(ns("do_register"), "Register Account", class = "btn-login w-100"),
+            
+            uiOutput(ns("register_message")),
+            br(),
+            actionLink(ns("btn_login"), "Back to Login", class = "register-link"),
+            
+            # Bottom Logos
+            div(
+              class = "login-logos-bottom",
+              tags$img(src = "logo3.png", class = "bottom-logo"),
+              tags$img(src = "HROD LOGO1.png", class = "bottom-logo"),
+              tags$img(src = "logo2.png", class = "bottom-logo")
+            )
+          )
+        )
       )
     }
   })
-  
-  output$station_specific_ui <- renderUI({
-    ns <- session$ns
-    
-    # Ensure govlev has been initialized before checking its value
-    req(input$govlev) 
-    
-    if (input$govlev == "School") {
-      # Render the 6-digit School ID input
-      tagList(
-        textInput(ns("school_id"), "School ID:"),
-        # Basic client-side validation hint
-        tags$small("Enter your School ID.", class = "text-muted") 
-      )
-    } else if (input$govlev %in% c("Central Office", "Regional Office", "Schools Division Office")) { # Explicit check for Office types
-      # Render the general Office name input for all other selections
-      tagList(
-        textInput(ns("office_name"), "Office Name"),
-        # Basic client-side validation hint
-        tags$small("Enter Bureau/Division. Do not abbreviate!", class = "text-muted")
-      )
-    }
-    # If "— Select an Option —" is chosen, nothing is rendered
-  })
+
   
   # --- 3. Login Logic ---
   observeEvent(input$do_login, {
