@@ -71,7 +71,12 @@ DBMProp <- read.csv("DBM-Proposal.csv") # Teacher Shortage Data
 EFDDB <- read.csv("EFD-DataBuilder-2025.csv")
 EFDMP <- read_parquet("EFD-Masterlist.parquet")
 EFD_Projects <- read.csv("EFD-ProgramsList-Aug2025.csv") %>% mutate(Allocation = as.numeric(Allocation)) %>% mutate(Completion = as.numeric(Completion)) %>% filter(FundingYear >= 2020)
-LMS <- read_parquet("EFD-LMS-GIDCA-NSBI2023.parquet") %>% mutate(Region = case_when(Region == "Region IV-B" ~ "MIMAROPA", TRUE ~ Region)) %>% mutate(With_Shortage = case_when(Estimated_CL_Shortage > 0 ~ 1, TRUE ~ 0))
+LMS <- read_parquet("EFD-LMS-GIDCA-NSBI2023.parquet") %>% mutate(Region = case_when(Region == "Region IV-B" ~ "MIMAROPA", TRUE ~ Region)) %>% mutate(With_Shortage = case_when(Estimated_CL_Shortage > 0 ~ 1, TRUE ~ 0)) %>%
+  left_join(
+    uni %>% select(SchoolID, Legislative.District),
+    by = c("School_ID" = "SchoolID")
+  )
+
 geojson_data <- geojson_read("gadm41_PHL_1.json", what = "sp")
 geojson_table <- as.data.frame(geojson_data)
 regprov <- read.csv("RegProv.Congestion.csv")
@@ -396,8 +401,11 @@ server <- function(input, output, session) {
   })
   
   filtered_data_LMS_erdb <- reactive({
+    # 1. Access drilldown state and initial data
     state <- drilldown_state()
-    data <- LMS
+    data <- LMS 
+    
+    # 2. Apply filtering based on drilldown state
     if (!is.null(state$region)) {
       data <- data %>% filter(Region == state$region)
     }
@@ -444,83 +452,100 @@ server <- function(input, output, session) {
   # ---------------------------------------------------------------------------
   
   # 1. Total Schools (White box)
-  output$total_schools_erdb <- renderValueBox({
+  # 1. Total Schools Count
+  # 1. Total Schools
+  output$total_schools_erdb <- renderUI({
     total <- nrow(filtered_data_uni_erdb())
-    make_value_box_no_icon(
-      title = "Total Schools Count",
-      value = scales::comma(total),
-      color_class = "#FFFFFF" 
-    )
-  })
-  
-  # 2. Total Enrolment (White box)
-  output$total_enrolment_erdb <- renderValueBox({
-    count <- sum(filtered_data_uni_erdb()$TotalEnrolment, na.rm = TRUE)
-    make_value_box_no_icon(
-      title = "Total Student Enrolment",
-      value = scales::comma(count),
-      color_class = "#FFFFFF"
-    )
-  })
-  
-  # 3. Total Classrooms (White box)
-  output$total_classrooms_erdb <- renderValueBox({
-    count <- sum(filtered_data_LMS_erdb()$Instructional_Rooms, na.rm = TRUE)
-    make_value_box_no_icon(
-      title = "Available Classrooms",
-      value = scales::comma(count),
-      color_class = "#FFFFFF"
-    )
-  })
-  
-  output$total_LMS_erdb <- renderValueBox({
-    # 1. Filter the data, then use nrow() to get the single count.
-    count <- filtered_data_LMS_erdb() %>%
-      filter(LMS == 1) %>%
-      nrow()
     
-    # 2. Render the value box
-    make_value_box_no_icon(
-      title = "Total Last Mile Schools",
-      value = scales::comma(count),
-      color_class = "#FFFFFF"
+    bslib::card(
+      style = "background-color: #FFFFFF;",
+      bslib::card_header("Total Schools Count", class = "text-center"),
+      bslib::card_body(
+        tags$h3(scales::comma(total), style = "text-align: center; font-weight: 700;")
+      )
+    )
+  })
+  
+  # 2. Total Enrolment
+  output$total_enrolment_erdb <- renderUI({
+    count <- sum(filtered_data_uni_erdb()$TotalEnrolment, na.rm = TRUE)
+    
+    bslib::card(
+      style = "background-color: #FFFFFF;",
+      bslib::card_header("Total Student Enrolment", class = "text-center"),
+      bslib::card_body(
+        tags$h3(scales::comma(count), style = "text-align: center; font-weight: 700;")
+      )
+    )
+  })
+  
+  # 3. Total Classrooms
+  output$total_classrooms_erdb <- renderUI({
+    count <- sum(filtered_data_LMS_erdb()$Instructional_Rooms, na.rm = TRUE)
+    
+    bslib::card(
+      style = "background-color: #FFFFFF;",
+      bslib::card_header("Available Classrooms", class = "text-center"),
+      bslib::card_body(
+        tags$h3(scales::comma(count), style = "text-align: center; font-weight: 700;")
+      )
     )
   })
   
   # 4. Total Classroom Shortage (Light Orange Warning)
-  output$total_classroom_shortage_erdb <- renderValueBox({
+  output$total_classroom_shortage_erdb <- renderUI({
     shortage <- sum(filtered_data_LMS_erdb()$Estimated_CL_Shortage, na.rm = TRUE)
-    make_value_box_no_icon(
-      title = "Classroom Shortage",
-      value = scales::comma(shortage),
-      color_class = "#FFE5CC" 
+    
+    bslib::card(
+      style = "background-color: #FFE5CC;",
+      bslib::card_header("Classroom Shortage", class = "text-center"),
+      bslib::card_body(
+        tags$h3(scales::comma(shortage), style = "text-align: center; font-weight: 700;")
+      )
     )
   })
   
-  output$SP_Shortage_erdb <- renderValueBox({
-    # 1. Access the reactive data once
-    data_uni <- filtered_data_uni_erdb()
+  # 5. Total Last Mile Schools
+  output$total_LMS_erdb <- renderUI({
+    count <- filtered_data_LMS_erdb() %>%
+      filter(LMS == 1) %>%
+      nrow()
     
-    # 2. Count the number of TRUE values where Designation is NOT "School Principal".
-    #    Using sum() on a logical vector (TRUE/FALSE) is the Base R way to count.
-    count <- sum(data_uni$Designation != "School Principal", na.rm = TRUE)
-    
-    # 3. Render the value box
-    make_value_box_no_icon(
-      title = "School Principal Shortage",
-      value = scales::comma(count),
-      color_class = "#00796B", 
-      text_color = "#FFFFFF" 
+    bslib::card(
+      style = "background-color: #FFFFFF;",
+      bslib::card_header("Total Last Mile Schools", class = "text-center"),
+      bslib::card_body(
+        tags$h3(scales::comma(count), style = "text-align: center; font-weight: 700;")
+      )
     )
   })
   
   # 6. Total Teacher Shortage (Light Red Critical Warning)
-  output$total_teacher_shortage_erdb <- renderValueBox({
+  output$total_teacher_shortage_erdb <- renderUI({
     shortage <- sum(filtered_data_df_erdb()$TeacherShortage, na.rm = TRUE)
-    make_value_box_no_icon(
-      title = "Teacher Shortage",
-      value = scales::comma(shortage),
-      color_class = "#F8D7DA" 
+    
+    bslib::card(
+      style = "background-color: #F8D7DA;",
+      bslib::card_header("Teacher Shortage", class = "text-center"),
+      bslib::card_body(
+        tags$h3(scales::comma(shortage), style = "text-align: center; font-weight: 700;")
+      )
+    )
+  })
+  
+  # 7. School Principal Shortage
+  output$SP_Shortage_erdb <- renderUI({
+    data_uni <- filtered_data_uni_erdb()
+    # Assuming the logic for 'count' remains correct for your purpose
+    count <- sum(data_uni$Designation != "School Principal", na.rm = TRUE)
+    
+    bslib::card(
+      # The style here correctly applies to the whole card, including text
+      style = "background-color: #FFF3CD; color: #664D03;", 
+      bslib::card_header("School Principal Shortage", class = "text-center"),
+      bslib::card_body(
+        tags$h3(scales::comma(count), style = "text-align: center; font-weight: 700;")
+      )
     )
   })
   
@@ -1938,13 +1963,13 @@ server <- function(input, output, session) {
               width = 1/7, 
               
               # 3. Use the modern valueBoxOutput
-              valueBoxOutput("total_schools_erdb", width = 12),           # width=12 ensures it takes full column space
-              valueBoxOutput("total_enrolment_erdb", width = 12),
-              valueBoxOutput("total_classrooms_erdb", width = 12),
-              valueBoxOutput("total_classroom_shortage_erdb", width = 12),
-              valueBoxOutput("total_LMS_erdb", width = 12),
-              valueBoxOutput("total_teacher_shortage_erdb", width = 12),
-              valueBoxOutput("SP_Shortage_erdb", width = 12)
+              uiOutput("total_schools_erdb"),
+              uiOutput("total_enrolment_erdb"),
+              uiOutput("total_classrooms_erdb"),
+              uiOutput("total_LMS_erdb"),
+              uiOutput("total_teacher_shortage_erdb"),
+              uiOutput("SP_Shortage_erdb"),
+              uiOutput("total_classroom_shortage_erdb")
             )
           ),
           
@@ -1953,17 +1978,17 @@ server <- function(input, output, session) {
           # -- Row 1 --
           layout_columns(
             col_widths = c(4, 4, 4),
-            card(card_header("Number of Schools (Click to Drill Down)"), plotlyOutput("totalschools_plot_erdb"), height = "420px"),
-            card(card_header("Curricular Offering"), plotlyOutput("curricular_plot_erdb"), height = "420px"),
-            card(card_header("School Size Typology"), plotlyOutput("typology_plot_erdb"), height = "420px")
+            card(card_header("Number of Schools (Click to Drill Down)"),full_screen = TRUE, plotlyOutput("totalschools_plot_erdb"), height = "420px"),
+            card(card_header("Curricular Offering"),full_screen = TRUE, plotlyOutput("curricular_plot_erdb"), height = "420px"),
+            card(card_header("School Size Typology"),full_screen = TRUE, plotlyOutput("typology_plot_erdb"), height = "420px")
           ),
           # -- Row 2 --
           layout_columns(
             col_widths = c(3, 3, 3, 3),
-            card(card_header("Classroom Shortage"), plotlyOutput("classroomshortage_plot_erdb"), height = "420px"),
-            card(card_header("Last Mile Schools"), plotlyOutput("LMS_plot_erdb"), height = "420px"),
-            card(card_header("Teacher Shortage"), plotlyOutput("teachershortage_plot_erdb"), height = "420px"),
-            card(card_header("School Principal Shortage"), plotlyOutput("principalshortage_plot_erdb"), height = "420px")
+            card(card_header("Classroom Shortage"),full_screen = TRUE, plotlyOutput("classroomshortage_plot_erdb"), height = "420px"),
+            card(card_header("Last Mile Schools"),full_screen = TRUE, plotlyOutput("LMS_plot_erdb"), height = "420px"),
+            card(card_header("Teacher Shortage"),full_screen = TRUE, plotlyOutput("teachershortage_plot_erdb"), height = "420px"),
+            card(card_header("School Principal Shortage"),full_screen = TRUE, plotlyOutput("principalshortage_plot_erdb"), height = "420px")
           ),
           hr(),
           card(
@@ -3594,29 +3619,29 @@ server <- function(input, output, session) {
             title = "National Classroom Inventory Overview",
             icon = bsicons::bs_icon("bar-chart-fill"),
             layout_columns(
-              card(
-                full_screen = TRUE,
-                card_header(
-                  tagList(
-                    strong("Classroom Shortage Breakdown"),
-                    tags$br(),
-                    tags$em("(n = 165,443)")
-                  )
-                ),
-                # Start of Tabset
-                navset_tab(
-                  # Tab 1: Regional Classroom Breakdown (Your existing content)
-                  # nav_panel("Regional Breakdown",
-                  #           plotlyOutput("Classroom_Shortage_Region_Graph2")
-                  # ),
-                  # Tab 2: Division Classroom Shortage Breakdown (The new tab)
-                  # nav_panel("Priority Divisions",
-                  #           plotlyOutput("Classroom_Shortage_Division_Graph2")
-                  # ),
-                  nav_panel("Dataset",
-                            dataTableOutput("Classroom_Shortage_Dataset"))
-                )),
-              # End of Tabset
+              # card(
+              #   full_screen = TRUE,
+              #   card_header(
+              #     tagList(
+              #       strong("Classroom Shortage Breakdown"),
+              #       tags$br(),
+              #       tags$em("(n = 165,443)")
+              #     )
+              #   ),
+              #   # Start of Tabset
+              #   navset_tab(
+              #     # Tab 1: Regional Classroom Breakdown (Your existing content)
+              #     # nav_panel("Regional Breakdown",
+              #     #           plotlyOutput("Classroom_Shortage_Region_Graph2")
+              #     # ),
+              #     # Tab 2: Division Classroom Shortage Breakdown (The new tab)
+              #     # nav_panel("Priority Divisions",
+              #     #           plotlyOutput("Classroom_Shortage_Division_Graph2")
+              #     # ),
+              #     nav_panel("Dataset",
+              #               dataTableOutput("Classroom_Shortage_Dataset"))
+              #   )),
+              # # End of Tabset
               
               card(
                 card_header(strong("Regional Classroom Shortage")),
@@ -3630,7 +3655,7 @@ server <- function(input, output, session) {
               # card_header(strong("District Classroom Shortage")),
               #valueBoxOutput("DistCRShort")
               #),
-              col_widths = c(12,6,6)
+              col_widths = c(6,6)
             )
           )
         ),
@@ -3668,34 +3693,34 @@ server <- function(input, output, session) {
             title = "Industry Summary",
             icon = bsicons::bs_icon("bar-chart"),
             
-            # --- Industry Distribution Overview Card placed FIRST ---
-            card(
-              full_screen = TRUE,
-              card_header(
-                tagList(
-                  strong("Industry Breakdown"),
-                  tags$br(),
-                  tags$em("(n = )")
-                )
-              ),
-              
-              # --- Tabset ---
-              navset_tab(
-                nav_panel("Regional Breakdown",
-                          plotlyOutput("Ind_Regional_Graph")
-                ),
-                # nav_panel("Priority Divisions",
-                #           plotlyOutput("Ind_Division_Graph")
-                # ),
-                nav_panel("Dataset",
-                          dataTableOutput("Ind_Dataset")
-                )
-              )
-            ),
-            
-            # --- Divider line for better separation ---
-            hr(),
-            
+            # # --- Industry Distribution Overview Card placed FIRST ---
+            # card(
+            #   full_screen = TRUE,
+            #   card_header(
+            #     tagList(
+            #       strong("Industry Breakdown"),
+            #       tags$br(),
+            #       tags$em("(n = )")
+            #     )
+            #   ),
+            #   
+            #   # --- Tabset ---
+            #   navset_tab(
+            #     nav_panel("Regional Breakdown",
+            #               plotlyOutput("Ind_Regional_Graph")
+            #     ),
+            #     # nav_panel("Priority Divisions",
+            #     #           plotlyOutput("Ind_Division_Graph")
+            #     # ),
+            #     nav_panel("Dataset",
+            #               dataTableOutput("Ind_Dataset")
+            #     )
+            #   )
+            # ),
+            # 
+            # # --- Divider line for better separation ---
+            # hr(),
+            # 
             # --- Summary Counts ---
             layout_column_wrap(
               width = 1/2,
@@ -3903,29 +3928,29 @@ server <- function(input, output, session) {
             title = "National and Regional Breakdown",
             icon = bsicons::bs_icon("bar-chart"),
             layout_columns(
-              card(
-                full_screen = TRUE,
-                card_header(
-                  tagList(
-                    strong("Breakdown of Last Mile Schools"),
-                    tags$br(),
-                    tags$em("(n = 9,100)")
-                  )
-                ),
-                # Start of Tabset
-                navset_tab(
-                  # Tab 1: Regional Breakdown (Your existing content)
-                  # nav_panel("Regional Breakdown",
-                  #           plotlyOutput("LMS_Nation_Graph2")
-                  # ),
-                  # # Tab 2: Division Breakdown (The new tab)
-                  # nav_panel("Priority Divisions",
-                  #           plotlyOutput("LMS_Division_Graph2")
-                  # ),
-                  nav_panel("Dataset",
-                            dataTableOutput("LMS_Dataset")
-                  )
-                )),
+              # card(
+              #   full_screen = TRUE,
+              #   card_header(
+              #     tagList(
+              #       strong("Breakdown of Last Mile Schools"),
+              #       tags$br(),
+              #       tags$em("(n = 9,100)")
+              #     )
+              #   ),
+              #   # Start of Tabset
+              #   navset_tab(
+              #     # Tab 1: Regional Breakdown (Your existing content)
+              #     # nav_panel("Regional Breakdown",
+              #     #           plotlyOutput("LMS_Nation_Graph2")
+              #     # ),
+              #     # # Tab 2: Division Breakdown (The new tab)
+              #     # nav_panel("Priority Divisions",
+              #     #           plotlyOutput("LMS_Division_Graph2")
+              #     # ),
+              #     nav_panel("Dataset",
+              #               dataTableOutput("LMS_Dataset")
+              #     )
+              #   )),
               card(
                 card_header(strong("Total Last Mile Schools by Region")),
                 valueBoxOutput("LMS_Total_Region")
@@ -3934,7 +3959,7 @@ server <- function(input, output, session) {
                 card_header(strong("Total Last Mile Schools by Division")),
                 valueBoxOutput("LMS_Total_Division")
               ),
-              col_widths = c(12,6,6)
+              col_widths = c(6,6)
             )
           )
         ),
