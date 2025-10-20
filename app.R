@@ -101,27 +101,8 @@ user_base <- tibble::tibble(
   name = c("User One", "User Two")
 )
 
-login_register_UI <- function(id) {
-  ns <- NS(id)
-  
-  # Use bslib::card for a contained, stylish panel
-  card(
-    # Use bslib::card_header for a title
-    card_header(
-      class = "bg-dark text-white",
-      "Cloud App Authentication"
-    ),
-    # Content of the card
-    div(
-      class = "d-flex justify-content-center mb-3", # Use Bootstrap utility classes
-      # The main panel for login/register choice using a tab-like navigation
-      uiOutput(ns("form_selector_ui"))
-    ),
-    
-    # The actual form (either login or register) displayed inside the card body
-    uiOutput(ns("dynamic_form_ui"))
-  )
-}
+
+
 
 SERVICE_ACCOUNT_FILE <- "service_account.json" 
 
@@ -185,23 +166,27 @@ ui <- page_fluid(
   ),
   
   # Header (always visible)
-  tags$div(
-    class = "app-header",
-    style = "display: flex; align-items: center; gap: 15px; justify-content: center;",
-    
-    # Logo
-    tags$img(src = "logo3.png", class = "header-logo-left"),
-    
-    # Center text
+  shinyjs::hidden(
     tags$div(
-      class = "header-title",
-      h2("DepEd STRIDE Dashboard"),
-      p("STRIDE: Strategic Inventory for Deployment Efficiency")
-    ),
-    
-    # Right logo
-    tags$img(src = "HROD LOGO1.png", class = "header-logo-right")
+      id = "app_header",
+      class = "app-header",
+      style = "display: flex; align-items: center; gap: 15px; justify-content: center;",
+      
+      # Left logo
+      tags$img(src = "logo3.png", class = "header-logo-left"),
+      
+      # Center text
+      tags$div(
+        class = "header-title",
+        h2("DepEd STRIDE"),
+        p("STRIDE: Strategic Inventory for Deployment Efficiency")
+      ),
+      
+      # Right logo
+      tags$img(src = "HROD LOGO1.png", class = "header-logo-right")
+    )
   ),
+  
   
   # 💡 CRITICAL FIX: The dynamic container for login/main app UI
   uiOutput("page_ui"),
@@ -241,9 +226,11 @@ ui <- page_fluid(
   ),
   
   # Footer (always visible)
-  tags$footer(
-    class = "app-footer",
-    tags$p("© Based on GMIS (April 2025) and eBEIS (SY 2024–2025)"))
+  shinyjs::hidden(
+    tags$footer(
+      id = "app_footer",
+      class = "app-footer",
+      tags$p("© Based on GMIS (April 2025) and eBEIS (SY 2024–2025)")))
 )
 
 
@@ -251,6 +238,62 @@ ui <- page_fluid(
 
 # Define server logic required to draw a histogram
 server <- function(input, output, session) {
+  
+  current_region <- reactiveVal(NULL)
+  current_division <- reactiveVal(NULL)
+  
+  output$backButtonUI <- renderUI({
+    # Only show the button if a region is currently selected
+    if (!is.null(current_region()) || !is.null(current_division())) {
+      actionButton("go_back", "⬅️ Back")
+    }
+  })
+  
+  observeEvent(input$go_back, {
+    
+    # Step 1: If we are viewing a Division breakdown, go back to the Region breakdown
+    if (!is.null(current_division())) {
+      current_division(NULL)
+      cat("State change: Returned to Region view.\n")
+    } 
+    
+    # Step 2: Else, if we are viewing a Region breakdown, go back to the Overall view
+    else if (!is.null(current_region())) {
+      current_region(NULL)
+      cat("State change: Returned to Overall view.\n")
+    }
+    
+    # Note: You do not need an 'else' block, as the button won't be visible 
+    # unless one of these reactive values is set (thanks to renderUI).
+  })
+  
+  # Hide header/footer when not authenticated; show when authenticated
+  observe({
+    # user_status is defined earlier in your server (values: "unauthenticated", "login", "register", "authenticated")
+    if (isTRUE(user_status() == "authenticated")) {
+      shinyjs::show("app_header")
+      shinyjs::show("app_footer")
+    } else {
+      shinyjs::hide("app_header")
+      shinyjs::hide("app_footer")
+    }
+  })
+  
+  observe({
+    mode <- if (user_status() == "authenticated") "app" else "login"
+    session$sendCustomMessage("setLoginMode", ifelse(mode == "login", "login", "app"))
+  })
+  
+  observe({
+    if (user_status() == "authenticated") {
+      shinyjs::show("app_header")
+      shinyjs::show("app_footer")
+    } else {
+      shinyjs::hide("app_header")
+      shinyjs::hide("app_footer")
+    }
+  })
+  
   
   output$StrideLogo <- renderImage({
     image_path <- normalizePath(file.path('www', 'STRIDE logo.png'))
@@ -22012,16 +22055,70 @@ server <- function(input, output, session) {
       }
     }
     
-    # If unauthenticated, or user data not found, show login/register
-    # Center the login card on the page when unauthenticated
-    div(
-      class = "d-flex justify-content-center align-items-center", 
-      style = "height: 80vh;", # Use full viewport height for centering
-      div(style = "width: 400px; max-width: 90%;", # Set a max width for the card
-          login_register_UI("auth")
+    # ✅ 2. UNAUTHENTICATED USERS — show login/register page
+    login_register_UI("auth")
+  })
+  
+  
+  login_register_UI <- function(id) {
+    ns <- NS(id)
+    
+    tagList(
+      # Fullscreen bubble background
+      div(
+        class = "bubble-bg",
+        lapply(1:20, function(i) div(class = paste0("bubble b", i)))
+      ),
+      
+      # Main login/register container
+      div(
+        class = "login-container",
+        
+        # LEFT SIDE
+        div(
+          class = "login-left",
+          div(
+            class = "login-text-box",
+            h2("STRIDE"),
+            p("Education in motion. Data Precision. Smart Decision.")
+          )
+        ),
+        
+        # RIGHT SIDE (Login Form)
+        div(
+          class = "login-right",
+          div(
+            class = "login-card",
+            
+            # Top Logo
+            tags$img(src = "STRIDE LOGO001.png", class = "login-logo-top"),
+            
+            # Login Form Inputs (NAMESPACED!)
+            textInput(ns("login_user"), NULL, placeholder = "user@deped.gov.ph"),
+            passwordInput(ns("login_pass"), NULL, placeholder = "Password"),
+            actionButton(ns("do_login"), "Sign In", class = "btn-login w-100"),
+            
+            uiOutput(ns("login_message")),
+            br(),
+            actionLink(ns("btn_register"), "Create an account", class = "register-link"),
+            
+            # Bottom Logos
+            div(
+              class = "login-logos-bottom",
+              tags$img(src = "logo3.png", class = "bottom-logo"),
+              tags$img(src = "HROD LOGO1.png", class = "bottom-logo"),
+              tags$img(src = "logo2.png", class = "bottom-logo")
+            )
+          )
+        )
       )
     )
-  })
+  }
+  
+    
+    # If unauthenticated, or user data not found, show login/register
+    # Center the login card on the page when unauthenticated
+    
   
   # --- Authentication Module (Login/Register Forms) ---
   # CRITICAL FIX: Only call the module ONCE at the start of the server.
