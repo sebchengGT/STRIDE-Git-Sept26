@@ -22021,20 +22021,36 @@ server <- function(input, output, session) {
   # --- UI Rendering Logic ---
   
   # Main dynamic UI switch
+  # 1️⃣  Define the reusable UI function FIRST
+  login_register_UI <- function(id) {
+    ns <- NS(id)
+    
+    tagList(
+      # Fullscreen bubble background (30 bubbles)
+      div(
+        class = "bubble-bg",
+        lapply(1:30, function(i) div(class = paste0("bubble b", i)))
+      ),
+      
+      # Render the UI produced by the authentication module
+      uiOutput(ns("auth_page"))
+    )
+  }
+  
+  
+  # 2️⃣  Define the main dynamic page switch
   output$page_ui <- renderUI({
     status <- user_status()
-    current_user <- authenticated_user() # Retrieve the currently logged-in user
+    current_user <- authenticated_user()  # Retrieve logged-in user
     
+    # ✅ AUTHENTICATED USERS
     if (status == "authenticated" && !is.null(current_user)) {
-      # 1. Get the full user row from the database based on the authenticated username
       users_db <- user_database()
       user_row <- users_db[users_db$Email_Address == current_user, ]
       
-      # Ensure the user still exists and has a station
       if (nrow(user_row) == 1) {
-        station <- user_row$Station[1] # Use the Station value
+        station <- user_row$Station[1]
         
-        # 2. Switch UI based on the Station
         if (station == "Central Office") {
           shinyjs::hide("data_input_content")
           shinyjs::show("mgmt_content")
@@ -22044,46 +22060,70 @@ server <- function(input, output, session) {
           shinyjs::hide("main_content")
           shinyjs::hide("mgmt_content")
         } else {
-          # Default UI for other stations (Regional Office, SDO, etc.)
-          # You can add more specific UIs here if needed
-          return(card(card_header("Application Dashboard"), 
-                      h2(paste("Welcome,", station, "User!")), 
-                      actionButton("main_app-logout", "Logout", class = "btn-danger")))
+          return(card(
+            card_header("Application Dashboard"),
+            h2(paste("Welcome,", station, "User!")),
+            actionButton("main_app-logout", "Logout", class = "btn-danger")
+          ))
         }
         return(NULL)
       }
     }
     
-    # ✅ 2. UNAUTHENTICATED USERS — show login/register page
+    # ✅ UNAUTHENTICATED USERS — show login/register page
     login_register_UI("auth")
   })
   
   
-  login_register_UI <- function(id) {
-    ns <- NS(id)
-    
-    tagList(
-      # Fullscreen bubble background
-      div(
-        class = "bubble-bg",
-        lapply(1:20, function(i) div(class = paste0("bubble b", i)))
-      ),
-      
-      # Main login/register container
+  # 3️⃣  Activate the authentication module
+  callModule(authentication_server, "auth", 
+             user_status, form_choice, SHEET_URL, user_database, db_trigger, 
+             authenticated_user)
+  # Pass the new reactive
+  
+  # --- Main App Module ---
+  
+  # Handle logout from the main app
+  observeEvent(input$`main_app-logout`, {
+    user_status("unauthenticated")
+    authenticated_user(NULL) # 💡 NEW: Clear the authenticated user
+    form_choice("login")  
+    showNotification("Logged out successfully.", type = "message")
+  })
+}
+
+# --- Authentication Server (Handles the logic for login and registration) ---
+authentication_server <- function(input, output, session, user_status, 
+                                  form_choice, sheet_url, user_database, db_trigger, 
+                                  authenticated_user) {
+  ns <- session$ns
+  
+  # --- SWITCH BETWEEN LOGIN & REGISTER FORMS ---
+  observeEvent(input$btn_register, {
+    form_choice("register")
+  })
+  
+  observeEvent(input$btn_login, {
+    form_choice("login")
+  })
+  
+  # --- MAIN AUTH PAGE UI ---
+  output$auth_page <- renderUI({
+    if (form_choice() == "login") {
+      # LOGIN PANEL (namespaced inputs)
       div(
         class = "login-container",
         
-        # LEFT SIDE
+        # LEFT SIDE — tagline
         div(
           class = "login-left",
-          div(
-            class = "login-text-box",
-            h2("STRIDE"),
-            p("Education in motion. Data Precision. Smart Decision.")
+          div(class = "login-text-box",
+              h2("STRIDE"),
+              p("Education in Motion. Data Precision. Smart Decision.")
           )
         ),
         
-        # RIGHT SIDE (Login Form)
+        # RIGHT SIDE — login form
         div(
           class = "login-right",
           div(
@@ -22092,8 +22132,8 @@ server <- function(input, output, session) {
             # Top Logo
             tags$img(src = "STRIDE LOGO001.png", class = "login-logo-top"),
             
-            # Login Form Inputs (NAMESPACED!)
-            textInput(ns("login_user"), NULL, placeholder = "user@deped.gov.ph"),
+            # Form Inputs (all namespaced!)
+            textInput(ns("login_user"), NULL, placeholder = "DepEd Email"),
             passwordInput(ns("login_pass"), NULL, placeholder = "Password"),
             actionButton(ns("do_login"), "Sign In", class = "btn-login w-100"),
             
@@ -22111,118 +22151,57 @@ server <- function(input, output, session) {
           )
         )
       )
-    )
-  }
-  
-    
-    # If unauthenticated, or user data not found, show login/register
-    # Center the login card on the page when unauthenticated
-    
-  
-  # --- Authentication Module (Login/Register Forms) ---
-  # CRITICAL FIX: Only call the module ONCE at the start of the server.
-  # 💡 NEW: Pass the authenticated_user reactiveVal to the module
-  callModule(authentication_server, "auth", 
-             user_status, form_choice, SHEET_URL, user_database, db_trigger, 
-             authenticated_user) # Pass the new reactive
-  
-  # --- Main App Module ---
-  
-  # Handle logout from the main app
-  observeEvent(input$`main_app-logout`, {
-    user_status("unauthenticated")
-    authenticated_user(NULL) # 💡 NEW: Clear the authenticated user
-    form_choice("login")  
-    showNotification("Logged out successfully.", type = "message")
-  })
-}
-
-# --- Authentication Server (Handles the logic for login and registration) ---
-authentication_server <- function(input, output, session, user_status, 
-                                  form_choice, sheet_url, user_database, db_trigger, 
-                                  authenticated_user) { # 💡 NEW: Receive the reactive
-  
-  # ... (form_selector_ui and dynamic_form_ui remain mostly the same) ...
-  
-  # 1. UI for selecting Login or Register
-  output$form_selector_ui <- renderUI({
-    list(
-      # The form selector now uses an input group style with btn-group
-      div(
-        class = "btn-group btn-group-toggle",  
-        role = "group",
-        actionButton(session$ns("btn_login"), "Login",  
-                     class = paste0("btn", if (form_choice() == "login") " btn-primary" else " btn-outline-primary")),
-        actionButton(session$ns("btn_register"), "Register",
-                     class = paste0("btn", if (form_choice() == "register") " btn-primary" else " btn-outline-primary"))
-      )
-    )
-  })
-  
-  # Handle button clicks to switch forms
-  observeEvent(input$btn_login, form_choice("login"))
-  observeEvent(input$btn_register, form_choice("register"))
-  
-  # 2. Dynamic form rendering (Login or Register)
-  output$dynamic_form_ui <- renderUI({
-    ns <- session$ns
-    if (form_choice() == "login") {
-      # Use a bslib::card_body_fill for clean padding
-      card_body_fill(
-        h5("Sign in with your credentials"),
-        textInput(ns("login_user"), "DepEd Email"),
-        passwordInput(ns("login_pass"), "Password"),
-        actionButton(ns("do_login"), "Login", class = "btn-success w-100"), # w-100 for full width
-        uiOutput(ns("login_message"))
-      )
     } else {
-      card_body_fill(
-        h5("Create a new account"),
-        textInput(ns("reg_user"), "Enter your DepEd Email"), # Label changed here
-        selectInput(
-          ns("govlev"),
-          "Select Station:", 
-          # 👇 FIX: Add an empty string "" as the first value.
-          choices = c("— Select an Option —" = "", 
-                      "Central Office", 
-                      "Regional Office", 
-                      "Schools Division Office", 
-                      "School"), 
-          # You can now completely omit 'selected = ""' or leave it as NULL
-          selected = NULL 
+      # REGISTER PANEL (namespaced inputs)
+      div(
+        class = "login-container",
+        
+        # LEFT SIDE — text
+        div(
+          class = "login-left",
+          div(
+            class = "login-text-box",
+            h2("Create a STRIDE Account"),
+            p("Register your DepEd account to access STRIDE dashboards.")
+          )
         ),
-        uiOutput(ns("station_specific_ui")),
-        passwordInput(ns("reg_pass"), "Choose Password"),
-        passwordInput(ns("reg_pass_confirm"), "Confirm Password"),
-        actionButton(ns("do_register"), "Register Account", class = "btn-success w-100"),
-        uiOutput(ns("register_message"))
+        
+        # RIGHT SIDE — form
+        div(
+          class = "login-right",
+          div(
+            class = "login-card",
+            tags$img(src = "STRIDE LOGO001.png", class = "login-logo-top"),
+            
+            selectInput(ns("govlev"), "Select Station:",
+                        choices = c("— Select an Option —" = "",
+                                    "Central Office", "Regional Office", 
+                                    "Schools Division Office", "School")),
+            
+            uiOutput(ns("station_specific_ui")),
+            
+            textInput(ns("reg_user"), NULL, placeholder = "DepEd Email (@deped.gov.ph)"),
+            passwordInput(ns("reg_pass"), NULL, placeholder = "Password"),
+            passwordInput(ns("reg_pass_confirm"), NULL, placeholder = "Confirm Password"),
+            actionButton(ns("do_register"), "Register Account", class = "btn-login w-100"),
+            
+            uiOutput(ns("register_message")),
+            br(),
+            actionLink(ns("btn_login"), "Back to Login", class = "register-link"),
+            
+            # Bottom Logos
+            div(
+              class = "login-logos-bottom",
+              tags$img(src = "logo3.png", class = "bottom-logo"),
+              tags$img(src = "HROD LOGO1.png", class = "bottom-logo"),
+              tags$img(src = "logo2.png", class = "bottom-logo")
+            )
+          )
+        )
       )
     }
   })
-  
-  output$station_specific_ui <- renderUI({
-    ns <- session$ns
-    
-    # Ensure govlev has been initialized before checking its value
-    req(input$govlev) 
-    
-    if (input$govlev == "School") {
-      # Render the 6-digit School ID input
-      tagList(
-        textInput(ns("school_id"), "School ID:"),
-        # Basic client-side validation hint
-        tags$small("Enter your School ID.", class = "text-muted") 
-      )
-    } else if (input$govlev %in% c("Central Office", "Regional Office", "Schools Division Office")) { # Explicit check for Office types
-      # Render the general Office name input for all other selections
-      tagList(
-        textInput(ns("office_name"), "Office Name"),
-        # Basic client-side validation hint
-        tags$small("Enter Bureau/Division. Do not abbreviate!", class = "text-muted")
-      )
-    }
-    # If "— Select an Option —" is chosen, nothing is rendered
-  })
+
   
   # --- 3. Login Logic ---
   observeEvent(input$do_login, {
