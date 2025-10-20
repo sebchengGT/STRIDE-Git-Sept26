@@ -22118,8 +22118,8 @@ authentication_server <- function(input, output, session, user_status,
         div(
           class = "login-left",
           div(class = "login-text-box",
-              h2("STRIDE"),
-              p("Education in Motion. Data Precision. Smart Decision.")
+              h2(style = "position: color: #000000;font-size: 10.98rem;text-shadow: -10px 2px 2px #1C6EA4;","STRIDE"),
+              p(style = "font-size: 30px;","Education in Motion. Data Precision. Smart Decision.")
           )
         ),
         
