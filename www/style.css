@@ -6,6 +6,11 @@ body {
   opacity: 1; /* keep content fully visible */
 }
 
+* {
+  font-family: 'Poppins', sans-serif !important;
+}
+
+
 body.login-bg {
   background: none;
   background-size: cover;

@@ -113,16 +113,18 @@ user_base <- tibble::tibble(
 SERVICE_ACCOUNT_FILE <- "service_account.json" 
 
 # Check if the file exists before attempting to authenticate
+print("Checking for service_account.json...")
+print(file.exists(SERVICE_ACCOUNT_FILE))
+
 if (file.exists(SERVICE_ACCOUNT_FILE)) {
-  # Authenticate non-interactively using the service account file
+  library(googlesheets4)
   gs4_auth(
     scopes = "https://www.googleapis.com/auth/spreadsheets",
     path = SERVICE_ACCOUNT_FILE
   )
   print("googlesheets4 authenticated successfully using Service Account.")
 } else {
-  warning(paste("Service account key not found at:", SERVICE_ACCOUNT_FILE, 
-                "Interactive authentication may be required."))
+  warning(paste("❌ Service account key not found at:", SERVICE_ACCOUNT_FILE))
 }
 
 # Define UI for application that draws a histogram
@@ -231,6 +233,23 @@ ui <- page_fluid(
     )
   ),
   
+  tags$head(
+    tags$link(
+      href = "https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap",
+      rel = "stylesheet"
+    ),
+    tags$style(HTML("
+    body, h1, h2, h3, h4, h5, h6, p, span, button {
+      font-family: 'Poppins', sans-serif !important;
+    }
+  "))
+  ),
+  tags$link(rel = "preconnect", href = "https://fonts.gstatic.com", crossorigin = "anonymous"),
+  
+  
+  
+  
+  
   # Footer (always visible)
   shinyjs::hidden(
     tags$footer(
@@ -238,6 +257,8 @@ ui <- page_fluid(
       class = "app-footer",
       tags$p("© Based on GMIS (April 2025) and eBEIS (SY 2024–2025)")))
 )
+
+
 
 
 
@@ -22135,6 +22156,19 @@ server <- function(input, output, session) {
     
     # ✅ AUTHENTICATED USERS
     if (status == "authenticated" && !is.null(current_user)) {
+      
+      # 🟡 Step 1: Check if Guest first
+      if (current_user == "guest_user@stride") {
+        print("🟢 Guest accessing STRIDE2 dashboard")
+        
+        showNotification("Welcome to STRIDE (Guest Mode: Read-only Access)", type = "message", duration = 5)
+        
+        shinyjs::show("mgmt_content")
+        return(NULL)
+      }
+      
+      
+      # 🟢 Step 2: Handle authenticated users from Google Sheet
       users_db <- user_database()
       user_row <- users_db[users_db$Email_Address == current_user, ]
       
@@ -22150,15 +22184,18 @@ server <- function(input, output, session) {
           shinyjs::hide("main_content")
           shinyjs::hide("mgmt_content")
         } else {
+          # Default fallback for other station types
           return(card(
             card_header("Application Dashboard"),
             h2(paste("Welcome,", station, "User!")),
             actionButton("main_app-logout", "Logout", class = "btn-danger")
           ))
         }
+        
         return(NULL)
       }
     }
+    
     
     # ✅ UNAUTHENTICATED USERS — show login/register page
     login_register_UI("auth")
@@ -22169,6 +22206,8 @@ server <- function(input, output, session) {
   callModule(authentication_server, "auth", 
              user_status, form_choice, SHEET_URL, user_database, db_trigger, 
              authenticated_user)
+  
+  
   # Pass the new reactive
   
   # --- Main App Module ---
@@ -22183,12 +22222,16 @@ server <- function(input, output, session) {
 }
 
 # --- Authentication Server (Handles the logic for login and registration) ---
+# ==========================================================
+# --- AUTHENTICATION MODULE: LOGIN / REGISTER / GUEST ---
+# ==========================================================
+
 authentication_server <- function(input, output, session, user_status, 
                                   form_choice, sheet_url, user_database, db_trigger, 
                                   authenticated_user) {
   ns <- session$ns
   
-  # --- SWITCH BETWEEN LOGIN & REGISTER FORMS ---
+  # --- 1️⃣ SWITCH BETWEEN LOGIN & REGISTER FORMS ---
   observeEvent(input$btn_register, {
     form_choice("register")
   })
@@ -22197,32 +22240,30 @@ authentication_server <- function(input, output, session, user_status,
     form_choice("login")
   })
   
-  # --- MAIN AUTH PAGE UI ---
+  # --- 2️⃣ MAIN AUTH PAGE UI ---
   output$auth_page <- renderUI({
     if (form_choice() == "login") {
-      # LOGIN PANEL (namespaced inputs)
+      # LOGIN PANEL
       div(
         class = "login-container",
         
-        # LEFT SIDE — tagline
+        # LEFT SIDE
         div(
           class = "login-left",
-          div(class = "login-text-box",
-              h2(style = "position: color: #000000;font-size: 10.98rem;text-shadow: -10px 2px 2px #1C6EA4;","STRIDE"),
-              p(style = "font-size: 30px;","Education in Motion. Data Precision. Smart Decision.")
+          div(
+            class = "login-text-box",
+            h2(style = "color: #000000; font-size: 10.98rem; text-shadow: -10px 2px 2px #1C6EA4;", "STRIDE"),
+            p(style = "font-size: 30px;", "Education in Motion. Data Precision. Smart Decision.")
           )
         ),
         
-        # RIGHT SIDE — login form
+        # RIGHT SIDE
         div(
           class = "login-right",
           div(
             class = "login-card",
-            
-            # Top Logo
             tags$img(src = "STRIDE LOGO001.png", class = "login-logo-top"),
             
-            # Form Inputs (all namespaced!)
             textInput(ns("login_user"), NULL, placeholder = "DepEd Email"),
             passwordInput(ns("login_pass"), NULL, placeholder = "Password"),
             actionButton(ns("do_login"), "Sign In", class = "btn-login w-100"),
@@ -22230,8 +22271,9 @@ authentication_server <- function(input, output, session, user_status,
             uiOutput(ns("login_message")),
             br(),
             actionLink(ns("btn_register"), "Create an account", class = "register-link"),
+            br(),
+            actionButton(ns("guest_mode"), "Continue as Guest", class = "btn-secondary w-100 mt-2"),
             
-            # Bottom Logos
             div(
               class = "login-logos-bottom",
               tags$img(src = "logo3.png", class = "bottom-logo"),
@@ -22242,11 +22284,11 @@ authentication_server <- function(input, output, session, user_status,
         )
       )
     } else {
-      # REGISTER PANEL (namespaced inputs)
+      # REGISTER PANEL
       div(
         class = "login-container",
         
-        # LEFT SIDE — text
+        # LEFT SIDE
         div(
           class = "login-left",
           div(
@@ -22256,7 +22298,7 @@ authentication_server <- function(input, output, session, user_status,
           )
         ),
         
-        # RIGHT SIDE — form
+        # RIGHT SIDE
         div(
           class = "login-right",
           div(
@@ -22269,7 +22311,6 @@ authentication_server <- function(input, output, session, user_status,
                                     "Schools Division Office", "School")),
             
             uiOutput(ns("station_specific_ui")),
-            
             textInput(ns("reg_user"), NULL, placeholder = "DepEd Email (@deped.gov.ph)"),
             passwordInput(ns("reg_pass"), NULL, placeholder = "Password"),
             passwordInput(ns("reg_pass_confirm"), NULL, placeholder = "Confirm Password"),
@@ -22279,7 +22320,6 @@ authentication_server <- function(input, output, session, user_status,
             br(),
             actionLink(ns("btn_login"), "Back to Login", class = "register-link"),
             
-            # Bottom Logos
             div(
               class = "login-logos-bottom",
               tags$img(src = "logo3.png", class = "bottom-logo"),
@@ -22291,15 +22331,12 @@ authentication_server <- function(input, output, session, user_status,
       )
     }
   })
-
   
-  # --- 3. Login Logic ---
+  # --- 3️⃣ LOGIN LOGIC ---
   observeEvent(input$do_login, {
     req(input$login_user, input$login_pass)
     
-    # Use the reactive user_database
     users_db <- user_database()
-    
     if (nrow(users_db) == 0) {
       output$login_message <- renderUI({
         tags$p("Database is empty or inaccessible.", class = "text-danger mt-2")
@@ -22307,28 +22344,20 @@ authentication_server <- function(input, output, session, user_status,
       return()
     }
     
-    # Check for user credentials
     user_row <- users_db[users_db$Email_Address == input$login_user, ]
-    
     if (nrow(user_row) == 1 && user_row$Password == input$login_pass) {
-      # Login successful for ANY station
       user_status("authenticated")
       authenticated_user(input$login_user)
       
-      # 🔥 Trigger loader for dashboard transition
-      session$sendCustomMessage("showLoader", "Welcome to Stride...")
-      print(">>> showLoader triggered")
+      session$sendCustomMessage("showLoader", "Welcome to STRIDE...")
+      print(">>> Login success — showLoader triggered")
       later::later(function() {
         session$sendCustomMessage("hideLoader", NULL)
-      }, 2) # 💡 CRITICAL: Store the logged-in username
+      }, 2)
       
-      # Clear the login fields on success
       updateTextInput(session, "login_user", value = "")
       updateTextInput(session, "login_pass", value = "")
-      
-      # Clear any previous messages
       output$login_message <- renderUI({})
-      
     } else {
       output$login_message <- renderUI({
         tags$p("Invalid username or password.", class = "text-danger mt-2")
@@ -22336,11 +22365,24 @@ authentication_server <- function(input, output, session, user_status,
     }
   })
   
-  # --- 4. Registration Logic ---
+  # --- 4️⃣ GUEST MODE LOGIC ---
+  observeEvent(input$guest_mode, {
+    print("🟢 Guest mode activated")
+    user_status("authenticated")
+    authenticated_user("guest_user@stride")
+    
+    session$sendCustomMessage("showLoader", "Entering STRIDE2 as Guest...")
+    later::later(function() {
+      session$sendCustomMessage("hideLoader", NULL)
+    }, 2)
+  })
+  
+  # --- 5️⃣ REGISTRATION LOGIC ---
   observeEvent(input$do_register, {
+    print("🔔 Register button clicked")
     req(input$reg_user, input$reg_pass, input$reg_pass_confirm, input$govlev)
     
-    # Check if a station has been selected (must be done early)
+    # Validation
     if (input$govlev == "") {
       output$register_message <- renderUI({
         tags$p("Please select your Station.", class = "text-danger mt-2")
@@ -22348,44 +22390,31 @@ authentication_server <- function(input, output, session, user_status,
       return()
     }
     
-    # 1. School ID and Office Name Validation/Requirement
-    
-    # Variable to hold station-specific detail, initialized to NA
+    # Initialize vars
     station_detail_id <- NA_character_
     station_detail_office <- NA_character_
     
     if (input$govlev == "School") {
-      # CRITICAL FIX: Use req() to ensure the input exists if 'School' is selected
-      req(input$school_id) 
-      
+      req(input$school_id)
       school_id_trimmed <- trimws(input$school_id)
-      
-      # School ID Length Check (from previous request)
       if (nchar(school_id_trimmed) != 6) {
         output$register_message <- renderUI({
           tags$p("School ID must be exactly 6 digits.", class = "text-danger mt-2")
         })
         return()
       }
-      # If valid, assign the value
       station_detail_id <- school_id_trimmed
-      
-    } else if (input$govlev %in% c("Central Office", "Regional Office", "Schools Division Office")) {
-      # CRITICAL FIX: Use req() to ensure the input exists for office stations
+    } else {
       req(input$office_name)
-      
-      # Office Name Requirement Check (simple check to ensure it's not empty)
       if (trimws(input$office_name) == "") {
         output$register_message <- renderUI({
           tags$p("Please enter your Office Name.", class = "text-danger mt-2")
         })
         return()
       }
-      # If valid, assign the value
       station_detail_office <- trimws(input$office_name)
     }
     
-    # 2. Email Domain Validation
     if (!endsWith(input$reg_user, "@deped.gov.ph")) {
       output$register_message <- renderUI({
         tags$p("Registration requires an official @deped.gov.ph email address.", class = "text-danger mt-2")
@@ -22393,7 +22422,6 @@ authentication_server <- function(input, output, session, user_status,
       return()
     }
     
-    # 3. Password Match Validation
     if (input$reg_pass != input$reg_pass_confirm) {
       output$register_message <- renderUI({
         tags$p("Passwords do not match.", class = "text-danger mt-2")
@@ -22401,51 +22429,56 @@ authentication_server <- function(input, output, session, user_status,
       return()
     }
     
-    # Use the reactive user_database for checking existing users
     users_db <- user_database()
-    
     if (input$reg_user %in% users_db$Email_Address) {
       output$register_message <- renderUI({
-        tags$p("Email_Address already taken. Please choose another.", class = "text-danger mt-2")
+        tags$p("This email is already registered.", class = "text-danger mt-2")
       })
       return()
     }
     
-    # 4. Successful validation - Register user
-    # CRITICAL FIX: Use the created variables (which are guaranteed to be 1 row)
-    # This prevents the "arguments imply differing number of rows" error.
     new_user <- data.frame(
       Registration_Date = as.character(Sys.time()),
       Email_Address = input$reg_user,
       Password = input$reg_pass,
       Station = input$govlev,
-      School_ID = station_detail_id, # Will be ID or NA
-      Office = station_detail_office, # Will be Office Name or NA
+      School_ID = station_detail_id,
+      Office = station_detail_office,
       stringsAsFactors = FALSE
     )
     
-    # Append the new user to the Google Sheet
-    sheet_write_status <- tryCatch({
-      # Note: Ensure your Google Sheet has all five columns: Email_Address, Password, Station, School_ID, Office
+    success <- tryCatch({
       googlesheets4::sheet_append(sheet_url, data = new_user)
       TRUE
     }, error = function(e) {
-      showNotification(paste("Error writing to database:", e$message), type = "error")
+      output$register_message <- renderUI({
+        tags$p(paste("Error writing to database:", e$message), class = "text-danger mt-2")
+      })
       FALSE
     })
     
-    if (sheet_write_status) {
-      db_trigger(db_trigger() + 1)  
+    if (success) {
+      db_trigger(db_trigger() + 1)
       user_status("authenticated")
       authenticated_user(input$reg_user)
       
-      # 🔥 Trigger loader after registration success
+      output$register_message <- renderUI({
+        tags$p("✅ Registration successful! Redirecting...", class = "text-success mt-2")
+      })
+      
       session$sendCustomMessage("showLoader", "Setting up your account...")
-      session$sendCustomMessage("hideLoader", NULL)
+      later::later(function() {
+        session$sendCustomMessage("hideLoader", NULL)
+      }, 2)
     }
   })
+}
+# --- END OF AUTHENTICATION MODULE ---
+# ==========================================================
+
   
-  ### SERVER FOR DATA ENTRY GOOGLE SHEETS ####
+  
+
   
   # Reactive function to read the data (run once when server starts)
   observeEvent(TRUE, {
@@ -22754,6 +22787,5 @@ authentication_server <- function(input, output, session, user_status,
   })
   
   
-}
 
 shinyApp(ui, server)
