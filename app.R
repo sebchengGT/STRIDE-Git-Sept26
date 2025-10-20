@@ -6,7 +6,7 @@
 #TESTINGGGGGGGGGGGGGGGGGGGGGGGGG
 #oct 13, 2025
 #eeee
-#updated as of oct 17,2025 4:27pm
+#updated as of oct 20,2025 8:17am
 library(tidyverse)
 library(DT)
 library(dplyr)
@@ -270,1217 +270,84 @@ server <- function(input, output, session) {
   #   active = reactive(credentials()$user_auth) # Logout button active only when logged in
   # )
   
-  ### DRILL DOWN SERVER ###
   
-  # --- Reactive State for Multi-level Drill-down ---
-  drilldown_state <- reactiveVal(list(region = NULL, division = NULL))
-  
-  # --- Event Handling for Clicks and Reset ---
-  observeEvent(event_data("plotly_click", source = "drilldown_source"), {
-    click_data <- event_data("plotly_click", source = "drilldown_source")
-    current_state <- drilldown_state()
-    
-    if (is.null(current_state$region)) {
-      # First drill-down: from national to region
-      drilldown_state(list(region = click_data$y, division = NULL))
-    } else if (is.null(current_state$division)) {
-      # Second drill-down: from region to division
-      drilldown_state(list(region = current_state$region, division = click_data$y))
-    }
-  })
-  
-  observeEvent(input$reset_button, {
-    state <- drilldown_state()
-    
-    if (!is.null(state$district)) {
-      # LEVEL 3: If we are at the District level, move up to the Division level.
-      # Keep Region and Division, set District to NULL.
-      drilldown_state(list(
-        region = state$region, 
-        division = state$division, 
-        district = NULL
-      ))
-      
-    } else if (!is.null(state$division)) {
-      # LEVEL 2: If we are at the Division level, move up to the Region level.
-      # Keep Region, set Division and District to NULL.
-      drilldown_state(list(
-        region = state$region, 
-        division = NULL, 
-        district = NULL
-      ))
-      
-    } else if (!is.null(state$region)) {
-      # LEVEL 1: If we are at the Region level, move up to the National level.
-      # Set all three (Region, Division, District) to NULL.
-      drilldown_state(list(
-        region = NULL, 
-        division = NULL, 
-        district = NULL
-      ))
-      
-    }
-    # If all are NULL (National level), the state remains unchanged.
-  })
-  
-  # --- Reactive Data Filtering ---
-  filtered_data_uni_erdb <- reactive({
-    state <- drilldown_state()
-    data <- uni
-    if (!is.null(state$region)) {
-      data <- data %>% filter(Region == state$region)
-    }
-    if (!is.null(state$division)) {
-      data <- data %>% filter(Division == state$division)
-    }
-    data
-  })
-  
-  filtered_data_df_erdb <- reactive({
-    state <- drilldown_state()
-    data <- df
-    if (!is.null(state$region)) {
-      data <- data %>% filter(Region == state$region)
-    }
-    if (!is.null(state$division)) {
-      data <- data %>% filter(Division == state$division)
-    }
-    data
-  })
-  
-  filtered_data_LMS_erdb <- reactive({
-    state <- drilldown_state()
-    data <- LMS
-    if (!is.null(state$region)) {
-      data <- data %>% filter(Region == state$region)
-    }
-    if (!is.null(state$division)) {
-      data <- data %>% filter(Division == state$division)
-    }
-    data
-  })
-  
-  # --- Value Box Rendering using shinydashboard::renderValueBox ---
-  
-  # Note: Ensure the 'comma' function (likely from the 'scales' package) is available.
-  # library(shinydashboard) 
-  # library(scales) 
-  
-  # Corrected and Enhanced renderInfoBox Functions (Server-Side)
-  
-  # Note: Ensure the 'comma' function (from the 'scales' package) is available.
-  # library(shinydashboard) 
-  # library(scales) 
-  
-  # 1. Total Schools
-  # Corrected and Enhanced renderValueBox Functions (Server-Side)
-  # Note: Requires the 'scales' package for comma()
-  
-  # Helper function to define the modern value_box without an icon
-  make_value_box_no_icon <- function(title, value, color_class, text_color = "#212529") {
-    bslib::value_box(
-      title = title,
-      
-      # 1. Make the value significantly bigger and bold
-      value = tags$span(value, style = "font-size: 2.5rem; font-weight: bold;"),
-      
-      # Showcase element (icon) is completely removed here ⬅️
-      
-      # Use 'full_screen' for a nice aesthetic hover-to-expand feature
-      full_screen = TRUE,
-      
-      # 2. Use 'theme' for the color scheme and text color
-      theme = bslib::value_box_theme(bg = color_class, fg = text_color)
+  # --- Curricular Offering Bar Chart ---
+  output$Curricular_Offering_Bar <- renderPlotly({
+    data <- data.frame(
+      Category = c("Purely ES", "JHS with SHS", "ES and JHS (K to 10)",
+                   "Purely JHS", "All Offering (K to 12)", "Purely SHS"),
+      Count = c(35036, 6598, 1690, 1367, 832, 262),
+      marker = list(color = "#0072B2")
     )
-  }
-  
-  # ---------------------------------------------------------------------------
-  
-  # 1. Total Schools (White box)
-  output$total_schools_erdb <- renderValueBox({
-    total <- nrow(filtered_data_uni_erdb())
-    make_value_box_no_icon(
-      title = "Total Schools Count",
-      value = scales::comma(total),
-      color_class = "#FFFFFF" 
-    )
-  })
-  
-  # 2. Total Enrolment (White box)
-  output$total_enrolment_erdb <- renderValueBox({
-    count <- sum(filtered_data_uni_erdb()$TotalEnrolment, na.rm = TRUE)
-    make_value_box_no_icon(
-      title = "Total Student Enrolment",
-      value = scales::comma(count),
-      color_class = "#FFFFFF"
-    )
-  })
-  
-  # 3. Total Classrooms (White box)
-  output$total_classrooms_erdb <- renderValueBox({
-    count <- sum(filtered_data_LMS_erdb()$Instructional_Rooms, na.rm = TRUE)
-    make_value_box_no_icon(
-      title = "Available Classrooms",
-      value = scales::comma(count),
-      color_class = "#FFFFFF"
-    )
-  })
-  
-  output$total_LMS_erdb <- renderValueBox({
-    # 1. Filter the data, then use nrow() to get the single count.
-    count <- filtered_data_LMS_erdb() %>%
-      filter(LMS == 1) %>%
-      nrow()
     
-    # 2. Render the value box
-    make_value_box_no_icon(
-      title = "Total Last Mile Schools",
-      value = scales::comma(count),
-      color_class = "#FFFFFF"
-    )
-  })
-  
-  # 4. Total Classroom Shortage (Light Orange Warning)
-  output$total_classroom_shortage_erdb <- renderValueBox({
-    shortage <- sum(filtered_data_LMS_erdb()$Estimated_CL_Shortage, na.rm = TRUE)
-    make_value_box_no_icon(
-      title = "Classroom Shortage",
-      value = scales::comma(shortage),
-      color_class = "#FFE5CC" 
-    )
-  })
-  
-  output$SP_Shortage_erdb <- renderValueBox({
-    # 1. Access the reactive data once
-    data_uni <- filtered_data_uni_erdb()
-    
-    # 2. Count the number of TRUE values where Designation is NOT "School Principal".
-    #    Using sum() on a logical vector (TRUE/FALSE) is the Base R way to count.
-    count <- sum(data_uni$Designation != "School Principal", na.rm = TRUE)
-    
-    # 3. Render the value box
-    make_value_box_no_icon(
-      title = "School Principal Shortage",
-      value = scales::comma(count),
-      color_class = "#00796B", 
-      text_color = "#FFFFFF" 
-    )
-  })
-  
-  # 6. Total Teacher Shortage (Light Red Critical Warning)
-  output$total_teacher_shortage_erdb <- renderValueBox({
-    shortage <- sum(filtered_data_df_erdb()$TeacherShortage, na.rm = TRUE)
-    make_value_box_no_icon(
-      title = "Teacher Shortage",
-      value = scales::comma(shortage),
-      color_class = "#F8D7DA" 
-    )
-  })
-  
-  # --- Plot Rendering ---
-  
-  # Total Schools Plot (Drilldown)
-  output$totalschools_plot_erdb <- renderPlotly({
-    state <- drilldown_state()
-    
-    if (is.null(state$region)) {
-      # National View -> Group by Region
-      plot_data <- uni %>%
-        group_by(Region) %>%
-        summarise(TotalSchools = n(), .groups = 'drop')
-      
-      max_schools <- max(plot_data$TotalSchools, na.rm = TRUE)
-      
-      p <- plot_ly(
-        data = plot_data, 
-        y = ~Region,                # Flipped: Category on Y-axis
-        x = ~TotalSchools,          # Flipped: Value on X-axis
-        type = 'bar', 
-        source = "drilldown_source",
-        text = ~TotalSchools,       # Added: Text label value
-        texttemplate = '%{x:,.0f}', # Added: Format text (comma, 0 decimals)
-        textposition = 'outside'    # Added: Place text outside bar
-      ) %>%
-        layout(
-          title = "Total Schools by Region", 
-          xaxis = list(title = "Number of Schools", tickformat = ",", range = c(0, max_schools * 1.15)), # Swapped to xaxis
-          yaxis = list(title = "", categoryorder = "total descending", autorange = "reversed") # Swapped to yaxis, removed tickangle, added autorange
-        )
-      
-    } else if (is.null(state$division)) {
-      # Regional View -> Group by Division
-      plot_data <- uni %>%
-        filter(Region == state$region) %>%
-        group_by(Division) %>%
-        summarise(TotalSchools = n(), .groups = 'drop')
-      
-      max_schools <- max(plot_data$TotalSchools, na.rm = TRUE)
-      
-      p <- plot_ly(
-        data = plot_data, 
-        y = ~Division,              # Flipped: Category on Y-axis
-        x = ~TotalSchools,          # Flipped: Value on X-axis
-        type = 'bar', 
-        source = "drilldown_source",
-        text = ~TotalSchools,       # Added
-        texttemplate = '%{x:,.0f}', # Added
-        textposition = 'outside'    # Added
-      ) %>%
-        layout(
-          title = paste("Schools in", state$region), 
-          xaxis = list(title = "Number of Schools", tickformat = ",", range = c(0, max_schools * 1.15)), # Swapped
-          yaxis = list(title = "", categoryorder = "total descending", autorange = "reversed") # Swapped
-        )
-      
-    } else {
-      # Divisional View -> Group by Legislative District
-      plot_data <- uni %>%
-        filter(Region == state$region, Division == state$division) %>%
-        group_by(Legislative.District) %>%
-        summarise(TotalSchools = n(), .groups = 'drop')
-      
-      max_schools <- max(plot_data$TotalSchools, na.rm = TRUE)
-      
-      p <- plot_ly(
-        data = plot_data, 
-        y = ~Legislative.District,  # Flipped: Category on Y-axis
-        x = ~TotalSchools,          # Flipped: Value on X-axis
-        type = 'bar',
-        text = ~TotalSchools,       # Added
-        texttemplate = '%{x:,.0f}', # Added
-        textposition = 'outside'    # Added
-      ) %>% 
-        layout(
-          title = paste("Schools in", state$division), 
-          xaxis = list(title = "Number of Schools", tickformat = ",", range = c(0, max_schools * 1.15)), # Swapped
-          yaxis = list(title = "Legislative District", categoryorder = "total descending", autorange = "reversed") # Swapped
-        )
-    }
-    p
-  })
-  
-  # By Curricular Offering (Pie Chart) - No changes
-  output$curricular_plot_erdb <- renderPlotly({
-    state <- drilldown_state()
-    
-    # 1. Filter data based on drill-down state
-    plot_data <- if (is.null(state$region)) {
-      uni # National view: use all data
-    } else if (is.null(state$division)) {
-      uni %>% filter(Region == state$region) # Regional view
-    } else {
-      uni %>% filter(Region == state$region, Division == state$division) # Divisional view
-    }
-    
-    # 2. Generate pie chart data from the (potentially filtered) data
-    pie_data <- plot_data %>%
-      group_by(Modified.COC) %>%
-      summarise(Count = n(), .groups = 'drop')
-    
-    # 3. Define title based on state
-    title_text <- if (is.null(state$region)) {
-      "By Curricular Offering (National)"
-    } else if (is.null(state$division)) {
-      paste("By Curricular Offering (", state$region, ")")
-    } else {
-      paste("By Curricular Offering (", state$division, ")")
-    }
-    
-    plot_ly(data = pie_data, labels = ~Modified.COC, values = ~Count, type = 'pie', textinfo = 'percent', insidetextorientation = 'radial') %>%
-      layout(title = title_text, showlegend = TRUE, xaxis = list(title = "", tickangle = -45))
-  })
-  
-  # By School Size Typology (Bar Chart)
-  output$typology_plot_erdb <- renderPlotly({
-    state <- drilldown_state()
-    
-    # 1. Filter data based on drill-down state (UNCHANGED)
-    plot_data <- if (is.null(state$region)) {
-      uni # National view
-    } else if (is.null(state$division)) {
-      uni %>% filter(Region == state$region) # Regional view
-    } else {
-      uni %>% filter(Region == state$region, Division == state$division) # Divisional view
-    }
-    
-    # 2. Generate bar chart data (UNCHANGED)
-    typology_data <- plot_data %>%
-      group_by(School.Size.Typology) %>%
-      summarise(Count = n(), .groups = 'drop')
-    
-    max_schools <- max(typology_data$Count, na.rm = TRUE)
-    
-    # 3. Define title based on state (UNCHANGED)
-    title_text <- if (is.null(state$region)) {
-      "By School Size (National)"
-    } else if (is.null(state$division)) {
-      paste("By School Size (", state$region, ")")
-    } else {
-      paste("By School Size (", state$division, ")")
-    }
-    
-    # 4. Create and customize the plot (MODIFIED)
     plot_ly(
-      data = typology_data,
-      y = ~School.Size.Typology,  # Flipped: Category on Y-axis
-      x = ~Count,                 # Flipped: Value on X-axis
-      type = 'bar',
-      text = ~Count,              # Added: Use Count for text
-      texttemplate = '%{x:,.0f}',  # Added: Format text
-      textposition = 'outside',   # Added: Place text outside
-      hovertemplate = paste(
-        "%{y}, %{x:,}", # Flipped: Use y for category, x for value
-        "<extra></extra>" 
-      )
-    ) %>%
-      layout(
-        title = title_text,
-        yaxis = list(              # Swapped to yaxis
-          title = "", categoryorder = "total descending", autorange = "reversed"),
-        xaxis = list(              # Swapped to xaxis
-          title = "Number of Schools",
-          tickformat = ",",
-          range = c(0, max_schools *1.15)
-        )
-      )
+      data,
+      x = ~Category, y = ~Count,
+      type = "bar", marker = list(color = "#002D62")
+    ) |>
+      layout(title = list(text = "Curricular Offering Distribution", x = 0.5),
+             xaxis = list(title = ""), yaxis = list(title = "Number of Schools"))
   })
   
-  # Classroom Shortage Plot
-  output$classroomshortage_plot_erdb <- renderPlotly({
-    state <- drilldown_state()
-    
-    if (is.null(state$region)) {
-      # National View -> Group by Region
-      plot_data <- LMS %>% # Using base LMS data
-        group_by(Region) %>%
-        summarise(TotalShortage = sum(Estimated_CL_Shortage, na.rm = TRUE), .groups = 'drop')
-      
-      max_schools <- max(plot_data$TotalShortage, na.rm = TRUE)
-      
-      p <- plot_ly(
-        data = plot_data, 
-        y = ~Region,                # Flipped
-        x = ~TotalShortage,         # Flipped
-        type = 'bar', 
-        source = "drilldown_source",
-        text = ~TotalShortage,      # Added
-        texttemplate = '%{x:,.0f}',# Added
-        textposition = 'outside'   # Added
-      ) %>%
-        layout(
-          title = "Classroom Shortage by Region", 
-          xaxis = list(title = "Total Shortage", tickformat = ",", range = c(0, max_schools * 1.15)), # Swapped
-          yaxis = list(title = "", categoryorder = "total descending", autorange = "reversed") # Swapped
-        )
-      
-    } else if (is.null(state$division)) {
-      # Regional View -> Group by Division
-      plot_data <- LMS %>% # Using base LMS data
-        filter(Region == state$region) %>%
-        group_by(Division) %>%
-        summarise(TotalShortage = sum(Estimated_CL_Shortage, na.rm = TRUE), .groups = 'drop')
-      
-      max_schools <- max(plot_data$TotalShortage, na.rm = TRUE)
-      
-      
-      p <- plot_ly(
-        data = plot_data, 
-        y = ~Division,              # Flipped
-        x = ~TotalShortage,         # Flipped
-        type = 'bar', 
-        source = "drilldown_source",
-        text = ~TotalShortage,      # Added
-        texttemplate = '%{x:,.0f}',# Added
-        textposition = 'outside'   # Added
-      ) %>%
-        layout(
-          title = paste("Classroom Shortage in", state$region), 
-          xaxis = list(title = "Total Shortage", tickformat = ",", range = c(0, max_schools * 1.15)), # Swapped
-          yaxis = list(title = "", categoryorder = "total descending", autorange = "reversed") # Swapped
-        )
-      
-    } else {
-      # Divisional View -> Group by Legislative District
-      plot_data <- LMS %>% # Using base LMS data
-        filter(Region == state$region, Division == state$division) %>%
-        group_by(Legislative.District) %>%
-        summarise(TotalShortage = sum(Estimated_CL_Shortage, na.rm = TRUE), .groups = 'drop')
-      
-      max_schools <- max(plot_data$TotalShortage, na.rm = TRUE)
-      
-      
-      p <- plot_ly(
-        data = plot_data, 
-        y = ~Legislative.District,  # Flipped
-        x = ~TotalShortage,         # Flipped
-        type = 'bar',
-        text = ~TotalShortage,      # Added
-        texttemplate = '%{x:,.0f}',# Added
-        textposition = 'outside'   # Added
-      ) %>% 
-        layout(
-          title = paste("Classroom Shortage in", state$division), 
-          xaxis = list(title = "Total Shortage", tickformat = ",", range = c(0, max_schools * 1.15)), # Swapped
-          yaxis = list(title = "Legislative District", categoryorder = "total descending", autorange = "reversed") # Swapped
-        )
-    }
-    p
-  })
-  
-  # LMS Plot
-  output$LMS_plot_erdb <- renderPlotly({
-    state <- drilldown_state()
-    
-    if (is.null(state$region)) {
-      # National View -> Group by Region
-      plot_data <- LMS %>% # Using base LMS data
-        filter(LMS == 1) %>% # Applying original filter
-        group_by(Region) %>%
-        summarise(Count = n(), .groups = 'drop')
-      
-      max_schools <- max(plot_data$Count, na.rm = TRUE)
-      
-      
-      p <- plot_ly(
-        data = plot_data, 
-        y = ~Region,                # Flipped
-        x = ~Count,                 # Flipped
-        type = 'bar', 
-        source = "drilldown_source",
-        text = ~Count,              # Added
-        texttemplate = '%{x:,.0f}',# Added
-        textposition = 'outside'   # Added
-      ) %>%
-        layout(
-          title = "LMS by Region", 
-          xaxis = list(title = "Number of LMS", tickformat = ",", range = c(0, max_schools * 1.15)), # Swapped
-          yaxis = list(title = "", categoryorder = "total descending", autorange = "reversed") # Swapped
-        )
-      
-    } else if (is.null(state$division)) {
-      # Regional View -> Group by Division
-      plot_data <- LMS %>% # Using base LMS data
-        filter(LMS == 1, Region == state$region) %>% # Applying filters
-        group_by(Division) %>%
-        summarise(Count = n(), .groups = 'drop')
-      
-      max_schools <- max(plot_data$Count, na.rm = TRUE)
-      
-      p <- plot_ly(
-        data = plot_data, 
-        y = ~Division,              # Flipped
-        x = ~Count,                 # Flipped
-        type = 'bar', 
-        source = "drilldown_source",
-        text = ~Count,              # Added
-        texttemplate = '%{x:,.0f}',# Added
-        textposition = 'outside'   # Added
-      ) %>%
-        layout(
-          title = paste("LMS in", state$region), 
-          xaxis = list(title = "Number of LMS", tickformat = ",", range = c(0, max_schools * 1.15)), # Swapped
-          yaxis = list(title = "", categoryorder = "total descending", autorange = "reversed") # Swapped
-        )
-      
-    } else {
-      # Divisional View -> Group by Legislative District
-      plot_data <- LMS %>% # Using base LMS data
-        filter(LMS == 1, Region == state$region, Division == state$division) %>% # Applying filters
-        group_by(Legislative.District) %>%
-        summarise(Count = n(), .groups = 'drop')
-      
-      max_schools <- max(plot_data$Count, na.rm = TRUE)
-      
-      p <- plot_ly(
-        data = plot_data, 
-        y = ~Legislative.District,  # Flipped
-        x = ~Count,                 # Flipped
-        type = 'bar',
-        text = ~Count,              # Added
-        texttemplate = '%{x:,.0f}',# Added
-        textposition = 'outside'   # Added
-      ) %>% 
-        layout(
-          title = paste("LMS in", state$division), 
-          xaxis = list(title = "Number of LMS", tickformat = ",", range = c(0, max_schools * 1.15)), # Swapped
-          yaxis = list(title = "Legislative District", categoryorder = "total descending", autorange = "reversed") # Swapped
-        )
-    }
-    p
-  })
-  
-  # Teacher Shortage Plot
-  output$teachershortage_plot_erdb <- renderPlotly({
-    state <- drilldown_state()
-    
-    if (is.null(state$region)) {
-      # National View -> Group by Region
-      plot_data <- df %>% # Using base df data
-        group_by(Region) %>%
-        summarise(TotalShortage = sum(TeacherShortage, na.rm = TRUE), .groups = 'drop')
-      
-      max_schools <- max(plot_data$TotalShortage, na.rm = TRUE)
-      
-      
-      p <- plot_ly(
-        data = plot_data, 
-        y = ~Region,                # Flipped
-        x = ~TotalShortage,         # Flipped
-        type = 'bar', 
-        source = "drilldown_source",
-        text = ~TotalShortage,      # Added
-        texttemplate = '%{x:,.0f}',# Added
-        textposition = 'outside'   # Added
-      ) %>%
-        layout(
-          title = "Teacher Shortage by Region", 
-          xaxis = list(title = "Total Teacher Shortage", tickformat = ",", range = c(0, max_schools * 1.15)), # Swapped
-          yaxis = list(title = "", categoryorder = "total descending", autorange = "reversed") # Swapped
-        )
-      
-    } else if (is.null(state$division)) {
-      # Regional View -> Group by Division
-      plot_data <- df %>% # Using base df data
-        filter(Region == state$region) %>%
-        group_by(Division) %>%
-        summarise(TotalShortage = sum(TeacherShortage, na.rm = TRUE), .groups = 'drop')
-      
-      max_schools <- max(plot_data$TotalShortage, na.rm = TRUE)
-      
-      p <- plot_ly(
-        data = plot_data, 
-        y = ~Division,              # Flipped
-        x = ~TotalShortage,         # Flipped
-        type = 'bar', 
-        source = "drilldown_source",
-        text = ~TotalShortage,      # Added
-        texttemplate = '%{x:,.0f}',# Added
-        textposition = 'outside'   # Added
-      ) %>%
-        layout(
-          title = paste("Teacher Shortage in", state$region), 
-          xaxis = list(title = "Total Teacher Shortage", tickformat = ",", range = c(0, max_schools * 1.15)), # Swapped
-          yaxis = list(title = "", categoryorder = "total descending", autorange = "reversed") # Swapped
-        )
-      
-    } else {
-      # Divisional View -> Group by Legislative District
-      plot_data <- df %>% # Using base df data
-        filter(Region == state$region, Division == state$division) %>%
-        group_by(Legislative.District) %>%
-        summarise(TotalShortage = sum(TeacherShortage, na.rm = TRUE), .groups = 'drop')
-      
-      max_schools <- max(plot_data$TotalShortage, na.rm = TRUE)
-      
-      p <- plot_ly(
-        data = plot_data, 
-        y = ~Legislative.District,  # Flipped
-        x = ~TotalShortage,         # Flipped
-        type = 'bar',
-        text = ~TotalShortage,      # Added
-        texttemplate = '%{x:,.0f}',# Added
-        textposition = 'outside'   # Added
-      ) %>% 
-        layout(
-          title = paste("Teacher Shortage in", state$division), 
-          xaxis = list(title = "Total Teacher Shortage", tickformat = ",", range = c(0, max_schools * 1.15)), # Swapped
-          yaxis = list(title = "Legislative District", categoryorder = "total descending", autorange = "reversed") # Swapped
-        )
-    }
-    p
-  })
-  
-  # Principal Shortage Plot
-  output$principalshortage_plot_erdb <- renderPlotly({
-    state <- drilldown_state()
-    
-    if (is.null(state$region)) {
-      # National View -> Group by Region
-      plot_data <- uni %>% # Using base uni data
-        filter(Designation != "School Principal") %>% # Applying original filter
-        group_by(Region) %>%
-        summarise(Count = n(), .groups = 'drop')
-      
-      max_schools <- max(plot_data$Count, na.rm = TRUE)
-      
-      p <- plot_ly(
-        data = plot_data, 
-        y = ~Region,                # Flipped
-        x = ~Count,                 # Flipped
-        type = 'bar', 
-        source = "drilldown_source",
-        text = ~Count,              # Added
-        texttemplate = '%{x:,.0f}',# Added
-        textposition = 'outside'   # Added
-      ) %>%
-        layout(
-          title = "Schools w/o Principal by Region", 
-          xaxis = list(title = "Number of Schools", tickformat = ",", range = c(0, max_schools * 1.15)), # Swapped
-          yaxis = list(title = "", categoryorder = "total descending", autorange = "reversed") # Swapped
-        )
-      
-    } else if (is.null(state$division)) {
-      # Regional View -> Group by Division
-      plot_data <- uni %>% # Using base uni data
-        filter(Designation != "School Principal", Region == state$region) %>% # Applying filters
-        group_by(Division) %>%
-        summarise(Count = n(), .groups = 'drop')
-      
-      max_schools <- max(plot_data$Count, na.rm = TRUE)
-      
-      p <- plot_ly(
-        data = plot_data, 
-        y = ~Division,              # Flipped
-        x = ~Count,                 # Flipped
-        type = 'bar', 
-        source = "drilldown_source",
-        text = ~Count,              # Added
-        texttemplate = '%{x:,.0f}',# Added
-        textposition = 'outside'   # Added
-      ) %>%
-        layout(
-          title = paste("Schools w/o Principal in", state$region), 
-          xaxis = list(title = "Number of Schools", tickformat = ",", range = c(0, max_schools * 1.15)), # Swapped
-          yaxis = list(title = "", categoryorder = "total descending", autorange = "reversed") # Swapped
-        )
-      
-    } else {
-      # Divisional View -> Group by Legislative District
-      plot_data <- uni %>% # Using base uni data
-        filter(Designation != "School Principal", Region == state$region, Division == state$division) %>% # Applying filters
-        group_by(Legislative.District) %>%
-        summarise(Count = n(), .groups = 'drop')
-      
-      max_schools <- max(plot_data$Count, na.rm = TRUE)
-      
-      p <- plot_ly(
-        data = plot_data, 
-        y = ~Legislative.District,  # Flipped
-        x = ~Count,                 # Flipped
-        type = 'bar',
-        text = ~Count,              # Added
-        texttemplate = '%{x:,.0f}',# Added
-        textposition = 'outside'   # Added
-      ) %>% 
-        layout(
-          title = paste("Schools w/o Principal in", state$division), 
-          xaxis = list(title = "Number of Schools", tickformat = ",", range = c(0, max_schools * 1.15)), # Swapped
-          yaxis = list(title = "Legislative District", categoryorder = "total descending", autorange = "reversed") # Swapped
-        )
-    }
-    p
-  })
-  
-  output$Teaching_Deployment_Division_Graph1 <- renderPlotly({
-    # --- Use the full dataset ---
-    current_filtered_data <- df
-    
-    # --- Empty Data Handling ---
-    if (nrow(current_filtered_data) == 0) {
-      return(plotly_empty() %>% 
-               layout(title = "No data for selected regions/divisions"))
-    }
-    
-    # --- Prepare data for plotting ---
-    plot_data <- current_filtered_data %>%
-      group_by(Division) %>%
-      summarise(Count = sum(as.numeric(TeacherShortage), na.rm = TRUE), .groups = 'drop') %>%
-      arrange(desc(Count)) %>%
-      slice_head(n = 20)
-    
-    # --- Create native Plotly chart ---
-    max_count <- max(plot_data$Count, na.rm = TRUE)
-    
-    p <- plot_ly(
-      data = plot_data,
-      y = ~reorder(Division, Count), # Division on Y-axis, sorted ascending (plotly reverses)
-      x = ~Count,                    # Count on X-axis
-      type = 'bar',
-      source = "teachingDeploymentDivisionPlot",
-      name = "Teacher Shortage",
-      # Use Plotly attributes for text labels
-      text = ~scales::comma(Count),
-      texttemplate = '%{text}',
-      textposition = 'outside',
-      # Custom hovertext
-      hovertemplate = paste(
-        "Division: %{y}<br>",
-        "Teacher Shortage: %{x:,0f}<extra></extra>"
-      )
-    ) %>%
-      layout(
-        title = list(text = "Top 20 Divisions by Teacher Shortage (Teaching Deployment)", 
-                     x = 0.5, font = list(size = 14, family = "sans-serif")),
-        xaxis = list(title = "Teacher Shortage", tickformat = ",", 
-                     range = c(0, max_count * 1.15)),
-        yaxis = list(title = "", categoryorder = "total ascending"), # Plotly reverses the order by default
-        hoverlabel = list(bgcolor = "white"),
-        margin = list(l = 100) # Left margin for division names
-      )
-    
-    return(p)
-  })
-  
-  output$Classroom_Shortage_Division_Graph2 <- renderPlotly({
-    # Use the reactive filtered data
-    current_filtered_data <- LMS
-    
-    # --- Empty Data Handling ---
-    if (nrow(current_filtered_data) == 0) {
-      return(plotly_empty() %>% 
-               layout(title = "No data for selected regions/divisions"))
-    }
-    
-    # Prepare the data for plotting
-    plot_data <- current_filtered_data %>%
-      group_by(Division) %>%
-      summarise(Count = sum(as.numeric(Estimated_CL_Shortage), na.rm = TRUE), .groups = 'drop') %>%
-      arrange(desc(Count)) %>%
-      slice_head(n = 20)
-    
-    # --- Create native Plotly chart ---
-    max_count <- max(plot_data$Count, na.rm = TRUE)
-    
-    p <- plot_ly(
-      data = plot_data,
-      y = ~reorder(Division, Count), # Division on Y-axis, sorted ascending
-      x = ~Count,                    # Count on X-axis
-      type = 'bar',
-      source = "classroomShortageRegionPlot",
-      name = "Classroom Shortage",
-      # Use Plotly attributes for text labels
-      text = ~scales::comma(Count),
-      texttemplate = '%{text}',
-      textposition = 'outside',
-      # Custom hovertext
-      hovertemplate = paste(
-        "Division: %{y}<br>",
-        "Classroom Shortage: %{x:,0f}<extra></extra>"
-      )
-    ) %>%
-      layout(
-        title = list(text = "Top 20 Divisions by Classroom Shortage", 
-                     x = 0.5, font = list(size = 14, family = "sans-serif")),
-        xaxis = list(title = "Classroom Shortage", tickformat = ",", 
-                     range = c(0, max_count * 1.15)),
-        yaxis = list(title = "", categoryorder = "total ascending"),
-        hoverlabel = list(bgcolor = "white"),
-        margin = list(l = 100)
-      )
-    
-    return(p)
-  })
-  
-  output$LMS_Division_Graph2 <- renderPlotly({
-    full_data <- LMS %>%
-      rename(
-        "With Buildable Space" = Buildable_space,
-        "With Excess Classrooms" = With_Excess,
-        "Without Classroom Shortage" = Without_Shortage,
-        "Last Mile Schools" = LMS,
-        "GIDCA" = GIDCA,
-        "With Shortage" = With_Shortage
-      ) %>%
-      pivot_longer(13:18, names_to = "Type", values_to = "Count")
-    
-    # --- Keep only "Last Mile Schools" and aggregate all regions ---
-    plot_data <- full_data %>%
-      filter(Type == "Last Mile Schools") %>%
-      group_by(Division) %>%
-      summarise(
-        Count = sum(as.numeric(Count), na.rm = TRUE),
-        .groups = "drop"
-      ) %>%
-      arrange(desc(Count)) %>%
-      slice_head(n = 20)
-    
-    # --- Create native Plotly chart ---
-    max_count <- max(plot_data$Count, na.rm = TRUE)
-    
-    p <- plot_ly(
-      data = plot_data,
-      y = ~reorder(Division, Count), # Division on Y-axis, sorted ascending
-      x = ~Count,                    # Count on X-axis
-      type = 'bar',
-      source = "LMSDivisionPlot", # Changed source for uniqueness
-      name = "Last Mile Schools",
-      # Use Plotly attributes for text labels
-      text = ~scales::comma(Count),
-      texttemplate = '%{text}',
-      textposition = 'outside',
-      # Custom hovertext
-      hovertemplate = paste(
-        "Division: %{y}<br>",
-        "Count: %{x:,0f}<extra></extra>"
-      )
-    ) %>%
-      layout(
-        title = list(text = "Top 20 Divisions by Last Mile Schools", 
-                     x = 0.5, font = list(size = 14, family = "sans-serif")),
-        xaxis = list(title = "Number of Last Mile Schools", tickformat = ",", 
-                     range = c(0, max_count * 1.15)),
-        yaxis = list(title = "", categoryorder = "total ascending"),
-        hoverlabel = list(bgcolor = "white"),
-        margin = list(l = 100)
-      ) %>%
-      style(hoverinfo = "text")
-    
-    return(p)
-  })
-  
-  # output$priority_division_erdb <- DT::renderDT({
-  #   
-  #   priority_df <- df %>%
-  #     group_by(Division) %>%
-  #     summarise(Count_TeacherShortage = sum(as.numeric(TeacherShortage), na.rm = TRUE), .groups = 'drop') %>%
-  #     arrange(desc(Count_TeacherShortage)) %>%
-  #     mutate(Rank_TeacherShortage = row_number())
-  #   
-  #   priority_classroom <- LMS %>%
-  #     group_by(Division) %>%
-  #     summarise(Count_ClassroomShortage = sum(as.numeric(Estimated_CL_Shortage), na.rm = TRUE), .groups = 'drop') %>%
-  #     arrange(desc(Count_ClassroomShortage)) %>%
-  #     mutate(Rank_ClassroomShortage = row_number())
-  #   
-  #   priority_SP <- uni %>% # Using base uni data
-  #     filter(Designation != "School Principal") %>% # Applying original filter
-  #     group_by(Division) %>%
-  #     summarise(Count_SPShortage = n(), .groups = 'drop') %>%
-  #     arrange(desc(Count_SPShortage)) %>%
-  #     mutate(Rank_SPShortage = row_number())
-  #   
-  #   full_data <- LMS %>%
-  #     rename(
-  #       "With Buildable Space" = Buildable_space,
-  #       "With Excess Classrooms" = With_Excess,
-  #       "Without Classroom Shortage" = Without_Shortage,
-  #       "Last Mile Schools" = LMS,
-  #       "GIDCA" = GIDCA,
-  #       "With Shortage" = With_Shortage
-  #     ) %>%
-  #     pivot_longer(13:18, names_to = "Type", values_to = "Count")
-  #   
-  #   # --- Keep only "Last Mile Schools", aggregate, and add rank ---
-  #   plot_LMS <- full_data %>%
-  #     filter(Type == "Last Mile Schools") %>%
-  #     group_by(Division) %>%
-  #     summarise(
-  #       Count_LastMileSchools = sum(as.numeric(Count), na.rm = TRUE),
-  #       .groups = "drop"
-  #     ) %>%
-  #     # Sort and rank
-  #     arrange(desc(Count_LastMileSchools)) %>%
-  #     mutate(Rank_LastMileSchools = row_number())
-  #   
-  #   # Full join priority_df and priority_classroom
-  #   combined_df <- full_join(
-  #     priority_df,
-  #     priority_classroom,
-  #     by = "Division"
-  #   )
-  #   
-  #   # Full join the result with plot_LMS
-  #   full_priority_div <- full_join(
-  #     combined_df,
-  #     plot_LMS,
-  #     by = "Division"
-  #   )
-  #   
-  #   # Full join the result with priority_SP
-  #   full_priority_div_sp <- full_join(
-  #     full_priority_div,
-  #     priority_SP,
-  #     by = "Division"
-  #   ) %>% 
-  #     left_join(uni %>% select(Region,Division), by = "Division") %>% 
-  #     distinct() %>%
-  #     
-  #     # Rename columns to friendly names
-  #     rename(
-  #       "Teacher Shortage" = Count_TeacherShortage,
-  #       "Teacher Shortage Rank" = Rank_TeacherShortage,
-  #       "Classroom Shortage" = Count_ClassroomShortage,
-  #       "Classroom Shortage Rank" = Rank_ClassroomShortage,
-  #       "Last Mile Schools" = Count_LastMileSchools,
-  #       "Last Mile Schools Rank" = Rank_LastMileSchools,
-  #       "School Principal Shortage" = Count_SPShortage,
-  #       "School Principal Shortage Rank" = Rank_SPShortage
-  #     ) %>%
-  #     
-  #     # Select and order the columns logically (All Counts, then All Ranks)
-  #     select(
-  #       Region,
-  #       Division,
-  #       
-  #       # --- All Counts (Non-Rank) Columns ---
-  #       "Teacher Shortage",
-  #       "School Principal Shortage",
-  #       "Classroom Shortage",
-  #       "Last Mile Schools",
-  #       
-  #       # --- All Rank Columns ---
-  #       "Teacher Shortage Rank",
-  #       "School Principal Shortage Rank",
-  #       "Classroom Shortage Rank",
-  #       "Last Mile Schools Rank"
-  #     ) %>%
-  #     
-  #     # Sort by Division (optional but often helpful)
-  #     arrange(Division)
-  #   
-  #   data_to_display <- full_priority_div_sp 
-  #   
-  #   if (is.null(data_to_display) || nrow(data_to_display) == 0) {
-  #     return(DT::datatable(
-  #       data.frame("Message" = "No data available based on current selection."),
-  #       options = list(dom = 't', scrollX = TRUE, fixedColumns = list(leftColumns = 5)),
-  #       rownames = FALSE
-  #     ))
-  #   }
-  #   
-  #   DT::datatable(
-  #     data_to_display,
-  #     extensions = c("FixedHeader", "FixedColumns", "Buttons"),
-  #     options = list(
-  #       pageLength = 10, 
-  #       scrollX = TRUE,
-  #       scrollY = 400,
-  #       fixedHeader = TRUE,
-  #       fixedColumns = list(leftColumns = 5),
-  #       dom = 'Bfrtip',
-  #       buttons = list(
-  #         list(extend = "csv", exportOptions = list(modifier = list(page = "all"))),
-  #         list(extend = "excel", exportOptions = list(modifier = list(page = "all"))),
-  #         list(extend = "print", exportOptions = list(modifier = list(page = "all")))
-  #       ),
-  #       
-  #       # --- NEW CODE ADDED HERE ---
-  #       columnDefs = list(
-  #         list(
-  #           # Apply this rule to columns 5, 6, 7, and 8 (0-indexed)
-  #           targets = c(6, 7, 8, 9), 
-  #           # Use a JS function to render the data
-  #           render = JS(
-  #             "function(data, type, row, meta) {",
-  #             "  // 'type' can be 'display', 'sort', 'filter', etc.",
-  #             "  // We only want to change the 'display' data",
-  #             "  if (type === 'display' && data !== null && !isNaN(data)) {",
-  #             "    var s = ['th', 'st', 'nd', 'rd'];",
-  #             "    var v = data % 100;",
-  #             "    return data + (s[(v - 20) % 10] || s[v] || s[0]);",
-  #             "  } else {",
-  #             "    // For all other types (like 'sort'), use the raw data",
-  #             "    return data;",
-  #             "  }",
-  #             "}"
-  #           )
-  #         )
-  #       )
-  #       # --- END OF NEW CODE ---
-  #       
-  #     ),
-  #     filter = 'top',
-  #     selection = 'multiple',
-  #     rownames = FALSE
-  #   )
-  # })
-  
-  
-  output$StrideLogo <- renderImage({
-    image_path <- normalizePath(file.path('www', 'STRIDE logo.png'))
-    list(
-      src = image_path,  # Path relative to the www directory
-      contentType = "image/png",
-      alt = "STRIDE logo",
-      width = "100%",
-      height = "auto"
-      # You can also set width and height here, e.g., width = 400,
-      # or control them in the imageOutput in the UI.
+  # --- Curricular Offering Pie Chart ---
+  output$Curricular_Offering_Pie <- renderPlotly({
+    data <- data.frame(
+      Category = c("Purely ES", "JHS with SHS", "ES and JHS (K to 10)",
+                   "Purely JHS", "All Offering (K to 12)", "Purely SHS"),
+      Count = c(35036, 6598, 1690, 1367, 832, 262),
+      marker = list(color = "#D9534F")
     )
-  }, deleteFile = FALSE)
-  # deleteFile = FALSE is important for pre-existing static files
+    
+    plot_ly(
+      data,
+      labels = ~Category, values = ~Count, type = "pie",
+      textinfo = "label+percent", insidetextorientation = "radial"
+    ) |> layout(title = list(text = "Curricular Offering (Pie)", x = 0.5))
+  })
   
+  # --- Toggle visibility for Curricular Offering graphs ---
+  observeEvent(input$show_curricular_graphs, {
+    if (input$show_curricular_graphs %% 2 == 1) {
+      shinyjs::show("curricular_graphs")
+      updateActionButton(session, "show_curricular_graphs", label = "Hide Graphs")
+    } else {
+      shinyjs::hide("curricular_graphs")
+      updateActionButton(session, "show_curricular_graphs", label = "Show Graphs")
+    }
+  })
   
-  # Call the shinyauthr::logoutServer module
-  # logout_init <- shinyauthr::logoutServer(
-  #   id = "logout",
-  #   active = reactive(credentials()$user_auth) # Logout button active only when logged in
-  # )
+  # --- School Size Typology Bar Chart ---
+  output$School_Size_Typology_Bar <- renderPlotly({
+    data <- data.frame(
+      Size = c("Very Small", "Small", "Medium", "Large",
+               "Very Large", "Extremely Large", "Mega"),
+      Count = c(24976, 10105, 5726, 4210, 727, 38, 3)
+    )
+    
+    plot_ly(
+      data,
+      x = ~Size, y = ~Count,
+      type = "bar", marker = list(color = "#0074D9")
+    ) |>
+      layout(title = list(text = "School Size Typology Distribution", x = 0.5),
+             xaxis = list(title = ""), yaxis = list(title = "Number of Schools"))
+  })
   
-  
-  # # --- Curricular Offering Bar Chart ---
-  # output$Curricular_Offering_Bar <- renderPlotly({
-  #   data <- data.frame(
-  #     Category = c("Purely ES", "JHS with SHS", "ES and JHS (K to 10)",
-  #                  "Purely JHS", "All Offering (K to 12)", "Purely SHS"),
-  #     Count = c(35036, 6598, 1690, 1367, 832, 262),
-  #     marker = list(color = "#0072B2")
-  #   )
-  #   
-  #   plot_ly(
-  #     data,
-  #     y = ~Category,  # Flipped
-  #     x = ~Count,     # Flipped
-  #     type = "bar", 
-  #     marker = list(color = "#002D62"),
-  #     text = ~Count,              # Added
-  #     texttemplate = '%{x:,.0f}',# Added
-  #     textposition = 'outside'   # Added
-  #   ) |>
-  #     layout(
-  #       title = list(text = "Curricular Offering Distribution", x = 0.5),
-  #       yaxis = list(title = "", autorange = "reversed"), # Swapped, added autorange
-  #       xaxis = list(title = "Number of Schools") # Swapped
-  #     )
-  # })
-  # 
-  # # --- Curricular Offering Pie Chart --- (No changes)
-  # output$Curricular_Offering_Pie <- renderPlotly({
-  #   data <- data.frame(
-  #     Category = c("Purely ES", "JHS with SHS", "ES and JHS (K to 10)",
-  #                  "Purely JHS", "All Offering (K to 12)", "Purely SHS"),
-  #     Count = c(35036, 6598, 1690, 1367, 832, 262),
-  #     marker = list(color = "#D9534F")
-  #   )
-  #   
-  #   plot_ly(
-  #     data,
-  #     labels = ~Category, values = ~Count, type = "pie",
-  #     textinfo = "label+percent", insidetextorientation = "radial"
-  #   ) |> layout(title = list(text = "Curricular Offering (Pie)", x = 0.5))
-  # })
-  # 
-  # # --- Toggle visibility for Curricular Offering graphs --- (No changes)
-  # observeEvent(input$show_curricular_graphs, {
-  #   if (input$show_curricular_graphs %% 2 == 1) {
-  #     shinyjs::show("curricular_graphs")
-  #     updateActionButton(session, "show_curricular_graphs", label = "Hide Graphs")
-  #   } else {
-  #     shinyjs::hide("curricular_graphs")
-  #     updateActionButton(session, "show_curricular_graphs", label = "Show Graphs")
-  #   }
-  # })
-  # 
-  # # --- School Size Typology Bar Chart ---
-  # output$School_Size_Typology_Bar <- renderPlotly({
-  #   data <- data.frame(
-  #     Size = c("Very Small", "Small", "Medium", "Large",
-  #              "Very Large", "Extremely Large", "Mega"),
-  #     Count = c(24976, 10105, 5726, 4210, 727, 38, 3)
-  #   )
-  #   
-  #   plot_ly(
-  #     data,
-  #     y = ~Size,  # Flipped
-  #     x = ~Count, # Flipped
-  #     type = "bar", 
-  #     marker = list(color = "#0074D9"),
-  #     text = ~Count,              # Added
-  #     texttemplate = '%{x:,.0f}',# Added
-  #     textposition = 'outside'   # Added
-  #   ) |>
-  #     layout(
-  #       title = list(text = "School Size Typology Distribution", x = 0.5),
-  #       yaxis = list(            # Swapped
-  #         title = "", categoryorder = "total descending", autorange = "reversed"
-  #       ), 
-  #       xaxis = list(title = "Number of Schools") # Swapped
-  #     )
-  # })
-  # 
-  # # --- School Size Typology Pie Chart --- (No changes)
-  # output$School_Size_Typology_Pie <- renderPlotly({
-  #   data <- data.frame(
-  #     Size = c("Very Small", "Small", "Medium", "Large",
-  #              "Very Large", "Extremely Large", "Mega"),
-  #     Count = c(24976, 10105, 5726, 4210, 727, 38, 3)
-  #   )
-  #   
-  #   plot_ly(
-  #     data,
-  #     labels = ~Size, values = ~Count,
-  #     type = "pie", textinfo = "label+percent",
-  #     insidetextorientation = "radial"
-  #   ) |> layout(title = list(text = "School Size Typology (Pie)", x = 0.5))
-  # })
-  # 
-  # # --- Curricular Offering Bar Chart ---
-  # output$Curricular_Offering_Bar <- renderPlotly({
-  #   data <- data.frame(
-  #     Category = c("Purely ES", "JHS with SHS", "ES and JHS (K to 10)",
-  #                  "Purely JHS", "All Offering (K to 12)", "Purely SHS"),
-  #     Count = c(35036, 6598, 1690, 1367, 832, 262),
-  #     marker = list(color = "#0072B2")
-  #   )
-  #   
-  #   plot_ly(
-  #     data,
-  #     x = ~Category, y = ~Count,
-  #     type = "bar", marker = list(color = "#002D62")
-  #   ) |>
-  #     layout(title = list(text = "Curricular Offering Distribution", x = 0.5),
-  #            xaxis = list(title = ""), yaxis = list(title = "Number of Schools"))
-  # })
-  # 
-  # # --- Curricular Offering Pie Chart ---
-  # output$Curricular_Offering_Pie <- renderPlotly({
-  #   data <- data.frame(
-  #     Category = c("Purely ES", "JHS with SHS", "ES and JHS (K to 10)",
-  #                  "Purely JHS", "All Offering (K to 12)", "Purely SHS"),
-  #     Count = c(35036, 6598, 1690, 1367, 832, 262),
-  #     marker = list(color = "#D9534F")
-  #   )
-  #   
-  #   plot_ly(
-  #     data,
-  #     labels = ~Category, values = ~Count, type = "pie",
-  #     textinfo = "label+percent", insidetextorientation = "radial"
-  #   ) |> layout(title = list(text = "Curricular Offering (Pie)", x = 0.5))
-  # })
-  # 
-  # # --- Toggle visibility for Curricular Offering graphs ---
-  # observeEvent(input$show_curricular_graphs, {
-  #   if (input$show_curricular_graphs %% 2 == 1) {
-  #     shinyjs::show("curricular_graphs")
-  #     updateActionButton(session, "show_curricular_graphs", label = "Hide Graphs")
-  #   } else {
-  #     shinyjs::hide("curricular_graphs")
-  #     updateActionButton(session, "show_curricular_graphs", label = "Show Graphs")
-  #   }
-  # })
-  # 
-  # # --- School Size Typology Bar Chart ---
-  # output$School_Size_Typology_Bar <- renderPlotly({
-  #   data <- data.frame(
-  #     Size = c("Very Small", "Small", "Medium", "Large",
-  #              "Very Large", "Extremely Large", "Mega"),
-  #     Count = c(24976, 10105, 5726, 4210, 727, 38, 3)
-  #   )
-  #   
-  #   plot_ly(
-  #     data,
-  #     x = ~Size, y = ~Count,
-  #     type = "bar", marker = list(color = "#0074D9")
-  #   ) |>
-  #     layout(title = list(text = "School Size Typology Distribution", x = 0.5),
-  #            xaxis = list(title = ""), yaxis = list(title = "Number of Schools"))
-  # })
-  # 
-  # # --- School Size Typology Pie Chart ---
-  # output$School_Size_Typology_Pie <- renderPlotly({
-  #   data <- data.frame(
-  #     Size = c("Very Small", "Small", "Medium", "Large",
-  #              "Very Large", "Extremely Large", "Mega"),
-  #     Count = c(24976, 10105, 5726, 4210, 727, 38, 3)
-  #   )
-  #   
-  #   plot_ly(
-  #     data,
-  #     labels = ~Size, values = ~Count,
-  #     type = "pie", textinfo = "label+percent",
-  #     insidetextorientation = "radial"
-  #   ) |> layout(title = list(text = "School Size Typology (Pie)", x = 0.5))
-  # })# --- Authentication ---
+  # --- School Size Typology Pie Chart ---
+  output$School_Size_Typology_Pie <- renderPlotly({
+    data <- data.frame(
+      Size = c("Very Small", "Small", "Medium", "Large",
+               "Very Large", "Extremely Large", "Mega"),
+      Count = c(24976, 10105, 5726, 4210, 727, 38, 3)
+    )
+    
+    plot_ly(
+      data,
+      labels = ~Size, values = ~Count,
+      type = "pie", textinfo = "label+percent",
+      insidetextorientation = "radial"
+    ) |> layout(title = list(text = "School Size Typology (Pie)", x = 0.5))
+  })# --- Authentication ---
   # Call the shinyauthr::loginServer module
   # credentials() will be a reactive returning a tibble with user_auth, info, and additional columns from user_base
   # credentials <- shinyauthr::loginServer(
@@ -1842,94 +709,342 @@ server <- function(input, output, session) {
                         tags$b("Dashboard")),
         nav_panel(
           title = "Education Resource Dashboard",
-          # --- ROW OF 6 VALUE BOXES ---
-          # Switched to shinydashboard::valueBoxOutput
-          fluidRow(
-            column(
-              width = 1,
-              actionButton(
-                "reset_button",
-                label = tagList(bs_icon("arrow-left"), "Back"),
-                class = "btn-primary mb-3"
-              )
-            ),
-            # 2. Use layout_column_wrap for perfect 6-column responsiveness
-            layout_column_wrap(
-              width = 1/7, 
-              
-              # 3. Use the modern valueBoxOutput
-              valueBoxOutput("total_schools_erdb", width = 12),           # width=12 ensures it takes full column space
-              valueBoxOutput("total_enrolment_erdb", width = 12),
-              valueBoxOutput("total_classrooms_erdb", width = 12),
-              valueBoxOutput("total_classroom_shortage_erdb", width = 12),
-              valueBoxOutput("total_LMS_erdb", width = 12),
-              valueBoxOutput("total_teacher_shortage_erdb", width = 12),
-              valueBoxOutput("SP_Shortage_erdb", width = 12)
-            )
-          ),
-          
-          # --- ADJUSTED 3x2 GRID OF PLOTS ---
-          
-          # -- Row 1 --
-          layout_columns(
-            col_widths = c(4, 4, 4),
-            card(card_header("Number of Schools (Click to Drill Down)"), plotlyOutput("totalschools_plot_erdb"), height = "420px"),
-            card(card_header("Curricular Offering"), plotlyOutput("curricular_plot_erdb"), height = "420px"),
-            card(card_header("School Size Typology"), plotlyOutput("typology_plot_erdb"), height = "420px")
-          ),
-          # -- Row 2 --
-          layout_columns(
-            col_widths = c(3, 3, 3, 3),
-            card(card_header("Classroom Shortage"), plotlyOutput("classroomshortage_plot_erdb"), height = "420px"),
-            card(card_header("Last Mile Schools"), plotlyOutput("LMS_plot_erdb"), height = "420px"),
-            card(card_header("Teacher Shortage"), plotlyOutput("teachershortage_plot_erdb"), height = "420px"),
-            card(card_header("School Principal Shortage"), plotlyOutput("principalshortage_plot_erdb"), height = "420px")
-          ),
-          hr(),
-        card(
-          full_screen = TRUE,
-          height = 800,
-          card_header("Priority Divisions"),
-          
-          # --- NEW CODE: Use layout_column_wrap to format the plots ---
-          layout_column_wrap(
-            width = 1/3, # This tells R to fit 3 items per row (1/3 of the width each)
-            heights_equal = "row", # Ensures all plots in the row have the same height
-
-            # Plot Outputs (These will be arranged based on the 'width' setting)
-            # Card for the first plot
-            card(
-              full_screen = TRUE,
-              card_header("Teacher Deployment Priorities"),
-              plotlyOutput("Teaching_Deployment_Division_Graph1")
-            ),
-
-            # Card for the second plot
-            card(
-              full_screen = TRUE,
-              card_header("Classroom Shortage Priorities"),
-              plotlyOutput("Classroom_Shortage_Division_Graph2")
-            ),
-
-            # Card for the third plot
-            card(
-              full_screen = TRUE,
-              card_header("Last Mile School Priorities"),
-              plotlyOutput("LMS_Division_Graph2")
-            )
-          )
-           # dataTableOutput("priority_division_erdb")
-        )),
-              
-        #   navset_card_pill(
-        #     nav_spacer(),
-        #     nav_panel(
-        #       title = "School-level Data (SY 2024-2025)",
-        #       dataTableOutput("regprof_DT")),
-        #     nav_panel(
-        #       title = "Classroom Data (SY 2023-2024)",
-        #       dataTableOutput("regprof_DT_CL")),
-        # ),
+          layout_sidebar(
+            sidebar = sidebar(
+              width = 300, # Keep the sidebar width
+              title = "Dashboard Navigation", # Main sidebar title
+              # Region Filter
+              card(height = 400, # Adjusted height
+                   card_header(tags$b("Region Filter")),
+                   card_body( # Added card_body
+                     pickerInput(
+                       inputId = "dashboard_region_filter", # Keep the same inputId for server compatibility
+                       label = NULL,
+                       choices = c("Region I" = "Region I", "Region II" = "Region II", "Region III" = "Region III", "Region IV-A" = "Region IV-A", "MIMAROPA" = "MIMAROPA", "Region V" = "Region V", "Region VI" = "Region VI", "NIR" = "NIR", "Region VII" = "Region VII", "Region VIII" = "Region VIII", "Region IX" = "Region IX", "Region X" = "Region X", "Region XI" = "Region XI", "Region XII" = "Region XII", "CARAGA" = "CARAGA", "CAR" = "CAR", "NCR" = "NCR","BARMM" = "BARMM"),
+                       selected = c("Region I"), # Keep the same default selected value
+                       multiple = TRUE,
+                       options = pickerOptions(
+                         actionsBox = TRUE, # Changed to TRUE
+                         liveSearch = TRUE,
+                         header = "Select Regions", # Changed header text
+                         title = "No Region Selected", # Changed title text
+                         selectedTextFormat = "count > 3",
+                         dropupAuto = FALSE, # This tells it NOT to automatically switch direction
+                         dropup = FALSE # Added this option
+                       ),
+                       choicesOpt = list() # Added choicesOpt
+                     )
+                   )
+              ),
+              card(height = 400, # Adjusted height
+                   card_header(tags$b("Division Filter")),
+                   card_body( # Added card_body
+                     pickerInput(
+                       inputId = "dashboard_division_filter", # Keep the same inputId for server compatibility
+                       label = NULL,
+                       choices = NULL, # Choices will be updated dynamically by the server
+                       selected = NULL,
+                       multiple = TRUE,
+                       options = pickerOptions(
+                         actionsBox = TRUE, # Changed to TRUE
+                         liveSearch = TRUE,
+                         header = "Select Divisions", # Changed header text
+                         title = "No Division Selected", # Changed title text
+                         selectedTextFormat = "count > 3",
+                         dropupAuto = FALSE, # This tells it NOT to automatically switch direction
+                         dropup = FALSE # Added this option
+                       ),
+                       choicesOpt = list() # Added choicesOpt
+                     )
+                   )
+              )),
+            accordion(
+              accordion_panel(
+                title = "National Statistics",
+                icon = bsicons::bs_icon("bar-chart"), # Optional icon
+                accordion_panel(
+                  title = "Curricular Offering",
+                  layout_column_wrap(
+                    width = 1/6,
+                    value_box(title = "Purely ES", value = "35,036"),
+                    value_box(title = "JHS with SHS", value = "6,598"),
+                    value_box(title = "ES and JHS (K to 10)", value = "1,690"),
+                    value_box(title = "Purely JHS", value = "1,367"),
+                    value_box(title = "All Offering (K to 12)", value = "832"),
+                    value_box(title = "Purely SHS", value = "262")
+                  )),
+                accordion_panel(
+                  title = "School Size Typology",
+                  layout_column_wrap(
+                    width = 1/7,
+                    value_box(title = "Very Small", value = "24,976"),
+                    value_box(title = "Small", value = "10,105"),
+                    value_box(title = "Medium", value = "5,726"),
+                    value_box(title = "Large", value = "4,210"),
+                    value_box(title = "Very Large", value = "727"),
+                    value_box(title = "Extremely Large", value = "38"),
+                    value_box(title = "Mega", value = "3")
+                  )),
+                # accordion_panel(
+                #   title = "Learner Overview",
+                #   layout_column_wrap(
+                #     width = 1/4,
+                #     value_box(title = "Total Learners", value = "21,669,181"),
+                #     value_box(title = "Total ES Learners", value = "12,877,988"),
+                #     value_box(title = "Total JHS Learners", value = "6,341,976"),
+                #     value_box(title = "Total SHS Learners", value = "2,449,217"))),
+                # accordion_panel(
+                #   title = "Curricular Offering",
+                #   layout_column_wrap(
+                #     width = 1/6,
+                #     value_box(title = "Purely ES", value = "35,036"),
+                #     value_box(title = "JHS with SHS", value = "6,598"),
+                #     value_box(title = "ES and JHS (K to 10)", value = "1,690"),
+                #     value_box(title = "Purely JHS", value = "1,367"),
+                #     value_box(title = "All Offering (K to 12)", value = "832"),
+                #     value_box(title = "Purely SHS", value = "262")
+                #   ),
+                #   
+                #   # --- Button to toggle visibility ---
+                #   div(
+                #     style = "text-align:center; margin-top:15px;",
+                #     actionButton("show_curricular_graphs", "Show Graphs", 
+                #                  class = "btn btn-primary btn-sm")
+                #   ),
+                #   
+                #   # --- Graph container (initially hidden) ---
+                #   shinyjs::hidden(
+                #     div(
+                #       id = "curricular_graphs",
+                #       layout_column_wrap(
+                #         width = 1/2,
+                #         card(
+                #           card_header("Curricular Offering - Bar Chart"),
+                #           card_body(plotlyOutput("Curricular_Offering_Bar", height = "300px"))
+                #         ),
+                #         card(
+                #           card_header("Curricular Offering - Pie Chart"),
+                #           card_body(plotlyOutput("Curricular_Offering_Pie", height = "300px"))
+                #         )
+                #       )
+                #     )
+                #   )),
+                # accordion_panel(
+                #   title = "School Size Typology",
+                #   layout_columns(
+                #     col_widths = c(6, 6),
+                #     
+                #     # 👈 Left column — Value Boxes
+                #     layout_column_wrap(
+                #       width = 1/2,
+                #       value_box(title = "Very Small", value = "24,976"),
+                #       value_box(title = "Small", value = "10,105"),
+                #       value_box(title = "Medium", value = "5,726"),
+                #       value_box(title = "Large", value = "4,210"),
+                #       value_box(title = "Very Large", value = "727"),
+                #       value_box(title = "Extremely Large", value = "38"),
+                #       value_box(title = "Mega", value = "3")
+                #     ),
+                #     
+                #     # 👉 Right column — Graphs stacked
+                #     layout_column_wrap(
+                #       width = 1,
+                #       card(
+                #         card_header("School Size Typology - Bar Chart"),
+                #         card_body(plotlyOutput("School_Size_Typology_Bar", height = "300px"))
+                #       ),
+                #       card(
+                #         card_header("School Size Typology - Pie Chart"),
+                #         card_body(plotlyOutput("School_Size_Typology_Pie", height = "300px"))
+                #       )
+                #     )
+                #   )),
+                accordion_panel(
+                  title = "Classroom Data",
+                  layout_column_wrap(
+                    width = 1/4,
+                    value_box(title = "Total Schools", value = "45,785"),
+                    value_box(title = "Schools with Classroom Shortage", value = "25,324"),
+                    value_box(title = "Schools with Classroom Shortage and Buildable Space", value = "11,347"),
+                    value_box(title = "National Classroom Shortage", value = "165,443"))
+                )
+              )),
+            hr(),
+            accordion(
+              accordion_panel(
+                title = "Regional Statistics",
+                icon = bsicons::bs_icon("bar-chart"), # Optional icon
+                layout_column_wrap(
+                  width = 1/2,
+                  marker = list(color = c("#0072B2", "#28a745", "#FFD700")),
+                  uiOutput("total_schools_box"),
+                  uiOutput("total_schools_box_div")))),
+            hr(), 
+            layout_columns(
+              col_widths = c(6,6,6,6,6,6,6,6,12),
+              card(full_screen = TRUE,
+                   card_header("Curricular Offering"),
+                   navset_card_pill(
+                     nav_spacer(),
+                     nav_panel(
+                       title = "Regional Level",
+                       plotlyOutput("school_count_regional_graph", height = 500)
+                     ),
+                     nav_panel(
+                       title = "SDO Level",
+                       plotlyOutput("school_count_division_graph", height = 500)
+                     ),
+                     nav_panel(
+                       title = "Legislative District Level",
+                       plotlyOutput("school_count_district_graph", height = 500)
+                     )
+                   )
+              ),
+              card(full_screen = TRUE,
+                   card_header("School Size Typology"),
+                   navset_card_pill(
+                     nav_spacer(),
+                     nav_panel(
+                       title = "Regional Level",
+                       plotlyOutput("SOSSS_Region_Typology", height = 500)
+                     ),
+                     nav_panel(
+                       title = "SDO Level",
+                       plotlyOutput("SOSSS_Division_Typology", height = 500)
+                     ),
+                     nav_panel(
+                       title = "Legislative District Level",
+                       plotlyOutput("SOSSS_District_Typology", height = 500)
+                     )
+                   )
+              ),
+              card(full_screen = TRUE,
+                   card_header("Classroom Data"),
+                   navset_card_pill(
+                     nav_spacer(),
+                     nav_panel(
+                       title = "Regional Level",
+                       plotlyOutput("Classroom_Shortage_Region_Graph", height = 500)
+                     ),
+                     nav_panel(
+                       title = "SDO Level",
+                       plotlyOutput("Classroom_Shortage_Division_Graph", height = 500)
+                     ),
+                     nav_panel(
+                       title = "Legislative District Level",
+                       plotlyOutput("Classroom_Shortage_District_Graph", height = 500)
+                     )
+                   )
+              ),
+              card(full_screen = TRUE,
+                   card_header("Last Mile Schools"),
+                   navset_card_pill(
+                     nav_spacer(),
+                     nav_panel(
+                       title = "Regional Level",
+                       plotlyOutput("LMS_Nation_Graph", height = 500)
+                     ),
+                     nav_panel(
+                       title = "SDO Level",
+                       plotlyOutput("LMS_Division_Graph", height = 500)
+                     )
+                   )
+              ),
+              card(full_screen = TRUE,
+                   card_header("Teacher Shortage"),
+                   navset_card_pill(
+                     nav_spacer(),
+                     nav_panel(
+                       title = "Regional Level",
+                       plotlyOutput("Teacher_Shortage_Regional_Graph", height = 500)
+                     ),
+                     nav_panel(
+                       title = "SDO Level",
+                       plotlyOutput("Teacher_Shortage_Division_Graph", height = 500)
+                     )
+                   )
+              ),
+              card(full_screen = TRUE,
+                   card_header("School Principal Shortage"),
+                   navset_card_pill(
+                     nav_spacer(),
+                     nav_panel(
+                       title = "Regional Level",
+                       plotlyOutput("School_Principal_Regional_Graph", height = 500)
+                     ),
+                     nav_panel(
+                       title = "SDO Level",
+                       plotlyOutput("School_Principal_Division_Graph", height = 500)
+                     ),
+                     nav_panel(
+                       title = "Legislative District Level",
+                       plotlyOutput("School_Principal_District_Graph", height = 500)
+                     )
+                   )
+              ),
+              card(full_screen = TRUE,
+                   card_header("AO II Deployment"),
+                   navset_card_pill(
+                     nav_spacer(),
+                     nav_panel(
+                       title = "Regional Level",
+                       plotlyOutput("AOII_Regional_Graph", height = 500)
+                     ),
+                     nav_panel(
+                       title = "SDO Level",
+                       plotlyOutput("AOII_Division_Graph", height = 500)
+                     ),
+                     nav_panel(
+                       title = "Legislative District Level",
+                       plotlyOutput("AOII_District_Graph", height = 500)
+                     )
+                   )
+              ),
+              card(full_screen = TRUE,
+                   card_header("PDO I Deployment"),
+                   navset_card_pill(
+                     nav_spacer(),
+                     nav_panel(
+                       title = "Regional Level",
+                       plotlyOutput("PDOI_Regional_Graph", height = 500)
+                     ),
+                     nav_panel(
+                       title = "SDO Level",
+                       plotlyOutput("PDOI_Division_Graph", height = 500)
+                     ),
+                     nav_panel(
+                       title = "Legislative District Level",
+                       plotlyOutput("PDOI_District_Graph", height = 500)
+                     )
+                   )
+              ),
+              card(full_screen = TRUE,
+                   card_header("Sufficiency"),
+                   navset_card_pill(
+                     nav_spacer(),
+                     nav_panel(
+                       title = "Regional Level",
+                       selectInput("SuffOpt","Select a Category:", multiple = FALSE, selected = "Teacher.Sufficiency", choices = c("Teacher Sufficiency" = "Teacher.Sufficiency","Classroom Sufficiency" = "Classroom.Sufficiency","School Principal Sufficiency" = "SH.Sufficiency", "AO Sufficiency" = "AO.Sufficiency")),
+                       plotlyOutput("Sufficiency_Regional_Graph", height = 500)
+                     ),
+                     nav_panel(
+                       title = "SDO Level",
+                       selectInput("SuffOpt","Select a Category:", multiple = FALSE, selected = "Teacher.Sufficiency", choices = c("Teacher Sufficiency" = "Teacher.Sufficiency","Classroom Sufficiency" = "Classroom.Sufficiency","School Principal Sufficiency" = "SH.Sufficiency", "AO Sufficiency" = "AO.Sufficiency")),
+                       plotlyOutput("Sufficiency_Division_Graph", height = 500)
+                     )))),
+            hr(),
+            card(full_screen = TRUE,
+                 height = 800,
+                 card_header("School Database"),
+                 navset_card_pill(
+                   nav_spacer(),
+                   nav_panel(
+                     title = "School-level Data (SY 2024-2025)",
+                     dataTableOutput("regprof_DT")),
+                   nav_panel(
+                     title = "Classroom Data (SY 2023-2024)",
+                     dataTableOutput("regprof_DT_CL")),
+                 )))),
         # HROD panel
         # nav_panel(
         #   title = "Education Resource Information", # Your existing HROD content
@@ -3274,9 +2389,9 @@ server <- function(input, output, session) {
               nav_panel("Regional Breakdown",
                         plotlyOutput("Teaching_Deployment_Region_Graph")
               ),
-              # nav_panel("Priority Divisions",
-              #           plotlyOutput("Teaching_Deployment_Division_Graph1")
-              # ),
+              nav_panel("Priority Divisions",
+                        plotlyOutput("Teaching_Deployment_Division_Graph1")
+              ),
               nav_panel("Dataset",
                         dataTableOutput("Teaching_Deployment_Dataset")
               )
@@ -3460,9 +2575,9 @@ server <- function(input, output, session) {
                             plotlyOutput("Classroom_Shortage_Region_Graph2")
                   ),
                   # Tab 2: Division Classroom Shortage Breakdown (The new tab)
-                  # nav_panel("Priority Divisions",
-                  #           plotlyOutput("Classroom_Shortage_Division_Graph2")
-                  # ),
+                  nav_panel("Priority Divisions",
+                            plotlyOutput("Classroom_Shortage_Division_Graph2")
+                  ),
                   nav_panel("Dataset",
                             dataTableOutput("Classroom_Shortage_Dataset"))
                 )),
@@ -3534,9 +2649,9 @@ server <- function(input, output, session) {
                 nav_panel("Regional Breakdown",
                           plotlyOutput("Ind_Regional_Graph")
                 ),
-                # nav_panel("Priority Divisions",
-                #           plotlyOutput("Ind_Division_Graph")
-                # ),
+                nav_panel("Priority Divisions",
+                          plotlyOutput("Ind_Division_Graph")
+                ),
                 nav_panel("Dataset",
                           dataTableOutput("Ind_Dataset")
                 )
@@ -3768,10 +2883,10 @@ server <- function(input, output, session) {
                   nav_panel("Regional Breakdown",
                             plotlyOutput("LMS_Nation_Graph2")
                   ),
-                  # # Tab 2: Division Breakdown (The new tab)
-                  # nav_panel("Priority Divisions",
-                  #           plotlyOutput("LMS_Division_Graph2")
-                  # ),
+                  # Tab 2: Division Breakdown (The new tab)
+                  nav_panel("Priority Divisions",
+                            plotlyOutput("LMS_Division_Graph2")
+                  ),
                   nav_panel("Dataset",
                             dataTableOutput("LMS_Dataset")
                   )
@@ -7946,6 +7061,70 @@ server <- function(input, output, session) {
       )
   })
   
+  # --- Teaching Deployment: Priority Division Graph ---
+  output$Teaching_Deployment_Division_Graph1 <- renderPlotly({
+    
+    # --- Use the full dataset  ---
+    current_filtered_data <- df
+    
+    # --- Empty Data Handling ---
+    if (nrow(current_filtered_data) == 0) {
+      return(ggplotly(
+        ggplot() +
+          annotate("text", x = 0.5, y = 0.5,
+                   label = "No data for selected regions/divisions") +
+          theme_void()
+      ))
+    }
+    
+    # --- Prepare data for plotting ---
+    plot_data <- current_filtered_data %>%
+      group_by(Division) %>%
+      summarise(Count = sum(as.numeric(TeacherShortage), na.rm = TRUE), .groups = 'drop') %>%
+      arrange(desc(Count)) %>%
+      slice_head(n = 20) 
+    
+    # --- Create ggplot ---
+    p <- ggplot(plot_data,
+                aes(x = reorder(Division, -Count),
+                    y = Count,
+                    fill = Division,
+                    text = paste(
+                      "Division: ", Division,
+                      "<br>Teacher Shortage: ", scales::comma(Count)
+                    ))) +
+      geom_bar(stat = "identity", color = "black") +
+      geom_text(data = plot_data,
+                aes(x = Division, y = Count * 1.05,
+                    label = scales::comma(Count)),
+                inherit.aes = FALSE,
+                size = 3.5,
+                color = "black") +
+      labs(
+        title = "Top 20 Divisions by Teacher Shortage (Teaching Deployment)",
+        x = "Division",
+        y = "Teacher Shortage"
+      ) +
+      scale_y_continuous(labels = scales::comma) +
+      theme_minimal() +
+      theme(
+        plot.title = element_text(
+          hjust = 0.5,
+          face = "bold",
+          size = 14,
+          color = "black"   
+        ),
+        axis.text.x = element_text(size = 10, angle = 45, hjust = 1),
+        legend.position = "none"
+      )
+    
+    # --- Convert ggplot to Plotly ---
+    ggplotly(p, tooltip = "text", source = "teachingDeploymentDivisionPlot") %>%
+      layout(
+        hoverlabel = list(bgcolor = "white"),
+        margin = list(b = 100)
+      )
+  })
   
   #Classroom Shortage
   output$Classroom_Shortage_Region_Graph2 <- renderPlotly({
@@ -7979,6 +7158,55 @@ server <- function(input, output, session) {
                 size = 3.5,
                 color = "black") +
       labs(x = "Region",
+           y = "Classroom Shortage") +
+      scale_y_continuous(labels = scales::comma) + # Format y-axis labels as comma-separated numbers
+      theme_minimal() +
+      theme(axis.text.x = element_text(size = 10, angle = 45, hjust = 1),
+            legend.position = "none", # No legend needed for single fill
+            plot.title = element_text(hjust = 0.5)) # Center the plot title
+    
+    # Convert ggplot to plotly, ensuring custom text is used for hover
+    ggplotly(p, tooltip = "text", source = "classroomShortageRegionPlot") %>%
+      layout(hoverlabel = list(bgcolor = "white"),
+             # Adjust margins to prevent labels from being cut off if needed
+             margin = list(b = 100)) # Increase bottom margin for x-axis labels
+  })
+  
+  output$Classroom_Shortage_Division_Graph2 <- renderPlotly({
+    
+    # Use the reactive filtered data
+    current_filtered_data <- LMS
+    
+    # --- Empty Data Handling ---
+    if (nrow(current_filtered_data) == 0) {
+      return(ggplotly(ggplot() +
+                        annotate("text", x = 0.5, y = 0.5, label = "No data for selected regions/divisions") +
+                        theme_void()))
+    }
+    
+    # Prepare the data for plotting
+    # Ensure 'Estimated_CL_Shortage' is treated as numeric
+    plot_data <- current_filtered_data %>%
+      group_by(Division) %>%
+      summarise(Count = sum(as.numeric(Estimated_CL_Shortage), na.rm = TRUE), .groups = 'drop') %>% 
+      arrange(desc(Count)) %>%
+      # Keep only the top 20 rows (divisions)
+      slice_head(n = 20)
+    
+    # Create the ggplot
+    p <- ggplot(plot_data,
+                aes(x = reorder(Division, -Count),
+                    y = Count,
+                    fill = Division,
+                    text = paste("Division: ", Division,
+                                 "<br>Classroom Shortage: ", scales::comma(Count)))) + # Custom tooltip text
+      geom_bar(stat = "identity", color = "black") +
+      geom_text(data = plot_data,
+                aes(x = Division, y = Count * 1.05, label = scales::comma(Count)), # Modified line
+                inherit.aes = FALSE,
+                size = 3.5,
+                color = "black") +
+      labs(x = "Division",
            y = "Classroom Shortage") +
       scale_y_continuous(labels = scales::comma) + # Format y-axis labels as comma-separated numbers
       theme_minimal() +
@@ -8293,6 +7521,72 @@ server <- function(input, output, session) {
         x = "Region",
         y = "Number of Last Mile Schools",
         fill = "Region"
+      ) +
+      scale_y_continuous(labels = scales::comma) +
+      theme_minimal() +
+      theme(
+        plot.title = element_text(hjust = 0.5, size = 14, face = "bold"),
+        axis.text.x = element_text(size = 10, angle = 45, hjust = 1),
+        legend.position = "none"
+      )
+    
+    ggplotly(p, tooltip = "text") %>%
+      layout(
+        hoverlabel = list(bgcolor = "white"),
+        margin = list(b = 100)
+      ) %>%
+      style(hoverinfo = "text")
+  })
+  
+  output$LMS_Division_Graph2 <- renderPlotly({
+    full_data <- LMS %>%   
+      rename(
+        "With Buildable Space" = Buildable_space,
+        "With Excess Classrooms" = With_Excess,
+        "Without Classroom Shortage" = Without_Shortage,
+        "Last Mile Schools" = LMS,
+        "GIDCA" = GIDCA,
+        "With Shortage" = With_Shortage
+      ) %>%
+      pivot_longer(13:18, names_to = "Type", values_to = "Count")
+    
+    # --- Keep only "Last Mile Schools" and aggregate all regions ---
+    plot_data <- full_data %>%
+      filter(Type == "Last Mile Schools") %>%
+      group_by(Division) %>%
+      summarise(
+        Count = sum(as.numeric(Count), na.rm = TRUE),
+        .groups = "drop"
+      ) %>%
+      # Sort the data by Count in descending order (highest count first)
+      arrange(desc(Count)) %>%
+      # Keep only the top 25 rows (divisions)
+      slice_head(n = 25)
+    
+    # --- Compute national total ---
+    national_total <- sum(plot_data$Count, na.rm = TRUE)
+    
+    # ---  Create the chart ---
+    p <- ggplot(plot_data,
+                aes(
+                  x = reorder(Division, -Count),
+                  y = Count,
+                  fill = Division,
+                  text = paste(
+                    "Division:", Division,
+                    "<br>Count:", scales::comma(Count)
+                  )
+                )) +
+      geom_bar(stat = "identity", color = "black", size = 0.25) +
+      geom_text(
+        aes(label = scales::comma(Count), y = Count * 1.05),
+        size = 3.5,
+        color = "black"
+      ) +
+      labs(
+        x = "Division",
+        y = "Number of Last Mile Schools",
+        fill = "Division"
       ) +
       scale_y_continuous(labels = scales::comma) +
       theme_minimal() +
@@ -22539,7 +21833,6 @@ authentication_server <- function(input, output, session, user_status,
   observeEvent(input$start_over, {
     session$reload()
   })
-  
   
 }
 
