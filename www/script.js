@@ -71,17 +71,20 @@ $(document).on("click", ".nav-link", function() {
   });
 });
 
-// === STRIDE UNIVERSAL LOADING CONTROL ===
+// === LOADER CONTROL ===
 function showLoader(text) {
   if (text) $("#loading-text").text(text);
-  $("#loading-overlay").stop(true, true).fadeIn(200);
+  $("#loading-overlay")
+    .stop(true, true)
+    .fadeIn(600)
+    .css("display", "flex");
 }
 
 function hideLoader() {
-  $("#loading-overlay").stop(true, true).fadeOut(400);
+  $("#loading-overlay").stop(true, true).fadeOut(1200);
 }
 
-// --- Register message handlers once ---
+// === SHINY MESSAGE HANDLERS ===
 Shiny.addCustomMessageHandler("showLoader", function(message) {
   showLoader(message);
 });
@@ -94,24 +97,49 @@ Shiny.addCustomMessageHandler("addDashboardClass", function(message) {
   $("body").addClass("dashboard-bg");
 });
 
-// --- Auto-hide loader when Shiny finishes rendering ---
-$(document).on("shiny:connected", function() {
-  setTimeout(() => hideLoader(), 2500);
+// === Smart Loader Control ===
+
+// Flag to track rendering progress
+let shinyBusy = true;
+
+// When Shiny starts recalculating
+$(document).on("shiny:busy", function() {
+  shinyBusy = true;
+  console.log("🚧 shiny busy — still loading");
 });
 
+// When Shiny becomes idle (initial render done)
+$(document).on("shiny:idle", function() {
+  console.log("✅ shiny idle — checking if visuals are done...");
 
-// --- Ensure overlay hidden on page load ---
+  // Wait a bit to make sure UI elements (plots, tables, etc.) are visible
+  setTimeout(() => {
+    if (!shinyBusy) return; // Prevent duplicate hides
+    shinyBusy = false;
+
+    // Double-check DOM readiness
+    if ($(".plotly, .datatables, .leaflet-container, .bslib-card").length > 0) {
+      console.log("✨ All visuals appear loaded, hiding loader.");
+      hideLoader();
+    } else {
+      // Try again in 1 second if visuals not yet visible
+      console.log("⏳ Waiting for UI elements...");
+      setTimeout(() => hideLoader(), 1000);
+    }
+  }, 1500); // wait a little after idle event
+});
+
+// Hide loader only after everything’s ready
+$(window).on("load", function() {
+  setTimeout(() => hideLoader(), 2000); // fallback if shiny events fail
+});
+
+// Ensure overlay hidden when page loads fresh
 $(window).on("load", function() {
   $("#loading-overlay").hide();
 });
-$(document).on("shiny:idle", function() {
-  console.log("✅ shiny:idle event fired");
-});
 
-$(document).on("shiny:idle", function() {
-  console.log("✅ shiny:idle detected");
-  $("#loading-overlay").fadeOut(400);
-});
+
 
 Shiny.addCustomMessageHandler("setLoginMode", function(mode) {
   if (mode === "login") {

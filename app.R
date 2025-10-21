@@ -187,7 +187,7 @@ ui <- page_fluid(
       tags$div(
         class = "header-title",
         h2("DepEd STRIDE"),
-        p("STRIDE: Strategic Inventory for Deployment Efficiency")
+        p("Strategic Inventory for Deployment Efficiency")
       ),
       
       # Right logo
@@ -2949,97 +2949,97 @@ server <- function(input, output, session) {
       # --- Second Top-Level Tab: Data Explorer --
       tags$head(
         tags$style(HTML("
-/* === FINAL FIX: Consistent Bootstrap-select picker design === */
-
-/* --- Text wrapping and internal spacing --- */
-.bootstrap-select .dropdown-menu li a span.text {
-  white-space: normal !important;
-  word-break: break-word !important;
-  display: inline-block !important;
-  overflow-wrap: anywhere !important;
-  line-height: 1.3em !important;
-  padding-right: 10px !important;
-  max-width: 100% !important;
-}
-
-/* --- Scroll area for dropdown content --- */
-.bootstrap-select .dropdown-menu.inner.show {
-  padding-bottom: 0 !important;
-  margin-bottom: 0 !important;
-  max-height: none !important;
-  overflow-y: auto !important;
-}
-
-/* --- Dropdown menu box consistency --- */
-.bootstrap-select .dropdown-menu {
-  min-width: 100% !important;      /* Make all dropdowns same width as picker */
-  width: 100% !important;
-  white-space: normal !important;
-  border-radius: 6px !important;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
-  padding-bottom: 0 !important;
-  overflow: visible !important;
-  max-height: none !important;
-}
-
-/* --- Picker button (main visible area) --- */
-.bootstrap-select .dropdown-toggle {
-  width: 100% !important;
-  background-color: #f2f2f2 !important;
-  color: #333 !important;
-  border: 1px solid #ccc !important;
-  border-radius: 6px !important;
-  text-align: left !important;
-  padding: 6px 10px !important;
-  font-size: 14px !important;
-  font-weight: 400 !important;
-}
-
-/* --- Ensure dropdown opens BELOW picker --- */
-.bootstrap-select.dropup .dropdown-menu,
-.bootstrap-select:not(.dropup) .dropdown-menu {
-  top: 100% !important;
-  bottom: auto !important;
-  transform: none !important;
-}
-
-/* --- Clean hover for navbar dropdowns (still included) --- */
-.navbar .dropdown-menu > li > a:hover,
-.bslib-navbar .dropdown-menu > li > a:hover {
-  background-color: #2c3895 !important;
-  color: white !important;
-}
-
-/* --- Scrollbar styling for long dropdowns --- */
-.bootstrap-select .dropdown-menu.inner::-webkit-scrollbar {
-  width: 8px;
-}
-
-.bootstrap-select .dropdown-menu.inner::-webkit-scrollbar-thumb {
-  background-color: rgba(0, 0, 0, 0.2);
-  border-radius: 4px;
-}
-
-.bootstrap-select .dropdown-menu.inner::-webkit-scrollbar-thumb:hover {
-  background-color: rgba(0, 0, 0, 0.35);
-}
-
-/* --- Consistent picker height and spacing --- */
-.bootstrap-select {
-  width: 100% !important;
-  margin-bottom: 10px !important;
-}
-
-.bootstrap-select .filter-option-inner-inner {
-  text-overflow: ellipsis !important;
-  overflow: hidden !important;
-  white-space: nowrap !important;
-}
-
-/* --- Prevent dropdown from cutting off --- */
-.bootstrap-select .dropdown-menu.show {
-  z-index: 9999 !important;
-}
+# /* === FINAL FIX: Consistent Bootstrap-select picker design === */
+# 
+# /* --- Text wrapping and internal spacing --- */
+# .bootstrap-select .dropdown-menu li a span.text {
+#   white-space: normal !important;
+#   word-break: break-word !important;
+#   display: inline-block !important;
+#   overflow-wrap: anywhere !important;
+#   line-height: 1.3em !important;
+#   padding-right: 10px !important;
+#   max-width: 100% !important;
+# }
+# 
+# /* --- Scroll area for dropdown content --- */
+# .bootstrap-select .dropdown-menu.inner.show {
+#   padding-bottom: 0 !important;
+#   margin-bottom: 0 !important;
+#   max-height: none !important;
+#   overflow-y: auto !important;
+# }
+# 
+# /* --- Dropdown menu box consistency --- */
+# .bootstrap-select .dropdown-menu {
+#   min-width: 100% !important;      /* Make all dropdowns same width as picker */
+#   width: 100% !important;
+#   white-space: normal !important;
+#   border-radius: 6px !important;
+#   box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
+#   padding-bottom: 0 !important;
+#   overflow: visible !important;
+#   max-height: none !important;
+# }
+# 
+# /* --- Picker button (main visible area) --- */
+# .bootstrap-select .dropdown-toggle {
+#   width: 100% !important;
+#   background-color: #f2f2f2 !important;
+#   color: #333 !important;
+#   border: 1px solid #ccc !important;
+#   border-radius: 6px !important;
+#   text-align: left !important;
+#   padding: 6px 10px !important;
+#   font-size: 14px !important;
+#   font-weight: 400 !important;
+# }
+# 
+# /* --- Ensure dropdown opens BELOW picker --- */
+# .bootstrap-select.dropup .dropdown-menu,
+# .bootstrap-select:not(.dropup) .dropdown-menu {
+#   top: 100% !important;
+#   bottom: auto !important;
+#   transform: none !important;
+# }
+# 
+# /* --- Clean hover for navbar dropdowns (still included) --- */
+# .navbar .dropdown-menu > li > a:hover,
+# .bslib-navbar .dropdown-menu > li > a:hover {
+#   background-color: #2c3895 !important;
+#   color: white !important;
+# }
+# 
+# /* --- Scrollbar styling for long dropdowns --- */
+# .bootstrap-select .dropdown-menu.inner::-webkit-scrollbar {
+#   width: 8px;
+# }
+# 
+# .bootstrap-select .dropdown-menu.inner::-webkit-scrollbar-thumb {
+#   background-color: rgba(0, 0, 0, 0.2);
+#   border-radius: 4px;
+# }
+# 
+# .bootstrap-select .dropdown-menu.inner::-webkit-scrollbar-thumb:hover {
+#   background-color: rgba(0, 0, 0, 0.35);
+# }
+# 
+# /* --- Consistent picker height and spacing --- */
+# .bootstrap-select {
+#   width: 100% !important;
+#   margin-bottom: 10px !important;
+# }
+# 
+# .bootstrap-select .filter-option-inner-inner {
+#   text-overflow: ellipsis !important;
+#   overflow: hidden !important;
+#   white-space: nowrap !important;
+# }
+# 
+# /* --- Prevent dropdown from cutting off --- */
+# .bootstrap-select .dropdown-menu.show {
+#   z-index: 9999 !important;
+# }
   "))
       )
       ,
@@ -22382,11 +22382,8 @@ server <- function(input, output, session) {
     ns <- NS(id)
     
     tagList(
-      # Fullscreen bubble background (30 bubbles)
-      div(
-        class = "bubble-bg",
-        lapply(1:30, function(i) div(class = paste0("bubble b", i)))
-      ),
+      # ✅ Animated gradient background (no bubbles)
+      div(class = "login-bg gradient-animated"),
       
       # Render the UI produced by the authentication module
       uiOutput(ns("auth_page"))
@@ -22487,95 +22484,89 @@ authentication_server <- function(input, output, session, user_status,
   
   # --- 2️⃣ MAIN AUTH PAGE UI ---
   output$auth_page <- renderUI({
-    if (form_choice() == "login") {
-      # LOGIN PANEL
+    ns <- session$ns
+    
+    tagList(
+      # --- LOGIN PANEL ---
       div(
-        class = "login-container",
-        
-        # LEFT SIDE
+        class = paste("auth-form", if (form_choice() == "login") "active"),
         div(
-          class = "login-left",
+          class = "login-container",
           div(
-            class = "login-text-box",
-            h2(style = "color: #000000; font-size: 10.98rem; text-shadow: -10px 2px 2px #1C6EA4;", "STRIDE"),
-            p(style = "font-size: 30px;", "Education in Motion. Data Precision. Smart Decision.")
-          )
-        ),
-        
-        # RIGHT SIDE
-        div(
-          class = "login-right",
-          div(
-            class = "login-card",
-            tags$img(src = "STRIDE LOGO001.png", class = "login-logo-top"),
-            
-            textInput(ns("login_user"), NULL, placeholder = "DepEd Email"),
-            passwordInput(ns("login_pass"), NULL, placeholder = "Password"),
-            actionButton(ns("do_login"), "Sign In", class = "btn-login w-100"),
-            
-            uiOutput(ns("login_message")),
-            br(),
-            actionLink(ns("btn_register"), "Create an account", class = "register-link"),
-            br(),
-            actionButton(ns("guest_mode"), "Continue as Guest", class = "btn-secondary w-100 mt-2"),
-            
+            class = "login-left",
             div(
-              class = "login-logos-bottom",
-              tags$img(src = "logo3.png", class = "bottom-logo"),
-              tags$img(src = "HROD LOGO1.png", class = "bottom-logo"),
-              tags$img(src = "logo2.png", class = "bottom-logo")
+              class = "login-text-box",
+              h2(style = "color: #000000; font-size: 10.98rem; text-shadow: -10px 2px 2px #ffffff;", "STRIDE"),
+              p(style = "font-size: 30px;text-shadow: -2px 0px 2px #ffffff;color: black;", "Education in Motion. Data Precision. Smart Decision.")
+            )
+          ),
+          div(
+            class = "login-right",
+            div(
+              class = "login-card",
+              tags$img(src = "STRIDE LOGO001.png", class = "login-logo-top"),
+              textInput(ns("login_user"), NULL, placeholder = "DepEd Email"),
+              passwordInput(ns("login_pass"), NULL, placeholder = "Password"),
+              actionButton(ns("do_login"), "Sign In", class = "btn-login w-100"),
+              uiOutput(ns("login_message")),
+              br(),
+              actionLink(ns("btn_register"), "Create an account", class = "register-link"),
+              br(),
+              actionButton(ns("guest_mode"), "Continue as Guest", class = "btn-secondary w-100 mt-2"),
+              div(
+                class = "login-logos-bottom",
+                tags$img(src = "logo3.png", class = "bottom-logo"),
+                tags$img(src = "HROD LOGO1.png", class = "bottom-logo"),
+                tags$img(src = "logo2.png", class = "bottom-logo")
+              )
+            )
+          )
+        )
+      ),
+      
+      # --- REGISTER PANEL ---
+      div(
+        class = paste("auth-form", if (form_choice() == "register") "active"),
+        div(
+          class = "login-container",
+          div(
+            class = "login-left",
+            div(
+              class = "login-text-box",
+              h2("Create a STRIDE Account"),
+              p("Register your DepEd account to access STRIDE dashboards.")
+            )
+          ),
+          div(
+            class = "login-right",
+            div(
+              class = "login-card",
+              tags$img(src = "STRIDE LOGO001.png", class = "login-logo-top"),
+              selectInput(ns("govlev"), "Select Station:",
+                          choices = c("— Select an Option —" = "",
+                                      "Central Office", "Regional Office", 
+                                      "Schools Division Office", "School")),
+              uiOutput(ns("station_specific_ui")),
+              textInput(ns("reg_user"), NULL, placeholder = "DepEd Email (@deped.gov.ph)"),
+              passwordInput(ns("reg_pass"), NULL, placeholder = "Password"),
+              passwordInput(ns("reg_pass_confirm"), NULL, placeholder = "Confirm Password"),
+              actionButton(ns("do_register"), "Register Account", class = "btn-login w-100"),
+              uiOutput(ns("register_message")),
+              br(),
+              actionLink(ns("btn_login"), "Back to Login", class = "register-link"),
+              div(
+                class = "login-logos-bottom",
+                tags$img(src = "logo3.png", class = "bottom-logo"),
+                tags$img(src = "HROD LOGO1.png", class = "bottom-logo"),
+                tags$img(src = "logo2.png", class = "bottom-logo")
+              )
             )
           )
         )
       )
-    } else {
-      # REGISTER PANEL
-      div(
-        class = "login-container",
-        
-        # LEFT SIDE
-        div(
-          class = "login-left",
-          div(
-            class = "login-text-box",
-            h2("Create a STRIDE Account"),
-            p("Register your DepEd account to access STRIDE dashboards.")
-          )
-        ),
-        
-        # RIGHT SIDE
-        div(
-          class = "login-right",
-          div(
-            class = "login-card",
-            tags$img(src = "STRIDE LOGO001.png", class = "login-logo-top"),
-            
-            selectInput(ns("govlev"), "Select Station:",
-                        choices = c("— Select an Option —" = "",
-                                    "Central Office", "Regional Office", 
-                                    "Schools Division Office", "School")),
-            
-            uiOutput(ns("station_specific_ui")),
-            textInput(ns("reg_user"), NULL, placeholder = "DepEd Email (@deped.gov.ph)"),
-            passwordInput(ns("reg_pass"), NULL, placeholder = "Password"),
-            passwordInput(ns("reg_pass_confirm"), NULL, placeholder = "Confirm Password"),
-            actionButton(ns("do_register"), "Register Account", class = "btn-login w-100"),
-            
-            uiOutput(ns("register_message")),
-            br(),
-            actionLink(ns("btn_login"), "Back to Login", class = "register-link"),
-            
-            div(
-              class = "login-logos-bottom",
-              tags$img(src = "logo3.png", class = "bottom-logo"),
-              tags$img(src = "HROD LOGO1.png", class = "bottom-logo"),
-              tags$img(src = "logo2.png", class = "bottom-logo")
-            )
-          )
-        )
-      )
-    }
+    )
   })
+  
   
   
   # --- Station-Specific Inputs ---
