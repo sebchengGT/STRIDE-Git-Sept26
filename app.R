@@ -42,7 +42,7 @@ library(reactablefmtr)
 
 
 # HROD Data Upload
-SHEET_URL <- "https://docs.google.com/spreadsheets/d/1e3ni50Jcv3sBAkG8TbwBt4v7kjjMRSVvf9gxtcMiqjU/edit?gid=0#gid=0"
+sheet_url <- "https://docs.google.com/spreadsheets/d/1e3ni50Jcv3sBAkG8TbwBt4v7kjjMRSVvf9gxtcMiqjU/edit?gid=0#gid=0"
 SHEET_ID <- "https://docs.google.com/spreadsheets/d/1x9D8xfXtkT1Mbr4M4We7I9sUqoj42X4SFX9N9hu24wM/edit?gid=0#gid=0"
 SHEET_NAME <- "Sheet1" # Assuming the data is on the first tab
 school_data <- reactiveVal(NULL)
@@ -22247,7 +22247,7 @@ server <- function(input, output, session) {
     
     # Read data from Google Sheet
     users_db <- tryCatch({
-      googlesheets4::read_sheet(SHEET_URL)
+      googlesheets4::read_sheet(sheet_url)
     }, error = function(e) {
       showNotification(paste("Error reading database:", e$message,  
                              "Assuming sheet structure is correct."), type = "error")
@@ -22400,7 +22400,7 @@ server <- function(input, output, session) {
   
   # 3️⃣  Activate the authentication module
   callModule(authentication_server, "auth", 
-             user_status, form_choice, SHEET_URL, user_database, db_trigger, 
+             user_status, form_choice, sheet_url, user_database, db_trigger, 
              authenticated_user)
   
   
@@ -22528,6 +22528,28 @@ authentication_server <- function(input, output, session, user_status,
     }
   })
   
+  
+  # --- Station-Specific Inputs ---
+  output$station_specific_ui <- renderUI({
+    ns <- session$ns
+    req(input$govlev)
+    
+    if (input$govlev == "School") {
+      tagList(
+        textInput(ns("school_id"), "School ID:"),
+        tags$small("Enter your School ID (6 digits).", class = "text-muted")
+      )
+    } else if (input$govlev %in% c("Central Office", "Regional Office", "Schools Division Office")) {
+      tagList(
+        textInput(ns("office_name"), "Office Name:"),
+        tags$small("Enter Bureau/Division. Do not abbreviate!", class = "text-muted")
+      )
+    } else {
+      NULL
+    }
+  })
+  
+  
   # --- 3️⃣ LOGIN LOGIC ---
   observeEvent(input$do_login, {
     req(input$login_user, input$login_pass)
@@ -22574,100 +22596,77 @@ authentication_server <- function(input, output, session, user_status,
   })
   
   # --- 5️⃣ REGISTRATION LOGIC ---
+  # --- 4. Registration Logic ---
   observeEvent(input$do_register, {
     print("🔔 Register button clicked")
-    req(input$reg_user, input$reg_pass, input$reg_pass_confirm, input$govlev)
     
-    # Validation
-    if (input$govlev == "") {
-      output$register_message <- renderUI({
-        tags$p("Please select your Station.", class = "text-danger mt-2")
-      })
+    # Collect values safely
+    reg_user <- input$reg_user
+    reg_pass <- input$reg_pass
+    govlev <- input$govlev
+    school_id <- input$school_id
+    office_name <- input$office_name
+    
+    print(list(
+      reg_user = reg_user,
+      reg_pass = reg_pass,
+      govlev = govlev,
+      school_id = school_id,
+      office_name = office_name
+    ))
+    
+    # === VALIDATION ===
+    if (is.null(reg_user) || reg_user == "") {
+      print("❌ Missing reg_user")
+      return()
+    }
+    if (!endsWith(reg_user, "@deped.gov.ph")) {
+      print("❌ Invalid email domain")
+      return()
+    }
+    if (is.null(reg_pass) || reg_pass == "") {
+      print("❌ Missing password")
+      return()
+    }
+    if (is.null(govlev) || govlev == "") {
+      print("❌ Missing station")
       return()
     }
     
-    # Initialize vars
-    station_detail_id <- NA_character_
-    station_detail_office <- NA_character_
-    
-    if (input$govlev == "School") {
-      req(input$school_id)
-      school_id_trimmed <- trimws(input$school_id)
-      if (nchar(school_id_trimmed) != 6) {
-        output$register_message <- renderUI({
-          tags$p("School ID must be exactly 6 digits.", class = "text-danger mt-2")
-        })
-        return()
-      }
-      station_detail_id <- school_id_trimmed
-    } else {
-      req(input$office_name)
-      if (trimws(input$office_name) == "") {
-        output$register_message <- renderUI({
-          tags$p("Please enter your Office Name.", class = "text-danger mt-2")
-        })
-        return()
-      }
-      station_detail_office <- trimws(input$office_name)
-    }
-    
-    if (!endsWith(input$reg_user, "@deped.gov.ph")) {
-      output$register_message <- renderUI({
-        tags$p("Registration requires an official @deped.gov.ph email address.", class = "text-danger mt-2")
-      })
-      return()
-    }
-    
-    if (input$reg_pass != input$reg_pass_confirm) {
-      output$register_message <- renderUI({
-        tags$p("Passwords do not match.", class = "text-danger mt-2")
-      })
-      return()
-    }
-    
-    users_db <- user_database()
-    if (input$reg_user %in% users_db$Email_Address) {
-      output$register_message <- renderUI({
-        tags$p("This email is already registered.", class = "text-danger mt-2")
-      })
-      return()
-    }
-    
+    # --- Prepare new user ---
     new_user <- data.frame(
       Registration_Date = as.character(Sys.time()),
-      Email_Address = input$reg_user,
-      Password = input$reg_pass,
-      Station = input$govlev,
-      School_ID = station_detail_id,
-      Office = station_detail_office,
+      Email_Address = reg_user,
+      Password = reg_pass,
+      Station = govlev,
+      School_ID = ifelse(govlev == "School", school_id, NA),
+      Office = ifelse(govlev != "School", office_name, NA),
       stringsAsFactors = FALSE
     )
     
-    success <- tryCatch({
-      googlesheets4::sheet_append(sheet_url, data = new_user)
-      TRUE
-    }, error = function(e) {
-      output$register_message <- renderUI({
-        tags$p(paste("Error writing to database:", e$message), class = "text-danger mt-2")
-      })
-      FALSE
-    })
+    print("🧩 Preparing to write new user:")
+    print(new_user)
     
-    if (success) {
+    # --- TRY WRITING TO GOOGLE SHEET ---
+    tryCatch({
+      print("🟢 Attempting to append to sheet...")
+      googlesheets4::sheet_append(sheet_url, data = new_user)
+      print("✅ Successfully appended to Google Sheet")
+      
+      # Trigger refresh
       db_trigger(db_trigger() + 1)
       user_status("authenticated")
-      authenticated_user(input$reg_user)
+      authenticated_user(reg_user)
       
-      output$register_message <- renderUI({
-        tags$p("✅ Registration successful! Redirecting...", class = "text-success mt-2")
-      })
+      showNotification("✅ Registration successful!", type = "message")
       
-      session$sendCustomMessage("showLoader", "Setting up your account...")
-      later::later(function() {
-        session$sendCustomMessage("hideLoader", NULL)
-      }, 2)
-    }
+    }, error = function(e) {
+      print(paste("❌ Error during sheet append:", e$message))
+      showNotification(paste("❌ Error writing to sheet:", e$message), type = "error")
+    })
   })
+  
+  
 }
 # --- END OF AUTHENTICATION MODULE ---
 # ==========================================================
