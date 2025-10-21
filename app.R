@@ -22357,16 +22357,14 @@ server <- function(input, output, session) {
     ns <- NS(id)
     
     tagList(
-      # Fullscreen bubble background (30 bubbles)
-      div(
-        class = "bubble-bg",
-        lapply(1:30, function(i) div(class = paste0("bubble b", i)))
-      ),
+      # ✅ Animated gradient background (no bubbles)
+      div(class = "login-bg gradient-animated"),
       
       # Render the UI produced by the authentication module
       uiOutput(ns("auth_page"))
     )
   }
+  
   
   
   # 2️⃣  Define the main dynamic page switch
@@ -22472,8 +22470,8 @@ authentication_server <- function(input, output, session, user_status,
           class = "login-left",
           div(
             class = "login-text-box",
-            h2(style = "color: #000000; font-size: 10.98rem; text-shadow: -10px 2px 2px #1C6EA4;", "STRIDE"),
-            p(style = "font-size: 30px;", "Education in Motion. Data Precision. Smart Decision.")
+            h2(style = "color: #000000; font-size: 10.98rem; text-shadow: -10px 2px 2px #ffffff;", "STRIDE"),
+            p(style = "font-size: 30px; color: #000000; text-shadow: -3px 1px 2px #ffffff", "Education in Motion. Data Precision. Smart Decision.")
           )
         ),
         
