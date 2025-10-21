@@ -248,7 +248,7 @@ body.dashboard-bg {
     gap: var(--bslib-spacer, 1rem);
     padding: var(--_padding);
     padding-top: var(--_padding-icon);
-    background: #23558f;
+    background: #003366;
     font-family: 'Poppins', sans-serif; /* Updated font */
     font-size: 17px;
     text-shadow: 1px 2px 2px #black;
@@ -535,7 +535,7 @@ body.dashboard-bg::before {
   align-self: flex-start;
   max-height: calc(100vh - 185px);
   overflow-y: auto !important;
-  background-color: #23558f; /* same as your theme */
+  background-color: #003366; /* same as your theme */
   z-index: 10; /* below navbar/header */
   scrollbar-width: thin;
   scrollbar-color: #002D62 #f9fafc;
@@ -1066,6 +1066,145 @@ b,strong {
     font-weight: bolder;
     font-size: 17px;
 }
+
+/* === STRIDE Multi-Color Animation === */
+/* STRIDE title styling */
+.stride-multi {
+  font-size: 14rem;
+  font-weight: 900;
+  text-shadow: -5px 2px 2px rgba(0,0,0,0.3);
+  letter-spacing: -22px; /* <<< tight spacing */
+  display: inline-block;
+  margin: -45px;
+}
+
+.stride-multi span {
+  display: inline-block;
+  animation: glowPulse 3s infinite ease-in-out;
+}
+
+/* Color classes for each segment */
+.stride-multi .blue { color: #1e415d; }    /* DepEd blue */
+.stride-multi .yellow { color: #bf9a16; }  /* DepEd yellow */
+.stride-multi .red { color: #D62828; }     /* DepEd red */
+
+
+/* Gentle glowing animation */
+@keyframes glowPulse {
+  0%, 100% { text-shadow: 0 0 8px rgba(255,255,255,0.4); transform: scale(1); }
+  50% { text-shadow: 0 0 20px rgba(255,255,255,0.8); transform: scale(1.03); }
+}
+
+
+/* === Slogan Text Styling === */
+.slogan-top {
+  font-size: 2rem;
+  font-weight: 600;
+  color: #1e415d;
+  margin-bottom: 0.5rem;
+  animation: fadeInDown 2s ease;
+}
+
+.slogan-bottom {
+  font-size: 2rem;
+  font-weight: 600;
+  color: #D62828;
+  margin-top: 0.5rem;
+  animation: fadeInUp 2s ease;
+}
+
+/* Fade-in animations */
+@keyframes fadeInDown {
+  from { opacity: 0; transform: translateY(-20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+
+/* === GLOBAL SIDEBAR STYLING === */
+.sidebar {
+  background: linear-gradient(180deg, #003366 0%, #003366 100%);
+  color: #fff !important;
+  border-right: 3px solid #FFD43B;
+  min-height: 100vh;
+  padding-top: 1rem;
+  transition: all 0.3s ease;
+}
+
+/* Sidebar titles / headers */
+.sidebar .sidebar-title, .sidebar h2, .sidebar h3 {
+  color: #FFD43B !important;
+  text-transform: uppercase;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-align: center;
+}
+
+/* Sidebar links or buttons */
+.sidebar a, .sidebar .nav-link, .sidebar .menuItem, .sidebar .action-button {
+  color: black !important;
+  text-decoration: none;
+  display: block;
+  padding: 10px 16px;
+  font-weight: 500;
+  transition: all 0.25s ease;
+  border-radius: 8px;
+  margin: 4px 8px;
+}
+
+/* Hover + Active State */
+.sidebar a:hover, .sidebar .nav-link.active, .sidebar .menuItem.active {
+  background: #FFD43B !important;
+  color: #003366 !important;
+  transform: scale(1.02);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+}
+
+/* Icons inside sidebar links */
+.sidebar .nav-icon, .sidebar .fa, .sidebar i {
+  margin-right: 8px;
+  color: #FFD43B;
+}
+
+/* Divider line between groups */
+.sidebar hr {
+  border-color: rgba(255, 255, 255, 0.2);
+  margin: 12px 0;
+  position: relative;
+  top: 0;
+}
+
+/* === Remove gaps between sidebar and navmenu === */
+.sidebar {
+  margin: 0 !important;
+  padding-top: 0 !important;
+}
+
+.navbar, .navmenu, .bslib-navbar, .bslib-nav {
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+body, .main-container, .bslib-layout-sidebar {
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+/* Make sure sidebar and nav align top-to-top */
+
+
+.navbar, .navmenu {
+  position: relative;
+  top: 0;
+  left: 0;
+  z-index: 1050; /* ensures it stays above content if needed */
+}
+
+
 
 
 
