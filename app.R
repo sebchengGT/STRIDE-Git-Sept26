@@ -2508,6 +2508,451 @@ server <- function(input, output, session) {
             ) # End of layout_columns for main content and filters
           ) # End of tagList for EFD
         )), # End of nav_menu
+      
+      # --- Second Top-Level Tab: Data Explorer --
+      nav_menu(
+        title = tags$b("Data Explorer"),  # Dropdown menu
+        icon = bs_icon("table"),
+        
+        # --- Nav Panel 1: Human Resource Database ---
+        nav_panel(
+          title = tags$b("Human Resource Database"),
+          layout_sidebar(
+            sidebar = sidebar(
+              width = 350,
+              h6("EFD Database Filters:"),
+              
+              # Region (single select)
+              pickerInput(
+                inputId = "EFD_Region",
+                label = "Select Region:",
+                choices = sort(unique(EFDDB$Region)),
+                selected = sort(unique(EFDDB$Region))[1],
+                multiple = FALSE,
+                options = pickerOptions(
+                  liveSearch = TRUE,
+                  header = "Select Region",
+                  title = "No Region Selected",
+                  dropupAuto = FALSE,
+                  dropup = FALSE
+                )
+              ),
+              
+              # Division (multi-select)
+              pickerInput(
+                inputId = "EFD_Division",
+                label = "Select Division:",
+                choices = sort(unique(EFDDB$Division)),
+                multiple = TRUE,
+                options = pickerOptions(
+                  `actions-box` = TRUE,
+                  liveSearch = TRUE,
+                  header = "Select Division(s)",
+                  title = "No Division Selected",
+                  dropupAuto = FALSE,
+                  dropup = FALSE
+                )
+              ),
+              
+              # Legislative District (multi-select)
+              pickerInput(
+                inputId = "EFD_LD",
+                label = "Select Legislative District:",
+                choices = sort(unique(EFDDB$Legislative.District)),
+                multiple = TRUE,
+                options = pickerOptions(
+                  `actions-box` = TRUE,
+                  liveSearch = TRUE,
+                  header = "Select Legislative District(s)",
+                  title = "No Legislative District Selected",
+                  dropupAuto = FALSE,
+                  dropup = FALSE
+                )
+              ),
+              
+              # Barangay picker removed
+              
+              # EFD Toggles (retained)
+              pickerInput(
+                inputId = "EFD_Toggles",
+                label = strong("EFD Data Toggles"),
+                choices = names(EFDDB)[!names(EFDDB) %in% c(
+                  "Region", "Old.Region", "Division", "SchoolID", "School.Name",
+                  "District", "Legislative.District", "Barangay"
+                )],
+                multiple = TRUE,
+                options = pickerOptions(
+                  `actions-box` = TRUE,
+                  liveSearch = TRUE,
+                  header = "Select Data Columns",
+                  title = "No Data Column Selected",
+                  dropupAuto = FALSE,
+                  dropup = FALSE
+                )
+              )
+            ),
+            
+            layout_columns(
+              card(
+                full_screen = TRUE,
+                style = "
+          width: 100%;
+          max-height: 85vh;
+          overflow-y: auto;
+          margin-bottom: 20px;
+        ",
+                card_header(
+                  strong("EFD Database Panel"),
+                  style = "
+            font-size: 22px;
+            padding: 15px 20px;
+            text-align: center;
+            background-color: #00234d;
+            color: white;
+            border-bottom: 2px solid #dee2e6;
+          "
+                ),
+                card_body(
+                  div(
+                    style = "
+              padding: 10px;
+              overflow-x: auto;
+              height: calc(85vh - 80px);
+            ",
+                    dataTableOutput("EFD_Table")
+                  )
+                )
+              ),
+              col_widths = c(12)
+            )
+          )
+        ),
+        
+        # --- Nav Panel 2: DepEd Officials ---
+        nav_panel(
+          title = tags$b("DepEd Officials"),
+          layout_sidebar(
+            sidebar = sidebar(
+              width = 350,
+              h6("Strand Filter:"),
+              pickerInput(
+                inputId = "ThirdLevel_Strands",
+                label = "Select Strand(s):",
+                choices = c(
+                  "Administration",
+                  "Deped Attached Agencies",
+                  "Finance",
+                  "Human Resource And Organizational Development",
+                  "Learning System",
+                  "Legal And Legislative Affairs",
+                  "Office Of The Secretary",
+                  "Operations",
+                  "Procurement",
+                  "Strategic Management",
+                  "Teachers And Education Council Secretariat"
+                ),
+                selected = c(
+                  "Administration",
+                  "Deped Attached Agencies",
+                  "Finance",
+                  "Human Resource And Organizational Development",
+                  "Learning System",
+                  "Legal And Legislative Affairs",
+                  "Office Of The Secretary",
+                  "Operations",
+                  "Procurement",
+                  "Strategic Management",
+                  "Teachers And Education Council Secretariat"
+                ),
+                multiple = TRUE,
+                options = pickerOptions(
+                  actionsBox = TRUE,
+                  liveSearch = TRUE,
+                  header = "Select Strand(s)",
+                  title = "No Strand Selected",
+                  selectedTextFormat = "count > 3",
+                  dropupAuto = FALSE,
+                  dropup = FALSE
+                ),
+                choicesOpt = list(
+                  style = "white-space: normal; word-break: break-word; overflow-wrap: break-word;"
+                )
+              )
+            ),
+            
+            layout_columns(
+              card(
+                full_screen = TRUE,
+                style = "
+          width: 100%;
+          max-height: 85vh;
+          overflow-y: auto;
+          margin-bottom: 20px;
+        ",
+                card_header(
+                  strong("HROD Data Panel"),
+                  style = "
+            font-size: 22px;
+            padding: 15px 20px;
+            text-align: center;
+            background-color: #00234d;
+            border-bottom: 2px solid #dee2e6;
+          "
+                ),
+                card_body(
+                  div(
+                    style = "
+              padding: 10px;
+              overflow-x: auto;
+              height: calc(85vh - 80px);
+            ",
+                    dataTableOutput("ThirdLevel_Table")
+                  )
+                )
+              ),
+              col_widths = c(12)
+            )
+          )
+        ),
+        
+        # --- Nav Panel 3: Infrastructure Database ---
+        nav_panel(
+          title = tags$b("Infrastructure Database"),
+          layout_sidebar(
+            sidebar = sidebar(
+              width = 350,
+              h6("Data Toggles:"),
+              
+              pickerInput(
+                inputId = "DataBuilder_HROD_Region",
+                label = "Select a Region:",
+                choices = sort(unique(uni$Region)),
+                selected = sort(unique(uni$Region)),
+                multiple = FALSE,
+                options = pickerOptions(
+                  actionsBox = TRUE,
+                  liveSearch = TRUE,
+                  header = "Select Categories",
+                  title = "No Category Selected",
+                  selectedTextFormat = "count > 3",
+                  dropupAuto = FALSE,
+                  dropup = FALSE
+                )
+              ),
+              uiOutput("DataBuilder_HROD_SDO"),
+              
+              pickerInput("School_Data_Toggles", strong("School Information Data Toggles"), 
+                          choices = c("School Size Typology" = "School.Size.Typology", 
+                                      "Curricular Offering" = "Modified.COC"),
+                          multiple = TRUE,
+                          options = pickerOptions(
+                            `actions-box` = TRUE,
+                            dropupAuto = FALSE,
+                            dropup = FALSE
+                          )
+              ),
+              
+              pickerInput("Teaching_Data_Toggles", strong("Teaching Data Toggles"), 
+                          choices = c("Total Teachers" = "TotalTeachers", 
+                                      "Teacher Excess" = "Total.Excess", 
+                                      "Teacher Shortage" = "Total.Shortage"),
+                          multiple = TRUE,
+                          options = pickerOptions(
+                            `actions-box` = TRUE,
+                            dropupAuto = FALSE,
+                            dropup = FALSE
+                          )
+              ),
+              
+              pickerInput("NTP_Data_Toggles", strong("Non-teaching Data Toggles"), 
+                          choices = c("COS" = "Outlier.Status", 
+                                      "AOII Clustering Status" = "Clustering.Status"),
+                          multiple = TRUE,
+                          options = pickerOptions(
+                            `actions-box` = TRUE,
+                            dropupAuto = FALSE,
+                            dropup = FALSE
+                          )
+              ),
+              
+              pickerInput("Enrolment_Data_Toggles", strong("Enrolment Data Toggles"), 
+                          choices = c("Total Enrolment" = "TotalEnrolment", "Kinder" = "Kinder", 
+                                      "Grade 1" = "G1", "Grade 2" = "G2", "Grade 3" = "G3", 
+                                      "Grade 4" = "G4", "Grade 5" = "G5", "Grade 6" = "G6", 
+                                      "Grade 7" = "G7", "Grade 8" = "G8", 
+                                      "Grade 9" = "G9", "Grade 10" = "G10", 
+                                      "Grade 11" = "G11", "Grade 12" = "G12"),
+                          multiple = TRUE,
+                          options = pickerOptions(
+                            `actions-box` = TRUE,
+                            dropupAuto = FALSE,
+                            dropup = FALSE
+                          )
+              ),
+              
+              pickerInput("Specialization_Data_Toggles", strong("Specialization Data Toggles"), 
+                          choices = c("English" = "English", "Mathematics" = "Mathematics", 
+                                      "Science" = "Science", 
+                                      "Biological Sciences" = "Biological.Sciences", 
+                                      "Physical Sciences" = "Physical.Sciences"),
+                          multiple = TRUE,
+                          options = pickerOptions(
+                            `actions-box` = TRUE,
+                            dropupAuto = FALSE,
+                            dropup = FALSE
+                          )
+              )
+              
+              # Removed: EFD_Data_Toggles picker
+            ),
+            
+            layout_columns(
+              card(
+                card_header(strong("HROD Data Panel")),
+                dataTableOutput("HROD_Table")
+              ),
+              col_widths = c(12, 12)
+            )
+          )
+        )
+      ),
+      # --- Quick School Search ---
+      nav_panel(
+        title = tags$b("Quick School Search"),
+        icon = bs_icon("search"),
+        layout_sidebar(
+          sidebar = sidebar(
+            textInput("text","Enter School Name"),
+            input_task_button("TextRun", icon_busy = fontawesome::fa_i("refresh", class = "fa-spin", "aria-hidden" = "true"), strong("Show Selection"), class = "btn-warning")),
+          layout_columns(
+            card(
+              card_header(strong("Search Output")),
+              dataTableOutput("TextTable")),
+            card(full_screen = TRUE,
+                 card_header(strong("School Mapping")),
+                 leafletOutput("TextMapping", height = 500, width = "100%")),
+            card(full_screen = TRUE,
+                 card_header(div(strong("School Details"),
+                                 tags$span(em("(Select a school from the table above)"),
+                                           style = "font-size: 0.7em; color: grey;"
+                                 ))),
+                 layout_columns(
+                   card(full_screen = TRUE,
+                        card_header(strong("Basic Information")),
+                        tableOutput("schooldetails")),
+                   card(full_screen = TRUE,
+                        card_header(strong("HR Data")),
+                        tableOutput("schooldetails2")),
+                   card(full_screen = TRUE,
+                        card_header(strong("Classroom Data")),
+                        tableOutput("schooldetails3")),
+                   card(full_screen = TRUE,
+                        card_header(div(strong("Specialization Data"),
+                                        tags$span(em("(based on eSF7 for SY 2023-2024)"),
+                                                  style = "font-size: 0.7em; color: grey;"
+                                        ))),
+                        tableOutput("schooldetails5")),
+                   col_widths = c(6,6,6,6))),
+            col_widths = c(6,6,12)))),
+      
+      # --- Resource Mapping ---
+      nav_panel(
+        title = tags$b("Resource Mapping"),
+        icon = bs_icon("map"),
+        layout_sidebar(
+          sidebar = sidebar(
+            width = 375,
+            title = "Resource Mapping Filters",
+            
+            # --- Data Filters Card for Resource Mapping ---
+            card(
+              height = 400,
+              card_header(tags$b("Data Filters")),
+              
+              # Region Picker
+              pickerInput(
+                inputId = "resource_map_region",
+                label = "Region:",
+                choices = c(
+                  "Region I" = "Region I","Region II" = "Region II","Region III" = "Region III",
+                  "Region IV-A" = "Region IV-A","MIMAROPA" = "MIMAROPA","Region V" = "Region V",
+                  "Region VI" = "Region VI","NIR" = "NIR","Region VII" = "Region VII",
+                  "Region VIII" = "Region VIII","Region IX" = "Region IX","Region X" = "Region X",
+                  "Region XI" = "Region XI","Region XII" = "Region XII","CARAGA" = "CARAGA",
+                  "CAR" = "CAR","NCR" = "NCR"
+                ),
+                selected = "Region I",
+                multiple = FALSE,
+                options = list(
+                  `actions-box` = FALSE,
+                  `none-selected-text` = "Select a region",
+                  dropupAuto = FALSE,
+                  dropup = FALSE
+                )
+              ),
+              
+              # Division Picker
+              pickerInput(
+                inputId = "Resource_SDO",
+                label = "Select a Division:",
+                choices = NULL,
+                selected = NULL,
+                multiple = FALSE,
+                options = list(
+                  `actions-box` = FALSE,
+                  `none-selected-text` = "Select a division",
+                  dropupAuto = FALSE,
+                  dropup = FALSE
+                )
+              ),
+              
+              # District Picker
+              pickerInput(
+                inputId = "Resource_LegDist",
+                label = "Select Legislative District(s):",
+                choices = NULL,
+                selected = NULL,
+                multiple = TRUE,
+                options = list(
+                  `actions-box` = TRUE,
+                  `none-selected-text` = "Select one or more districts",
+                  dropupAuto = FALSE,
+                  dropup = FALSE
+                )
+              ),
+              
+              input_task_button("Mapping_Run", strong("Show Selection"), class = "btn-warning")
+            ),
+            
+            hr(),
+            
+            # Resource Types
+            card(
+              card_header(tags$b("Resource Types")),
+              radioButtons(
+                inputId = "resource_type_selection",
+                label = NULL,
+                choices = c(
+                  "Teaching Deployment",
+                  "Non-teaching Deployment",
+                  "Classroom Inventory",
+                  "Learner Congestion",
+                  "Industries",
+                  "Facilities",
+                  "Last Mile School"
+                ),
+                selected = "Teaching Deployment"
+              )
+            )
+          ),
+          
+          # Main Panel
+          mainPanel(
+            width = 12,
+            uiOutput("dynamic_resource_panel")
+          )
+        )
+      ),
       nav_menu(
         title = tagList(bs_icon("cloud"),
                         tags$b("CLOUD")),
@@ -3066,450 +3511,6 @@ server <- function(input, output, session) {
             )
           ))),
       
-      # --- Second Top-Level Tab: Data Explorer --
-      nav_menu(
-        title = tags$b("Data Explorer"),  # Dropdown menu
-        icon = bs_icon("table"),
-        
-        # --- Nav Panel 1: Human Resource Database ---
-        nav_panel(
-          title = tags$b("Human Resource Database"),
-          layout_sidebar(
-            sidebar = sidebar(
-              width = 350,
-              h6("EFD Database Filters:"),
-              
-              # Region (single select)
-              pickerInput(
-                inputId = "EFD_Region",
-                label = "Select Region:",
-                choices = sort(unique(EFDDB$Region)),
-                selected = sort(unique(EFDDB$Region))[1],
-                multiple = FALSE,
-                options = pickerOptions(
-                  liveSearch = TRUE,
-                  header = "Select Region",
-                  title = "No Region Selected",
-                  dropupAuto = FALSE,
-                  dropup = FALSE
-                )
-              ),
-              
-              # Division (multi-select)
-              pickerInput(
-                inputId = "EFD_Division",
-                label = "Select Division:",
-                choices = sort(unique(EFDDB$Division)),
-                multiple = TRUE,
-                options = pickerOptions(
-                  `actions-box` = TRUE,
-                  liveSearch = TRUE,
-                  header = "Select Division(s)",
-                  title = "No Division Selected",
-                  dropupAuto = FALSE,
-                  dropup = FALSE
-                )
-              ),
-              
-              # Legislative District (multi-select)
-              pickerInput(
-                inputId = "EFD_LD",
-                label = "Select Legislative District:",
-                choices = sort(unique(EFDDB$Legislative.District)),
-                multiple = TRUE,
-                options = pickerOptions(
-                  `actions-box` = TRUE,
-                  liveSearch = TRUE,
-                  header = "Select Legislative District(s)",
-                  title = "No Legislative District Selected",
-                  dropupAuto = FALSE,
-                  dropup = FALSE
-                )
-              ),
-              
-              # Barangay picker removed
-              
-              # EFD Toggles (retained)
-              pickerInput(
-                inputId = "EFD_Toggles",
-                label = strong("EFD Data Toggles"),
-                choices = names(EFDDB)[!names(EFDDB) %in% c(
-                  "Region", "Old.Region", "Division", "SchoolID", "School.Name",
-                  "District", "Legislative.District", "Barangay"
-                )],
-                multiple = TRUE,
-                options = pickerOptions(
-                  `actions-box` = TRUE,
-                  liveSearch = TRUE,
-                  header = "Select Data Columns",
-                  title = "No Data Column Selected",
-                  dropupAuto = FALSE,
-                  dropup = FALSE
-                )
-              )
-            ),
-            
-            layout_columns(
-              card(
-                full_screen = TRUE,
-                style = "
-          width: 100%;
-          max-height: 85vh;
-          overflow-y: auto;
-          margin-bottom: 20px;
-        ",
-                card_header(
-                  strong("EFD Database Panel"),
-                  style = "
-            font-size: 22px;
-            padding: 15px 20px;
-            text-align: center;
-            background-color: #00234d;
-            color: white;
-            border-bottom: 2px solid #dee2e6;
-          "
-                ),
-                card_body(
-                  div(
-                    style = "
-              padding: 10px;
-              overflow-x: auto;
-              height: calc(85vh - 80px);
-            ",
-                    dataTableOutput("EFD_Table")
-                  )
-                )
-              ),
-              col_widths = c(12)
-            )
-          )
-        ),
-        
-        # --- Nav Panel 2: DepEd Officials ---
-        nav_panel(
-          title = tags$b("DepEd Officials"),
-          layout_sidebar(
-            sidebar = sidebar(
-              width = 350,
-              h6("Strand Filter:"),
-              pickerInput(
-                inputId = "ThirdLevel_Strands",
-                label = "Select Strand(s):",
-                choices = c(
-                  "Administration",
-                  "Deped Attached Agencies",
-                  "Finance",
-                  "Human Resource And Organizational Development",
-                  "Learning System",
-                  "Legal And Legislative Affairs",
-                  "Office Of The Secretary",
-                  "Operations",
-                  "Procurement",
-                  "Strategic Management",
-                  "Teachers And Education Council Secretariat"
-                ),
-                selected = c(
-                  "Administration",
-                  "Deped Attached Agencies",
-                  "Finance",
-                  "Human Resource And Organizational Development",
-                  "Learning System",
-                  "Legal And Legislative Affairs",
-                  "Office Of The Secretary",
-                  "Operations",
-                  "Procurement",
-                  "Strategic Management",
-                  "Teachers And Education Council Secretariat"
-                ),
-                multiple = TRUE,
-                options = pickerOptions(
-                  actionsBox = TRUE,
-                  liveSearch = TRUE,
-                  header = "Select Strand(s)",
-                  title = "No Strand Selected",
-                  selectedTextFormat = "count > 3",
-                  dropupAuto = FALSE,
-                  dropup = FALSE
-                ),
-                choicesOpt = list(
-                  style = "white-space: normal; word-break: break-word; overflow-wrap: break-word;"
-                )
-              )
-            ),
-            
-            layout_columns(
-              card(
-                full_screen = TRUE,
-                style = "
-          width: 100%;
-          max-height: 85vh;
-          overflow-y: auto;
-          margin-bottom: 20px;
-        ",
-                card_header(
-                  strong("HROD Data Panel"),
-                  style = "
-            font-size: 22px;
-            padding: 15px 20px;
-            text-align: center;
-            background-color: #00234d;
-            border-bottom: 2px solid #dee2e6;
-          "
-                ),
-                card_body(
-                  div(
-                    style = "
-              padding: 10px;
-              overflow-x: auto;
-              height: calc(85vh - 80px);
-            ",
-                    dataTableOutput("ThirdLevel_Table")
-                  )
-                )
-              ),
-              col_widths = c(12)
-            )
-          )
-        ),
-        
-        # --- Nav Panel 3: Infrastructure Database ---
-        nav_panel(
-          title = tags$b("Infrastructure Database"),
-          layout_sidebar(
-            sidebar = sidebar(
-              width = 350,
-              h6("Data Toggles:"),
-              
-              pickerInput(
-                inputId = "DataBuilder_HROD_Region",
-                label = "Select a Region:",
-                choices = sort(unique(uni$Region)),
-                selected = sort(unique(uni$Region)),
-                multiple = FALSE,
-                options = pickerOptions(
-                  actionsBox = TRUE,
-                  liveSearch = TRUE,
-                  header = "Select Categories",
-                  title = "No Category Selected",
-                  selectedTextFormat = "count > 3",
-                  dropupAuto = FALSE,
-                  dropup = FALSE
-                )
-              ),
-              uiOutput("DataBuilder_HROD_SDO"),
-              
-              pickerInput("School_Data_Toggles", strong("School Information Data Toggles"), 
-                          choices = c("School Size Typology" = "School.Size.Typology", 
-                                      "Curricular Offering" = "Modified.COC"),
-                          multiple = TRUE,
-                          options = pickerOptions(
-                            `actions-box` = TRUE,
-                            dropupAuto = FALSE,
-                            dropup = FALSE
-                          )
-              ),
-              
-              pickerInput("Teaching_Data_Toggles", strong("Teaching Data Toggles"), 
-                          choices = c("Total Teachers" = "TotalTeachers", 
-                                      "Teacher Excess" = "Total.Excess", 
-                                      "Teacher Shortage" = "Total.Shortage"),
-                          multiple = TRUE,
-                          options = pickerOptions(
-                            `actions-box` = TRUE,
-                            dropupAuto = FALSE,
-                            dropup = FALSE
-                          )
-              ),
-              
-              pickerInput("NTP_Data_Toggles", strong("Non-teaching Data Toggles"), 
-                          choices = c("COS" = "Outlier.Status", 
-                                      "AOII Clustering Status" = "Clustering.Status"),
-                          multiple = TRUE,
-                          options = pickerOptions(
-                            `actions-box` = TRUE,
-                            dropupAuto = FALSE,
-                            dropup = FALSE
-                          )
-              ),
-              
-              pickerInput("Enrolment_Data_Toggles", strong("Enrolment Data Toggles"), 
-                          choices = c("Total Enrolment" = "TotalEnrolment", "Kinder" = "Kinder", 
-                                      "Grade 1" = "G1", "Grade 2" = "G2", "Grade 3" = "G3", 
-                                      "Grade 4" = "G4", "Grade 5" = "G5", "Grade 6" = "G6", 
-                                      "Grade 7" = "G7", "Grade 8" = "G8", 
-                                      "Grade 9" = "G9", "Grade 10" = "G10", 
-                                      "Grade 11" = "G11", "Grade 12" = "G12"),
-                          multiple = TRUE,
-                          options = pickerOptions(
-                            `actions-box` = TRUE,
-                            dropupAuto = FALSE,
-                            dropup = FALSE
-                          )
-              ),
-              
-              pickerInput("Specialization_Data_Toggles", strong("Specialization Data Toggles"), 
-                          choices = c("English" = "English", "Mathematics" = "Mathematics", 
-                                      "Science" = "Science", 
-                                      "Biological Sciences" = "Biological.Sciences", 
-                                      "Physical Sciences" = "Physical.Sciences"),
-                          multiple = TRUE,
-                          options = pickerOptions(
-                            `actions-box` = TRUE,
-                            dropupAuto = FALSE,
-                            dropup = FALSE
-                          )
-              )
-              
-              # Removed: EFD_Data_Toggles picker
-            ),
-            
-            layout_columns(
-              card(
-                card_header(strong("HROD Data Panel")),
-                dataTableOutput("HROD_Table")
-              ),
-              col_widths = c(12, 12)
-            )
-          )
-        )
-      ),
-      # --- Quick School Search ---
-      nav_panel(
-        title = tags$b("Quick School Search"),
-        icon = bs_icon("search"),
-        layout_sidebar(
-          sidebar = sidebar(
-            textInput("text","Enter School Name"),
-            input_task_button("TextRun", icon_busy = fontawesome::fa_i("refresh", class = "fa-spin", "aria-hidden" = "true"), strong("Show Selection"), class = "btn-warning")),
-          layout_columns(
-            card(
-              card_header(strong("Search Output")),
-              dataTableOutput("TextTable")),
-            card(full_screen = TRUE,
-                 card_header(strong("School Mapping")),
-                 leafletOutput("TextMapping", height = 500, width = "100%")),
-            card(full_screen = TRUE,
-                 card_header(div(strong("School Details"),
-                                 tags$span(em("(Select a school from the table above)"),
-                                           style = "font-size: 0.7em; color: grey;"
-                                 ))),
-                 layout_columns(
-                   card(full_screen = TRUE,
-                        card_header(strong("Basic Information")),
-                        tableOutput("schooldetails")),
-                   card(full_screen = TRUE,
-                        card_header(strong("HR Data")),
-                        tableOutput("schooldetails2")),
-                   card(full_screen = TRUE,
-                        card_header(strong("Classroom Data")),
-                        tableOutput("schooldetails3")),
-                   card(full_screen = TRUE,
-                        card_header(div(strong("Specialization Data"),
-                                        tags$span(em("(based on eSF7 for SY 2023-2024)"),
-                                                  style = "font-size: 0.7em; color: grey;"
-                                        ))),
-                        tableOutput("schooldetails5")),
-                   col_widths = c(6,6,6,6))),
-            col_widths = c(6,6,12)))),
-      
-      # --- Resource Mapping ---
-      nav_panel(
-        title = tags$b("Resource Mapping"),
-        icon = bs_icon("map"),
-        layout_sidebar(
-          sidebar = sidebar(
-            width = 375,
-            title = "Resource Mapping Filters",
-            
-            # --- Data Filters Card for Resource Mapping ---
-            card(
-              height = 400,
-              card_header(tags$b("Data Filters")),
-              
-              # Region Picker
-              pickerInput(
-                inputId = "resource_map_region",
-                label = "Region:",
-                choices = c(
-                  "Region I" = "Region I","Region II" = "Region II","Region III" = "Region III",
-                  "Region IV-A" = "Region IV-A","MIMAROPA" = "MIMAROPA","Region V" = "Region V",
-                  "Region VI" = "Region VI","NIR" = "NIR","Region VII" = "Region VII",
-                  "Region VIII" = "Region VIII","Region IX" = "Region IX","Region X" = "Region X",
-                  "Region XI" = "Region XI","Region XII" = "Region XII","CARAGA" = "CARAGA",
-                  "CAR" = "CAR","NCR" = "NCR"
-                ),
-                selected = "Region I",
-                multiple = FALSE,
-                options = list(
-                  `actions-box` = FALSE,
-                  `none-selected-text` = "Select a region",
-                  dropupAuto = FALSE,
-                  dropup = FALSE
-                )
-              ),
-              
-              # Division Picker
-              pickerInput(
-                inputId = "Resource_SDO",
-                label = "Select a Division:",
-                choices = NULL,
-                selected = NULL,
-                multiple = FALSE,
-                options = list(
-                  `actions-box` = FALSE,
-                  `none-selected-text` = "Select a division",
-                  dropupAuto = FALSE,
-                  dropup = FALSE
-                )
-              ),
-              
-              # District Picker
-              pickerInput(
-                inputId = "Resource_LegDist",
-                label = "Select Legislative District(s):",
-                choices = NULL,
-                selected = NULL,
-                multiple = TRUE,
-                options = list(
-                  `actions-box` = TRUE,
-                  `none-selected-text` = "Select one or more districts",
-                  dropupAuto = FALSE,
-                  dropup = FALSE
-                )
-              ),
-              
-              input_task_button("Mapping_Run", strong("Show Selection"), class = "btn-warning")
-            ),
-            
-            hr(),
-            
-            # Resource Types
-            card(
-              card_header(tags$b("Resource Types")),
-              radioButtons(
-                inputId = "resource_type_selection",
-                label = NULL,
-                choices = c(
-                  "Teaching Deployment",
-                  "Non-teaching Deployment",
-                  "Classroom Inventory",
-                  "Learner Congestion",
-                  "Industries",
-                  "Facilities",
-                  "Last Mile School"
-                ),
-                selected = "Teaching Deployment"
-              )
-            )
-          ),
-          
-          # Main Panel
-          mainPanel(
-            width = 12,
-            uiOutput("dynamic_resource_panel")
-          )
-        )
-      ),
       # --- Last Top-Level Tab: About ---
       nav_panel(
         title = tags$b("About"),
@@ -4184,25 +4185,23 @@ server <- function(input, output, session) {
     )
   })
   
-  # --- Delay default setting until UI & df are ready ---
-  observe({
-    # Wait until df exists and has Region I data
+  observeEvent(TRUE, {
     req(df)
-    invalidateLater(500, session)  # keeps checking until successful
     
-    if (!is.null(input$resource_map_region) && input$resource_map_region == "Region I") {
-      filtered_division <- unique(df[df$Region == "Region I", "Division"])
-      filtered_division <- filtered_division[!is.na(filtered_division) & filtered_division != ""]
-      
-      if (length(filtered_division) > 0) {
+    # Initialize only once at startup
+    isolate({
+      if (!is.null(input$resource_map_region) && input$resource_map_region == "Region I") {
+        filtered_division <- unique(df[df$Region == "Region I", "Division"])
+        filtered_division <- filtered_division[!is.na(filtered_division) & filtered_division != ""]
+        
         shinyWidgets::updatePickerInput(
           session = session,
           inputId = "Resource_SDO",
           choices = filtered_division,
-          selected = filtered_division[1]
+          selected = if (length(filtered_division) > 0) filtered_division[1] else NULL
         )
       }
-    }
+    })
   })
   
   # Reactive value to store uploaded data
