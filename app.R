@@ -9,6 +9,7 @@
 #kleinudeeeeeeeeeeee
 #uddddd
 #updated as of oct 21,2025 48:55am
+#oct 21,2025
 library(tidyverse)
 library(DT)
 library(dplyr)
@@ -1371,7 +1372,7 @@ server <- function(input, output, session) {
       pageSizeOptions = c(15, 25, 50, 100),
       
       sortable = TRUE,
-      wrap = FALSE,
+      wrap = TRUE,
       columns = list(
         "Teacher Shortage" = reactable::colDef(na = "-", sortNALast = TRUE, align = "center"),
         "School Principal Shortage" = reactable::colDef(na = "-", sortNALast = TRUE, align = "center"),
@@ -1955,8 +1956,104 @@ server <- function(input, output, session) {
     }
     "
       ),
-      
-      
+  #data explorer css 
+      tags$head(
+        tags$style(HTML("
+/* === FINAL FIX: Consistent Bootstrap-select picker design === */
+
+/* --- Text wrapping and internal spacing --- */
+.bootstrap-select .dropdown-menu li a span.text {
+  white-space: normal !important;
+  word-break: break-word !important;
+  display: inline-block !important;
+  overflow-wrap: anywhere !important;
+  line-height: 1.3em !important;
+  padding-right: 10px !important;
+  max-width: 100% !important;
+}
+
+/* --- Scroll area for dropdown content --- */
+.bootstrap-select .dropdown-menu.inner.show {
+  padding-bottom: 0 !important;
+  margin-bottom: 0 !important;
+  max-height: none !important;
+  overflow-y: auto !important;
+}
+
+/* --- Dropdown menu box consistency --- */
+.bootstrap-select .dropdown-menu {
+  min-width: 100% !important;      /* Make all dropdowns same width as picker */
+  width: 100% !important;
+  white-space: normal !important;
+  border-radius: 6px !important;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
+  padding-bottom: 0 !important;
+  overflow: visible !important;
+  max-height: none !important;
+}
+
+/* --- Picker button (main visible area) --- */
+.bootstrap-select .dropdown-toggle {
+  width: 100% !important;
+  background-color: #f2f2f2 !important;
+  color: #333 !important;
+  border: 1px solid #ccc !important;
+  border-radius: 6px !important;
+  text-align: left !important;
+  padding: 6px 10px !important;
+  font-size: 14px !important;
+  font-weight: 400 !important;
+}
+
+/* --- Ensure dropdown opens BELOW picker --- */
+.bootstrap-select.dropup .dropdown-menu,
+.bootstrap-select:not(.dropup) .dropdown-menu {
+  top: 100% !important;
+  bottom: auto !important;
+  transform: none !important;
+}
+
+/* --- Clean hover for navbar dropdowns (still included) --- */
+.navbar .dropdown-menu > li > a:hover,
+.bslib-navbar .dropdown-menu > li > a:hover {
+  background-color: #2c3895 !important;
+  color: white !important;
+}
+
+/* --- Scrollbar styling for long dropdowns --- */
+.bootstrap-select .dropdown-menu.inner::-webkit-scrollbar {
+  width: 8px;
+}
+
+.bootstrap-select .dropdown-menu.inner::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
+}
+
+.bootstrap-select .dropdown-menu.inner::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(0, 0, 0, 0.35);
+}
+
+/* --- Consistent picker height and spacing --- */
+.bootstrap-select {
+  width: 100% !important;
+  margin-bottom: 10px !important;
+}
+
+.bootstrap-select .filter-option-inner-inner {
+  text-overflow: ellipsis !important;
+  overflow: hidden !important;
+  white-space: nowrap !important;
+}
+
+/* --- Prevent dropdown from cutting off --- */
+.bootstrap-select .dropdown-menu.show {
+  z-index: 9999 !important;
+}
+
+  "))
+      )
+      ,
       
       nav_spacer(),
       
@@ -2045,6 +2142,25 @@ server <- function(input, output, session) {
             card(
               full_screen = TRUE,
               card_header("SDO Ranking"),
+              
+              # ✅ Add this here
+              tags$head(
+                tags$style(HTML("
+      .reactable thead th {
+        white-space: normal !important;
+        word-wrap: break-word !important;
+        line-height: 1.1;
+        text-align: center;
+      }
+      .reactable .rt-thead.-header { height: auto !important; }
+      .reactable .rt-th {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+      }
+    "))
+              ),
               height = 800,
               reactable::reactableOutput("priority_division_erdb"),
               hr(), # Adds a horizontal line
@@ -2946,103 +3062,8 @@ server <- function(input, output, session) {
               )
             )
           ))),
+      
       # --- Second Top-Level Tab: Data Explorer --
-      tags$head(
-        tags$style(HTML("
-/* === FINAL FIX: Consistent Bootstrap-select picker design === */
-
-/* --- Text wrapping and internal spacing --- */
-.bootstrap-select .dropdown-menu li a span.text {
-  white-space: normal !important;
-  word-break: break-word !important;
-  display: inline-block !important;
-  overflow-wrap: anywhere !important;
-  line-height: 1.3em !important;
-  padding-right: 10px !important;
-  max-width: 100% !important;
-}
-
-/* --- Scroll area for dropdown content --- */
-.bootstrap-select .dropdown-menu.inner.show {
-  padding-bottom: 0 !important;
-  margin-bottom: 0 !important;
-  max-height: none !important;
-  overflow-y: auto !important;
-}
-
-/* --- Dropdown menu box consistency --- */
-.bootstrap-select .dropdown-menu {
-  min-width: 100% !important;      /* Make all dropdowns same width as picker */
-  width: 100% !important;
-  white-space: normal !important;
-  border-radius: 6px !important;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
-  padding-bottom: 0 !important;
-  overflow: visible !important;
-  max-height: none !important;
-}
-
-/* --- Picker button (main visible area) --- */
-.bootstrap-select .dropdown-toggle {
-  width: 100% !important;
-  background-color: #f2f2f2 !important;
-  color: #333 !important;
-  border: 1px solid #ccc !important;
-  border-radius: 6px !important;
-  text-align: left !important;
-  padding: 6px 10px !important;
-  font-size: 14px !important;
-  font-weight: 400 !important;
-}
-
-/* --- Ensure dropdown opens BELOW picker --- */
-.bootstrap-select.dropup .dropdown-menu,
-.bootstrap-select:not(.dropup) .dropdown-menu {
-  top: 100% !important;
-  bottom: auto !important;
-  transform: none !important;
-}
-
-/* --- Clean hover for navbar dropdowns (still included) --- */
-.navbar .dropdown-menu > li > a:hover,
-.bslib-navbar .dropdown-menu > li > a:hover {
-  background-color: #2c3895 !important;
-  color: white !important;
-}
-
-/* --- Scrollbar styling for long dropdowns --- */
-.bootstrap-select .dropdown-menu.inner::-webkit-scrollbar {
-  width: 8px;
-}
-
-.bootstrap-select .dropdown-menu.inner::-webkit-scrollbar-thumb {
-  background-color: rgba(0, 0, 0, 0.2);
-  border-radius: 4px;
-}
-
-.bootstrap-select .dropdown-menu.inner::-webkit-scrollbar-thumb:hover {
-  background-color: rgba(0, 0, 0, 0.35);
-}
-
-/* --- Consistent picker height and spacing --- */
-.bootstrap-select {
-  width: 100% !important;
-  margin-bottom: 10px !important;
-}
-
-.bootstrap-select .filter-option-inner-inner {
-  text-overflow: ellipsis !important;
-  overflow: hidden !important;
-  white-space: nowrap !important;
-}
-
-/* --- Prevent dropdown from cutting off --- */
-.bootstrap-select .dropdown-menu.show {
-  z-index: 9999 !important;
-}
-  "))
-      )
-      ,
       nav_menu(
         title = tags$b("Data Explorer"),  # Dropdown menu
         icon = bs_icon("table"),
