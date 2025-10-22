@@ -164,6 +164,7 @@ ui <- page_fluid(
       color: #fff !important;
     }
     ")),
+  
     
     # External files (ensure they are in the 'www' folder)
     includeCSS("www/style.css"),
@@ -253,6 +254,7 @@ ui <- page_fluid(
       href = "https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap",
       rel = "stylesheet"
     ),
+    
     tags$style(HTML("
     body, h1, h2, h3, h4, h5, h6, p, span, button {
       font-family: 'Poppins', sans-serif !important;
@@ -3523,14 +3525,14 @@ server <- function(input, output, session) {
       
       # # --- Last Top-Level Tab: About ---
       # nav_panel(
-      #   title = tags$b("HR DATA"),
+      #   title = tags$b("About"),
       #   icon = bs_icon("info-circle"),
       #   tagList(
       #     layout_columns(
       #       HTML('<img src="Contactus.png" width="100%" height="auto">'))
       #   )),
 
-      
+   
       # --- Contact Us Top-Level Tab ---
       nav_panel(
         title = tags$b("Contact Us"),
@@ -5158,6 +5160,167 @@ server <- function(input, output, session) {
             )
           ))),
       
+      # --- HR Top-Level Tab ---
+  nav_panel(
+    title = tags$b("HR DATA"),
+    icon = bs_icon("person-lines-fill"),
+    
+    # Main Content (copied from your output$STRIDE_data)
+    fluidPage(
+      theme = bs_theme(
+        version = 5,
+        base_font = font_google("Poppins")
+      ),
+      
+      # --- CUSTOM CSS FOR FLOATING SIDEBAR ---
+      tags$head(
+        tags$style(HTML("
+          #submit:disabled {
+            background-color: #cccccc;
+            border-color: #cccccc;
+            color: #666666;
+            cursor: not-allowed;
+          }
+          .input-error {
+            border: 1px solid #dc3545;
+            box-shadow: 0 0 0.2rem #dc3545;
+          }
+        "))
+      ),
+      
+      useShinyjs(),
+      br(),
+      tags$div(
+        id = "form_title_bar",
+        style = "
+          background-color: #f0ad4e;
+          color: white;
+          padding: 15px 20px;
+          margin-bottom: 20px;
+          border-radius: 5px;
+          text-align: center;
+          box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        ",
+        h1(
+          strong("STRIDE Data Entry Form (HR Module)"),
+          style = "margin: 0; font-size: 2.5rem; text-shadow: 2px 2px 4px rgba(0,0,0,0.4);"
+        )
+      ),
+      
+      div(
+        id = "form_container",
+        sidebarLayout(
+          
+          # Sidebar Filters
+          sidebarPanel(
+            id = "sidebar",
+            width = 3,
+            h3(strong("School Profile")),
+            hr(),
+            textInput("school_id", "School ID", placeholder = "e.g. 193849"),
+            textInput("school_name", "School Name:", placeholder = "e.g. Juan Dela Cruz Elementary School"),
+            selectInput("stride_region", "Region:",
+              choices = c("--- Select a Region ---" = "", "Region I", "Region II", "Region III", "Region IV-A",
+                          "MIMAROPA", "Region V", "Region VI", "NIR", "Region VII", "Region VIII", "Region IX",
+                          "Region X", "Region XI", "Region XII", "CARAGA", "CAR", "NCR"),
+              selected = NULL
+            ),
+            uiOutput("stride_division"),
+            selectInput("curricular_offering", "Filter Curricular Offering:",
+              choices = c("--- Select a Curricular Offering ---" = "","Purely ES", "Purely JHS", "Purely SHS",
+                          "JHS and SHS", "ES and JHS", "All Offering"),
+              selected = NULL
+            )
+          ),
+          
+          # Main Form Area
+          mainPanel(
+            width = 9,
+            accordion(
+              id = "form_accordion",
+              multiple = FALSE,
+              
+              accordion_panel(
+                title = strong("School Information"),
+                value = "step1",
+                fluidRow(
+                  textInput("school_head_gn", "Given Name (School Head):", placeholder = "Enter Given Name"),
+                  textInput("school_head_mn", "Middle Name (School Head):", placeholder = "Enter Middle Name"),
+                  textInput("school_head_ln", "Last Name (School Head):", placeholder = "Enter Last Name"),
+                  selectInput("school_head_position", "Plantilla Position:",
+                    choices = c("School Principal I","School Principal II","School Principal III")),
+                  textInput("school_head_contact", "Contact Number", placeholder = "e.g. 09129382923"),
+                  textInput("school_head_contact_alt", "Alternative Contact Number", placeholder = "e.g. 09122314424"),
+                  textInput("school_head_email", "DepEd Email Address:", placeholder = "e.g. juan.delacruz@deped.gov.ph"),
+                  textInput("school_head_email_alt", "Alternative Email Address:", placeholder = "e.g. juan.delacruz@gmail.com")
+                )
+              ),
+              
+              accordion_panel(
+                title = strong("Enrolment per Grade Level"),
+                value = "step2",
+                fluidRow(
+                  column(4, numericInput("g1","Grade 1", value = "")),
+                  column(4, numericInput("g2","Grade 2", value = "")),
+                  column(4, numericInput("g3","Grade 3", value = "")),
+                  column(4, numericInput("g4","Grade 4", value = "")),
+                  column(4, numericInput("g5","Grade 5", value = "")),
+                  column(4, numericInput("g6","Grade 6", value = "")),
+                  column(4, numericInput("g7","Grade 7", value = "")),
+                  column(4, numericInput("g8","Grade 8", value = "")),
+                  column(4, numericInput("g9","Grade 9", value = "")),
+                  column(4, numericInput("g10","Grade 10", value = "")),
+                  column(4, numericInput("g11","Grade 11", value = "")),
+                  column(4, numericInput("g12","Grade 12", value = ""))
+                )
+              ),
+              
+              accordion_panel(
+                title = strong("Teacher Specialization"),
+                value = "step7",
+                fluidRow(
+                  column(4, numericInput("english","English", value = "")),
+                  column(4, numericInput("math","Math", value = "")),
+                  column(4, numericInput("science","Science", value = "")),
+                  column(4, numericInput("biological_science","Biological Science", value = "")),
+                  column(4, numericInput("physical_science","Physical Science", value = "")),
+                  column(4, numericInput("general_education","General Education", value = "")),
+                  column(4, numericInput("araling_panlipunan","Araling Panlipunan", value = "")),
+                  column(4, numericInput("tle","TLE", value = "")),
+                  column(4, numericInput("mapeh","MAPEH", value = "")),
+                  column(4, numericInput("filipino","Filipino", value = "")),
+                  column(4, numericInput("esp","ESP", value = "")),
+                  column(4, numericInput("agriculture","Agriculture", value = "")),
+                  column(4, numericInput("ece","Early Childhood Education", value = "")),
+                  column(4, numericInput("sped","SPED", value = ""))
+                )
+              )
+            )
+          )
+        ),
+        
+        hr(),
+        fluidRow(
+          column(
+            12,
+            align = "center",
+            actionButton("submit", "Submit Form", class = "btn-success btn-lg", icon = icon("check"), disabled = TRUE)
+          )
+        ),
+        br()
+      ),
+      
+      hidden(
+        div(
+          id = "thank_you_section",
+          h3("Thank You! 👋"),
+          p("Your submission has been recorded successfully."),
+          actionButton("start_over", "Submit Another Response")
+        )
+      )
+    )
+  )
+,
       # # --- Last Top-Level Tab: About ---
       # nav_panel(
       #   title = tags$b("HR DATA"),
@@ -5167,6 +5330,7 @@ server <- function(input, output, session) {
       #       HTML('<img src="Contactus.png" width="100%" height="auto">'))
       #   )),
       
+     
       # --- Contact Us Top-Level Tab ---
       nav_panel(
         title = tags$b("Contact Us"),
@@ -6802,6 +6966,15 @@ server <- function(input, output, session) {
       #     layout_columns(
       #       HTML('<img src="Contactus.png" width="100%" height="auto">'))
       #   )),
+      
+      # --- ENGINEER DATA Top-Level Tab ---
+      nav_panel(
+        title = "EFD DATA",
+        card(
+          card_header("Engineering Field Data"),
+          card_body("This section contains engineering-related datasets and reports.")
+        )
+      ),
       
       # --- Contact Us Top-Level Tab ---
       nav_panel(
@@ -13469,15 +13642,17 @@ server <- function(input, output, session) {
     leafletProxy("TextMapping") %>%
       clearMarkers() %>%
       clearMarkerClusters() %>%
-      setView(lng = mainreact1$Longitude[1],
-              lat = mainreact1$Latitude[1],
-              zoom = 4.5) %>%
+      setView(
+        lng = mainreact1$Longitude[1],
+        lat = mainreact1$Latitude[1],
+        zoom = 5
+      ) %>%
       addAwesomeMarkers(
         lng = mainreact1$Longitude,
         lat = mainreact1$Latitude,
         icon = makeAwesomeIcon(
-          icon = "education",
-          library = "glyphicon",
+          icon = "graduation-cap",   # FA4-compatible name
+          library = "fa",            # use Font Awesome, not glyphicon
           markerColor = "blue"
         ),
         label = values.comp,
@@ -14986,10 +15161,37 @@ server <- function(input, output, session) {
       names_to = "Other Data",     # Name of the new column holding the original column names
       values_to = "Data")     # Name of the new column holding the original values
     
-    rowselected_table5 <- row_selected %>% select(English,Mathematics,Science,Biological.Sciences,Physical.Sciences,General.Ed,Araling.Panlipunan,TLE,MAPEH,Filipino,ESP,Agriculture,ECE,SPED) %>% rename("Biological Sciences" = Biological.Sciences,"Physical Sciences" = Physical.Sciences,"General Education" = General.Ed,"Araling Panlipunan" = Araling.Panlipunan,"Early Chilhood Education" = ECE) %>% mutate(dplyr::across(tidyr::everything(), as.character)) %>% pivot_longer(
-      cols = everything(),    # Pivot all columns selected in details_to_pivot
-      names_to = "Other Data",     # Name of the new column holding the original column names
-      values_to = "Data")     # Name of the new column holding the original values
+    #for filtering in specialized data qss
+    rowselected_table5 <- row_selected %>%
+      select(English, Mathematics, Science, Biological.Sciences, Physical.Sciences,
+             General.Ed, Araling.Panlipunan, TLE, MAPEH, Filipino, ESP,
+             Agriculture, ECE, SPED) %>%
+      rename(
+        "Biological Sciences" = Biological.Sciences,
+        "Physical Sciences" = Physical.Sciences,
+        "General Education" = General.Ed,
+        "Araling Panlipunan" = Araling.Panlipunan,
+        "Early Childhood Education" = ECE
+      ) %>%
+      mutate(across(everything(), as.character)) %>%
+      # ✅ Replace 0 -> "-" only if school looks like an elementary school
+      {
+        if (any(grepl("Elementary", row_selected$School.Name, ignore.case = TRUE)) ||
+            any(grepl(" ES( |$)", row_selected$School.Name, ignore.case = TRUE)) ||
+            any(grepl("Elementary", row_selected$Implementing.Unit, ignore.case = TRUE)) ||
+            any(grepl(" ES( |$)", row_selected$Implementing.Unit, ignore.case = TRUE))) {
+          mutate(., across(everything(), ~ ifelse(. == "0", "-", .)))
+        } else {
+          .
+        }
+      } %>%
+      pivot_longer(
+        cols = everything(),
+        names_to = "Specialization",
+        values_to = "Data"
+      )
+    
+    
     
     output$schooldetails <- renderTable({
       # Pass the pivoted data frame directly
