@@ -25928,6 +25928,12 @@ server <- function(input, output, session) {
 # ==========================================================
 # --- AUTHENTICATION MODULE: LOGIN / REGISTER / GUEST ---
 # ==========================================================
+# === Dynamic dropdown lists from your LMS and uni data ===
+all_regions <- sort(unique(LMS$Region))
+all_divisions <- sort(unique(LMS$Division))
+all_districts <- sort(unique(LMS$District))
+all_positions <- sort(unique(LMS$Position))
+all_school_ids <- sort(unique(LMS$School_ID))
 
 authentication_server <- function(input, output, session, user_status, 
                                   form_choice, sheet_url, user_database, db_trigger, 
@@ -26003,6 +26009,7 @@ authentication_server <- function(input, output, session, user_status,
       )
     } else {
       # REGISTER PANEL
+      # REGISTER PANEL
       div(
         class = "login-container",
         
@@ -26023,17 +26030,24 @@ authentication_server <- function(input, output, session, user_status,
             class = "login-card",
             tags$img(src = "STRIDE LOGO001.png", class = "login-logo-top"),
             
-            selectInput(ns("govlev"), "Select Station:",
-                        choices = c("— Select an Option —" = "",
-                                    "Central Office", "Regional Office", 
-                                    "Schools Division Office", "School")),
+            # === Station / User Type Selection ===
+            selectInput(
+              ns("govlev"), "Select Station / User Type:",
+              choices = c("— Select an Option —" = "",
+                          "Central Office", "Regional Office",
+                          "Schools Division Office", "School",
+                          "HR", "Engineer")
+            ),
             
-            uiOutput(ns("station_specific_ui")),
+            # === Dynamic fields (HR & Engineer only) ===
+            uiOutput(ns("extra_fields_ui")),  # <<–– Instead of conditionalPanel
+            
+            # === Universal fields ===
             textInput(ns("reg_user"), NULL, placeholder = "DepEd Email (@deped.gov.ph)"),
             passwordInput(ns("reg_pass"), NULL, placeholder = "Password"),
             passwordInput(ns("reg_pass_confirm"), NULL, placeholder = "Confirm Password"),
-            actionButton(ns("do_register"), "Register Account", class = "btn-login w-100"),
             
+            actionButton(ns("do_register"), "Register Account", class = "btn-login w-100"),
             uiOutput(ns("register_message")),
             br(),
             actionLink(ns("btn_login"), "Back to Login", class = "register-link"),
@@ -26047,7 +26061,80 @@ authentication_server <- function(input, output, session, user_status,
           )
         )
       )
+      
     }
+  })
+  
+  # === Dynamic HR / Engineer Field Renderer ===
+  observe({
+    req(input$govlev)
+    
+    if (input$govlev %in% c("HR", "Engineer")) {
+      output$extra_fields_ui <- renderUI({
+        tagList(
+          textInput(ns("first_name"), "First Name"),
+          textInput(ns("middle_name"), "Middle Name"),
+          textInput(ns("last_name"), "Last Name"),
+          
+          selectInput(ns("region"), "Region",
+                      choices = c("— Select Region —" = "", sort(unique(uni$Region)))),
+          uiOutput(ns("division_ui")),
+          uiOutput(ns("district_ui")),
+          uiOutput(ns("school_ui")),
+          
+          textInput(ns("position"), "Position")
+        )
+      })
+    } else {
+      output$extra_fields_ui <- renderUI({ NULL })
+    }
+  })
+  
+  # REGION → DIVISION
+  observeEvent(input$region, {
+    req(input$region)
+    divisions <- uni %>%
+      filter(Region == input$region) %>%
+      distinct(Division) %>%
+      arrange(Division) %>%
+      pull(Division)
+    
+    output$division_ui <- renderUI({
+      selectInput(ns("division"), "Division", choices = c("— Select Division —" = "", divisions))
+    })
+    
+    output$district_ui <- renderUI({ NULL })
+    output$school_ui <- renderUI({ NULL })
+  })
+  
+  # DIVISION → DISTRICT
+  observeEvent(input$division, {
+    req(input$division)
+    districts <- uni %>%
+      filter(Division == input$division) %>%
+      distinct(Legislative.District) %>%
+      arrange(Legislative.District) %>%
+      pull(Legislative.District)
+    
+    output$district_ui <- renderUI({
+      selectInput(ns("district"), "District", choices = c("— Select District —" = "", districts))
+    })
+    
+    output$school_ui <- renderUI({ NULL })
+  })
+  
+  # DISTRICT → SCHOOL
+  observeEvent(input$district, {
+    req(input$district)
+    schools <- uni %>%
+      filter(Legislative.District == input$district) %>%
+      distinct(SchoolID, SchoolName) %>%
+      arrange(SchoolName)
+    
+    output$school_ui <- renderUI({
+      selectInput(ns("school_id"), "School ID",
+                  choices = c("— Select School —" = "", setNames(schools$SchoolID, schools$SchoolName)))
+    })
   })
   
   
@@ -26059,17 +26146,71 @@ authentication_server <- function(input, output, session, user_status,
     if (input$govlev == "School") {
       tagList(
         textInput(ns("school_id"), "School ID:"),
-        tags$small("Enter your School ID (6 digits).", class = "text-muted")
+        tags$small("Enter your 6-digit School ID.", class = "text-muted")
       )
+      
     } else if (input$govlev %in% c("Central Office", "Regional Office", "Schools Division Office")) {
       tagList(
         textInput(ns("office_name"), "Office Name:"),
         tags$small("Enter Bureau/Division. Do not abbreviate!", class = "text-muted")
       )
+      
+    } else if (input$govlev %in% c("HR", "Engineer")) {
+      tagList(
+        div(
+          id = ns("hr_engineer_form"),
+          class = "hr-form-container",
+          style = "animation: fadeIn 0.6s ease-out;",
+          
+          h4(
+            paste("Additional Information for", input$govlev),
+            style = "margin-bottom: 15px; color: #1C6EA4; font-weight: 600;"
+          ),
+          
+          div(class = "row g-3",
+              # LEFT SIDE
+              div(class = "col-md-6",
+                  textInput(ns("reg_user"), "DepEd Email (@deped.gov.ph)"),
+                  textInput(ns("first_name"), "First Name"),
+                  textInput(ns("middle_name"), "Middle Name"),
+                  textInput(ns("last_name"), "Last Name")
+              ),
+              
+              # RIGHT SIDE
+              div(class = "col-md-6",
+                  selectInput(
+                    ns("region"),
+                    "Region",
+                    choices = c("— Select Region —" = "", sort(unique(uni$Region)))
+                  ),
+                  selectInput(
+                    ns("division"),
+                    "Division (if applicable)",
+                    choices = c("— Select Division —" = "", sort(unique(uni$Division)))
+                  ),
+                  selectInput(
+                    ns("district"),
+                    "District (if applicable)",
+                    choices = c("— Select District —" = "", sort(unique(uni$District)))
+                  ),
+                  selectInput(
+                    ns("position"),
+                    "Position",
+                    choices = c("— Select Position —" = "",
+                                "HR Officer", "Engineer II", "Engineer III", "Administrative Officer",
+                                "Other")
+                  ),
+                  textInput(ns("school_id"), "School ID (if applicable)")
+              )
+          )
+        )
+      )
     } else {
-      NULL
+      return(NULL)
     }
   })
+   
+  
   
   
   # --- 3️⃣ LOGIN LOGIC ---
@@ -26118,78 +26259,111 @@ authentication_server <- function(input, output, session, user_status,
   })
   
   # --- 5️⃣ REGISTRATION LOGIC ---
-  # --- 4. Registration Logic ---
-  observeEvent(input$do_register, {
-    print("🔔 Register button clicked")
+  
+  # --- Dynamic Region → Division → District → School chain ---
+  # --- REGION → DIVISION DYNAMIC ---
+  observeEvent(input$region, {
+    req(input$region)
     
-    # Collect values safely
-    reg_user <- input$reg_user
-    reg_pass <- input$reg_pass
-    govlev <- input$govlev
-    school_id <- input$school_id
-    office_name <- input$office_name
+    divisions <- uni %>%
+      filter(Region == input$region) %>%
+      distinct(Division) %>%
+      arrange(Division) %>%
+      pull(Division)
     
-    print(list(
-      reg_user = reg_user,
-      reg_pass = reg_pass,
-      govlev = govlev,
-      school_id = school_id,
-      office_name = office_name
-    ))
+    output$division_ui <- renderUI({
+      selectInput(ns("division"), "Division", choices = c("— Select Division —" = "", divisions))
+    })
     
-    # === VALIDATION ===
-    if (is.null(reg_user) || reg_user == "") {
-      print("❌ Missing reg_user")
-      return()
-    }
-    if (!endsWith(reg_user, "@deped.gov.ph")) {
-      print("❌ Invalid email domain")
-      return()
-    }
-    if (is.null(reg_pass) || reg_pass == "") {
-      print("❌ Missing password")
-      return()
-    }
-    if (is.null(govlev) || govlev == "") {
-      print("❌ Missing station")
-      return()
-    }
+    # Reset the next dropdowns
+    output$district_ui <- renderUI({ NULL })
+    output$school_ui <- renderUI({ NULL })
+  })
+  
+  # --- DIVISION → DISTRICT DYNAMIC ---
+  observeEvent(input$division, {
+    req(input$division)
     
-    # --- Prepare new user ---
-    new_user <- data.frame(
-      Registration_Date = as.character(Sys.time()),
-      Email_Address = reg_user,
-      Password = reg_pass,
-      Station = govlev,
-      School_ID = ifelse(govlev == "School", school_id, NA),
-      Office = ifelse(govlev != "School", office_name, NA),
-      stringsAsFactors = FALSE
-    )
+    districts <- uni %>%
+      filter(Division == input$division) %>%
+      distinct(Legislative.District) %>%
+      arrange(Legislative.District) %>%
+      pull(Legislative.District)
     
-    print("🧩 Preparing to write new user:")
-    print(new_user)
+    output$district_ui <- renderUI({
+      selectInput(ns("district"), "District", choices = c("— Select District —" = "", districts))
+    })
     
-    # --- TRY WRITING TO GOOGLE SHEET ---
-    tryCatch({
-      print("🟢 Attempting to append to sheet...")
-      googlesheets4::sheet_append(sheet_url, data = new_user)
-      print("✅ Successfully appended to Google Sheet")
-      
-      # Trigger refresh
-      db_trigger(db_trigger() + 1)
-      user_status("authenticated")
-      authenticated_user(reg_user)
-      
-      showNotification("✅ Registration successful!", type = "message")
-      
-    }, error = function(e) {
-      print(paste("❌ Error during sheet append:", e$message))
-      showNotification(paste("❌ Error writing to sheet:", e$message), type = "error")
+    output$school_ui <- renderUI({ NULL })
+  })
+  
+  # --- DISTRICT → SCHOOL ID DYNAMIC ---
+  observeEvent(input$district, {
+    req(input$district)
+    
+    schools <- uni %>%
+      filter(Legislative.District == input$district) %>%
+      distinct(SchoolID) %>%
+      arrange(SchoolID) %>%
+      pull(SchoolID)
+    
+    output$school_ui <- renderUI({
+      selectInput(ns("school_id"), "School ID", choices = c("— Select School ID —" = "", schools))
     })
   })
   
   
-}
+  
+  observeEvent(input$do_register, {
+    req(input$reg_user, input$reg_pass, input$govlev)
+    
+    # Validation
+    if (!endsWith(input$reg_user, "@deped.gov.ph")) {
+      showNotification("Please use a @deped.gov.ph email.", type = "error")
+      return()
+    }
+    
+    # --- Build record ---
+    if (input$govlev %in% c("HR", "Engineer")) {
+      new_user <- data.frame(
+        Registration_Date = as.character(Sys.time()),
+        Email_Address = input$reg_user,
+        First_Name = input$first_name,
+        Middle_Name = input$middle_name,
+        Last_Name = input$last_name,
+        Region = input$region,
+        Division = input$division,
+        District = input$district,
+        Position = input$position,
+        School_ID = input$school_id,
+        Station = input$govlev,
+        Password = input$reg_pass,
+        stringsAsFactors = FALSE
+      )
+    } else {
+      new_user <- data.frame(
+        Registration_Date = as.character(Sys.time()),
+        Email_Address = input$reg_user,
+        Password = input$reg_pass,
+        Station = input$govlev,
+        stringsAsFactors = FALSE
+      )
+    }
+    
+    # --- Save to Google Sheet ---
+    tryCatch({
+      googlesheets4::sheet_append(sheet_url, data = new_user)
+      showNotification("✅ Registration successful!", type = "message")
+      db_trigger(db_trigger() + 1)
+      user_status("authenticated")
+      authenticated_user(input$reg_user)
+    }, error = function(e) {
+      showNotification(paste("❌ Error:", e$message), type = "error")
+    })
+  })
+  
+  
+  
 # --- END OF AUTHENTICATION MODULE ---
 # ==========================================================
 
@@ -26503,6 +26677,6 @@ observeEvent(input$start_over, {
   session$reload()
 })
 
-
+}
 
 shinyApp(ui, server)
