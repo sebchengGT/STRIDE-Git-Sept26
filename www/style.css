@@ -248,7 +248,7 @@ body.dashboard-bg {
     gap: var(--bslib-spacer, 1rem);
     padding: var(--_padding);
     padding-top: var(--_padding-icon);
-    background: #003366;
+    background: #23558f;
     font-family: 'Poppins', sans-serif; /* Updated font */
     font-size: 17px;
     text-shadow: 1px 2px 2px #black;
@@ -535,7 +535,7 @@ body.dashboard-bg::before {
   align-self: flex-start;
   max-height: calc(100vh - 185px);
   overflow-y: auto !important;
-  background-color: #003366; /* same as your theme */
+  background-color: #23558f; /* same as your theme */
   z-index: 10; /* below navbar/header */
   scrollbar-width: thin;
   scrollbar-color: #002D62 #f9fafc;
