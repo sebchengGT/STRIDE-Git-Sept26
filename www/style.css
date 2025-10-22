@@ -1260,6 +1260,37 @@ body, .main-container, .bslib-layout-sidebar {
   50% { transform: translate(-50%, -8px); }
 }
 
+/* --- GLOBAL NAV PANEL STYLING --- */
+
+/* Make all nav items semi-transparent by default */
+.nav-item .nav-link {
+  opacity: 0.3;
+  transition: opacity 0.3s ease, color 0.3s ease;
+}
+
+/* On hover, increase visibility slightly */
+.nav-item .nav-link:hover {
+  opacity: 0.8;
+  color: #ffffff !important; /* DepEd blue accent */
+}
+
+/* Active tab — full opacity and colored text */
+.nav-item .nav-link.active,
+.nav-item .nav-link.active:focus {
+  opacity: 1;
+  color: black !important; /* Highlight color for active tab */
+  font-weight: 600;
+  border-bottom: 3px solid #ffffff; /* Optional underline */
+}
+
+/* Optional: remove extra outlines when clicking */
+.nav-item .nav-link:focus {
+  box-shadow: none !important;
+}
+
+
+
+
 
 
 
