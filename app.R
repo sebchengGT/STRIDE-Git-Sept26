@@ -164,6 +164,7 @@ ui <- page_fluid(
       color: #fff !important;
     }
     ")),
+  
     
     # External files (ensure they are in the 'www' folder)
     includeCSS("www/style.css"),
@@ -253,6 +254,7 @@ ui <- page_fluid(
       href = "https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap",
       rel = "stylesheet"
     ),
+    
     tags$style(HTML("
     body, h1, h2, h3, h4, h5, h6, p, span, button {
       font-family: 'Poppins', sans-serif !important;
@@ -3523,14 +3525,14 @@ server <- function(input, output, session) {
       
       # # --- Last Top-Level Tab: About ---
       # nav_panel(
-      #   title = tags$b("HR DATA"),
+      #   title = tags$b("About"),
       #   icon = bs_icon("info-circle"),
       #   tagList(
       #     layout_columns(
       #       HTML('<img src="Contactus.png" width="100%" height="auto">'))
       #   )),
 
-      
+   
       # --- Contact Us Top-Level Tab ---
       nav_panel(
         title = tags$b("Contact Us"),
@@ -5158,6 +5160,167 @@ server <- function(input, output, session) {
             )
           ))),
       
+      # --- HR Top-Level Tab ---
+  nav_panel(
+    title = tags$b("HR DATA"),
+    icon = bs_icon("person-lines-fill"),
+    
+    # Main Content (copied from your output$STRIDE_data)
+    fluidPage(
+      theme = bs_theme(
+        version = 5,
+        base_font = font_google("Poppins")
+      ),
+      
+      # --- CUSTOM CSS FOR FLOATING SIDEBAR ---
+      tags$head(
+        tags$style(HTML("
+          #submit:disabled {
+            background-color: #cccccc;
+            border-color: #cccccc;
+            color: #666666;
+            cursor: not-allowed;
+          }
+          .input-error {
+            border: 1px solid #dc3545;
+            box-shadow: 0 0 0.2rem #dc3545;
+          }
+        "))
+      ),
+      
+      useShinyjs(),
+      br(),
+      tags$div(
+        id = "form_title_bar",
+        style = "
+          background-color: #f0ad4e;
+          color: white;
+          padding: 15px 20px;
+          margin-bottom: 20px;
+          border-radius: 5px;
+          text-align: center;
+          box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        ",
+        h1(
+          strong("STRIDE Data Entry Form (HR Module)"),
+          style = "margin: 0; font-size: 2.5rem; text-shadow: 2px 2px 4px rgba(0,0,0,0.4);"
+        )
+      ),
+      
+      div(
+        id = "form_container",
+        sidebarLayout(
+          
+          # Sidebar Filters
+          sidebarPanel(
+            id = "sidebar",
+            width = 3,
+            h3(strong("School Profile")),
+            hr(),
+            textInput("school_id", "School ID", placeholder = "e.g. 193849"),
+            textInput("school_name", "School Name:", placeholder = "e.g. Juan Dela Cruz Elementary School"),
+            selectInput("stride_region", "Region:",
+              choices = c("--- Select a Region ---" = "", "Region I", "Region II", "Region III", "Region IV-A",
+                          "MIMAROPA", "Region V", "Region VI", "NIR", "Region VII", "Region VIII", "Region IX",
+                          "Region X", "Region XI", "Region XII", "CARAGA", "CAR", "NCR"),
+              selected = NULL
+            ),
+            uiOutput("stride_division"),
+            selectInput("curricular_offering", "Filter Curricular Offering:",
+              choices = c("--- Select a Curricular Offering ---" = "","Purely ES", "Purely JHS", "Purely SHS",
+                          "JHS and SHS", "ES and JHS", "All Offering"),
+              selected = NULL
+            )
+          ),
+          
+          # Main Form Area
+          mainPanel(
+            width = 9,
+            accordion(
+              id = "form_accordion",
+              multiple = FALSE,
+              
+              accordion_panel(
+                title = strong("School Information"),
+                value = "step1",
+                fluidRow(
+                  textInput("school_head_gn", "Given Name (School Head):", placeholder = "Enter Given Name"),
+                  textInput("school_head_mn", "Middle Name (School Head):", placeholder = "Enter Middle Name"),
+                  textInput("school_head_ln", "Last Name (School Head):", placeholder = "Enter Last Name"),
+                  selectInput("school_head_position", "Plantilla Position:",
+                    choices = c("School Principal I","School Principal II","School Principal III")),
+                  textInput("school_head_contact", "Contact Number", placeholder = "e.g. 09129382923"),
+                  textInput("school_head_contact_alt", "Alternative Contact Number", placeholder = "e.g. 09122314424"),
+                  textInput("school_head_email", "DepEd Email Address:", placeholder = "e.g. juan.delacruz@deped.gov.ph"),
+                  textInput("school_head_email_alt", "Alternative Email Address:", placeholder = "e.g. juan.delacruz@gmail.com")
+                )
+              ),
+              
+              accordion_panel(
+                title = strong("Enrolment per Grade Level"),
+                value = "step2",
+                fluidRow(
+                  column(4, numericInput("g1","Grade 1", value = "")),
+                  column(4, numericInput("g2","Grade 2", value = "")),
+                  column(4, numericInput("g3","Grade 3", value = "")),
+                  column(4, numericInput("g4","Grade 4", value = "")),
+                  column(4, numericInput("g5","Grade 5", value = "")),
+                  column(4, numericInput("g6","Grade 6", value = "")),
+                  column(4, numericInput("g7","Grade 7", value = "")),
+                  column(4, numericInput("g8","Grade 8", value = "")),
+                  column(4, numericInput("g9","Grade 9", value = "")),
+                  column(4, numericInput("g10","Grade 10", value = "")),
+                  column(4, numericInput("g11","Grade 11", value = "")),
+                  column(4, numericInput("g12","Grade 12", value = ""))
+                )
+              ),
+              
+              accordion_panel(
+                title = strong("Teacher Specialization"),
+                value = "step7",
+                fluidRow(
+                  column(4, numericInput("english","English", value = "")),
+                  column(4, numericInput("math","Math", value = "")),
+                  column(4, numericInput("science","Science", value = "")),
+                  column(4, numericInput("biological_science","Biological Science", value = "")),
+                  column(4, numericInput("physical_science","Physical Science", value = "")),
+                  column(4, numericInput("general_education","General Education", value = "")),
+                  column(4, numericInput("araling_panlipunan","Araling Panlipunan", value = "")),
+                  column(4, numericInput("tle","TLE", value = "")),
+                  column(4, numericInput("mapeh","MAPEH", value = "")),
+                  column(4, numericInput("filipino","Filipino", value = "")),
+                  column(4, numericInput("esp","ESP", value = "")),
+                  column(4, numericInput("agriculture","Agriculture", value = "")),
+                  column(4, numericInput("ece","Early Childhood Education", value = "")),
+                  column(4, numericInput("sped","SPED", value = ""))
+                )
+              )
+            )
+          )
+        ),
+        
+        hr(),
+        fluidRow(
+          column(
+            12,
+            align = "center",
+            actionButton("submit", "Submit Form", class = "btn-success btn-lg", icon = icon("check"), disabled = TRUE)
+          )
+        ),
+        br()
+      ),
+      
+      hidden(
+        div(
+          id = "thank_you_section",
+          h3("Thank You! 👋"),
+          p("Your submission has been recorded successfully."),
+          actionButton("start_over", "Submit Another Response")
+        )
+      )
+    )
+  )
+,
       # # --- Last Top-Level Tab: About ---
       # nav_panel(
       #   title = tags$b("HR DATA"),
@@ -5167,6 +5330,7 @@ server <- function(input, output, session) {
       #       HTML('<img src="Contactus.png" width="100%" height="auto">'))
       #   )),
       
+     
       # --- Contact Us Top-Level Tab ---
       nav_panel(
         title = tags$b("Contact Us"),
@@ -6802,6 +6966,15 @@ server <- function(input, output, session) {
       #     layout_columns(
       #       HTML('<img src="Contactus.png" width="100%" height="auto">'))
       #   )),
+      
+      # --- ENGINEER DATA Top-Level Tab ---
+      nav_panel(
+        title = "EFD DATA",
+        card(
+          card_header("Engineering Field Data"),
+          card_body("This section contains engineering-related datasets and reports.")
+        )
+      ),
       
       # --- Contact Us Top-Level Tab ---
       nav_panel(
@@ -13469,15 +13642,17 @@ server <- function(input, output, session) {
     leafletProxy("TextMapping") %>%
       clearMarkers() %>%
       clearMarkerClusters() %>%
-      setView(lng = mainreact1$Longitude[1],
-              lat = mainreact1$Latitude[1],
-              zoom = 4.5) %>%
+      setView(
+        lng = mainreact1$Longitude[1],
+        lat = mainreact1$Latitude[1],
+        zoom = 5
+      ) %>%
       addAwesomeMarkers(
         lng = mainreact1$Longitude,
         lat = mainreact1$Latitude,
         icon = makeAwesomeIcon(
-          icon = "education",
-          library = "glyphicon",
+          icon = "graduation-cap",   # FA4-compatible name
+          library = "fa",            # use Font Awesome, not glyphicon
           markerColor = "blue"
         ),
         label = values.comp,
@@ -14986,10 +15161,37 @@ server <- function(input, output, session) {
       names_to = "Other Data",     # Name of the new column holding the original column names
       values_to = "Data")     # Name of the new column holding the original values
     
-    rowselected_table5 <- row_selected %>% select(English,Mathematics,Science,Biological.Sciences,Physical.Sciences,General.Ed,Araling.Panlipunan,TLE,MAPEH,Filipino,ESP,Agriculture,ECE,SPED) %>% rename("Biological Sciences" = Biological.Sciences,"Physical Sciences" = Physical.Sciences,"General Education" = General.Ed,"Araling Panlipunan" = Araling.Panlipunan,"Early Chilhood Education" = ECE) %>% mutate(dplyr::across(tidyr::everything(), as.character)) %>% pivot_longer(
-      cols = everything(),    # Pivot all columns selected in details_to_pivot
-      names_to = "Other Data",     # Name of the new column holding the original column names
-      values_to = "Data")     # Name of the new column holding the original values
+    #for filtering in specialized data qss
+    rowselected_table5 <- row_selected %>%
+      select(English, Mathematics, Science, Biological.Sciences, Physical.Sciences,
+             General.Ed, Araling.Panlipunan, TLE, MAPEH, Filipino, ESP,
+             Agriculture, ECE, SPED) %>%
+      rename(
+        "Biological Sciences" = Biological.Sciences,
+        "Physical Sciences" = Physical.Sciences,
+        "General Education" = General.Ed,
+        "Araling Panlipunan" = Araling.Panlipunan,
+        "Early Childhood Education" = ECE
+      ) %>%
+      mutate(across(everything(), as.character)) %>%
+      # ✅ Replace 0 -> "-" only if school looks like an elementary school
+      {
+        if (any(grepl("Elementary", row_selected$School.Name, ignore.case = TRUE)) ||
+            any(grepl(" ES( |$)", row_selected$School.Name, ignore.case = TRUE)) ||
+            any(grepl("Elementary", row_selected$Implementing.Unit, ignore.case = TRUE)) ||
+            any(grepl(" ES( |$)", row_selected$Implementing.Unit, ignore.case = TRUE))) {
+          mutate(., across(everything(), ~ ifelse(. == "0", "-", .)))
+        } else {
+          .
+        }
+      } %>%
+      pivot_longer(
+        cols = everything(),
+        names_to = "Specialization",
+        values_to = "Data"
+      )
+    
+    
     
     output$schooldetails <- renderTable({
       # Pass the pivoted data frame directly
@@ -25726,6 +25928,12 @@ server <- function(input, output, session) {
 # ==========================================================
 # --- AUTHENTICATION MODULE: LOGIN / REGISTER / GUEST ---
 # ==========================================================
+# === Dynamic dropdown lists from your LMS and uni data ===
+all_regions <- sort(unique(LMS$Region))
+all_divisions <- sort(unique(LMS$Division))
+all_districts <- sort(unique(LMS$District))
+all_positions <- sort(unique(LMS$Position))
+all_school_ids <- sort(unique(LMS$School_ID))
 
 authentication_server <- function(input, output, session, user_status, 
                                   form_choice, sheet_url, user_database, db_trigger, 
@@ -25801,6 +26009,7 @@ authentication_server <- function(input, output, session, user_status,
       )
     } else {
       # REGISTER PANEL
+      # REGISTER PANEL
       div(
         class = "login-container",
         
@@ -25821,17 +26030,24 @@ authentication_server <- function(input, output, session, user_status,
             class = "login-card",
             tags$img(src = "STRIDE LOGO001.png", class = "login-logo-top"),
             
-            selectInput(ns("govlev"), "Select Station:",
-                        choices = c("— Select an Option —" = "",
-                                    "Central Office", "Regional Office", 
-                                    "Schools Division Office", "School")),
+            # === Station / User Type Selection ===
+            selectInput(
+              ns("govlev"), "Select Station / User Type:",
+              choices = c("— Select an Option —" = "",
+                          "Central Office", "Regional Office",
+                          "Schools Division Office", "School",
+                          "HR", "Engineer")
+            ),
             
-            uiOutput(ns("station_specific_ui")),
+            # === Dynamic fields (HR & Engineer only) ===
+            uiOutput(ns("extra_fields_ui")),  # <<–– Instead of conditionalPanel
+            
+            # === Universal fields ===
             textInput(ns("reg_user"), NULL, placeholder = "DepEd Email (@deped.gov.ph)"),
             passwordInput(ns("reg_pass"), NULL, placeholder = "Password"),
             passwordInput(ns("reg_pass_confirm"), NULL, placeholder = "Confirm Password"),
-            actionButton(ns("do_register"), "Register Account", class = "btn-login w-100"),
             
+            actionButton(ns("do_register"), "Register Account", class = "btn-login w-100"),
             uiOutput(ns("register_message")),
             br(),
             actionLink(ns("btn_login"), "Back to Login", class = "register-link"),
@@ -25845,7 +26061,80 @@ authentication_server <- function(input, output, session, user_status,
           )
         )
       )
+      
     }
+  })
+  
+  # === Dynamic HR / Engineer Field Renderer ===
+  observe({
+    req(input$govlev)
+    
+    if (input$govlev %in% c("HR", "Engineer")) {
+      output$extra_fields_ui <- renderUI({
+        tagList(
+          textInput(ns("first_name"), "First Name"),
+          textInput(ns("middle_name"), "Middle Name"),
+          textInput(ns("last_name"), "Last Name"),
+          
+          selectInput(ns("region"), "Region",
+                      choices = c("— Select Region —" = "", sort(unique(uni$Region)))),
+          uiOutput(ns("division_ui")),
+          uiOutput(ns("district_ui")),
+          uiOutput(ns("school_ui")),
+          
+          textInput(ns("position"), "Position")
+        )
+      })
+    } else {
+      output$extra_fields_ui <- renderUI({ NULL })
+    }
+  })
+  
+  # REGION → DIVISION
+  observeEvent(input$region, {
+    req(input$region)
+    divisions <- uni %>%
+      filter(Region == input$region) %>%
+      distinct(Division) %>%
+      arrange(Division) %>%
+      pull(Division)
+    
+    output$division_ui <- renderUI({
+      selectInput(ns("division"), "Division", choices = c("— Select Division —" = "", divisions))
+    })
+    
+    output$district_ui <- renderUI({ NULL })
+    output$school_ui <- renderUI({ NULL })
+  })
+  
+  # DIVISION → DISTRICT
+  observeEvent(input$division, {
+    req(input$division)
+    districts <- uni %>%
+      filter(Division == input$division) %>%
+      distinct(Legislative.District) %>%
+      arrange(Legislative.District) %>%
+      pull(Legislative.District)
+    
+    output$district_ui <- renderUI({
+      selectInput(ns("district"), "District", choices = c("— Select District —" = "", districts))
+    })
+    
+    output$school_ui <- renderUI({ NULL })
+  })
+  
+  # DISTRICT → SCHOOL
+  observeEvent(input$district, {
+    req(input$district)
+    schools <- uni %>%
+      filter(Legislative.District == input$district) %>%
+      distinct(SchoolID, SchoolName) %>%
+      arrange(SchoolName)
+    
+    output$school_ui <- renderUI({
+      selectInput(ns("school_id"), "School ID",
+                  choices = c("— Select School —" = "", setNames(schools$SchoolID, schools$SchoolName)))
+    })
   })
   
   
@@ -25857,17 +26146,71 @@ authentication_server <- function(input, output, session, user_status,
     if (input$govlev == "School") {
       tagList(
         textInput(ns("school_id"), "School ID:"),
-        tags$small("Enter your School ID (6 digits).", class = "text-muted")
+        tags$small("Enter your 6-digit School ID.", class = "text-muted")
       )
+      
     } else if (input$govlev %in% c("Central Office", "Regional Office", "Schools Division Office")) {
       tagList(
         textInput(ns("office_name"), "Office Name:"),
         tags$small("Enter Bureau/Division. Do not abbreviate!", class = "text-muted")
       )
+      
+    } else if (input$govlev %in% c("HR", "Engineer")) {
+      tagList(
+        div(
+          id = ns("hr_engineer_form"),
+          class = "hr-form-container",
+          style = "animation: fadeIn 0.6s ease-out;",
+          
+          h4(
+            paste("Additional Information for", input$govlev),
+            style = "margin-bottom: 15px; color: #1C6EA4; font-weight: 600;"
+          ),
+          
+          div(class = "row g-3",
+              # LEFT SIDE
+              div(class = "col-md-6",
+                  textInput(ns("reg_user"), "DepEd Email (@deped.gov.ph)"),
+                  textInput(ns("first_name"), "First Name"),
+                  textInput(ns("middle_name"), "Middle Name"),
+                  textInput(ns("last_name"), "Last Name")
+              ),
+              
+              # RIGHT SIDE
+              div(class = "col-md-6",
+                  selectInput(
+                    ns("region"),
+                    "Region",
+                    choices = c("— Select Region —" = "", sort(unique(uni$Region)))
+                  ),
+                  selectInput(
+                    ns("division"),
+                    "Division (if applicable)",
+                    choices = c("— Select Division —" = "", sort(unique(uni$Division)))
+                  ),
+                  selectInput(
+                    ns("district"),
+                    "District (if applicable)",
+                    choices = c("— Select District —" = "", sort(unique(uni$District)))
+                  ),
+                  selectInput(
+                    ns("position"),
+                    "Position",
+                    choices = c("— Select Position —" = "",
+                                "HR Officer", "Engineer II", "Engineer III", "Administrative Officer",
+                                "Other")
+                  ),
+                  textInput(ns("school_id"), "School ID (if applicable)")
+              )
+          )
+        )
+      )
     } else {
-      NULL
+      return(NULL)
     }
   })
+   
+  
   
   
   # --- 3️⃣ LOGIN LOGIC ---
@@ -25916,78 +26259,111 @@ authentication_server <- function(input, output, session, user_status,
   })
   
   # --- 5️⃣ REGISTRATION LOGIC ---
-  # --- 4. Registration Logic ---
-  observeEvent(input$do_register, {
-    print("🔔 Register button clicked")
+  
+  # --- Dynamic Region → Division → District → School chain ---
+  # --- REGION → DIVISION DYNAMIC ---
+  observeEvent(input$region, {
+    req(input$region)
     
-    # Collect values safely
-    reg_user <- input$reg_user
-    reg_pass <- input$reg_pass
-    govlev <- input$govlev
-    school_id <- input$school_id
-    office_name <- input$office_name
+    divisions <- uni %>%
+      filter(Region == input$region) %>%
+      distinct(Division) %>%
+      arrange(Division) %>%
+      pull(Division)
     
-    print(list(
-      reg_user = reg_user,
-      reg_pass = reg_pass,
-      govlev = govlev,
-      school_id = school_id,
-      office_name = office_name
-    ))
+    output$division_ui <- renderUI({
+      selectInput(ns("division"), "Division", choices = c("— Select Division —" = "", divisions))
+    })
     
-    # === VALIDATION ===
-    if (is.null(reg_user) || reg_user == "") {
-      print("❌ Missing reg_user")
-      return()
-    }
-    if (!endsWith(reg_user, "@deped.gov.ph")) {
-      print("❌ Invalid email domain")
-      return()
-    }
-    if (is.null(reg_pass) || reg_pass == "") {
-      print("❌ Missing password")
-      return()
-    }
-    if (is.null(govlev) || govlev == "") {
-      print("❌ Missing station")
-      return()
-    }
+    # Reset the next dropdowns
+    output$district_ui <- renderUI({ NULL })
+    output$school_ui <- renderUI({ NULL })
+  })
+  
+  # --- DIVISION → DISTRICT DYNAMIC ---
+  observeEvent(input$division, {
+    req(input$division)
     
-    # --- Prepare new user ---
-    new_user <- data.frame(
-      Registration_Date = as.character(Sys.time()),
-      Email_Address = reg_user,
-      Password = reg_pass,
-      Station = govlev,
-      School_ID = ifelse(govlev == "School", school_id, NA),
-      Office = ifelse(govlev != "School", office_name, NA),
-      stringsAsFactors = FALSE
-    )
+    districts <- uni %>%
+      filter(Division == input$division) %>%
+      distinct(Legislative.District) %>%
+      arrange(Legislative.District) %>%
+      pull(Legislative.District)
     
-    print("🧩 Preparing to write new user:")
-    print(new_user)
+    output$district_ui <- renderUI({
+      selectInput(ns("district"), "District", choices = c("— Select District —" = "", districts))
+    })
     
-    # --- TRY WRITING TO GOOGLE SHEET ---
-    tryCatch({
-      print("🟢 Attempting to append to sheet...")
-      googlesheets4::sheet_append(sheet_url, data = new_user)
-      print("✅ Successfully appended to Google Sheet")
-      
-      # Trigger refresh
-      db_trigger(db_trigger() + 1)
-      user_status("authenticated")
-      authenticated_user(reg_user)
-      
-      showNotification("✅ Registration successful!", type = "message")
-      
-    }, error = function(e) {
-      print(paste("❌ Error during sheet append:", e$message))
-      showNotification(paste("❌ Error writing to sheet:", e$message), type = "error")
+    output$school_ui <- renderUI({ NULL })
+  })
+  
+  # --- DISTRICT → SCHOOL ID DYNAMIC ---
+  observeEvent(input$district, {
+    req(input$district)
+    
+    schools <- uni %>%
+      filter(Legislative.District == input$district) %>%
+      distinct(SchoolID) %>%
+      arrange(SchoolID) %>%
+      pull(SchoolID)
+    
+    output$school_ui <- renderUI({
+      selectInput(ns("school_id"), "School ID", choices = c("— Select School ID —" = "", schools))
     })
   })
   
   
-}
+  
+  observeEvent(input$do_register, {
+    req(input$reg_user, input$reg_pass, input$govlev)
+    
+    # Validation
+    if (!endsWith(input$reg_user, "@deped.gov.ph")) {
+      showNotification("Please use a @deped.gov.ph email.", type = "error")
+      return()
+    }
+    
+    # --- Build record ---
+    if (input$govlev %in% c("HR", "Engineer")) {
+      new_user <- data.frame(
+        Registration_Date = as.character(Sys.time()),
+        Email_Address = input$reg_user,
+        First_Name = input$first_name,
+        Middle_Name = input$middle_name,
+        Last_Name = input$last_name,
+        Region = input$region,
+        Division = input$division,
+        District = input$district,
+        Position = input$position,
+        School_ID = input$school_id,
+        Station = input$govlev,
+        Password = input$reg_pass,
+        stringsAsFactors = FALSE
+      )
+    } else {
+      new_user <- data.frame(
+        Registration_Date = as.character(Sys.time()),
+        Email_Address = input$reg_user,
+        Password = input$reg_pass,
+        Station = input$govlev,
+        stringsAsFactors = FALSE
+      )
+    }
+    
+    # --- Save to Google Sheet ---
+    tryCatch({
+      googlesheets4::sheet_append(sheet_url, data = new_user)
+      showNotification("✅ Registration successful!", type = "message")
+      db_trigger(db_trigger() + 1)
+      user_status("authenticated")
+      authenticated_user(input$reg_user)
+    }, error = function(e) {
+      showNotification(paste("❌ Error:", e$message), type = "error")
+    })
+  })
+  
+  
+  
 # --- END OF AUTHENTICATION MODULE ---
 # ==========================================================
 
@@ -26301,6 +26677,6 @@ observeEvent(input$start_over, {
   session$reload()
 })
 
-
+}
 
 shinyApp(ui, server)
