@@ -13,6 +13,7 @@
 #updated as of oct 21,2025 48:55am
 #oct 21,2025 UDDDDDDDDDDDDDDD uppp
 #TESTTTTTTTTTTTTTTTTTTT
+#ttestclea
 library(tidyverse)
 library(DT)
 library(dplyr)
@@ -217,6 +218,16 @@ ui <- page_fluid(
     div(
       id = "data_input_content",
       uiOutput("STRIDE_data"))),
+  
+  shinyjs::hidden(
+    div(
+      id = "mgmt_content",
+      uiOutput("STRIDEHR"))),
+  
+  shinyjs::hidden(
+    div(
+      id = "mgmt_content",
+      uiOutput("STRIDEENGINEER"))),
   
   tags$div(
     id = "loading-overlay",
@@ -2628,94 +2639,7 @@ server <- function(input, output, session) {
           )
         ),
         
-        # --- Nav Panel 2: DepEd Officials ---
-        nav_panel(
-          title = tags$b("DepEd Officials"),
-          layout_sidebar(
-            sidebar = sidebar(
-              width = 350,
-              h6("Strand Filter:"),
-              pickerInput(
-                inputId = "ThirdLevel_Strands",
-                label = "Select Strand(s):",
-                choices = c(
-                  "Administration",
-                  "Deped Attached Agencies",
-                  "Finance",
-                  "Human Resource And Organizational Development",
-                  "Learning System",
-                  "Legal And Legislative Affairs",
-                  "Office Of The Secretary",
-                  "Operations",
-                  "Procurement",
-                  "Strategic Management",
-                  "Teachers And Education Council Secretariat"
-                ),
-                selected = c(
-                  "Administration",
-                  "Deped Attached Agencies",
-                  "Finance",
-                  "Human Resource And Organizational Development",
-                  "Learning System",
-                  "Legal And Legislative Affairs",
-                  "Office Of The Secretary",
-                  "Operations",
-                  "Procurement",
-                  "Strategic Management",
-                  "Teachers And Education Council Secretariat"
-                ),
-                multiple = TRUE,
-                options = pickerOptions(
-                  actionsBox = TRUE,
-                  liveSearch = TRUE,
-                  header = "Select Strand(s)",
-                  title = "No Strand Selected",
-                  selectedTextFormat = "count > 3",
-                  dropupAuto = FALSE,
-                  dropup = FALSE
-                ),
-                choicesOpt = list(
-                  style = "white-space: normal; word-break: break-word; overflow-wrap: break-word;"
-                )
-              )
-            ),
-            
-            layout_columns(
-              card(
-                full_screen = TRUE,
-                style = "
-          width: 100%;
-          max-height: 85vh;
-          overflow-y: auto;
-          margin-bottom: 20px;
-        ",
-                card_header(
-                  strong("HROD Data Panel"),
-                  style = "
-            font-size: 22px;
-            padding: 15px 20px;
-            text-align: center;
-            background-color: #00234d;
-            border-bottom: 2px solid #dee2e6;
-          "
-                ),
-                card_body(
-                  div(
-                    style = "
-              padding: 10px;
-              overflow-x: auto;
-              height: calc(85vh - 80px);
-            ",
-                    dataTableOutput("ThirdLevel_Table")
-                  )
-                )
-              ),
-              col_widths = c(12)
-            )
-          )
-        ),
-        
-        # --- Nav Panel 3: Infrastructure Database ---
+        # --- Nav Panel 2: Infrastructure Database ---
         nav_panel(
           title = tags$b("Infrastructure Database"),
           layout_sidebar(
@@ -2812,6 +2736,92 @@ server <- function(input, output, session) {
                 dataTableOutput("HROD_Table")
               ),
               col_widths = c(12, 12)
+            )
+          )
+        ),
+        # --- Nav Panel 3: DepEd Officials ---
+        nav_panel(
+          title = tags$b("DepEd Officials"),
+          layout_sidebar(
+            sidebar = sidebar(
+              width = 350,
+              h6("Strand Filter:"),
+              pickerInput(
+                inputId = "ThirdLevel_Strands",
+                label = "Select Strand(s):",
+                choices = c(
+                  "Administration",
+                  "Deped Attached Agencies",
+                  "Finance",
+                  "Human Resource And Organizational Development",
+                  "Learning System",
+                  "Legal And Legislative Affairs",
+                  "Office Of The Secretary",
+                  "Operations",
+                  "Procurement",
+                  "Strategic Management",
+                  "Teachers And Education Council Secretariat"
+                ),
+                selected = c(
+                  "Administration",
+                  "Deped Attached Agencies",
+                  "Finance",
+                  "Human Resource And Organizational Development",
+                  "Learning System",
+                  "Legal And Legislative Affairs",
+                  "Office Of The Secretary",
+                  "Operations",
+                  "Procurement",
+                  "Strategic Management",
+                  "Teachers And Education Council Secretariat"
+                ),
+                multiple = TRUE,
+                options = pickerOptions(
+                  actionsBox = TRUE,
+                  liveSearch = TRUE,
+                  header = "Select Strand(s)",
+                  title = "No Strand Selected",
+                  selectedTextFormat = "count > 3",
+                  dropupAuto = FALSE,
+                  dropup = FALSE
+                ),
+                choicesOpt = list(
+                  style = "white-space: normal; word-break: break-word; overflow-wrap: break-word;"
+                )
+              )
+            ),
+            
+            layout_columns(
+              card(
+                full_screen = TRUE,
+                style = "
+          width: 100%;
+          max-height: 85vh;
+          overflow-y: auto;
+          margin-bottom: 20px;
+        ",
+                card_header(
+                  strong("HROD Data Panel"),
+                  style = "
+            font-size: 22px;
+            padding: 15px 20px;
+            text-align: center;
+            background-color: #00234d;
+            border-bottom: 2px solid #dee2e6;
+          "
+                ),
+                card_body(
+                  div(
+                    style = "
+              padding: 10px;
+              overflow-x: auto;
+              height: calc(85vh - 80px);
+            ",
+                    dataTableOutput("ThirdLevel_Table")
+                  )
+                )
+              ),
+              col_widths = c(12)
             )
           )
         )
@@ -3511,14 +3521,3287 @@ server <- function(input, output, session) {
             )
           ))),
       
-      # --- Last Top-Level Tab: About ---
+      # # --- Last Top-Level Tab: About ---
+      # nav_panel(
+      #   title = tags$b("HR DATA"),
+      #   icon = bs_icon("info-circle"),
+      #   tagList(
+      #     layout_columns(
+      #       HTML('<img src="Contactus.png" width="100%" height="auto">'))
+      #   )),
+
+      
+      # --- Contact Us Top-Level Tab ---
       nav_panel(
-        title = tags$b("About"),
-        icon = bs_icon("info-circle"),
-        tagList(
+        title = tags$b("Contact Us"),
+        icon = bs_icon("envelope"),
+        h3("Contact Information"),
+        fluidRow(
+          column(12,
+                 tags$iframe(
+                   id = "googleform",
+                   src = "https://docs.google.com/forms/d/e/1FAIpQLScmWmVzlAHgsitxUncINy4OC_5gkyg2LvYcJAkAGlGAzQHNvw/viewform?embedded=true", # Replace YOUR_FORM_ID
+                   width = "100%", # Or a specific pixel value like "760"
+                   height = "700px", # Or a specific pixel value like "500"
+                   frameborder = "0",
+                   marginheight = "0",
+                   marginwidth = "0")
+          )
+        )
+      ),
+      
+      # ✅ Logout button shown as its own nav tab
+      # nav_panel(
+      #   title = tagList(bs_icon("box-arrow-right"), "Log Out"),
+      #   shinyauthr::logoutUI(
+      #     id = "logout",
+      #     label = "Log Out",
+      #     icon = icon("sign-out-alt"),
+      #     class = "btn btn-danger")
+      # )
+    )
+  })
+  output$STRIDEHR <- renderUI({
+    page_navbar(
+      # no title, just the nav items
+      
+      theme = bs_theme(
+        version = 5,
+        bootswatch = "sandstone",
+        font_scale = 0.9,
+        base_font = font_google("Poppins")
+      ) |> bs_add_rules(
+        "
+    /* Ensure nav links remain bold */
+    .nav-tabs .nav-link,
+    .nav-pills .nav-link,
+    .accordion-button {
+      font-weight: bold;
+    }
+
+    /* Hide the top-level tabs of the main content area for 'page' navigation */
+    .card .nav-tabs {
+      display: none;
+    }
+    .card .card-header.bg-body-secondary ~ .tab-content {
+      border-top: none; /* Remove extra border if card-header is used for main content */
+    }
+
+    /* Custom rule for the main sidebar title */
+    .sidebar-title {
+      color: #002D62; /* DepEd Blue */
+      font-weight: bold;
+    }
+
+    /* Custom rule for card headers within the sidebar */
+    .card-header {
+      background-color: #e6f0ff; /* Very light blue, subtle background */
+      color: #002D62; /* DepEd Blue for text */
+      border-bottom: 1px solid #cce0ff; /* Slightly darker light blue border */
+    }
+
+    /* Ensure other h4 elements in sidebar (like Data Toggles) also use DepEd Blue */
+    .sidebar h4 {
+      color: #002D62; /* DepEd Blue */
+      font-weight: bold;
+    }
+    "
+      ),
+      #data explorer css 
+      #       tags$head(
+      #         tags$style(HTML("
+      # /* === FINAL FIX: Consistent Bootstrap-select picker design === */
+      # 
+      # /* --- Text wrapping and internal spacing --- */
+      # .bootstrap-select .dropdown-menu li a span.text {
+      #   white-space: normal !important;
+      #   word-break: break-word !important;
+      #   display: inline-block !important;
+      #   overflow-wrap: anywhere !important;
+      #   line-height: 1.3em !important;
+      #   padding-right: 10px !important;
+      #   max-width: 100% !important;
+      # }
+      # 
+      # /* --- Scroll area for dropdown content --- */
+      # .bootstrap-select .dropdown-menu.inner.show {
+      #   padding-bottom: 0 !important;
+      #   margin-bottom: 0 !important;
+      #   max-height: none !important;
+      #   overflow-y: auto !important;
+      # }
+      # 
+      # /* --- Dropdown menu box consistency --- */
+      # .bootstrap-select .dropdown-menu {
+      #   min-width: 100% !important;      /* Make all dropdowns same width as picker */
+      #   width: 100% !important;
+      #   white-space: normal !important;
+      #   border-radius: 6px !important;
+      #   box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
+      #   padding-bottom: 0 !important;
+      #   overflow: visible !important;
+      #   max-height: none !important;
+      # }
+      # 
+      # /* --- Picker button (main visible area) --- */
+      # .bootstrap-select .dropdown-toggle {
+      #   width: 100% !important;
+      #   background-color: #f2f2f2 !important;
+      #   color: #333 !important;
+      #   border: 1px solid #ccc !important;
+      #   border-radius: 6px !important;
+      #   text-align: left !important;
+      #   padding: 6px 10px !important;
+      #   font-size: 14px !important;
+      #   font-weight: 400 !important;
+      # }
+      # 
+      # /* --- Ensure dropdown opens BELOW picker --- */
+      # .bootstrap-select.dropup .dropdown-menu,
+      # .bootstrap-select:not(.dropup) .dropdown-menu {
+      #   top: 100% !important;
+      #   bottom: auto !important;
+      #   transform: none !important;
+      # }
+      # 
+      # /* --- Clean hover for navbar dropdowns (still included) --- */
+      # .navbar .dropdown-menu > li > a:hover,
+      # .bslib-navbar .dropdown-menu > li > a:hover {
+      #   background-color: #2c3895 !important;
+      #   color: white !important;
+      # }
+      # 
+      # /* --- Scrollbar styling for long dropdowns --- */
+      # .bootstrap-select .dropdown-menu.inner::-webkit-scrollbar {
+      #   width: 8px;
+      # }
+      # 
+      # .bootstrap-select .dropdown-menu.inner::-webkit-scrollbar-thumb {
+      #   background-color: rgba(0, 0, 0, 0.2);
+      #   border-radius: 4px;
+      # }
+      # 
+      # .bootstrap-select .dropdown-menu.inner::-webkit-scrollbar-thumb:hover {
+      #   background-color: rgba(0, 0, 0, 0.35);
+      # }
+      # 
+      # /* --- Consistent picker height and spacing --- */
+      # .bootstrap-select {
+      #   width: 100% !important;
+      #   margin-bottom: 10px !important;
+      # }
+      # 
+      # .bootstrap-select .filter-option-inner-inner {
+      #   text-overflow: ellipsis !important;
+      #   overflow: hidden !important;
+      #   white-space: nowrap !important;
+      # }
+      # 
+      # /* --- Prevent dropdown from cutting off --- */
+      # .bootstrap-select .dropdown-menu.show {
+      #   z-index: 9999 !important;
+      # }
+      # 
+      #   "))
+      #       )
+      #       ,
+      
+      nav_spacer(),
+      
+      # --- First Top-Level Tab: Dashboard ---
+      # Assuming this is part of your ui.R file, within the nav_menu("Dashboard") block
+      
+      nav_menu(
+        title = tagList(bs_icon("speedometer"),
+                        tags$b("Dashboard")),
+        nav_panel(
+          title = "Education Resource Dashboard",
+          # --- ROW OF 6 VALUE BOXES ---
+          # Switched to shinydashboard::valueBoxOutput
+          fluidRow(
+            column(
+              width = 1,
+              actionButton(
+                "reset_button",
+                label = tagList(bs_icon("arrow-left"), "Back"),
+                class = "btn-primary mb-3"
+              )
+            ),
+            # 2. Use layout_column_wrap for perfect 6-column responsiveness
+            layout_column_wrap(
+              width = 1/7, 
+              
+              # 3. Use the modern valueBoxOutput
+              uiOutput("total_schools_erdb"),
+              uiOutput("total_enrolment_erdb"),
+              uiOutput("total_classrooms_erdb"),
+              uiOutput("total_LMS_erdb"),
+              uiOutput("total_teacher_shortage_erdb"),
+              uiOutput("SP_Shortage_erdb"),
+              uiOutput("total_classroom_shortage_erdb")
+            )
+          ),
+          
+          # --- ADJUSTED 3x2 GRID OF PLOTS ---
+          
+          # -- Row 1 --
           layout_columns(
-            HTML('<img src="Contactus.png" width="100%" height="auto">'))
-        )),
+            col_widths = c(4, 4, 4),
+            card(card_header("Number of Schools (Click to Drill Down)"),full_screen = TRUE, plotlyOutput("totalschools_plot_erdb"), height = "420px"),
+            card(card_header("Curricular Offering"),full_screen = TRUE, plotlyOutput("curricular_plot_erdb"), height = "420px"),
+            card(card_header("School Size Typology"),full_screen = TRUE, plotlyOutput("typology_plot_erdb"), height = "420px")
+          ),
+          # -- Row 2 --
+          layout_columns(
+            col_widths = c(3, 3, 3, 3),
+            card(card_header("Classroom Shortage"),full_screen = TRUE, plotlyOutput("classroomshortage_plot_erdb"), height = "420px"),
+            card(card_header("Last Mile Schools"),full_screen = TRUE, plotlyOutput("LMS_plot_erdb"), height = "420px"),
+            card(card_header("Teacher Shortage"),full_screen = TRUE, plotlyOutput("teachershortage_plot_erdb"), height = "420px"),
+            card(card_header("School Principal Shortage"),full_screen = TRUE, plotlyOutput("principalshortage_plot_erdb"), height = "420px")
+          ),
+          hr(),
+          card(
+            full_screen = TRUE,
+            card_header("Priority Divisions"),
+            
+            # --- NEW CODE: Use layout_column_wrap to format the plots ---
+            layout_column_wrap(
+              width = 1/3, # This tells R to fit 3 items per row (1/3 of the width each)
+              heights_equal = "row", # Ensures all plots in the row have the same height
+              
+              # Plot Outputs (These will be arranged based on the 'width' setting)
+              # Card for the first plot
+              card(
+                full_screen = TRUE,
+                card_header("Teacher Deployment Priorities"),
+                plotlyOutput("Teaching_Deployment_Division_Graph1")
+              ),
+              
+              # Card for the second plot
+              card(
+                full_screen = TRUE,
+                card_header("Classroom Shortage Priorities"),
+                plotlyOutput("Classroom_Shortage_Division_Graph2")
+              ),
+              
+              # Card for the third plot
+              card(
+                full_screen = TRUE,
+                card_header("Last Mile School Priorities"),
+                plotlyOutput("LMS_Division_Graph2")
+              )),
+            card(
+              full_screen = TRUE,
+              card_header("SDO Ranking"),
+              
+              # ✅ Add this here
+              tags$head(
+                tags$style(HTML("
+      .reactable thead th {
+        white-space: normal !important;
+        word-wrap: break-word !important;
+        line-height: 1.1;
+        text-align: center;
+      }
+      .reactable .rt-thead.-header { height: auto !important; }
+      .reactable .rt-th {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+      }
+    "))
+              ),
+              height = 800,
+              reactable::reactableOutput("priority_division_erdb"),
+              hr(), # Adds a horizontal line
+              downloadButton(
+                "download_priority_data",  # This is the ID for the server
+                "Download SDO Ranking as CSV", class = "btn-success"   # This is the text on the button
+              )
+            ))),
+        
+        #   navset_card_pill(
+        #     nav_spacer(),
+        #     nav_panel(
+        #       title = "School-level Data (SY 2024-2025)",
+        #       dataTableOutput("regprof_DT")),
+        #     nav_panel(
+        #       title = "Classroom Data (SY 2023-2024)",
+        #       dataTableOutput("regprof_DT_CL")),
+        # ),
+        # HROD panel
+        # nav_panel(
+        #   title = "Education Resource Information", # Your existing HROD content
+        #   layout_sidebar(
+        #     sidebar = sidebar(
+        #       width = 300, # Keep the sidebar width
+        #       title = "Dashboard Navigation", # Main sidebar title
+        #       
+        #       # Card for Main Category Picker (combining General Info, Resource Shortage, Other)
+        #       # Assuming this UI code is part of your sidebar or main UI definition
+        #       
+        #       card(height = 400, # Adjusted height to 500
+        #            card_header(tags$b("Select Category")),
+        #            card_body( # Wrapped pickerInput in card_body
+        #              pickerInput(
+        #                inputId = "hrod_main_category_picker",
+        #                label = NULL,
+        #                choices = c(
+        #                  "School Count" = "general_school_count",
+        #                  "School Size Typology" = "general_sosss",
+        #                  "Classroom Shortage" = "resource_shortage_classroom",
+        #                  "Last Mile School" = "resource_lms",
+        #                  "Teacher Shortage" = "resource_shortage_teacher",
+        #                  "School Principal Shortage" = "resource_shortage_principal",
+        #                  "Non-Teaching Personnel" = "resource_shortage_non_teaching",
+        #                  "Sufficiency" = "others_sufficiency"
+        #                ),
+        #                selected = "general_school_count", # Keep the default selected value
+        #                multiple = FALSE, # Keep as FALSE for single selection
+        #                options = pickerOptions(
+        #                  actionsBox = FALSE, # Keep as FALSE as it's single select
+        #                  liveSearch = TRUE,
+        #                  header = "Select a Category", # Keep existing header
+        #                  title = "Select Category",
+        #                  dropupAuto = FALSE, # This tells it NOT to automatically switch direction
+        #                  dropup = FALSE # Keep existing title
+        #                  # selectedTextFormat is not applicable for multiple = FALSE, so it's not added
+        #                ),
+        #                choicesOpt = list() # Added choicesOpt = list() for consistency
+        #              )
+        #            )
+        #       ),
+        #       
+        #       hr(), # Add a separator
+        #       
+        #       # Card for Region Picker
+        #       # Assuming this UI code is part of your sidebar or main UI definition
+        #       
+        #       # Region Filter
+        #       card(height = 400, # Adjusted height
+        #            card_header(tags$b("Region Filter")),
+        #            card_body( # Added card_body
+        #              pickerInput(
+        #                inputId = "dashboard_region_filter", # Keep the same inputId for server compatibility
+        #                label = NULL,
+        #                choices = c("Region I" = "Region I", "Region II" = "Region II", "Region III" = "Region III", "Region IV-A" = "Region IV-A", "MIMAROPA" = "MIMAROPA", "Region V" = "Region V", "Region VI" = "Region VI", "NIR" = "NIR", "Region VII" = "Region VII", "Region VIII" = "Region VIII", "Region IX" = "Region IX", "Region X" = "Region X", "Region XI" = "Region XI", "Region XII" = "Region XII", "CARAGA" = "CARAGA", "CAR" = "CAR", "NCR" = "NCR","BARMM" = "BARMM"),
+        #                selected = c("Region I"), # Keep the same default selected value
+        #                multiple = TRUE,
+        #                options = pickerOptions(
+        #                  actionsBox = TRUE, # Changed to TRUE
+        #                  liveSearch = TRUE,
+        #                  header = "Select Regions", # Changed header text
+        #                  title = "No Region Selected", # Changed title text
+        #                  selectedTextFormat = "count > 3",
+        #                  dropupAuto = FALSE, # This tells it NOT to automatically switch direction
+        #                  dropup = FALSE # Added this option
+        #                ),
+        #                choicesOpt = list() # Added choicesOpt
+        #              )
+        #            )
+        #       ),
+        #       
+        #       # Division Filter
+        #       card(height = 400, # Adjusted height
+        #            card_header(tags$b("Division Filter")),
+        #            card_body( # Added card_body
+        #              pickerInput(
+        #                inputId = "dashboard_division_filter", # Keep the same inputId for server compatibility
+        #                label = NULL,
+        #                choices = NULL, # Choices will be updated dynamically by the server
+        #                selected = NULL,
+        #                multiple = TRUE,
+        #                options = pickerOptions(
+        #                  actionsBox = TRUE, # Changed to TRUE
+        #                  liveSearch = TRUE,
+        #                  header = "Select Divisions", # Changed header text
+        #                  title = "No Division Selected", # Changed title text
+        #                  selectedTextFormat = "count > 3",
+        #                  dropupAuto = FALSE, # This tells it NOT to automatically switch direction
+        #                  dropup = FALSE # Added this option
+        #                ),
+        #                choicesOpt = list() # Added choicesOpt
+        #              )
+        #            )
+        #       )), # End of sidebar
+        #     # Main content for Dashboard tab, controlled by uiOutput
+        #     uiOutput("dashboard_main_content_area")
+        #   ) # End of layout_sidebar
+        # ),
+        nav_panel("Plantilla Positions",  #GMIS
+                  layout_sidebar(
+                    sidebar = sidebar(
+                      width = 450,
+                      class = "bg-secondary",
+                      h6("Data Toggles:"),
+                      pickerInput(
+                        inputId = "RegionGMIS",
+                        label = "Select one or more Regions:",
+                        choices = c(
+                          "Region I" = "Region I - Ilocos",
+                          "Region II" = "Region II - Cagayan Valley",
+                          "Region III" = "Region III - Central Luzon",
+                          "Region IV-A" = "Region IVA - CALABARZON",
+                          "Region IV-B" = "Region IVB - MIMAROPA",
+                          "Region V" = "Region V - Bicol",
+                          "Region VI" = "Region VI - Western Visayas",
+                          "Region VII" = "Region VII - Central Visayas",
+                          "Region VIII" = "Region VIII - Eastern Visayas",
+                          "Region IX" = "Region IX - Zamboanga Peninsula",
+                          "Region X" = "Region X - Northern Mindanao",
+                          "Region XI" = "Region XI - Davao",
+                          "Region XII" = "Region XII - SOCCSKSARGEN",
+                          "CARAGA" = "Region XIII - CARAGA",
+                          "CAR" = "Cordillera Administrative Region (CAR)",
+                          "NCR" = "National Capital Region (NCR)"
+                        ),
+                        selected = c(
+                          "Region I" = "Region I - Ilocos",
+                          "Region II" = "Region II - Cagayan Valley",
+                          "Region III" = "Region III - Central Luzon",
+                          "Region IV-A" = "Region IVA - CALABARZON",
+                          "Region IV-B" = "Region IVB - MIMAROPA",
+                          "Region V" = "Region V - Bicol",
+                          "Region VI" = "Region VI - Western Visayas",
+                          "Region VII" = "Region VII - Central Visayas",
+                          "Region VIII" = "Region VIII - Eastern Visayas",
+                          "Region IX" = "Region IX - Zamboanga Peninsula",
+                          "Region X" = "Region X - Northern Mindanao",
+                          "Region XI" = "Region XI - Davao",
+                          "Region XII" = "Region XII - SOCCSKSARGEN",
+                          "CARAGA" = "Region XIII - CARAGA",
+                          "CAR" = "Cordillera Administrative Region (CAR)",
+                          "NCR" = "National Capital Region (NCR)"
+                        ), # You can set default selected values here
+                        multiple = TRUE, # CRITICAL CHANGE: Must be TRUE to enable Select All/Deselect All
+                        options = pickerOptions(
+                          actionsBox = TRUE, # Already correct
+                          liveSearch = TRUE,
+                          header = "Select Regions",
+                          title = "No Regions Selected",
+                          selectedTextFormat = "count > 3",
+                          dropupAuto = FALSE,
+                          dropup = FALSE
+                        ),
+                        choicesOpt = list()
+                      ),
+                      uiOutput("SDOSelectionGMIS"),
+                      # pickerInput(
+                      #   inputId = "PosCatGMIS",
+                      #   label = "Select a Position Category:",
+                      #   choices = c(
+                      #     "General Civil Servant" = "General Civil Servant",
+                      #     "Teaching Related" = "Teaching Related",
+                      #     "Allied Medical" = "Allied Medical",
+                      #     "Medical" = "Medical",
+                      #     "Teaching" = "Teaching"
+                      #   ),
+                      #   selected = c(
+                      #     "Teaching" = "Teaching"
+                      #   ),
+                      #   multiple = TRUE,
+                      #   options = pickerOptions(
+                      #     liveSearch = TRUE,
+                      #     actionsBox = TRUE, # This adds the "Select All" and "Deselect All" buttons
+                      #     title = "No Category Selected",
+                      #     header = "Select a Category"
+                      #   )
+                      # ),
+                      uiOutput("PosSelectionGMIS")),
+                    # input_task_button("GMISRun", icon_busy = fontawesome::fa_i("refresh", class = "fa-spin", "aria-hidden" = "true"), strong("Show Selection"), class = "btn-danger")),
+                    layout_columns(
+                      card(
+                        card_header(strong("GMIS Data")),
+                        plotlyOutput("GMISTable")),
+                      card(
+                        card_header(strong("GMIS Data")),
+                        dataTableOutput("GMISTable1")),
+                      col_widths = c(12,12)))),
+        # NEW CONTENT FOR EFD NAV_PANEL STARTS HERE
+        nav_panel(
+          title = "Infrastructure and Education Facilities",
+          layout_sidebar(
+            sidebar = sidebar(
+              width = 350,
+              div( # This div acts as a container for the right-hand filter cards
+                card( # Filter by Category
+                  card_header("Filter by Category"),
+                  height = 400,
+                  card_body(
+                    pickerInput(
+                      inputId = "selected_category",
+                      label = NULL,
+                      choices = all_categories,
+                      selected = all_categories,
+                      multiple = TRUE,
+                      options = pickerOptions(
+                        actionsBox = TRUE,
+                        liveSearch = TRUE,
+                        header = "Select Categories",
+                        title = "No Category Selected",
+                        selectedTextFormat = "count > 3",
+                        dropupAuto = FALSE, # This tells it NOT to automatically switch direction
+                        dropup = FALSE
+                      ),
+                      choicesOpt = list()
+                    )
+                  )
+                ),
+                card( # Filter by Region
+                  card_header("Filter by Region"),
+                  height = 400,
+                  card_body(
+                    pickerInput(
+                      inputId = "selected_region",
+                      label = NULL,
+                      choices = all_regions,
+                      selected = all_regions,
+                      multiple = TRUE,
+                      options = pickerOptions(
+                        actionsBox = TRUE,
+                        liveSearch = TRUE,
+                        header = "Select Regions",
+                        title = "No Region Selected",
+                        selectedTextFormat = "count > 3",
+                        dropupAuto = FALSE, # This tells it NOT to automatically switch direction
+                        dropup = FALSE
+                      ),
+                      choicesOpt = list()
+                    )
+                  )
+                ),
+                card( # Filter by Division
+                  card_header("Filter by Division"),
+                  height = 400,
+                  card_body(
+                    pickerInput(
+                      inputId = "selected_division",
+                      label = NULL,
+                      choices = NULL,
+                      selected = NULL,
+                      multiple = TRUE,
+                      options = pickerOptions(
+                        actionsBox = TRUE,
+                        liveSearch = TRUE,
+                        header = "Select Divisions",
+                        title = "No Division Selected",
+                        selectedTextFormat = "count > 3",
+                        dropupAuto = FALSE, # This tells it NOT to automatically switch direction
+                        dropup = FALSE
+                      ),
+                      choicesOpt = list()
+                    )
+                  )
+                )
+              )
+            ),
+            tagList( # Start of tagList for EFD
+              h3("Allocation and Completion Overview"),
+              layout_columns( # Start of layout_columns for main content and filters
+                col_widths = c(12,12,12,12), # Main content on left (10), Filters on right (2)
+                
+                # --- LEFT COLUMN: Main Dashboard Content (Value Boxes + Tabs) ---
+                # div(
+                #   # Value Boxes Section
+                #   card(
+                #     card_header("Total Allocation per Funding Year"),
+                #     layout_columns(
+                #       col_widths = 12 / length(unique_funding_years), # Distribute columns evenly
+                #       row_heights = 1, # Forces them into a single row
+                #       !!!lapply(unique_funding_years, function(year) {
+                #         value_box(
+                #           title = paste("Total in", year),
+                #           value = tags$span(textOutput(paste0("vb_total_alloc_", year)), style = "font-size: 1.5em;"),
+                #           showcase = bsicons::bs_icon("cash-coin"),
+                #           theme = "primary",
+                #           full_screen = TRUE
+                #         )
+                #       })
+                #     )
+                #   )),
+                
+                # Main Content Area (Tabs) - Below Value Boxes
+                navset_card_tab(
+                  nav_panel("Allocation Overview",
+                            layout_columns(
+                              card(full_screen = TRUE,
+                                   plotlyOutput("allocationStackedBar", height = "100%"),
+                                   fill = TRUE, fillable = TRUE, max_height = "auto", height = 500
+                              ))),
+                  nav_panel("Completion Overview",
+                            card(full_screen = TRUE,
+                                 plotlyOutput("completionByCategoryPlot", height = "100%"),
+                                 fill = TRUE, fillable = TRUE, max_height = "auto", height = 500
+                            )))
+                , # Added comma to separate navset_card_tab from the next card
+                card( # This card contains both the data table and the line graph
+                  layout_columns(
+                    col_widths = 12,
+                    card(
+                      card_header("Detailed Project Data for Selected Bar Segment"),
+                      DT::dataTableOutput("projectDetailTable", height = "100%"),
+                      fill = TRUE, fillable = TRUE, max_height = "auto", height = 700)
+                  ),
+                  layout_columns(col_widths = 12,
+                                 row_heights = "fill",
+                                 card(
+                                   card_header("Allocation Trend per Category per Funding Year (Line Graph)"),
+                                   plotlyOutput("allocationTrendLine", height = "100%"),
+                                   fill = TRUE, fillable = TRUE, max_height = "auto", height = 600, full_screen = TRUE
+                                 )
+                  )
+                )
+              )
+            ) # End of layout_columns for main content and filters
+          ) # End of tagList for EFD
+        )), # End of nav_menu
+      
+      # --- Second Top-Level Tab: Data Explorer --
+      nav_menu(
+        title = tags$b("Data Explorer"),  # Dropdown menu
+        icon = bs_icon("table"),
+        
+        # --- Nav Panel 1: Human Resource Database ---
+        nav_panel(
+          title = tags$b("Human Resource Database"),
+          layout_sidebar(
+            sidebar = sidebar(
+              width = 350,
+              h6("EFD Database Filters:"),
+              
+              # Region (single select)
+              pickerInput(
+                inputId = "EFD_Region",
+                label = "Select Region:",
+                choices = sort(unique(EFDDB$Region)),
+                selected = sort(unique(EFDDB$Region))[1],
+                multiple = FALSE,
+                options = pickerOptions(
+                  liveSearch = TRUE,
+                  header = "Select Region",
+                  title = "No Region Selected",
+                  dropupAuto = FALSE,
+                  dropup = FALSE
+                )
+              ),
+              
+              # Division (multi-select)
+              pickerInput(
+                inputId = "EFD_Division",
+                label = "Select Division:",
+                choices = sort(unique(EFDDB$Division)),
+                multiple = TRUE,
+                options = pickerOptions(
+                  `actions-box` = TRUE,
+                  liveSearch = TRUE,
+                  header = "Select Division(s)",
+                  title = "No Division Selected",
+                  dropupAuto = FALSE,
+                  dropup = FALSE
+                )
+              ),
+              
+              # Legislative District (multi-select)
+              pickerInput(
+                inputId = "EFD_LD",
+                label = "Select Legislative District:",
+                choices = sort(unique(EFDDB$Legislative.District)),
+                multiple = TRUE,
+                options = pickerOptions(
+                  `actions-box` = TRUE,
+                  liveSearch = TRUE,
+                  header = "Select Legislative District(s)",
+                  title = "No Legislative District Selected",
+                  dropupAuto = FALSE,
+                  dropup = FALSE
+                )
+              ),
+              
+              # Barangay picker removed
+              
+              # EFD Toggles (retained)
+              pickerInput(
+                inputId = "EFD_Toggles",
+                label = strong("EFD Data Toggles"),
+                choices = names(EFDDB)[!names(EFDDB) %in% c(
+                  "Region", "Old.Region", "Division", "SchoolID", "School.Name",
+                  "District", "Legislative.District", "Barangay"
+                )],
+                multiple = TRUE,
+                options = pickerOptions(
+                  `actions-box` = TRUE,
+                  liveSearch = TRUE,
+                  header = "Select Data Columns",
+                  title = "No Data Column Selected",
+                  dropupAuto = FALSE,
+                  dropup = FALSE
+                )
+              )
+            ),
+            
+            layout_columns(
+              card(
+                full_screen = TRUE,
+                style = "
+          width: 100%;
+          max-height: 85vh;
+          overflow-y: auto;
+          margin-bottom: 20px;
+        ",
+                card_header(
+                  strong("EFD Database Panel"),
+                  style = "
+            font-size: 22px;
+            padding: 15px 20px;
+            text-align: center;
+            background-color: #00234d;
+            color: white;
+            border-bottom: 2px solid #dee2e6;
+          "
+                ),
+                card_body(
+                  div(
+                    style = "
+              padding: 10px;
+              overflow-x: auto;
+              height: calc(85vh - 80px);
+            ",
+                    dataTableOutput("EFD_Table")
+                  )
+                )
+              ),
+              col_widths = c(12)
+            )
+          )
+        ),
+        
+        # --- Nav Panel 2: Infrastructure Database ---
+        nav_panel(
+          title = tags$b("Infrastructure Database"),
+          layout_sidebar(
+            sidebar = sidebar(
+              width = 350,
+              h6("Data Toggles:"),
+              
+              pickerInput(
+                inputId = "DataBuilder_HROD_Region",
+                label = "Select a Region:",
+                choices = sort(unique(uni$Region)),
+                selected = sort(unique(uni$Region)),
+                multiple = FALSE,
+                options = pickerOptions(
+                  actionsBox = TRUE,
+                  liveSearch = TRUE,
+                  header = "Select Categories",
+                  title = "No Category Selected",
+                  selectedTextFormat = "count > 3",
+                  dropupAuto = FALSE,
+                  dropup = FALSE
+                )
+              ),
+              uiOutput("DataBuilder_HROD_SDO"),
+              
+              pickerInput("School_Data_Toggles", strong("School Information Data Toggles"), 
+                          choices = c("School Size Typology" = "School.Size.Typology", 
+                                      "Curricular Offering" = "Modified.COC"),
+                          multiple = TRUE,
+                          options = pickerOptions(
+                            `actions-box` = TRUE,
+                            dropupAuto = FALSE,
+                            dropup = FALSE
+                          )
+              ),
+              
+              pickerInput("Teaching_Data_Toggles", strong("Teaching Data Toggles"), 
+                          choices = c("Total Teachers" = "TotalTeachers", 
+                                      "Teacher Excess" = "Total.Excess", 
+                                      "Teacher Shortage" = "Total.Shortage"),
+                          multiple = TRUE,
+                          options = pickerOptions(
+                            `actions-box` = TRUE,
+                            dropupAuto = FALSE,
+                            dropup = FALSE
+                          )
+              ),
+              
+              pickerInput("NTP_Data_Toggles", strong("Non-teaching Data Toggles"), 
+                          choices = c("COS" = "Outlier.Status", 
+                                      "AOII Clustering Status" = "Clustering.Status"),
+                          multiple = TRUE,
+                          options = pickerOptions(
+                            `actions-box` = TRUE,
+                            dropupAuto = FALSE,
+                            dropup = FALSE
+                          )
+              ),
+              
+              pickerInput("Enrolment_Data_Toggles", strong("Enrolment Data Toggles"), 
+                          choices = c("Total Enrolment" = "TotalEnrolment", "Kinder" = "Kinder", 
+                                      "Grade 1" = "G1", "Grade 2" = "G2", "Grade 3" = "G3", 
+                                      "Grade 4" = "G4", "Grade 5" = "G5", "Grade 6" = "G6", 
+                                      "Grade 7" = "G7", "Grade 8" = "G8", 
+                                      "Grade 9" = "G9", "Grade 10" = "G10", 
+                                      "Grade 11" = "G11", "Grade 12" = "G12"),
+                          multiple = TRUE,
+                          options = pickerOptions(
+                            `actions-box` = TRUE,
+                            dropupAuto = FALSE,
+                            dropup = FALSE
+                          )
+              ),
+              
+              pickerInput("Specialization_Data_Toggles", strong("Specialization Data Toggles"), 
+                          choices = c("English" = "English", "Mathematics" = "Mathematics", 
+                                      "Science" = "Science", 
+                                      "Biological Sciences" = "Biological.Sciences", 
+                                      "Physical Sciences" = "Physical.Sciences"),
+                          multiple = TRUE,
+                          options = pickerOptions(
+                            `actions-box` = TRUE,
+                            dropupAuto = FALSE,
+                            dropup = FALSE
+                          )
+              )
+              
+              # Removed: EFD_Data_Toggles picker
+            ),
+            
+            layout_columns(
+              card(
+                card_header(strong("HROD Data Panel")),
+                dataTableOutput("HROD_Table")
+              ),
+              col_widths = c(12, 12)
+            )
+          )
+        ),
+        # --- Nav Panel 3: DepEd Officials ---
+        nav_panel(
+          title = tags$b("DepEd Officials"),
+          layout_sidebar(
+            sidebar = sidebar(
+              width = 350,
+              h6("Strand Filter:"),
+              pickerInput(
+                inputId = "ThirdLevel_Strands",
+                label = "Select Strand(s):",
+                choices = c(
+                  "Administration",
+                  "Deped Attached Agencies",
+                  "Finance",
+                  "Human Resource And Organizational Development",
+                  "Learning System",
+                  "Legal And Legislative Affairs",
+                  "Office Of The Secretary",
+                  "Operations",
+                  "Procurement",
+                  "Strategic Management",
+                  "Teachers And Education Council Secretariat"
+                ),
+                selected = c(
+                  "Administration",
+                  "Deped Attached Agencies",
+                  "Finance",
+                  "Human Resource And Organizational Development",
+                  "Learning System",
+                  "Legal And Legislative Affairs",
+                  "Office Of The Secretary",
+                  "Operations",
+                  "Procurement",
+                  "Strategic Management",
+                  "Teachers And Education Council Secretariat"
+                ),
+                multiple = TRUE,
+                options = pickerOptions(
+                  actionsBox = TRUE,
+                  liveSearch = TRUE,
+                  header = "Select Strand(s)",
+                  title = "No Strand Selected",
+                  selectedTextFormat = "count > 3",
+                  dropupAuto = FALSE,
+                  dropup = FALSE
+                ),
+                choicesOpt = list(
+                  style = "white-space: normal; word-break: break-word; overflow-wrap: break-word;"
+                )
+              )
+            ),
+            
+            layout_columns(
+              card(
+                full_screen = TRUE,
+                style = "
+          width: 100%;
+          max-height: 85vh;
+          overflow-y: auto;
+          margin-bottom: 20px;
+        ",
+                card_header(
+                  strong("HROD Data Panel"),
+                  style = "
+            font-size: 22px;
+            padding: 15px 20px;
+            text-align: center;
+            background-color: #00234d;
+            border-bottom: 2px solid #dee2e6;
+          "
+                ),
+                card_body(
+                  div(
+                    style = "
+              padding: 10px;
+              overflow-x: auto;
+              height: calc(85vh - 80px);
+            ",
+                    dataTableOutput("ThirdLevel_Table")
+                  )
+                )
+              ),
+              col_widths = c(12)
+            )
+          )
+        )
+      ),
+      # --- Quick School Search ---
+      nav_panel(
+        title = tags$b("Quick School Search"),
+        icon = bs_icon("search"),
+        layout_sidebar(
+          sidebar = sidebar(
+            textInput("text","Enter School Name"),
+            input_task_button("TextRun", icon_busy = fontawesome::fa_i("refresh", class = "fa-spin", "aria-hidden" = "true"), strong("Show Selection"), class = "btn-warning")),
+          layout_columns(
+            card(
+              card_header(strong("Search Output")),
+              dataTableOutput("TextTable")),
+            card(full_screen = TRUE,
+                 card_header(strong("School Mapping")),
+                 leafletOutput("TextMapping", height = 500, width = "100%")),
+            card(full_screen = TRUE,
+                 card_header(div(strong("School Details"),
+                                 tags$span(em("(Select a school from the table above)"),
+                                           style = "font-size: 0.7em; color: grey;"
+                                 ))),
+                 layout_columns(
+                   card(full_screen = TRUE,
+                        card_header(strong("Basic Information")),
+                        tableOutput("schooldetails")),
+                   card(full_screen = TRUE,
+                        card_header(strong("HR Data")),
+                        tableOutput("schooldetails2")),
+                   card(full_screen = TRUE,
+                        card_header(strong("Classroom Data")),
+                        tableOutput("schooldetails3")),
+                   card(full_screen = TRUE,
+                        card_header(div(strong("Specialization Data"),
+                                        tags$span(em("(based on eSF7 for SY 2023-2024)"),
+                                                  style = "font-size: 0.7em; color: grey;"
+                                        ))),
+                        tableOutput("schooldetails5")),
+                   col_widths = c(6,6,6,6))),
+            col_widths = c(6,6,12)))),
+      
+      # --- Resource Mapping ---
+      nav_panel(
+        title = tags$b("Resource Mapping"),
+        icon = bs_icon("map"),
+        layout_sidebar(
+          sidebar = sidebar(
+            width = 375,
+            title = "Resource Mapping Filters",
+            
+            # --- Data Filters Card for Resource Mapping ---
+            card(
+              height = 400,
+              card_header(tags$b("Data Filters")),
+              
+              # Region Picker
+              pickerInput(
+                inputId = "resource_map_region",
+                label = "Region:",
+                choices = c(
+                  "Region I" = "Region I","Region II" = "Region II","Region III" = "Region III",
+                  "Region IV-A" = "Region IV-A","MIMAROPA" = "MIMAROPA","Region V" = "Region V",
+                  "Region VI" = "Region VI","NIR" = "NIR","Region VII" = "Region VII",
+                  "Region VIII" = "Region VIII","Region IX" = "Region IX","Region X" = "Region X",
+                  "Region XI" = "Region XI","Region XII" = "Region XII","CARAGA" = "CARAGA",
+                  "CAR" = "CAR","NCR" = "NCR"
+                ),
+                selected = "Region I",
+                multiple = FALSE,
+                options = list(
+                  `actions-box` = FALSE,
+                  `none-selected-text` = "Select a region",
+                  dropupAuto = FALSE,
+                  dropup = FALSE
+                )
+              ),
+              
+              # Division Picker
+              pickerInput(
+                inputId = "Resource_SDO",
+                label = "Select a Division:",
+                choices = NULL,
+                selected = NULL,
+                multiple = FALSE,
+                options = list(
+                  `actions-box` = FALSE,
+                  `none-selected-text` = "Select a division",
+                  dropupAuto = FALSE,
+                  dropup = FALSE
+                )
+              ),
+              
+              # District Picker
+              pickerInput(
+                inputId = "Resource_LegDist",
+                label = "Select Legislative District(s):",
+                choices = NULL,
+                selected = NULL,
+                multiple = TRUE,
+                options = list(
+                  `actions-box` = TRUE,
+                  `none-selected-text` = "Select one or more districts",
+                  dropupAuto = FALSE,
+                  dropup = FALSE
+                )
+              ),
+              
+              input_task_button("Mapping_Run", strong("Show Selection"), class = "btn-warning")
+            ),
+            
+            hr(),
+            
+            # Resource Types
+            card(
+              card_header(tags$b("Resource Types")),
+              radioButtons(
+                inputId = "resource_type_selection",
+                label = NULL,
+                choices = c(
+                  "Teaching Deployment",
+                  "Non-teaching Deployment",
+                  "Classroom Inventory",
+                  "Learner Congestion",
+                  "Industries",
+                  "Facilities",
+                  "Last Mile School"
+                ),
+                selected = "Teaching Deployment"
+              )
+            )
+          ),
+          
+          # Main Panel
+          mainPanel(
+            width = 12,
+            uiOutput("dynamic_resource_panel")
+          )
+        )
+      ),
+      nav_menu(
+        title = tagList(bs_icon("cloud"),
+                        tags$b("CLOUD")),
+        
+        nav_panel(
+          title = "CLOUD (Regional Profile)", # Your existing HROD content
+          layout_columns( # Main sidebar title
+            # Card for Main Category Picker (combining General Info, Resource Shortage, Other)
+            # Assuming this UI code is part of your sidebar or main UI definition
+            # Region Filter
+            card(height = 300, # Adjusted height
+                 card_header(tags$b("Region Filter")),
+                 card_body( # Added card_body
+                   pickerInput(
+                     inputId = "cloud_region_profile_filter", # Keep the same inputId for server compatibility
+                     label = NULL,
+                     choices = c("Region II" = "Region II", "MIMAROPA" = "MIMAROPA", "Region XII" = "Region XII", "CAR" = "CAR"),
+                     selected = "Region II", # Keep the same default selected value
+                     multiple = FALSE,
+                     options = pickerOptions(
+                       actionsBox = TRUE, # Changed to TRUE
+                       liveSearch = TRUE,
+                       header = "Select Regions", # Changed header text
+                       title = "No Region Selected", # Changed title text
+                       selectedTextFormat = "count > 3",
+                       dropupAuto = FALSE, # This tells it NOT to automatically switch direction
+                       dropup = FALSE # Added this option
+                     ),
+                     choicesOpt = list() # Added choicesOpt
+                   )
+                 )
+            )
+            # 
+            # # Division Filter
+            # card(height = 400, # Adjusted height
+            #      card_header(tags$b("Division Filter")),
+            #      card_body( # Added card_body
+            #        pickerInput(
+            #          inputId = "cloud_dashboard_division_filter", # Keep the same inputId for server compatibility
+            #          label = NULL,
+            #          choices = NULL, # Choices will be updated dynamically by the server
+            #          selected = NULL,
+            #          multiple = FALSE,
+            #          options = pickerOptions(
+            #            actionsBox = TRUE, # Changed to TRUE
+            #            liveSearch = TRUE,
+            #            header = "Select Divisions", # Changed header text
+            #            title = "No Division Selected", # Changed title text
+            #            selectedTextFormat = "count > 3",
+            #            dropupAuto = FALSE, # This tells it NOT to automatically switch direction
+            #            dropup = FALSE # Added this option
+            #          ),
+            #          choicesOpt = list() # Added choicesOpt
+            #        )
+            #      )
+            # )
+          ), # End of sidebar
+          # Main content for Dashboard tab, controlled by uiOutput
+          uiOutput("cloud_profile_main_content_area") # End of layout_sidebar
+        ), # End of nav_panel("HROD")
+        
+        nav_panel(
+          title = "CLOUD (SDO Breakdown)", # Your existing HROD content
+          layout_sidebar(
+            sidebar = sidebar(
+              width = 350, # Keep the sidebar width
+              title = "Dashboard Navigation", # Main sidebar title
+              
+              # Card for Main Category Picker (combining General Info, Resource Shortage, Other)
+              # Assuming this UI code is part of your sidebar or main UI definition
+              
+              card(height = 400, # Adjusted height to 500
+                   card_header(tags$b("Select Category")),
+                   card_body( # Wrapped pickerInput in card_body
+                     pickerInput(
+                       inputId = "cloud_main_category_picker",
+                       label = NULL,
+                       choices = c(
+                         "Enrolment Data" = "cloud_enrolment",
+                         "SNED Learners" = "cloud_sned",
+                         "IP Learners" = "cloud_ip",
+                         "Muslim Learners" = "cloud_muslim",
+                         "Displaced Learners" = "cloud_displaced",
+                         "ALS Learners" = "cloud_als",
+                         "Dropout Data" = "cloud_dropout",
+                         "Teacher Inventory" = "cloud_teacherinventory",
+                         "Years in Service" = "cloud_years",
+                         "Classroom Inventory" = "cloud_classroom",
+                         "Multigrade" = "cloud_multigrade",
+                         "Organized Class" = "cloud_organizedclass",
+                         "JHS Teacher Deployment" = "cloud_jhsdeployment",
+                         "Shifting" = "cloud_shifting",
+                         "Learning Delivery Modality" = "cloud_LDM",
+                         "ARAL" = "cloud_ARAL",
+                         "CRLA" = "cloud_crla",
+                         "PhilIRI" = "cloud_philiri",
+                         "Alternative Delivery Modality" = "cloud_adm",
+                         "Reading Proficiency" = "cloud_rf",
+                         "Electricity Source" = "cloud_elec",
+                         "Water Source" = "cloud_water",
+                         "Internet Source" = "cloud_internet",
+                         "Internet Usage" = "cloud_internet_usage",
+                         "Bullying Incidence" = "cloud_bully",
+                         # "School Initiatives" = "cloud_initiatives",
+                         # "Medium of Instruction" = "cloud_moi",
+                         # "School Structure" = "cloud_sosss",
+                         # "SHS Implementation" = "cloud_shsimplem",
+                         "Overload Pay" = "cloud_overload",
+                         "School Resources" = "cloud_resources",
+                         "NAT" = "cloud_nat",
+                         "NAT Sufficiency" = "cloud_nat_sufficiency",
+                         "LAC" = "cloud_lac",
+                         "Feeding Program" = "cloud_feeding",
+                         "SHA" = "cloud_sha"
+                         # "Child Protection" = "cloud_childprotection",
+                         # "Extension" = "cloud_extension"
+                       ),
+                       selected = "general_school_count", # Keep the default selected value
+                       multiple = FALSE, # Keep as FALSE for single selection
+                       options = pickerOptions(
+                         actionsBox = FALSE, # Keep as FALSE as it's single select
+                         liveSearch = TRUE,
+                         header = "Select a Category", # Keep existing header
+                         title = "Select Category",
+                         dropupAuto = FALSE, # This tells it NOT to automatically switch direction
+                         dropup = FALSE # Keep existing title
+                         # selectedTextFormat is not applicable for multiple = FALSE, so it's not added
+                       ),
+                       choicesOpt = list() # Added choicesOpt = list() for consistency
+                     )
+                   )
+              ),
+              
+              hr(), # Add a separator
+              
+              # Card for Region Picker
+              # Assuming this UI code is part of your sidebar or main UI definition
+              
+              # Region Filter
+              card(height = 400, # Adjusted height
+                   card_header(tags$b("Region Filter")),
+                   card_body( # Added card_body
+                     pickerInput(
+                       inputId = "cloud_region_filter", # Keep the same inputId for server compatibility
+                       label = NULL,
+                       choices = c("Region II" = "Region II", "MIMAROPA" = "MIMAROPA", "Region XII" = "Region XII", "CAR" = "CAR"),
+                       selected = "Region II", # Keep the same default selected value
+                       multiple = FALSE,
+                       options = pickerOptions(
+                         actionsBox = TRUE, # Changed to TRUE
+                         liveSearch = TRUE,
+                         header = "Select Regions", # Changed header text
+                         title = "No Region Selected", # Changed title text
+                         selectedTextFormat = "count > 3",
+                         dropupAuto = FALSE, # This tells it NOT to automatically switch direction
+                         dropup = FALSE # Added this option
+                       ),
+                       choicesOpt = list() # Added choicesOpt
+                     )
+                   )
+              )
+              # 
+              # # Division Filter
+              # card(height = 400, # Adjusted height
+              #      card_header(tags$b("Division Filter")),
+              #      card_body( # Added card_body
+              #        pickerInput(
+              #          inputId = "cloud_dashboard_division_filter", # Keep the same inputId for server compatibility
+              #          label = NULL,
+              #          choices = NULL, # Choices will be updated dynamically by the server
+              #          selected = NULL,
+              #          multiple = FALSE,
+              #          options = pickerOptions(
+              #            actionsBox = TRUE, # Changed to TRUE
+              #            liveSearch = TRUE,
+              #            header = "Select Divisions", # Changed header text
+              #            title = "No Division Selected", # Changed title text
+              #            selectedTextFormat = "count > 3",
+              #            dropupAuto = FALSE, # This tells it NOT to automatically switch direction
+              #            dropup = FALSE # Added this option
+              #          ),
+              #          choicesOpt = list() # Added choicesOpt
+              #        )
+              #      )
+              # )
+            ), # End of sidebar
+            # Main content for Dashboard tab, controlled by uiOutput
+            uiOutput("cloud_main_content_area")
+          ) # End of layout_sidebar
+        ), # End of nav_panel("HROD")
+        
+        nav_panel(
+          title = tagList("CLOUD", em("(Multi-variable)")), # Your existing HROD content
+          
+          # A fluidRow to contain the three main boxes
+          fluidRow(
+            # First Box
+            column(
+              width = 6,
+              card(
+                card_header(tags$b("Data View 1")),
+                card_body(
+                  pickerInput(
+                    inputId = "cloud_category_picker_1",
+                    label = NULL,
+                    choices = c(
+                      "Enrolment Data" = "cloud_enrolment",
+                      "SNED Learners" = "cloud_sned",
+                      "IP Learners" = "cloud_ip",
+                      "Muslim Learners" = "cloud_muslim",
+                      "Displaced Learners" = "cloud_displaced",
+                      "ALS Learners" = "cloud_als",
+                      "Dropout Data" = "cloud_dropout",
+                      "Teacher Inventory" = "cloud_teacherinventory",
+                      "Years in Service" = "cloud_years",
+                      "Classroom Inventory" = "cloud_classroom",
+                      "Multigrade" = "cloud_multigrade",
+                      "Organized Class" = "cloud_organizedclass",
+                      "JHS Teacher Deployment" = "cloud_jhsdeployment",
+                      "Shifting" = "cloud_shifting",
+                      "Learning Delivery Modality" = "cloud_LDM",
+                      "ARAL" = "cloud_ARAL",
+                      "CRLA" = "cloud_crla",
+                      "PhilIRI" = "cloud_philiri",
+                      "Alternative Delivery Modality" = "cloud_adm",
+                      "Reading Proficiency" = "cloud_rf",
+                      "Electricity Source" = "cloud_elec",
+                      "Water Source" = "cloud_water",
+                      "Internet Source" = "cloud_internet",
+                      "Internet Usage" = "cloud_internet_usage",
+                      "Bullying Incidence" = "cloud_bully",
+                      # "School Initiatives" = "cloud_initiatives",
+                      # "Medium of Instruction" = "cloud_moi",
+                      # "School Structure" = "cloud_sosss",
+                      # "SHS Implementation" = "cloud_shsimplem",
+                      "Overload Pay" = "cloud_overload",
+                      "School Resources" = "cloud_resources",
+                      "NAT" = "cloud_nat",
+                      "NAT Sufficiency" = "cloud_nat_sufficiency",
+                      "LAC" = "cloud_lac",
+                      "Feeding Program" = "cloud_feeding",
+                      "SHA" = "cloud_sha"
+                      # "Child Protection" = "cloud_childprotection",
+                      # "Extension" = "cloud_extension"
+                    ),
+                    selected = "cloud_enrolment",
+                    multiple = FALSE,
+                    options = pickerOptions(
+                      liveSearch = TRUE,
+                      title = "Select Category"
+                    )
+                  ),
+                  uiOutput("cloud_graph_1") # Placeholder for the first graph
+                )
+              )
+            ),
+            
+            # Second Box
+            column(
+              width = 6,
+              card(
+                card_header(tags$b("Data View 2")),
+                card_body(
+                  pickerInput(
+                    inputId = "cloud_category_picker_2",
+                    label = NULL,
+                    choices = c(
+                      "Enrolment Data" = "cloud_enrolment",
+                      "SNED Learners" = "cloud_sned",
+                      "IP Learners" = "cloud_ip",
+                      "Muslim Learners" = "cloud_muslim",
+                      "Displaced Learners" = "cloud_displaced",
+                      "ALS Learners" = "cloud_als",
+                      "Dropout Data" = "cloud_dropout",
+                      "Teacher Inventory" = "cloud_teacherinventory",
+                      "Years in Service" = "cloud_years",
+                      "Classroom Inventory" = "cloud_classroom",
+                      "Multigrade" = "cloud_multigrade",
+                      "Organized Class" = "cloud_organizedclass",
+                      "JHS Teacher Deployment" = "cloud_jhsdeployment",
+                      "Shifting" = "cloud_shifting",
+                      "Learning Delivery Modality" = "cloud_LDM",
+                      "ARAL" = "cloud_ARAL",
+                      "CRLA" = "cloud_crla",
+                      "PhilIRI" = "cloud_philiri",
+                      "Alternative Delivery Modality" = "cloud_adm",
+                      "Reading Proficiency" = "cloud_rf",
+                      "Electricity Source" = "cloud_elec",
+                      "Water Source" = "cloud_water",
+                      "Internet Source" = "cloud_internet",
+                      "Internet Usage" = "cloud_internet_usage",
+                      "Bullying Incidence" = "cloud_bully",
+                      # "School Initiatives" = "cloud_initiatives",
+                      # "Medium of Instruction" = "cloud_moi",
+                      # "School Structure" = "cloud_sosss",
+                      # "SHS Implementation" = "cloud_shsimplem",
+                      "Overload Pay" = "cloud_overload",
+                      "School Resources" = "cloud_resources",
+                      "NAT" = "cloud_nat",
+                      "NAT Sufficiency" = "cloud_nat_sufficiency",
+                      "LAC" = "cloud_lac",
+                      "Feeding Program" = "cloud_feeding",
+                      "SHA" = "cloud_sha"
+                      # "Child Protection" = "cloud_childprotection",
+                      # "Extension" = "cloud_extension"
+                    ),
+                    selected = "cloud_teacherinventory",
+                    multiple = FALSE,
+                    options = pickerOptions(
+                      liveSearch = TRUE,
+                      title = "Select Category"
+                    )
+                  ),
+                  uiOutput("cloud_graph_2") # Placeholder for the second graph
+                )
+              )
+            ),
+            
+            # Third Box
+            column(
+              width = 6,
+              card(
+                card_header(tags$b("Data View 3")),
+                card_body(
+                  pickerInput(
+                    inputId = "cloud_category_picker_3",
+                    label = NULL,
+                    choices = c(
+                      "Enrolment Data" = "cloud_enrolment",
+                      "SNED Learners" = "cloud_sned",
+                      "IP Learners" = "cloud_ip",
+                      "Muslim Learners" = "cloud_muslim",
+                      "Displaced Learners" = "cloud_displaced",
+                      "ALS Learners" = "cloud_als",
+                      "Dropout Data" = "cloud_dropout",
+                      "Teacher Inventory" = "cloud_teacherinventory",
+                      "Years in Service" = "cloud_years",
+                      "Classroom Inventory" = "cloud_classroom",
+                      "Multigrade" = "cloud_multigrade",
+                      "Organized Class" = "cloud_organizedclass",
+                      "JHS Teacher Deployment" = "cloud_jhsdeployment",
+                      "Shifting" = "cloud_shifting",
+                      "Learning Delivery Modality" = "cloud_LDM",
+                      "ARAL" = "cloud_ARAL",
+                      "CRLA" = "cloud_crla",
+                      "PhilIRI" = "cloud_philiri",
+                      "Alternative Delivery Modality" = "cloud_adm",
+                      "Reading Proficiency" = "cloud_rf",
+                      "Electricity Source" = "cloud_elec",
+                      "Water Source" = "cloud_water",
+                      "Internet Source" = "cloud_internet",
+                      "Internet Usage" = "cloud_internet_usage",
+                      "Bullying Incidence" = "cloud_bully",
+                      # "School Initiatives" = "cloud_initiatives",
+                      # "Medium of Instruction" = "cloud_moi",
+                      # "School Structure" = "cloud_sosss",
+                      # "SHS Implementation" = "cloud_shsimplem",
+                      "Overload Pay" = "cloud_overload",
+                      "School Resources" = "cloud_resources",
+                      "NAT" = "cloud_nat",
+                      "NAT Sufficiency" = "cloud_nat_sufficiency",
+                      "LAC" = "cloud_lac",
+                      "Feeding Program" = "cloud_feeding",
+                      "SHA" = "cloud_sha"
+                      # "Child Protection" = "cloud_childprotection",
+                      # "Extension" = "cloud_extension"
+                    ),
+                    selected = "cloud_classroom",
+                    multiple = FALSE,
+                    options = pickerOptions(
+                      liveSearch = TRUE,
+                      title = "Select Category"
+                    )
+                  ),
+                  uiOutput("cloud_graph_3") # Placeholder for the third graph
+                )
+              )
+            ),
+            # Fourth Box
+            column(
+              width = 6,
+              card(
+                card_header(tags$b("Data View 4")),
+                card_body(
+                  pickerInput(
+                    inputId = "cloud_category_picker_4",
+                    label = NULL,
+                    choices = c(
+                      "Enrolment Data" = "cloud_enrolment",
+                      "SNED Learners" = "cloud_sned",
+                      "IP Learners" = "cloud_ip",
+                      "Muslim Learners" = "cloud_muslim",
+                      "Displaced Learners" = "cloud_displaced",
+                      "ALS Learners" = "cloud_als",
+                      "Dropout Data" = "cloud_dropout",
+                      "Teacher Inventory" = "cloud_teacherinventory",
+                      "Years in Service" = "cloud_years",
+                      "Classroom Inventory" = "cloud_classroom",
+                      "Multigrade" = "cloud_multigrade",
+                      "Organized Class" = "cloud_organizedclass",
+                      "JHS Teacher Deployment" = "cloud_jhsdeployment",
+                      "Shifting" = "cloud_shifting",
+                      "Learning Delivery Modality" = "cloud_LDM",
+                      "ARAL" = "cloud_ARAL",
+                      "CRLA" = "cloud_crla",
+                      "PhilIRI" = "cloud_philiri",
+                      "Alternative Delivery Modality" = "cloud_adm",
+                      "Reading Proficiency" = "cloud_rf",
+                      "Electricity Source" = "cloud_elec",
+                      "Water Source" = "cloud_water",
+                      "Internet Source" = "cloud_internet",
+                      "Internet Usage" = "cloud_internet_usage",
+                      "Bullying Incidence" = "cloud_bully",
+                      # "School Initiatives" = "cloud_initiatives",
+                      # "Medium of Instruction" = "cloud_moi",
+                      # "School Structure" = "cloud_sosss",
+                      # "SHS Implementation" = "cloud_shsimplem",
+                      "Overload Pay" = "cloud_overload",
+                      "School Resources" = "cloud_resources",
+                      "NAT" = "cloud_nat",
+                      "NAT Sufficiency" = "cloud_nat_sufficiency",
+                      "LAC" = "cloud_lac",
+                      "Feeding Program" = "cloud_feeding",
+                      "SHA" = "cloud_sha"
+                      # "Child Protection" = "cloud_childprotection",
+                      # "Extension" = "cloud_extension"
+                    ),
+                    selected = "cloud_shifting",
+                    multiple = FALSE,
+                    options = pickerOptions(
+                      liveSearch = TRUE,
+                      title = "Select Category"
+                    )
+                  ),
+                  uiOutput("cloud_graph_4") # Placeholder for the third graph
+                )
+              )
+            ),
+            column(
+              width = 6,
+              card(
+                card_header(tags$b("Data View 5")),
+                card_body(
+                  pickerInput(
+                    inputId = "cloud_category_picker_5",
+                    label = NULL,
+                    choices = c(
+                      "Enrolment Data" = "cloud_enrolment",
+                      "SNED Learners" = "cloud_sned",
+                      "IP Learners" = "cloud_ip",
+                      "Muslim Learners" = "cloud_muslim",
+                      "Displaced Learners" = "cloud_displaced",
+                      "ALS Learners" = "cloud_als",
+                      "Dropout Data" = "cloud_dropout",
+                      "Teacher Inventory" = "cloud_teacherinventory",
+                      "Years in Service" = "cloud_years",
+                      "Classroom Inventory" = "cloud_classroom",
+                      "Multigrade" = "cloud_multigrade",
+                      "Organized Class" = "cloud_organizedclass",
+                      "JHS Teacher Deployment" = "cloud_jhsdeployment",
+                      "Shifting" = "cloud_shifting",
+                      "Learning Delivery Modality" = "cloud_LDM",
+                      "ARAL" = "cloud_ARAL",
+                      "CRLA" = "cloud_crla",
+                      "PhilIRI" = "cloud_philiri",
+                      "Alternative Delivery Modality" = "cloud_adm",
+                      "Reading Proficiency" = "cloud_rf",
+                      "Electricity Source" = "cloud_elec",
+                      "Water Source" = "cloud_water",
+                      "Internet Source" = "cloud_internet",
+                      "Internet Usage" = "cloud_internet_usage",
+                      "Bullying Incidence" = "cloud_bully",
+                      # "School Initiatives" = "cloud_initiatives",
+                      # "Medium of Instruction" = "cloud_moi",
+                      # "School Structure" = "cloud_sosss",
+                      # "SHS Implementation" = "cloud_shsimplem",
+                      "Overload Pay" = "cloud_overload",
+                      "School Resources" = "cloud_resources",
+                      "NAT" = "cloud_nat",
+                      "NAT Sufficiency" = "cloud_nat_sufficiency",
+                      "LAC" = "cloud_lac",
+                      "Feeding Program" = "cloud_feeding",
+                      "SHA" = "cloud_sha"
+                      # "Child Protection" = "cloud_childprotection",
+                      # "Extension" = "cloud_extension"
+                    ),
+                    selected = "cloud_enrolment",
+                    multiple = FALSE,
+                    options = pickerOptions(
+                      liveSearch = TRUE,
+                      title = "Select Category"
+                    )
+                  ),
+                  uiOutput("cloud_graph_5") # Placeholder for the first graph
+                )
+              )
+            ),
+            column(
+              width = 6,
+              card(
+                card_header(tags$b("Data View 6")),
+                card_body(
+                  pickerInput(
+                    inputId = "cloud_category_picker_6",
+                    label = NULL,
+                    choices = c(
+                      "Enrolment Data" = "cloud_enrolment",
+                      "SNED Learners" = "cloud_sned",
+                      "IP Learners" = "cloud_ip",
+                      "Muslim Learners" = "cloud_muslim",
+                      "Displaced Learners" = "cloud_displaced",
+                      "ALS Learners" = "cloud_als",
+                      "Dropout Data" = "cloud_dropout",
+                      "Teacher Inventory" = "cloud_teacherinventory",
+                      "Years in Service" = "cloud_years",
+                      "Classroom Inventory" = "cloud_classroom",
+                      "Multigrade" = "cloud_multigrade",
+                      "Organized Class" = "cloud_organizedclass",
+                      "JHS Teacher Deployment" = "cloud_jhsdeployment",
+                      "Shifting" = "cloud_shifting",
+                      "Learning Delivery Modality" = "cloud_LDM",
+                      "ARAL" = "cloud_ARAL",
+                      "CRLA" = "cloud_crla",
+                      "PhilIRI" = "cloud_philiri",
+                      "Alternative Delivery Modality" = "cloud_adm",
+                      "Reading Proficiency" = "cloud_rf",
+                      "Electricity Source" = "cloud_elec",
+                      "Water Source" = "cloud_water",
+                      "Internet Source" = "cloud_internet",
+                      "Internet Usage" = "cloud_internet_usage",
+                      "Bullying Incidence" = "cloud_bully",
+                      # "School Initiatives" = "cloud_initiatives",
+                      # "Medium of Instruction" = "cloud_moi",
+                      # "School Structure" = "cloud_sosss",
+                      # "SHS Implementation" = "cloud_shsimplem",
+                      "Overload Pay" = "cloud_overload",
+                      "School Resources" = "cloud_resources",
+                      "NAT" = "cloud_nat",
+                      "NAT Sufficiency" = "cloud_nat_sufficiency",
+                      "LAC" = "cloud_lac",
+                      "Feeding Program" = "cloud_feeding",
+                      "SHA" = "cloud_sha"
+                      # "Child Protection" = "cloud_childprotection",
+                      # "Extension" = "cloud_extension"
+                    ),
+                    selected = "cloud_enrolment",
+                    multiple = FALSE,
+                    options = pickerOptions(
+                      liveSearch = TRUE,
+                      title = "Select Category"
+                    )
+                  ),
+                  uiOutput("cloud_graph_6") # Placeholder for the first graph
+                )
+              )
+            )
+          ))),
+      
+      # # --- Last Top-Level Tab: About ---
+      # nav_panel(
+      #   title = tags$b("HR DATA"),
+      #   icon = bs_icon("info-circle"),
+      #   tagList(
+      #     layout_columns(
+      #       HTML('<img src="Contactus.png" width="100%" height="auto">'))
+      #   )),
+      
+      # --- Contact Us Top-Level Tab ---
+      nav_panel(
+        title = tags$b("Contact Us"),
+        icon = bs_icon("envelope"),
+        h3("Contact Information"),
+        fluidRow(
+          column(12,
+                 tags$iframe(
+                   id = "googleform",
+                   src = "https://docs.google.com/forms/d/e/1FAIpQLScmWmVzlAHgsitxUncINy4OC_5gkyg2LvYcJAkAGlGAzQHNvw/viewform?embedded=true", # Replace YOUR_FORM_ID
+                   width = "100%", # Or a specific pixel value like "760"
+                   height = "700px", # Or a specific pixel value like "500"
+                   frameborder = "0",
+                   marginheight = "0",
+                   marginwidth = "0")
+          )
+        )
+      ),
+      
+      # ✅ Logout button shown as its own nav tab
+      # nav_panel(
+      #   title = tagList(bs_icon("box-arrow-right"), "Log Out"),
+      #   shinyauthr::logoutUI(
+      #     id = "logout",
+      #     label = "Log Out",
+      #     icon = icon("sign-out-alt"),
+      #     class = "btn btn-danger")
+      # )
+    )
+  })
+  output$STRIDEENGINEER <- renderUI({
+    page_navbar(
+      # no title, just the nav items
+      
+      theme = bs_theme(
+        version = 5,
+        bootswatch = "sandstone",
+        font_scale = 0.9,
+        base_font = font_google("Poppins")
+      ) |> bs_add_rules(
+        "
+    /* Ensure nav links remain bold */
+    .nav-tabs .nav-link,
+    .nav-pills .nav-link,
+    .accordion-button {
+      font-weight: bold;
+    }
+
+    /* Hide the top-level tabs of the main content area for 'page' navigation */
+    .card .nav-tabs {
+      display: none;
+    }
+    .card .card-header.bg-body-secondary ~ .tab-content {
+      border-top: none; /* Remove extra border if card-header is used for main content */
+    }
+
+    /* Custom rule for the main sidebar title */
+    .sidebar-title {
+      color: #002D62; /* DepEd Blue */
+      font-weight: bold;
+    }
+
+    /* Custom rule for card headers within the sidebar */
+    .card-header {
+      background-color: #e6f0ff; /* Very light blue, subtle background */
+      color: #002D62; /* DepEd Blue for text */
+      border-bottom: 1px solid #cce0ff; /* Slightly darker light blue border */
+    }
+
+    /* Ensure other h4 elements in sidebar (like Data Toggles) also use DepEd Blue */
+    .sidebar h4 {
+      color: #002D62; /* DepEd Blue */
+      font-weight: bold;
+    }
+    "
+      ),
+      #data explorer css 
+      #       tags$head(
+      #         tags$style(HTML("
+      # /* === FINAL FIX: Consistent Bootstrap-select picker design === */
+      # 
+      # /* --- Text wrapping and internal spacing --- */
+      # .bootstrap-select .dropdown-menu li a span.text {
+      #   white-space: normal !important;
+      #   word-break: break-word !important;
+      #   display: inline-block !important;
+      #   overflow-wrap: anywhere !important;
+      #   line-height: 1.3em !important;
+      #   padding-right: 10px !important;
+      #   max-width: 100% !important;
+      # }
+      # 
+      # /* --- Scroll area for dropdown content --- */
+      # .bootstrap-select .dropdown-menu.inner.show {
+      #   padding-bottom: 0 !important;
+      #   margin-bottom: 0 !important;
+      #   max-height: none !important;
+      #   overflow-y: auto !important;
+      # }
+      # 
+      # /* --- Dropdown menu box consistency --- */
+      # .bootstrap-select .dropdown-menu {
+      #   min-width: 100% !important;      /* Make all dropdowns same width as picker */
+      #   width: 100% !important;
+      #   white-space: normal !important;
+      #   border-radius: 6px !important;
+      #   box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
+      #   padding-bottom: 0 !important;
+      #   overflow: visible !important;
+      #   max-height: none !important;
+      # }
+      # 
+      # /* --- Picker button (main visible area) --- */
+      # .bootstrap-select .dropdown-toggle {
+      #   width: 100% !important;
+      #   background-color: #f2f2f2 !important;
+      #   color: #333 !important;
+      #   border: 1px solid #ccc !important;
+      #   border-radius: 6px !important;
+      #   text-align: left !important;
+      #   padding: 6px 10px !important;
+      #   font-size: 14px !important;
+      #   font-weight: 400 !important;
+      # }
+      # 
+      # /* --- Ensure dropdown opens BELOW picker --- */
+      # .bootstrap-select.dropup .dropdown-menu,
+      # .bootstrap-select:not(.dropup) .dropdown-menu {
+      #   top: 100% !important;
+      #   bottom: auto !important;
+      #   transform: none !important;
+      # }
+      # 
+      # /* --- Clean hover for navbar dropdowns (still included) --- */
+      # .navbar .dropdown-menu > li > a:hover,
+      # .bslib-navbar .dropdown-menu > li > a:hover {
+      #   background-color: #2c3895 !important;
+      #   color: white !important;
+      # }
+      # 
+      # /* --- Scrollbar styling for long dropdowns --- */
+      # .bootstrap-select .dropdown-menu.inner::-webkit-scrollbar {
+      #   width: 8px;
+      # }
+      # 
+      # .bootstrap-select .dropdown-menu.inner::-webkit-scrollbar-thumb {
+      #   background-color: rgba(0, 0, 0, 0.2);
+      #   border-radius: 4px;
+      # }
+      # 
+      # .bootstrap-select .dropdown-menu.inner::-webkit-scrollbar-thumb:hover {
+      #   background-color: rgba(0, 0, 0, 0.35);
+      # }
+      # 
+      # /* --- Consistent picker height and spacing --- */
+      # .bootstrap-select {
+      #   width: 100% !important;
+      #   margin-bottom: 10px !important;
+      # }
+      # 
+      # .bootstrap-select .filter-option-inner-inner {
+      #   text-overflow: ellipsis !important;
+      #   overflow: hidden !important;
+      #   white-space: nowrap !important;
+      # }
+      # 
+      # /* --- Prevent dropdown from cutting off --- */
+      # .bootstrap-select .dropdown-menu.show {
+      #   z-index: 9999 !important;
+      # }
+      # 
+      #   "))
+      #       )
+      #       ,
+      
+      nav_spacer(),
+      
+      # --- First Top-Level Tab: Dashboard ---
+      # Assuming this is part of your ui.R file, within the nav_menu("Dashboard") block
+      
+      nav_menu(
+        title = tagList(bs_icon("speedometer"),
+                        tags$b("Dashboard")),
+        nav_panel(
+          title = "Education Resource Dashboard",
+          # --- ROW OF 6 VALUE BOXES ---
+          # Switched to shinydashboard::valueBoxOutput
+          fluidRow(
+            column(
+              width = 1,
+              actionButton(
+                "reset_button",
+                label = tagList(bs_icon("arrow-left"), "Back"),
+                class = "btn-primary mb-3"
+              )
+            ),
+            # 2. Use layout_column_wrap for perfect 6-column responsiveness
+            layout_column_wrap(
+              width = 1/7, 
+              
+              # 3. Use the modern valueBoxOutput
+              uiOutput("total_schools_erdb"),
+              uiOutput("total_enrolment_erdb"),
+              uiOutput("total_classrooms_erdb"),
+              uiOutput("total_LMS_erdb"),
+              uiOutput("total_teacher_shortage_erdb"),
+              uiOutput("SP_Shortage_erdb"),
+              uiOutput("total_classroom_shortage_erdb")
+            )
+          ),
+          
+          # --- ADJUSTED 3x2 GRID OF PLOTS ---
+          
+          # -- Row 1 --
+          layout_columns(
+            col_widths = c(4, 4, 4),
+            card(card_header("Number of Schools (Click to Drill Down)"),full_screen = TRUE, plotlyOutput("totalschools_plot_erdb"), height = "420px"),
+            card(card_header("Curricular Offering"),full_screen = TRUE, plotlyOutput("curricular_plot_erdb"), height = "420px"),
+            card(card_header("School Size Typology"),full_screen = TRUE, plotlyOutput("typology_plot_erdb"), height = "420px")
+          ),
+          # -- Row 2 --
+          layout_columns(
+            col_widths = c(3, 3, 3, 3),
+            card(card_header("Classroom Shortage"),full_screen = TRUE, plotlyOutput("classroomshortage_plot_erdb"), height = "420px"),
+            card(card_header("Last Mile Schools"),full_screen = TRUE, plotlyOutput("LMS_plot_erdb"), height = "420px"),
+            card(card_header("Teacher Shortage"),full_screen = TRUE, plotlyOutput("teachershortage_plot_erdb"), height = "420px"),
+            card(card_header("School Principal Shortage"),full_screen = TRUE, plotlyOutput("principalshortage_plot_erdb"), height = "420px")
+          ),
+          hr(),
+          card(
+            full_screen = TRUE,
+            card_header("Priority Divisions"),
+            
+            # --- NEW CODE: Use layout_column_wrap to format the plots ---
+            layout_column_wrap(
+              width = 1/3, # This tells R to fit 3 items per row (1/3 of the width each)
+              heights_equal = "row", # Ensures all plots in the row have the same height
+              
+              # Plot Outputs (These will be arranged based on the 'width' setting)
+              # Card for the first plot
+              card(
+                full_screen = TRUE,
+                card_header("Teacher Deployment Priorities"),
+                plotlyOutput("Teaching_Deployment_Division_Graph1")
+              ),
+              
+              # Card for the second plot
+              card(
+                full_screen = TRUE,
+                card_header("Classroom Shortage Priorities"),
+                plotlyOutput("Classroom_Shortage_Division_Graph2")
+              ),
+              
+              # Card for the third plot
+              card(
+                full_screen = TRUE,
+                card_header("Last Mile School Priorities"),
+                plotlyOutput("LMS_Division_Graph2")
+              )),
+            card(
+              full_screen = TRUE,
+              card_header("SDO Ranking"),
+              
+              # ✅ Add this here
+              tags$head(
+                tags$style(HTML("
+      .reactable thead th {
+        white-space: normal !important;
+        word-wrap: break-word !important;
+        line-height: 1.1;
+        text-align: center;
+      }
+      .reactable .rt-thead.-header { height: auto !important; }
+      .reactable .rt-th {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+      }
+    "))
+              ),
+              height = 800,
+              reactable::reactableOutput("priority_division_erdb"),
+              hr(), # Adds a horizontal line
+              downloadButton(
+                "download_priority_data",  # This is the ID for the server
+                "Download SDO Ranking as CSV", class = "btn-success"   # This is the text on the button
+              )
+            ))),
+        
+        #   navset_card_pill(
+        #     nav_spacer(),
+        #     nav_panel(
+        #       title = "School-level Data (SY 2024-2025)",
+        #       dataTableOutput("regprof_DT")),
+        #     nav_panel(
+        #       title = "Classroom Data (SY 2023-2024)",
+        #       dataTableOutput("regprof_DT_CL")),
+        # ),
+        # HROD panel
+        # nav_panel(
+        #   title = "Education Resource Information", # Your existing HROD content
+        #   layout_sidebar(
+        #     sidebar = sidebar(
+        #       width = 300, # Keep the sidebar width
+        #       title = "Dashboard Navigation", # Main sidebar title
+        #       
+        #       # Card for Main Category Picker (combining General Info, Resource Shortage, Other)
+        #       # Assuming this UI code is part of your sidebar or main UI definition
+        #       
+        #       card(height = 400, # Adjusted height to 500
+        #            card_header(tags$b("Select Category")),
+        #            card_body( # Wrapped pickerInput in card_body
+        #              pickerInput(
+        #                inputId = "hrod_main_category_picker",
+        #                label = NULL,
+        #                choices = c(
+        #                  "School Count" = "general_school_count",
+        #                  "School Size Typology" = "general_sosss",
+        #                  "Classroom Shortage" = "resource_shortage_classroom",
+        #                  "Last Mile School" = "resource_lms",
+        #                  "Teacher Shortage" = "resource_shortage_teacher",
+        #                  "School Principal Shortage" = "resource_shortage_principal",
+        #                  "Non-Teaching Personnel" = "resource_shortage_non_teaching",
+        #                  "Sufficiency" = "others_sufficiency"
+        #                ),
+        #                selected = "general_school_count", # Keep the default selected value
+        #                multiple = FALSE, # Keep as FALSE for single selection
+        #                options = pickerOptions(
+        #                  actionsBox = FALSE, # Keep as FALSE as it's single select
+        #                  liveSearch = TRUE,
+        #                  header = "Select a Category", # Keep existing header
+        #                  title = "Select Category",
+        #                  dropupAuto = FALSE, # This tells it NOT to automatically switch direction
+        #                  dropup = FALSE # Keep existing title
+        #                  # selectedTextFormat is not applicable for multiple = FALSE, so it's not added
+        #                ),
+        #                choicesOpt = list() # Added choicesOpt = list() for consistency
+        #              )
+        #            )
+        #       ),
+        #       
+        #       hr(), # Add a separator
+        #       
+        #       # Card for Region Picker
+        #       # Assuming this UI code is part of your sidebar or main UI definition
+        #       
+        #       # Region Filter
+        #       card(height = 400, # Adjusted height
+        #            card_header(tags$b("Region Filter")),
+        #            card_body( # Added card_body
+        #              pickerInput(
+        #                inputId = "dashboard_region_filter", # Keep the same inputId for server compatibility
+        #                label = NULL,
+        #                choices = c("Region I" = "Region I", "Region II" = "Region II", "Region III" = "Region III", "Region IV-A" = "Region IV-A", "MIMAROPA" = "MIMAROPA", "Region V" = "Region V", "Region VI" = "Region VI", "NIR" = "NIR", "Region VII" = "Region VII", "Region VIII" = "Region VIII", "Region IX" = "Region IX", "Region X" = "Region X", "Region XI" = "Region XI", "Region XII" = "Region XII", "CARAGA" = "CARAGA", "CAR" = "CAR", "NCR" = "NCR","BARMM" = "BARMM"),
+        #                selected = c("Region I"), # Keep the same default selected value
+        #                multiple = TRUE,
+        #                options = pickerOptions(
+        #                  actionsBox = TRUE, # Changed to TRUE
+        #                  liveSearch = TRUE,
+        #                  header = "Select Regions", # Changed header text
+        #                  title = "No Region Selected", # Changed title text
+        #                  selectedTextFormat = "count > 3",
+        #                  dropupAuto = FALSE, # This tells it NOT to automatically switch direction
+        #                  dropup = FALSE # Added this option
+        #                ),
+        #                choicesOpt = list() # Added choicesOpt
+        #              )
+        #            )
+        #       ),
+        #       
+        #       # Division Filter
+        #       card(height = 400, # Adjusted height
+        #            card_header(tags$b("Division Filter")),
+        #            card_body( # Added card_body
+        #              pickerInput(
+        #                inputId = "dashboard_division_filter", # Keep the same inputId for server compatibility
+        #                label = NULL,
+        #                choices = NULL, # Choices will be updated dynamically by the server
+        #                selected = NULL,
+        #                multiple = TRUE,
+        #                options = pickerOptions(
+        #                  actionsBox = TRUE, # Changed to TRUE
+        #                  liveSearch = TRUE,
+        #                  header = "Select Divisions", # Changed header text
+        #                  title = "No Division Selected", # Changed title text
+        #                  selectedTextFormat = "count > 3",
+        #                  dropupAuto = FALSE, # This tells it NOT to automatically switch direction
+        #                  dropup = FALSE # Added this option
+        #                ),
+        #                choicesOpt = list() # Added choicesOpt
+        #              )
+        #            )
+        #       )), # End of sidebar
+        #     # Main content for Dashboard tab, controlled by uiOutput
+        #     uiOutput("dashboard_main_content_area")
+        #   ) # End of layout_sidebar
+        # ),
+        nav_panel("Plantilla Positions",  #GMIS
+                  layout_sidebar(
+                    sidebar = sidebar(
+                      width = 450,
+                      class = "bg-secondary",
+                      h6("Data Toggles:"),
+                      pickerInput(
+                        inputId = "RegionGMIS",
+                        label = "Select one or more Regions:",
+                        choices = c(
+                          "Region I" = "Region I - Ilocos",
+                          "Region II" = "Region II - Cagayan Valley",
+                          "Region III" = "Region III - Central Luzon",
+                          "Region IV-A" = "Region IVA - CALABARZON",
+                          "Region IV-B" = "Region IVB - MIMAROPA",
+                          "Region V" = "Region V - Bicol",
+                          "Region VI" = "Region VI - Western Visayas",
+                          "Region VII" = "Region VII - Central Visayas",
+                          "Region VIII" = "Region VIII - Eastern Visayas",
+                          "Region IX" = "Region IX - Zamboanga Peninsula",
+                          "Region X" = "Region X - Northern Mindanao",
+                          "Region XI" = "Region XI - Davao",
+                          "Region XII" = "Region XII - SOCCSKSARGEN",
+                          "CARAGA" = "Region XIII - CARAGA",
+                          "CAR" = "Cordillera Administrative Region (CAR)",
+                          "NCR" = "National Capital Region (NCR)"
+                        ),
+                        selected = c(
+                          "Region I" = "Region I - Ilocos",
+                          "Region II" = "Region II - Cagayan Valley",
+                          "Region III" = "Region III - Central Luzon",
+                          "Region IV-A" = "Region IVA - CALABARZON",
+                          "Region IV-B" = "Region IVB - MIMAROPA",
+                          "Region V" = "Region V - Bicol",
+                          "Region VI" = "Region VI - Western Visayas",
+                          "Region VII" = "Region VII - Central Visayas",
+                          "Region VIII" = "Region VIII - Eastern Visayas",
+                          "Region IX" = "Region IX - Zamboanga Peninsula",
+                          "Region X" = "Region X - Northern Mindanao",
+                          "Region XI" = "Region XI - Davao",
+                          "Region XII" = "Region XII - SOCCSKSARGEN",
+                          "CARAGA" = "Region XIII - CARAGA",
+                          "CAR" = "Cordillera Administrative Region (CAR)",
+                          "NCR" = "National Capital Region (NCR)"
+                        ), # You can set default selected values here
+                        multiple = TRUE, # CRITICAL CHANGE: Must be TRUE to enable Select All/Deselect All
+                        options = pickerOptions(
+                          actionsBox = TRUE, # Already correct
+                          liveSearch = TRUE,
+                          header = "Select Regions",
+                          title = "No Regions Selected",
+                          selectedTextFormat = "count > 3",
+                          dropupAuto = FALSE,
+                          dropup = FALSE
+                        ),
+                        choicesOpt = list()
+                      ),
+                      uiOutput("SDOSelectionGMIS"),
+                      # pickerInput(
+                      #   inputId = "PosCatGMIS",
+                      #   label = "Select a Position Category:",
+                      #   choices = c(
+                      #     "General Civil Servant" = "General Civil Servant",
+                      #     "Teaching Related" = "Teaching Related",
+                      #     "Allied Medical" = "Allied Medical",
+                      #     "Medical" = "Medical",
+                      #     "Teaching" = "Teaching"
+                      #   ),
+                      #   selected = c(
+                      #     "Teaching" = "Teaching"
+                      #   ),
+                      #   multiple = TRUE,
+                      #   options = pickerOptions(
+                      #     liveSearch = TRUE,
+                      #     actionsBox = TRUE, # This adds the "Select All" and "Deselect All" buttons
+                      #     title = "No Category Selected",
+                      #     header = "Select a Category"
+                      #   )
+                      # ),
+                      uiOutput("PosSelectionGMIS")),
+                    # input_task_button("GMISRun", icon_busy = fontawesome::fa_i("refresh", class = "fa-spin", "aria-hidden" = "true"), strong("Show Selection"), class = "btn-danger")),
+                    layout_columns(
+                      card(
+                        card_header(strong("GMIS Data")),
+                        plotlyOutput("GMISTable")),
+                      card(
+                        card_header(strong("GMIS Data")),
+                        dataTableOutput("GMISTable1")),
+                      col_widths = c(12,12)))),
+        # NEW CONTENT FOR EFD NAV_PANEL STARTS HERE
+        nav_panel(
+          title = "Infrastructure and Education Facilities",
+          layout_sidebar(
+            sidebar = sidebar(
+              width = 350,
+              div( # This div acts as a container for the right-hand filter cards
+                card( # Filter by Category
+                  card_header("Filter by Category"),
+                  height = 400,
+                  card_body(
+                    pickerInput(
+                      inputId = "selected_category",
+                      label = NULL,
+                      choices = all_categories,
+                      selected = all_categories,
+                      multiple = TRUE,
+                      options = pickerOptions(
+                        actionsBox = TRUE,
+                        liveSearch = TRUE,
+                        header = "Select Categories",
+                        title = "No Category Selected",
+                        selectedTextFormat = "count > 3",
+                        dropupAuto = FALSE, # This tells it NOT to automatically switch direction
+                        dropup = FALSE
+                      ),
+                      choicesOpt = list()
+                    )
+                  )
+                ),
+                card( # Filter by Region
+                  card_header("Filter by Region"),
+                  height = 400,
+                  card_body(
+                    pickerInput(
+                      inputId = "selected_region",
+                      label = NULL,
+                      choices = all_regions,
+                      selected = all_regions,
+                      multiple = TRUE,
+                      options = pickerOptions(
+                        actionsBox = TRUE,
+                        liveSearch = TRUE,
+                        header = "Select Regions",
+                        title = "No Region Selected",
+                        selectedTextFormat = "count > 3",
+                        dropupAuto = FALSE, # This tells it NOT to automatically switch direction
+                        dropup = FALSE
+                      ),
+                      choicesOpt = list()
+                    )
+                  )
+                ),
+                card( # Filter by Division
+                  card_header("Filter by Division"),
+                  height = 400,
+                  card_body(
+                    pickerInput(
+                      inputId = "selected_division",
+                      label = NULL,
+                      choices = NULL,
+                      selected = NULL,
+                      multiple = TRUE,
+                      options = pickerOptions(
+                        actionsBox = TRUE,
+                        liveSearch = TRUE,
+                        header = "Select Divisions",
+                        title = "No Division Selected",
+                        selectedTextFormat = "count > 3",
+                        dropupAuto = FALSE, # This tells it NOT to automatically switch direction
+                        dropup = FALSE
+                      ),
+                      choicesOpt = list()
+                    )
+                  )
+                )
+              )
+            ),
+            tagList( # Start of tagList for EFD
+              h3("Allocation and Completion Overview"),
+              layout_columns( # Start of layout_columns for main content and filters
+                col_widths = c(12,12,12,12), # Main content on left (10), Filters on right (2)
+                
+                # --- LEFT COLUMN: Main Dashboard Content (Value Boxes + Tabs) ---
+                # div(
+                #   # Value Boxes Section
+                #   card(
+                #     card_header("Total Allocation per Funding Year"),
+                #     layout_columns(
+                #       col_widths = 12 / length(unique_funding_years), # Distribute columns evenly
+                #       row_heights = 1, # Forces them into a single row
+                #       !!!lapply(unique_funding_years, function(year) {
+                #         value_box(
+                #           title = paste("Total in", year),
+                #           value = tags$span(textOutput(paste0("vb_total_alloc_", year)), style = "font-size: 1.5em;"),
+                #           showcase = bsicons::bs_icon("cash-coin"),
+                #           theme = "primary",
+                #           full_screen = TRUE
+                #         )
+                #       })
+                #     )
+                #   )),
+                
+                # Main Content Area (Tabs) - Below Value Boxes
+                navset_card_tab(
+                  nav_panel("Allocation Overview",
+                            layout_columns(
+                              card(full_screen = TRUE,
+                                   plotlyOutput("allocationStackedBar", height = "100%"),
+                                   fill = TRUE, fillable = TRUE, max_height = "auto", height = 500
+                              ))),
+                  nav_panel("Completion Overview",
+                            card(full_screen = TRUE,
+                                 plotlyOutput("completionByCategoryPlot", height = "100%"),
+                                 fill = TRUE, fillable = TRUE, max_height = "auto", height = 500
+                            )))
+                , # Added comma to separate navset_card_tab from the next card
+                card( # This card contains both the data table and the line graph
+                  layout_columns(
+                    col_widths = 12,
+                    card(
+                      card_header("Detailed Project Data for Selected Bar Segment"),
+                      DT::dataTableOutput("projectDetailTable", height = "100%"),
+                      fill = TRUE, fillable = TRUE, max_height = "auto", height = 700)
+                  ),
+                  layout_columns(col_widths = 12,
+                                 row_heights = "fill",
+                                 card(
+                                   card_header("Allocation Trend per Category per Funding Year (Line Graph)"),
+                                   plotlyOutput("allocationTrendLine", height = "100%"),
+                                   fill = TRUE, fillable = TRUE, max_height = "auto", height = 600, full_screen = TRUE
+                                 )
+                  )
+                )
+              )
+            ) # End of layout_columns for main content and filters
+          ) # End of tagList for EFD
+        )), # End of nav_menu
+      
+      # --- Second Top-Level Tab: Data Explorer --
+      nav_menu(
+        title = tags$b("Data Explorer"),  # Dropdown menu
+        icon = bs_icon("table"),
+        
+        # --- Nav Panel 1: Human Resource Database ---
+        nav_panel(
+          title = tags$b("Human Resource Database"),
+          layout_sidebar(
+            sidebar = sidebar(
+              width = 350,
+              h6("EFD Database Filters:"),
+              
+              # Region (single select)
+              pickerInput(
+                inputId = "EFD_Region",
+                label = "Select Region:",
+                choices = sort(unique(EFDDB$Region)),
+                selected = sort(unique(EFDDB$Region))[1],
+                multiple = FALSE,
+                options = pickerOptions(
+                  liveSearch = TRUE,
+                  header = "Select Region",
+                  title = "No Region Selected",
+                  dropupAuto = FALSE,
+                  dropup = FALSE
+                )
+              ),
+              
+              # Division (multi-select)
+              pickerInput(
+                inputId = "EFD_Division",
+                label = "Select Division:",
+                choices = sort(unique(EFDDB$Division)),
+                multiple = TRUE,
+                options = pickerOptions(
+                  `actions-box` = TRUE,
+                  liveSearch = TRUE,
+                  header = "Select Division(s)",
+                  title = "No Division Selected",
+                  dropupAuto = FALSE,
+                  dropup = FALSE
+                )
+              ),
+              
+              # Legislative District (multi-select)
+              pickerInput(
+                inputId = "EFD_LD",
+                label = "Select Legislative District:",
+                choices = sort(unique(EFDDB$Legislative.District)),
+                multiple = TRUE,
+                options = pickerOptions(
+                  `actions-box` = TRUE,
+                  liveSearch = TRUE,
+                  header = "Select Legislative District(s)",
+                  title = "No Legislative District Selected",
+                  dropupAuto = FALSE,
+                  dropup = FALSE
+                )
+              ),
+              
+              # Barangay picker removed
+              
+              # EFD Toggles (retained)
+              pickerInput(
+                inputId = "EFD_Toggles",
+                label = strong("EFD Data Toggles"),
+                choices = names(EFDDB)[!names(EFDDB) %in% c(
+                  "Region", "Old.Region", "Division", "SchoolID", "School.Name",
+                  "District", "Legislative.District", "Barangay"
+                )],
+                multiple = TRUE,
+                options = pickerOptions(
+                  `actions-box` = TRUE,
+                  liveSearch = TRUE,
+                  header = "Select Data Columns",
+                  title = "No Data Column Selected",
+                  dropupAuto = FALSE,
+                  dropup = FALSE
+                )
+              )
+            ),
+            
+            layout_columns(
+              card(
+                full_screen = TRUE,
+                style = "
+          width: 100%;
+          max-height: 85vh;
+          overflow-y: auto;
+          margin-bottom: 20px;
+        ",
+                card_header(
+                  strong("EFD Database Panel"),
+                  style = "
+            font-size: 22px;
+            padding: 15px 20px;
+            text-align: center;
+            background-color: #00234d;
+            color: white;
+            border-bottom: 2px solid #dee2e6;
+          "
+                ),
+                card_body(
+                  div(
+                    style = "
+              padding: 10px;
+              overflow-x: auto;
+              height: calc(85vh - 80px);
+            ",
+                    dataTableOutput("EFD_Table")
+                  )
+                )
+              ),
+              col_widths = c(12)
+            )
+          )
+        ),
+        
+        # --- Nav Panel 2: Infrastructure Database ---
+        nav_panel(
+          title = tags$b("Infrastructure Database"),
+          layout_sidebar(
+            sidebar = sidebar(
+              width = 350,
+              h6("Data Toggles:"),
+              
+              pickerInput(
+                inputId = "DataBuilder_HROD_Region",
+                label = "Select a Region:",
+                choices = sort(unique(uni$Region)),
+                selected = sort(unique(uni$Region)),
+                multiple = FALSE,
+                options = pickerOptions(
+                  actionsBox = TRUE,
+                  liveSearch = TRUE,
+                  header = "Select Categories",
+                  title = "No Category Selected",
+                  selectedTextFormat = "count > 3",
+                  dropupAuto = FALSE,
+                  dropup = FALSE
+                )
+              ),
+              uiOutput("DataBuilder_HROD_SDO"),
+              
+              pickerInput("School_Data_Toggles", strong("School Information Data Toggles"), 
+                          choices = c("School Size Typology" = "School.Size.Typology", 
+                                      "Curricular Offering" = "Modified.COC"),
+                          multiple = TRUE,
+                          options = pickerOptions(
+                            `actions-box` = TRUE,
+                            dropupAuto = FALSE,
+                            dropup = FALSE
+                          )
+              ),
+              
+              pickerInput("Teaching_Data_Toggles", strong("Teaching Data Toggles"), 
+                          choices = c("Total Teachers" = "TotalTeachers", 
+                                      "Teacher Excess" = "Total.Excess", 
+                                      "Teacher Shortage" = "Total.Shortage"),
+                          multiple = TRUE,
+                          options = pickerOptions(
+                            `actions-box` = TRUE,
+                            dropupAuto = FALSE,
+                            dropup = FALSE
+                          )
+              ),
+              
+              pickerInput("NTP_Data_Toggles", strong("Non-teaching Data Toggles"), 
+                          choices = c("COS" = "Outlier.Status", 
+                                      "AOII Clustering Status" = "Clustering.Status"),
+                          multiple = TRUE,
+                          options = pickerOptions(
+                            `actions-box` = TRUE,
+                            dropupAuto = FALSE,
+                            dropup = FALSE
+                          )
+              ),
+              
+              pickerInput("Enrolment_Data_Toggles", strong("Enrolment Data Toggles"), 
+                          choices = c("Total Enrolment" = "TotalEnrolment", "Kinder" = "Kinder", 
+                                      "Grade 1" = "G1", "Grade 2" = "G2", "Grade 3" = "G3", 
+                                      "Grade 4" = "G4", "Grade 5" = "G5", "Grade 6" = "G6", 
+                                      "Grade 7" = "G7", "Grade 8" = "G8", 
+                                      "Grade 9" = "G9", "Grade 10" = "G10", 
+                                      "Grade 11" = "G11", "Grade 12" = "G12"),
+                          multiple = TRUE,
+                          options = pickerOptions(
+                            `actions-box` = TRUE,
+                            dropupAuto = FALSE,
+                            dropup = FALSE
+                          )
+              ),
+              
+              pickerInput("Specialization_Data_Toggles", strong("Specialization Data Toggles"), 
+                          choices = c("English" = "English", "Mathematics" = "Mathematics", 
+                                      "Science" = "Science", 
+                                      "Biological Sciences" = "Biological.Sciences", 
+                                      "Physical Sciences" = "Physical.Sciences"),
+                          multiple = TRUE,
+                          options = pickerOptions(
+                            `actions-box` = TRUE,
+                            dropupAuto = FALSE,
+                            dropup = FALSE
+                          )
+              )
+              
+              # Removed: EFD_Data_Toggles picker
+            ),
+            
+            layout_columns(
+              card(
+                card_header(strong("HROD Data Panel")),
+                dataTableOutput("HROD_Table")
+              ),
+              col_widths = c(12, 12)
+            )
+          )
+        ),
+        # --- Nav Panel 3: DepEd Officials ---
+        nav_panel(
+          title = tags$b("DepEd Officials"),
+          layout_sidebar(
+            sidebar = sidebar(
+              width = 350,
+              h6("Strand Filter:"),
+              pickerInput(
+                inputId = "ThirdLevel_Strands",
+                label = "Select Strand(s):",
+                choices = c(
+                  "Administration",
+                  "Deped Attached Agencies",
+                  "Finance",
+                  "Human Resource And Organizational Development",
+                  "Learning System",
+                  "Legal And Legislative Affairs",
+                  "Office Of The Secretary",
+                  "Operations",
+                  "Procurement",
+                  "Strategic Management",
+                  "Teachers And Education Council Secretariat"
+                ),
+                selected = c(
+                  "Administration",
+                  "Deped Attached Agencies",
+                  "Finance",
+                  "Human Resource And Organizational Development",
+                  "Learning System",
+                  "Legal And Legislative Affairs",
+                  "Office Of The Secretary",
+                  "Operations",
+                  "Procurement",
+                  "Strategic Management",
+                  "Teachers And Education Council Secretariat"
+                ),
+                multiple = TRUE,
+                options = pickerOptions(
+                  actionsBox = TRUE,
+                  liveSearch = TRUE,
+                  header = "Select Strand(s)",
+                  title = "No Strand Selected",
+                  selectedTextFormat = "count > 3",
+                  dropupAuto = FALSE,
+                  dropup = FALSE
+                ),
+                choicesOpt = list(
+                  style = "white-space: normal; word-break: break-word; overflow-wrap: break-word;"
+                )
+              )
+            ),
+            
+            layout_columns(
+              card(
+                full_screen = TRUE,
+                style = "
+          width: 100%;
+          max-height: 85vh;
+          overflow-y: auto;
+          margin-bottom: 20px;
+        ",
+                card_header(
+                  strong("HROD Data Panel"),
+                  style = "
+            font-size: 22px;
+            padding: 15px 20px;
+            text-align: center;
+            background-color: #00234d;
+            border-bottom: 2px solid #dee2e6;
+          "
+                ),
+                card_body(
+                  div(
+                    style = "
+              padding: 10px;
+              overflow-x: auto;
+              height: calc(85vh - 80px);
+            ",
+                    dataTableOutput("ThirdLevel_Table")
+                  )
+                )
+              ),
+              col_widths = c(12)
+            )
+          )
+        )
+      ),
+      # --- Quick School Search ---
+      nav_panel(
+        title = tags$b("Quick School Search"),
+        icon = bs_icon("search"),
+        layout_sidebar(
+          sidebar = sidebar(
+            textInput("text","Enter School Name"),
+            input_task_button("TextRun", icon_busy = fontawesome::fa_i("refresh", class = "fa-spin", "aria-hidden" = "true"), strong("Show Selection"), class = "btn-warning")),
+          layout_columns(
+            card(
+              card_header(strong("Search Output")),
+              dataTableOutput("TextTable")),
+            card(full_screen = TRUE,
+                 card_header(strong("School Mapping")),
+                 leafletOutput("TextMapping", height = 500, width = "100%")),
+            card(full_screen = TRUE,
+                 card_header(div(strong("School Details"),
+                                 tags$span(em("(Select a school from the table above)"),
+                                           style = "font-size: 0.7em; color: grey;"
+                                 ))),
+                 layout_columns(
+                   card(full_screen = TRUE,
+                        card_header(strong("Basic Information")),
+                        tableOutput("schooldetails")),
+                   card(full_screen = TRUE,
+                        card_header(strong("HR Data")),
+                        tableOutput("schooldetails2")),
+                   card(full_screen = TRUE,
+                        card_header(strong("Classroom Data")),
+                        tableOutput("schooldetails3")),
+                   card(full_screen = TRUE,
+                        card_header(div(strong("Specialization Data"),
+                                        tags$span(em("(based on eSF7 for SY 2023-2024)"),
+                                                  style = "font-size: 0.7em; color: grey;"
+                                        ))),
+                        tableOutput("schooldetails5")),
+                   col_widths = c(6,6,6,6))),
+            col_widths = c(6,6,12)))),
+      
+      # --- Resource Mapping ---
+      nav_panel(
+        title = tags$b("Resource Mapping"),
+        icon = bs_icon("map"),
+        layout_sidebar(
+          sidebar = sidebar(
+            width = 375,
+            title = "Resource Mapping Filters",
+            
+            # --- Data Filters Card for Resource Mapping ---
+            card(
+              height = 400,
+              card_header(tags$b("Data Filters")),
+              
+              # Region Picker
+              pickerInput(
+                inputId = "resource_map_region",
+                label = "Region:",
+                choices = c(
+                  "Region I" = "Region I","Region II" = "Region II","Region III" = "Region III",
+                  "Region IV-A" = "Region IV-A","MIMAROPA" = "MIMAROPA","Region V" = "Region V",
+                  "Region VI" = "Region VI","NIR" = "NIR","Region VII" = "Region VII",
+                  "Region VIII" = "Region VIII","Region IX" = "Region IX","Region X" = "Region X",
+                  "Region XI" = "Region XI","Region XII" = "Region XII","CARAGA" = "CARAGA",
+                  "CAR" = "CAR","NCR" = "NCR"
+                ),
+                selected = "Region I",
+                multiple = FALSE,
+                options = list(
+                  `actions-box` = FALSE,
+                  `none-selected-text` = "Select a region",
+                  dropupAuto = FALSE,
+                  dropup = FALSE
+                )
+              ),
+              
+              # Division Picker
+              pickerInput(
+                inputId = "Resource_SDO",
+                label = "Select a Division:",
+                choices = NULL,
+                selected = NULL,
+                multiple = FALSE,
+                options = list(
+                  `actions-box` = FALSE,
+                  `none-selected-text` = "Select a division",
+                  dropupAuto = FALSE,
+                  dropup = FALSE
+                )
+              ),
+              
+              # District Picker
+              pickerInput(
+                inputId = "Resource_LegDist",
+                label = "Select Legislative District(s):",
+                choices = NULL,
+                selected = NULL,
+                multiple = TRUE,
+                options = list(
+                  `actions-box` = TRUE,
+                  `none-selected-text` = "Select one or more districts",
+                  dropupAuto = FALSE,
+                  dropup = FALSE
+                )
+              ),
+              
+              input_task_button("Mapping_Run", strong("Show Selection"), class = "btn-warning")
+            ),
+            
+            hr(),
+            
+            # Resource Types
+            card(
+              card_header(tags$b("Resource Types")),
+              radioButtons(
+                inputId = "resource_type_selection",
+                label = NULL,
+                choices = c(
+                  "Teaching Deployment",
+                  "Non-teaching Deployment",
+                  "Classroom Inventory",
+                  "Learner Congestion",
+                  "Industries",
+                  "Facilities",
+                  "Last Mile School"
+                ),
+                selected = "Teaching Deployment"
+              )
+            )
+          ),
+          
+          # Main Panel
+          mainPanel(
+            width = 12,
+            uiOutput("dynamic_resource_panel")
+          )
+        )
+      ),
+      nav_menu(
+        title = tagList(bs_icon("cloud"),
+                        tags$b("CLOUD")),
+        
+        nav_panel(
+          title = "CLOUD (Regional Profile)", # Your existing HROD content
+          layout_columns( # Main sidebar title
+            # Card for Main Category Picker (combining General Info, Resource Shortage, Other)
+            # Assuming this UI code is part of your sidebar or main UI definition
+            # Region Filter
+            card(height = 300, # Adjusted height
+                 card_header(tags$b("Region Filter")),
+                 card_body( # Added card_body
+                   pickerInput(
+                     inputId = "cloud_region_profile_filter", # Keep the same inputId for server compatibility
+                     label = NULL,
+                     choices = c("Region II" = "Region II", "MIMAROPA" = "MIMAROPA", "Region XII" = "Region XII", "CAR" = "CAR"),
+                     selected = "Region II", # Keep the same default selected value
+                     multiple = FALSE,
+                     options = pickerOptions(
+                       actionsBox = TRUE, # Changed to TRUE
+                       liveSearch = TRUE,
+                       header = "Select Regions", # Changed header text
+                       title = "No Region Selected", # Changed title text
+                       selectedTextFormat = "count > 3",
+                       dropupAuto = FALSE, # This tells it NOT to automatically switch direction
+                       dropup = FALSE # Added this option
+                     ),
+                     choicesOpt = list() # Added choicesOpt
+                   )
+                 )
+            )
+            # 
+            # # Division Filter
+            # card(height = 400, # Adjusted height
+            #      card_header(tags$b("Division Filter")),
+            #      card_body( # Added card_body
+            #        pickerInput(
+            #          inputId = "cloud_dashboard_division_filter", # Keep the same inputId for server compatibility
+            #          label = NULL,
+            #          choices = NULL, # Choices will be updated dynamically by the server
+            #          selected = NULL,
+            #          multiple = FALSE,
+            #          options = pickerOptions(
+            #            actionsBox = TRUE, # Changed to TRUE
+            #            liveSearch = TRUE,
+            #            header = "Select Divisions", # Changed header text
+            #            title = "No Division Selected", # Changed title text
+            #            selectedTextFormat = "count > 3",
+            #            dropupAuto = FALSE, # This tells it NOT to automatically switch direction
+            #            dropup = FALSE # Added this option
+            #          ),
+            #          choicesOpt = list() # Added choicesOpt
+            #        )
+            #      )
+            # )
+          ), # End of sidebar
+          # Main content for Dashboard tab, controlled by uiOutput
+          uiOutput("cloud_profile_main_content_area") # End of layout_sidebar
+        ), # End of nav_panel("HROD")
+        
+        nav_panel(
+          title = "CLOUD (SDO Breakdown)", # Your existing HROD content
+          layout_sidebar(
+            sidebar = sidebar(
+              width = 350, # Keep the sidebar width
+              title = "Dashboard Navigation", # Main sidebar title
+              
+              # Card for Main Category Picker (combining General Info, Resource Shortage, Other)
+              # Assuming this UI code is part of your sidebar or main UI definition
+              
+              card(height = 400, # Adjusted height to 500
+                   card_header(tags$b("Select Category")),
+                   card_body( # Wrapped pickerInput in card_body
+                     pickerInput(
+                       inputId = "cloud_main_category_picker",
+                       label = NULL,
+                       choices = c(
+                         "Enrolment Data" = "cloud_enrolment",
+                         "SNED Learners" = "cloud_sned",
+                         "IP Learners" = "cloud_ip",
+                         "Muslim Learners" = "cloud_muslim",
+                         "Displaced Learners" = "cloud_displaced",
+                         "ALS Learners" = "cloud_als",
+                         "Dropout Data" = "cloud_dropout",
+                         "Teacher Inventory" = "cloud_teacherinventory",
+                         "Years in Service" = "cloud_years",
+                         "Classroom Inventory" = "cloud_classroom",
+                         "Multigrade" = "cloud_multigrade",
+                         "Organized Class" = "cloud_organizedclass",
+                         "JHS Teacher Deployment" = "cloud_jhsdeployment",
+                         "Shifting" = "cloud_shifting",
+                         "Learning Delivery Modality" = "cloud_LDM",
+                         "ARAL" = "cloud_ARAL",
+                         "CRLA" = "cloud_crla",
+                         "PhilIRI" = "cloud_philiri",
+                         "Alternative Delivery Modality" = "cloud_adm",
+                         "Reading Proficiency" = "cloud_rf",
+                         "Electricity Source" = "cloud_elec",
+                         "Water Source" = "cloud_water",
+                         "Internet Source" = "cloud_internet",
+                         "Internet Usage" = "cloud_internet_usage",
+                         "Bullying Incidence" = "cloud_bully",
+                         # "School Initiatives" = "cloud_initiatives",
+                         # "Medium of Instruction" = "cloud_moi",
+                         # "School Structure" = "cloud_sosss",
+                         # "SHS Implementation" = "cloud_shsimplem",
+                         "Overload Pay" = "cloud_overload",
+                         "School Resources" = "cloud_resources",
+                         "NAT" = "cloud_nat",
+                         "NAT Sufficiency" = "cloud_nat_sufficiency",
+                         "LAC" = "cloud_lac",
+                         "Feeding Program" = "cloud_feeding",
+                         "SHA" = "cloud_sha"
+                         # "Child Protection" = "cloud_childprotection",
+                         # "Extension" = "cloud_extension"
+                       ),
+                       selected = "general_school_count", # Keep the default selected value
+                       multiple = FALSE, # Keep as FALSE for single selection
+                       options = pickerOptions(
+                         actionsBox = FALSE, # Keep as FALSE as it's single select
+                         liveSearch = TRUE,
+                         header = "Select a Category", # Keep existing header
+                         title = "Select Category",
+                         dropupAuto = FALSE, # This tells it NOT to automatically switch direction
+                         dropup = FALSE # Keep existing title
+                         # selectedTextFormat is not applicable for multiple = FALSE, so it's not added
+                       ),
+                       choicesOpt = list() # Added choicesOpt = list() for consistency
+                     )
+                   )
+              ),
+              
+              hr(), # Add a separator
+              
+              # Card for Region Picker
+              # Assuming this UI code is part of your sidebar or main UI definition
+              
+              # Region Filter
+              card(height = 400, # Adjusted height
+                   card_header(tags$b("Region Filter")),
+                   card_body( # Added card_body
+                     pickerInput(
+                       inputId = "cloud_region_filter", # Keep the same inputId for server compatibility
+                       label = NULL,
+                       choices = c("Region II" = "Region II", "MIMAROPA" = "MIMAROPA", "Region XII" = "Region XII", "CAR" = "CAR"),
+                       selected = "Region II", # Keep the same default selected value
+                       multiple = FALSE,
+                       options = pickerOptions(
+                         actionsBox = TRUE, # Changed to TRUE
+                         liveSearch = TRUE,
+                         header = "Select Regions", # Changed header text
+                         title = "No Region Selected", # Changed title text
+                         selectedTextFormat = "count > 3",
+                         dropupAuto = FALSE, # This tells it NOT to automatically switch direction
+                         dropup = FALSE # Added this option
+                       ),
+                       choicesOpt = list() # Added choicesOpt
+                     )
+                   )
+              )
+              # 
+              # # Division Filter
+              # card(height = 400, # Adjusted height
+              #      card_header(tags$b("Division Filter")),
+              #      card_body( # Added card_body
+              #        pickerInput(
+              #          inputId = "cloud_dashboard_division_filter", # Keep the same inputId for server compatibility
+              #          label = NULL,
+              #          choices = NULL, # Choices will be updated dynamically by the server
+              #          selected = NULL,
+              #          multiple = FALSE,
+              #          options = pickerOptions(
+              #            actionsBox = TRUE, # Changed to TRUE
+              #            liveSearch = TRUE,
+              #            header = "Select Divisions", # Changed header text
+              #            title = "No Division Selected", # Changed title text
+              #            selectedTextFormat = "count > 3",
+              #            dropupAuto = FALSE, # This tells it NOT to automatically switch direction
+              #            dropup = FALSE # Added this option
+              #          ),
+              #          choicesOpt = list() # Added choicesOpt
+              #        )
+              #      )
+              # )
+            ), # End of sidebar
+            # Main content for Dashboard tab, controlled by uiOutput
+            uiOutput("cloud_main_content_area")
+          ) # End of layout_sidebar
+        ), # End of nav_panel("HROD")
+        
+        nav_panel(
+          title = tagList("CLOUD", em("(Multi-variable)")), # Your existing HROD content
+          
+          # A fluidRow to contain the three main boxes
+          fluidRow(
+            # First Box
+            column(
+              width = 6,
+              card(
+                card_header(tags$b("Data View 1")),
+                card_body(
+                  pickerInput(
+                    inputId = "cloud_category_picker_1",
+                    label = NULL,
+                    choices = c(
+                      "Enrolment Data" = "cloud_enrolment",
+                      "SNED Learners" = "cloud_sned",
+                      "IP Learners" = "cloud_ip",
+                      "Muslim Learners" = "cloud_muslim",
+                      "Displaced Learners" = "cloud_displaced",
+                      "ALS Learners" = "cloud_als",
+                      "Dropout Data" = "cloud_dropout",
+                      "Teacher Inventory" = "cloud_teacherinventory",
+                      "Years in Service" = "cloud_years",
+                      "Classroom Inventory" = "cloud_classroom",
+                      "Multigrade" = "cloud_multigrade",
+                      "Organized Class" = "cloud_organizedclass",
+                      "JHS Teacher Deployment" = "cloud_jhsdeployment",
+                      "Shifting" = "cloud_shifting",
+                      "Learning Delivery Modality" = "cloud_LDM",
+                      "ARAL" = "cloud_ARAL",
+                      "CRLA" = "cloud_crla",
+                      "PhilIRI" = "cloud_philiri",
+                      "Alternative Delivery Modality" = "cloud_adm",
+                      "Reading Proficiency" = "cloud_rf",
+                      "Electricity Source" = "cloud_elec",
+                      "Water Source" = "cloud_water",
+                      "Internet Source" = "cloud_internet",
+                      "Internet Usage" = "cloud_internet_usage",
+                      "Bullying Incidence" = "cloud_bully",
+                      # "School Initiatives" = "cloud_initiatives",
+                      # "Medium of Instruction" = "cloud_moi",
+                      # "School Structure" = "cloud_sosss",
+                      # "SHS Implementation" = "cloud_shsimplem",
+                      "Overload Pay" = "cloud_overload",
+                      "School Resources" = "cloud_resources",
+                      "NAT" = "cloud_nat",
+                      "NAT Sufficiency" = "cloud_nat_sufficiency",
+                      "LAC" = "cloud_lac",
+                      "Feeding Program" = "cloud_feeding",
+                      "SHA" = "cloud_sha"
+                      # "Child Protection" = "cloud_childprotection",
+                      # "Extension" = "cloud_extension"
+                    ),
+                    selected = "cloud_enrolment",
+                    multiple = FALSE,
+                    options = pickerOptions(
+                      liveSearch = TRUE,
+                      title = "Select Category"
+                    )
+                  ),
+                  uiOutput("cloud_graph_1") # Placeholder for the first graph
+                )
+              )
+            ),
+            
+            # Second Box
+            column(
+              width = 6,
+              card(
+                card_header(tags$b("Data View 2")),
+                card_body(
+                  pickerInput(
+                    inputId = "cloud_category_picker_2",
+                    label = NULL,
+                    choices = c(
+                      "Enrolment Data" = "cloud_enrolment",
+                      "SNED Learners" = "cloud_sned",
+                      "IP Learners" = "cloud_ip",
+                      "Muslim Learners" = "cloud_muslim",
+                      "Displaced Learners" = "cloud_displaced",
+                      "ALS Learners" = "cloud_als",
+                      "Dropout Data" = "cloud_dropout",
+                      "Teacher Inventory" = "cloud_teacherinventory",
+                      "Years in Service" = "cloud_years",
+                      "Classroom Inventory" = "cloud_classroom",
+                      "Multigrade" = "cloud_multigrade",
+                      "Organized Class" = "cloud_organizedclass",
+                      "JHS Teacher Deployment" = "cloud_jhsdeployment",
+                      "Shifting" = "cloud_shifting",
+                      "Learning Delivery Modality" = "cloud_LDM",
+                      "ARAL" = "cloud_ARAL",
+                      "CRLA" = "cloud_crla",
+                      "PhilIRI" = "cloud_philiri",
+                      "Alternative Delivery Modality" = "cloud_adm",
+                      "Reading Proficiency" = "cloud_rf",
+                      "Electricity Source" = "cloud_elec",
+                      "Water Source" = "cloud_water",
+                      "Internet Source" = "cloud_internet",
+                      "Internet Usage" = "cloud_internet_usage",
+                      "Bullying Incidence" = "cloud_bully",
+                      # "School Initiatives" = "cloud_initiatives",
+                      # "Medium of Instruction" = "cloud_moi",
+                      # "School Structure" = "cloud_sosss",
+                      # "SHS Implementation" = "cloud_shsimplem",
+                      "Overload Pay" = "cloud_overload",
+                      "School Resources" = "cloud_resources",
+                      "NAT" = "cloud_nat",
+                      "NAT Sufficiency" = "cloud_nat_sufficiency",
+                      "LAC" = "cloud_lac",
+                      "Feeding Program" = "cloud_feeding",
+                      "SHA" = "cloud_sha"
+                      # "Child Protection" = "cloud_childprotection",
+                      # "Extension" = "cloud_extension"
+                    ),
+                    selected = "cloud_teacherinventory",
+                    multiple = FALSE,
+                    options = pickerOptions(
+                      liveSearch = TRUE,
+                      title = "Select Category"
+                    )
+                  ),
+                  uiOutput("cloud_graph_2") # Placeholder for the second graph
+                )
+              )
+            ),
+            
+            # Third Box
+            column(
+              width = 6,
+              card(
+                card_header(tags$b("Data View 3")),
+                card_body(
+                  pickerInput(
+                    inputId = "cloud_category_picker_3",
+                    label = NULL,
+                    choices = c(
+                      "Enrolment Data" = "cloud_enrolment",
+                      "SNED Learners" = "cloud_sned",
+                      "IP Learners" = "cloud_ip",
+                      "Muslim Learners" = "cloud_muslim",
+                      "Displaced Learners" = "cloud_displaced",
+                      "ALS Learners" = "cloud_als",
+                      "Dropout Data" = "cloud_dropout",
+                      "Teacher Inventory" = "cloud_teacherinventory",
+                      "Years in Service" = "cloud_years",
+                      "Classroom Inventory" = "cloud_classroom",
+                      "Multigrade" = "cloud_multigrade",
+                      "Organized Class" = "cloud_organizedclass",
+                      "JHS Teacher Deployment" = "cloud_jhsdeployment",
+                      "Shifting" = "cloud_shifting",
+                      "Learning Delivery Modality" = "cloud_LDM",
+                      "ARAL" = "cloud_ARAL",
+                      "CRLA" = "cloud_crla",
+                      "PhilIRI" = "cloud_philiri",
+                      "Alternative Delivery Modality" = "cloud_adm",
+                      "Reading Proficiency" = "cloud_rf",
+                      "Electricity Source" = "cloud_elec",
+                      "Water Source" = "cloud_water",
+                      "Internet Source" = "cloud_internet",
+                      "Internet Usage" = "cloud_internet_usage",
+                      "Bullying Incidence" = "cloud_bully",
+                      # "School Initiatives" = "cloud_initiatives",
+                      # "Medium of Instruction" = "cloud_moi",
+                      # "School Structure" = "cloud_sosss",
+                      # "SHS Implementation" = "cloud_shsimplem",
+                      "Overload Pay" = "cloud_overload",
+                      "School Resources" = "cloud_resources",
+                      "NAT" = "cloud_nat",
+                      "NAT Sufficiency" = "cloud_nat_sufficiency",
+                      "LAC" = "cloud_lac",
+                      "Feeding Program" = "cloud_feeding",
+                      "SHA" = "cloud_sha"
+                      # "Child Protection" = "cloud_childprotection",
+                      # "Extension" = "cloud_extension"
+                    ),
+                    selected = "cloud_classroom",
+                    multiple = FALSE,
+                    options = pickerOptions(
+                      liveSearch = TRUE,
+                      title = "Select Category"
+                    )
+                  ),
+                  uiOutput("cloud_graph_3") # Placeholder for the third graph
+                )
+              )
+            ),
+            # Fourth Box
+            column(
+              width = 6,
+              card(
+                card_header(tags$b("Data View 4")),
+                card_body(
+                  pickerInput(
+                    inputId = "cloud_category_picker_4",
+                    label = NULL,
+                    choices = c(
+                      "Enrolment Data" = "cloud_enrolment",
+                      "SNED Learners" = "cloud_sned",
+                      "IP Learners" = "cloud_ip",
+                      "Muslim Learners" = "cloud_muslim",
+                      "Displaced Learners" = "cloud_displaced",
+                      "ALS Learners" = "cloud_als",
+                      "Dropout Data" = "cloud_dropout",
+                      "Teacher Inventory" = "cloud_teacherinventory",
+                      "Years in Service" = "cloud_years",
+                      "Classroom Inventory" = "cloud_classroom",
+                      "Multigrade" = "cloud_multigrade",
+                      "Organized Class" = "cloud_organizedclass",
+                      "JHS Teacher Deployment" = "cloud_jhsdeployment",
+                      "Shifting" = "cloud_shifting",
+                      "Learning Delivery Modality" = "cloud_LDM",
+                      "ARAL" = "cloud_ARAL",
+                      "CRLA" = "cloud_crla",
+                      "PhilIRI" = "cloud_philiri",
+                      "Alternative Delivery Modality" = "cloud_adm",
+                      "Reading Proficiency" = "cloud_rf",
+                      "Electricity Source" = "cloud_elec",
+                      "Water Source" = "cloud_water",
+                      "Internet Source" = "cloud_internet",
+                      "Internet Usage" = "cloud_internet_usage",
+                      "Bullying Incidence" = "cloud_bully",
+                      # "School Initiatives" = "cloud_initiatives",
+                      # "Medium of Instruction" = "cloud_moi",
+                      # "School Structure" = "cloud_sosss",
+                      # "SHS Implementation" = "cloud_shsimplem",
+                      "Overload Pay" = "cloud_overload",
+                      "School Resources" = "cloud_resources",
+                      "NAT" = "cloud_nat",
+                      "NAT Sufficiency" = "cloud_nat_sufficiency",
+                      "LAC" = "cloud_lac",
+                      "Feeding Program" = "cloud_feeding",
+                      "SHA" = "cloud_sha"
+                      # "Child Protection" = "cloud_childprotection",
+                      # "Extension" = "cloud_extension"
+                    ),
+                    selected = "cloud_shifting",
+                    multiple = FALSE,
+                    options = pickerOptions(
+                      liveSearch = TRUE,
+                      title = "Select Category"
+                    )
+                  ),
+                  uiOutput("cloud_graph_4") # Placeholder for the third graph
+                )
+              )
+            ),
+            column(
+              width = 6,
+              card(
+                card_header(tags$b("Data View 5")),
+                card_body(
+                  pickerInput(
+                    inputId = "cloud_category_picker_5",
+                    label = NULL,
+                    choices = c(
+                      "Enrolment Data" = "cloud_enrolment",
+                      "SNED Learners" = "cloud_sned",
+                      "IP Learners" = "cloud_ip",
+                      "Muslim Learners" = "cloud_muslim",
+                      "Displaced Learners" = "cloud_displaced",
+                      "ALS Learners" = "cloud_als",
+                      "Dropout Data" = "cloud_dropout",
+                      "Teacher Inventory" = "cloud_teacherinventory",
+                      "Years in Service" = "cloud_years",
+                      "Classroom Inventory" = "cloud_classroom",
+                      "Multigrade" = "cloud_multigrade",
+                      "Organized Class" = "cloud_organizedclass",
+                      "JHS Teacher Deployment" = "cloud_jhsdeployment",
+                      "Shifting" = "cloud_shifting",
+                      "Learning Delivery Modality" = "cloud_LDM",
+                      "ARAL" = "cloud_ARAL",
+                      "CRLA" = "cloud_crla",
+                      "PhilIRI" = "cloud_philiri",
+                      "Alternative Delivery Modality" = "cloud_adm",
+                      "Reading Proficiency" = "cloud_rf",
+                      "Electricity Source" = "cloud_elec",
+                      "Water Source" = "cloud_water",
+                      "Internet Source" = "cloud_internet",
+                      "Internet Usage" = "cloud_internet_usage",
+                      "Bullying Incidence" = "cloud_bully",
+                      # "School Initiatives" = "cloud_initiatives",
+                      # "Medium of Instruction" = "cloud_moi",
+                      # "School Structure" = "cloud_sosss",
+                      # "SHS Implementation" = "cloud_shsimplem",
+                      "Overload Pay" = "cloud_overload",
+                      "School Resources" = "cloud_resources",
+                      "NAT" = "cloud_nat",
+                      "NAT Sufficiency" = "cloud_nat_sufficiency",
+                      "LAC" = "cloud_lac",
+                      "Feeding Program" = "cloud_feeding",
+                      "SHA" = "cloud_sha"
+                      # "Child Protection" = "cloud_childprotection",
+                      # "Extension" = "cloud_extension"
+                    ),
+                    selected = "cloud_enrolment",
+                    multiple = FALSE,
+                    options = pickerOptions(
+                      liveSearch = TRUE,
+                      title = "Select Category"
+                    )
+                  ),
+                  uiOutput("cloud_graph_5") # Placeholder for the first graph
+                )
+              )
+            ),
+            column(
+              width = 6,
+              card(
+                card_header(tags$b("Data View 6")),
+                card_body(
+                  pickerInput(
+                    inputId = "cloud_category_picker_6",
+                    label = NULL,
+                    choices = c(
+                      "Enrolment Data" = "cloud_enrolment",
+                      "SNED Learners" = "cloud_sned",
+                      "IP Learners" = "cloud_ip",
+                      "Muslim Learners" = "cloud_muslim",
+                      "Displaced Learners" = "cloud_displaced",
+                      "ALS Learners" = "cloud_als",
+                      "Dropout Data" = "cloud_dropout",
+                      "Teacher Inventory" = "cloud_teacherinventory",
+                      "Years in Service" = "cloud_years",
+                      "Classroom Inventory" = "cloud_classroom",
+                      "Multigrade" = "cloud_multigrade",
+                      "Organized Class" = "cloud_organizedclass",
+                      "JHS Teacher Deployment" = "cloud_jhsdeployment",
+                      "Shifting" = "cloud_shifting",
+                      "Learning Delivery Modality" = "cloud_LDM",
+                      "ARAL" = "cloud_ARAL",
+                      "CRLA" = "cloud_crla",
+                      "PhilIRI" = "cloud_philiri",
+                      "Alternative Delivery Modality" = "cloud_adm",
+                      "Reading Proficiency" = "cloud_rf",
+                      "Electricity Source" = "cloud_elec",
+                      "Water Source" = "cloud_water",
+                      "Internet Source" = "cloud_internet",
+                      "Internet Usage" = "cloud_internet_usage",
+                      "Bullying Incidence" = "cloud_bully",
+                      # "School Initiatives" = "cloud_initiatives",
+                      # "Medium of Instruction" = "cloud_moi",
+                      # "School Structure" = "cloud_sosss",
+                      # "SHS Implementation" = "cloud_shsimplem",
+                      "Overload Pay" = "cloud_overload",
+                      "School Resources" = "cloud_resources",
+                      "NAT" = "cloud_nat",
+                      "NAT Sufficiency" = "cloud_nat_sufficiency",
+                      "LAC" = "cloud_lac",
+                      "Feeding Program" = "cloud_feeding",
+                      "SHA" = "cloud_sha"
+                      # "Child Protection" = "cloud_childprotection",
+                      # "Extension" = "cloud_extension"
+                    ),
+                    selected = "cloud_enrolment",
+                    multiple = FALSE,
+                    options = pickerOptions(
+                      liveSearch = TRUE,
+                      title = "Select Category"
+                    )
+                  ),
+                  uiOutput("cloud_graph_6") # Placeholder for the first graph
+                )
+              )
+            )
+          ))),
+      
+      # # --- Last Top-Level Tab: About ---
+      # nav_panel(
+      #   title = tags$b("HR DATA"),
+      #   icon = bs_icon("info-circle"),
+      #   tagList(
+      #     layout_columns(
+      #       HTML('<img src="Contactus.png" width="100%" height="auto">'))
+      #   )),
       
       # --- Contact Us Top-Level Tab ---
       nav_panel(
