@@ -9,6 +9,10 @@
 #kleinudeeeeeeeeeeee
 #uddddd
 #updated as of oct 17,2025 4:27pm
+#t=hdhdh
+#updated as of oct 21,2025 48:55am
+#oct 21,2025 UDDDDDDDDDDDDDDD uppp
+#TESTTTTTTTTTTTTTTTTTTT
 library(tidyverse)
 library(DT)
 library(dplyr)
@@ -42,7 +46,7 @@ library(reactablefmtr)
 
 
 # HROD Data Upload
-SHEET_URL <- "https://docs.google.com/spreadsheets/d/1e3ni50Jcv3sBAkG8TbwBt4v7kjjMRSVvf9gxtcMiqjU/edit?gid=0#gid=0"
+sheet_url <- "https://docs.google.com/spreadsheets/d/1e3ni50Jcv3sBAkG8TbwBt4v7kjjMRSVvf9gxtcMiqjU/edit?gid=0#gid=0"
 SHEET_ID <- "https://docs.google.com/spreadsheets/d/1x9D8xfXtkT1Mbr4M4We7I9sUqoj42X4SFX9N9hu24wM/edit?gid=0#gid=0"
 SHEET_NAME <- "Sheet1" # Assuming the data is on the first tab
 school_data <- reactiveVal(NULL)
@@ -1371,7 +1375,7 @@ server <- function(input, output, session) {
       pageSizeOptions = c(15, 25, 50, 100),
       
       sortable = TRUE,
-      wrap = FALSE,
+      wrap = TRUE,
       columns = list(
         "Teacher Shortage" = reactable::colDef(na = "-", sortNALast = TRUE, align = "center"),
         "School Principal Shortage" = reactable::colDef(na = "-", sortNALast = TRUE, align = "center"),
@@ -1955,8 +1959,104 @@ server <- function(input, output, session) {
     }
     "
       ),
-      
-      
+      #data explorer css 
+#       tags$head(
+#         tags$style(HTML("
+# /* === FINAL FIX: Consistent Bootstrap-select picker design === */
+# 
+# /* --- Text wrapping and internal spacing --- */
+# .bootstrap-select .dropdown-menu li a span.text {
+#   white-space: normal !important;
+#   word-break: break-word !important;
+#   display: inline-block !important;
+#   overflow-wrap: anywhere !important;
+#   line-height: 1.3em !important;
+#   padding-right: 10px !important;
+#   max-width: 100% !important;
+# }
+# 
+# /* --- Scroll area for dropdown content --- */
+# .bootstrap-select .dropdown-menu.inner.show {
+#   padding-bottom: 0 !important;
+#   margin-bottom: 0 !important;
+#   max-height: none !important;
+#   overflow-y: auto !important;
+# }
+# 
+# /* --- Dropdown menu box consistency --- */
+# .bootstrap-select .dropdown-menu {
+#   min-width: 100% !important;      /* Make all dropdowns same width as picker */
+#   width: 100% !important;
+#   white-space: normal !important;
+#   border-radius: 6px !important;
+#   box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
+#   padding-bottom: 0 !important;
+#   overflow: visible !important;
+#   max-height: none !important;
+# }
+# 
+# /* --- Picker button (main visible area) --- */
+# .bootstrap-select .dropdown-toggle {
+#   width: 100% !important;
+#   background-color: #f2f2f2 !important;
+#   color: #333 !important;
+#   border: 1px solid #ccc !important;
+#   border-radius: 6px !important;
+#   text-align: left !important;
+#   padding: 6px 10px !important;
+#   font-size: 14px !important;
+#   font-weight: 400 !important;
+# }
+# 
+# /* --- Ensure dropdown opens BELOW picker --- */
+# .bootstrap-select.dropup .dropdown-menu,
+# .bootstrap-select:not(.dropup) .dropdown-menu {
+#   top: 100% !important;
+#   bottom: auto !important;
+#   transform: none !important;
+# }
+# 
+# /* --- Clean hover for navbar dropdowns (still included) --- */
+# .navbar .dropdown-menu > li > a:hover,
+# .bslib-navbar .dropdown-menu > li > a:hover {
+#   background-color: #2c3895 !important;
+#   color: white !important;
+# }
+# 
+# /* --- Scrollbar styling for long dropdowns --- */
+# .bootstrap-select .dropdown-menu.inner::-webkit-scrollbar {
+#   width: 8px;
+# }
+# 
+# .bootstrap-select .dropdown-menu.inner::-webkit-scrollbar-thumb {
+#   background-color: rgba(0, 0, 0, 0.2);
+#   border-radius: 4px;
+# }
+# 
+# .bootstrap-select .dropdown-menu.inner::-webkit-scrollbar-thumb:hover {
+#   background-color: rgba(0, 0, 0, 0.35);
+# }
+# 
+# /* --- Consistent picker height and spacing --- */
+# .bootstrap-select {
+#   width: 100% !important;
+#   margin-bottom: 10px !important;
+# }
+# 
+# .bootstrap-select .filter-option-inner-inner {
+#   text-overflow: ellipsis !important;
+#   overflow: hidden !important;
+#   white-space: nowrap !important;
+# }
+# 
+# /* --- Prevent dropdown from cutting off --- */
+# .bootstrap-select .dropdown-menu.show {
+#   z-index: 9999 !important;
+# }
+# 
+#   "))
+#       )
+#       ,
       
       nav_spacer(),
       
@@ -2045,6 +2145,25 @@ server <- function(input, output, session) {
             card(
               full_screen = TRUE,
               card_header("SDO Ranking"),
+              
+              # ✅ Add this here
+              tags$head(
+                tags$style(HTML("
+      .reactable thead th {
+        white-space: normal !important;
+        word-wrap: break-word !important;
+        line-height: 1.1;
+        text-align: center;
+      }
+      .reactable .rt-thead.-header { height: auto !important; }
+      .reactable .rt-th {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+      }
+    "))
+              ),
               height = 800,
               reactable::reactableOutput("priority_division_erdb"),
               hr(), # Adds a horizontal line
@@ -2389,6 +2508,451 @@ server <- function(input, output, session) {
             ) # End of layout_columns for main content and filters
           ) # End of tagList for EFD
         )), # End of nav_menu
+      
+      # --- Second Top-Level Tab: Data Explorer --
+      nav_menu(
+        title = tags$b("Data Explorer"),  # Dropdown menu
+        icon = bs_icon("table"),
+        
+        # --- Nav Panel 1: Human Resource Database ---
+        nav_panel(
+          title = tags$b("Human Resource Database"),
+          layout_sidebar(
+            sidebar = sidebar(
+              width = 350,
+              h6("EFD Database Filters:"),
+              
+              # Region (single select)
+              pickerInput(
+                inputId = "EFD_Region",
+                label = "Select Region:",
+                choices = sort(unique(EFDDB$Region)),
+                selected = sort(unique(EFDDB$Region))[1],
+                multiple = FALSE,
+                options = pickerOptions(
+                  liveSearch = TRUE,
+                  header = "Select Region",
+                  title = "No Region Selected",
+                  dropupAuto = FALSE,
+                  dropup = FALSE
+                )
+              ),
+              
+              # Division (multi-select)
+              pickerInput(
+                inputId = "EFD_Division",
+                label = "Select Division:",
+                choices = sort(unique(EFDDB$Division)),
+                multiple = TRUE,
+                options = pickerOptions(
+                  `actions-box` = TRUE,
+                  liveSearch = TRUE,
+                  header = "Select Division(s)",
+                  title = "No Division Selected",
+                  dropupAuto = FALSE,
+                  dropup = FALSE
+                )
+              ),
+              
+              # Legislative District (multi-select)
+              pickerInput(
+                inputId = "EFD_LD",
+                label = "Select Legislative District:",
+                choices = sort(unique(EFDDB$Legislative.District)),
+                multiple = TRUE,
+                options = pickerOptions(
+                  `actions-box` = TRUE,
+                  liveSearch = TRUE,
+                  header = "Select Legislative District(s)",
+                  title = "No Legislative District Selected",
+                  dropupAuto = FALSE,
+                  dropup = FALSE
+                )
+              ),
+              
+              # Barangay picker removed
+              
+              # EFD Toggles (retained)
+              pickerInput(
+                inputId = "EFD_Toggles",
+                label = strong("EFD Data Toggles"),
+                choices = names(EFDDB)[!names(EFDDB) %in% c(
+                  "Region", "Old.Region", "Division", "SchoolID", "School.Name",
+                  "District", "Legislative.District", "Barangay"
+                )],
+                multiple = TRUE,
+                options = pickerOptions(
+                  `actions-box` = TRUE,
+                  liveSearch = TRUE,
+                  header = "Select Data Columns",
+                  title = "No Data Column Selected",
+                  dropupAuto = FALSE,
+                  dropup = FALSE
+                )
+              )
+            ),
+            
+            layout_columns(
+              card(
+                full_screen = TRUE,
+                style = "
+          width: 100%;
+          max-height: 85vh;
+          overflow-y: auto;
+          margin-bottom: 20px;
+        ",
+                card_header(
+                  strong("EFD Database Panel"),
+                  style = "
+            font-size: 22px;
+            padding: 15px 20px;
+            text-align: center;
+            background-color: #00234d;
+            color: white;
+            border-bottom: 2px solid #dee2e6;
+          "
+                ),
+                card_body(
+                  div(
+                    style = "
+              padding: 10px;
+              overflow-x: auto;
+              height: calc(85vh - 80px);
+            ",
+                    dataTableOutput("EFD_Table")
+                  )
+                )
+              ),
+              col_widths = c(12)
+            )
+          )
+        ),
+        
+        # --- Nav Panel 2: DepEd Officials ---
+        nav_panel(
+          title = tags$b("DepEd Officials"),
+          layout_sidebar(
+            sidebar = sidebar(
+              width = 350,
+              h6("Strand Filter:"),
+              pickerInput(
+                inputId = "ThirdLevel_Strands",
+                label = "Select Strand(s):",
+                choices = c(
+                  "Administration",
+                  "Deped Attached Agencies",
+                  "Finance",
+                  "Human Resource And Organizational Development",
+                  "Learning System",
+                  "Legal And Legislative Affairs",
+                  "Office Of The Secretary",
+                  "Operations",
+                  "Procurement",
+                  "Strategic Management",
+                  "Teachers And Education Council Secretariat"
+                ),
+                selected = c(
+                  "Administration",
+                  "Deped Attached Agencies",
+                  "Finance",
+                  "Human Resource And Organizational Development",
+                  "Learning System",
+                  "Legal And Legislative Affairs",
+                  "Office Of The Secretary",
+                  "Operations",
+                  "Procurement",
+                  "Strategic Management",
+                  "Teachers And Education Council Secretariat"
+                ),
+                multiple = TRUE,
+                options = pickerOptions(
+                  actionsBox = TRUE,
+                  liveSearch = TRUE,
+                  header = "Select Strand(s)",
+                  title = "No Strand Selected",
+                  selectedTextFormat = "count > 3",
+                  dropupAuto = FALSE,
+                  dropup = FALSE
+                ),
+                choicesOpt = list(
+                  style = "white-space: normal; word-break: break-word; overflow-wrap: break-word;"
+                )
+              )
+            ),
+            
+            layout_columns(
+              card(
+                full_screen = TRUE,
+                style = "
+          width: 100%;
+          max-height: 85vh;
+          overflow-y: auto;
+          margin-bottom: 20px;
+        ",
+                card_header(
+                  strong("HROD Data Panel"),
+                  style = "
+            font-size: 22px;
+            padding: 15px 20px;
+            text-align: center;
+            background-color: #00234d;
+            border-bottom: 2px solid #dee2e6;
+          "
+                ),
+                card_body(
+                  div(
+                    style = "
+              padding: 10px;
+              overflow-x: auto;
+              height: calc(85vh - 80px);
+            ",
+                    dataTableOutput("ThirdLevel_Table")
+                  )
+                )
+              ),
+              col_widths = c(12)
+            )
+          )
+        ),
+        
+        # --- Nav Panel 3: Infrastructure Database ---
+        nav_panel(
+          title = tags$b("Infrastructure Database"),
+          layout_sidebar(
+            sidebar = sidebar(
+              width = 350,
+              h6("Data Toggles:"),
+              
+              pickerInput(
+                inputId = "DataBuilder_HROD_Region",
+                label = "Select a Region:",
+                choices = sort(unique(uni$Region)),
+                selected = sort(unique(uni$Region)),
+                multiple = FALSE,
+                options = pickerOptions(
+                  actionsBox = TRUE,
+                  liveSearch = TRUE,
+                  header = "Select Categories",
+                  title = "No Category Selected",
+                  selectedTextFormat = "count > 3",
+                  dropupAuto = FALSE,
+                  dropup = FALSE
+                )
+              ),
+              uiOutput("DataBuilder_HROD_SDO"),
+              
+              pickerInput("School_Data_Toggles", strong("School Information Data Toggles"), 
+                          choices = c("School Size Typology" = "School.Size.Typology", 
+                                      "Curricular Offering" = "Modified.COC"),
+                          multiple = TRUE,
+                          options = pickerOptions(
+                            `actions-box` = TRUE,
+                            dropupAuto = FALSE,
+                            dropup = FALSE
+                          )
+              ),
+              
+              pickerInput("Teaching_Data_Toggles", strong("Teaching Data Toggles"), 
+                          choices = c("Total Teachers" = "TotalTeachers", 
+                                      "Teacher Excess" = "Total.Excess", 
+                                      "Teacher Shortage" = "Total.Shortage"),
+                          multiple = TRUE,
+                          options = pickerOptions(
+                            `actions-box` = TRUE,
+                            dropupAuto = FALSE,
+                            dropup = FALSE
+                          )
+              ),
+              
+              pickerInput("NTP_Data_Toggles", strong("Non-teaching Data Toggles"), 
+                          choices = c("COS" = "Outlier.Status", 
+                                      "AOII Clustering Status" = "Clustering.Status"),
+                          multiple = TRUE,
+                          options = pickerOptions(
+                            `actions-box` = TRUE,
+                            dropupAuto = FALSE,
+                            dropup = FALSE
+                          )
+              ),
+              
+              pickerInput("Enrolment_Data_Toggles", strong("Enrolment Data Toggles"), 
+                          choices = c("Total Enrolment" = "TotalEnrolment", "Kinder" = "Kinder", 
+                                      "Grade 1" = "G1", "Grade 2" = "G2", "Grade 3" = "G3", 
+                                      "Grade 4" = "G4", "Grade 5" = "G5", "Grade 6" = "G6", 
+                                      "Grade 7" = "G7", "Grade 8" = "G8", 
+                                      "Grade 9" = "G9", "Grade 10" = "G10", 
+                                      "Grade 11" = "G11", "Grade 12" = "G12"),
+                          multiple = TRUE,
+                          options = pickerOptions(
+                            `actions-box` = TRUE,
+                            dropupAuto = FALSE,
+                            dropup = FALSE
+                          )
+              ),
+              
+              pickerInput("Specialization_Data_Toggles", strong("Specialization Data Toggles"), 
+                          choices = c("English" = "English", "Mathematics" = "Mathematics", 
+                                      "Science" = "Science", 
+                                      "Biological Sciences" = "Biological.Sciences", 
+                                      "Physical Sciences" = "Physical.Sciences"),
+                          multiple = TRUE,
+                          options = pickerOptions(
+                            `actions-box` = TRUE,
+                            dropupAuto = FALSE,
+                            dropup = FALSE
+                          )
+              )
+              
+              # Removed: EFD_Data_Toggles picker
+            ),
+            
+            layout_columns(
+              card(
+                card_header(strong("HROD Data Panel")),
+                dataTableOutput("HROD_Table")
+              ),
+              col_widths = c(12, 12)
+            )
+          )
+        )
+      ),
+      # --- Quick School Search ---
+      nav_panel(
+        title = tags$b("Quick School Search"),
+        icon = bs_icon("search"),
+        layout_sidebar(
+          sidebar = sidebar(
+            textInput("text","Enter School Name"),
+            input_task_button("TextRun", icon_busy = fontawesome::fa_i("refresh", class = "fa-spin", "aria-hidden" = "true"), strong("Show Selection"), class = "btn-warning")),
+          layout_columns(
+            card(
+              card_header(strong("Search Output")),
+              dataTableOutput("TextTable")),
+            card(full_screen = TRUE,
+                 card_header(strong("School Mapping")),
+                 leafletOutput("TextMapping", height = 500, width = "100%")),
+            card(full_screen = TRUE,
+                 card_header(div(strong("School Details"),
+                                 tags$span(em("(Select a school from the table above)"),
+                                           style = "font-size: 0.7em; color: grey;"
+                                 ))),
+                 layout_columns(
+                   card(full_screen = TRUE,
+                        card_header(strong("Basic Information")),
+                        tableOutput("schooldetails")),
+                   card(full_screen = TRUE,
+                        card_header(strong("HR Data")),
+                        tableOutput("schooldetails2")),
+                   card(full_screen = TRUE,
+                        card_header(strong("Classroom Data")),
+                        tableOutput("schooldetails3")),
+                   card(full_screen = TRUE,
+                        card_header(div(strong("Specialization Data"),
+                                        tags$span(em("(based on eSF7 for SY 2023-2024)"),
+                                                  style = "font-size: 0.7em; color: grey;"
+                                        ))),
+                        tableOutput("schooldetails5")),
+                   col_widths = c(6,6,6,6))),
+            col_widths = c(6,6,12)))),
+      
+      # --- Resource Mapping ---
+      nav_panel(
+        title = tags$b("Resource Mapping"),
+        icon = bs_icon("map"),
+        layout_sidebar(
+          sidebar = sidebar(
+            width = 375,
+            title = "Resource Mapping Filters",
+            
+            # --- Data Filters Card for Resource Mapping ---
+            card(
+              height = 400,
+              card_header(tags$b("Data Filters")),
+              
+              # Region Picker
+              pickerInput(
+                inputId = "resource_map_region",
+                label = "Region:",
+                choices = c(
+                  "Region I" = "Region I","Region II" = "Region II","Region III" = "Region III",
+                  "Region IV-A" = "Region IV-A","MIMAROPA" = "MIMAROPA","Region V" = "Region V",
+                  "Region VI" = "Region VI","NIR" = "NIR","Region VII" = "Region VII",
+                  "Region VIII" = "Region VIII","Region IX" = "Region IX","Region X" = "Region X",
+                  "Region XI" = "Region XI","Region XII" = "Region XII","CARAGA" = "CARAGA",
+                  "CAR" = "CAR","NCR" = "NCR"
+                ),
+                selected = "Region I",
+                multiple = FALSE,
+                options = list(
+                  `actions-box` = FALSE,
+                  `none-selected-text` = "Select a region",
+                  dropupAuto = FALSE,
+                  dropup = FALSE
+                )
+              ),
+              
+              # Division Picker
+              pickerInput(
+                inputId = "Resource_SDO",
+                label = "Select a Division:",
+                choices = NULL,
+                selected = NULL,
+                multiple = FALSE,
+                options = list(
+                  `actions-box` = FALSE,
+                  `none-selected-text` = "Select a division",
+                  dropupAuto = FALSE,
+                  dropup = FALSE
+                )
+              ),
+              
+              # District Picker
+              pickerInput(
+                inputId = "Resource_LegDist",
+                label = "Select Legislative District(s):",
+                choices = NULL,
+                selected = NULL,
+                multiple = TRUE,
+                options = list(
+                  `actions-box` = TRUE,
+                  `none-selected-text` = "Select one or more districts",
+                  dropupAuto = FALSE,
+                  dropup = FALSE
+                )
+              ),
+              
+              input_task_button("Mapping_Run", strong("Show Selection"), class = "btn-warning")
+            ),
+            
+            hr(),
+            
+            # Resource Types
+            card(
+              card_header(tags$b("Resource Types")),
+              radioButtons(
+                inputId = "resource_type_selection",
+                label = NULL,
+                choices = c(
+                  "Teaching Deployment",
+                  "Non-teaching Deployment",
+                  "Classroom Inventory",
+                  "Learner Congestion",
+                  "Industries",
+                  "Facilities",
+                  "Last Mile School"
+                ),
+                selected = "Teaching Deployment"
+              )
+            )
+          ),
+          
+          # Main Panel
+          mainPanel(
+            width = 12,
+            uiOutput("dynamic_resource_panel")
+          )
+        )
+      ),
       nav_menu(
         title = tagList(bs_icon("cloud"),
                         tags$b("CLOUD")),
@@ -2946,582 +3510,7 @@ server <- function(input, output, session) {
               )
             )
           ))),
-      # --- Second Top-Level Tab: Data Explorer --
-      tags$head(
-        tags$style(HTML("
-/* === FINAL FIX: Consistent Bootstrap-select picker design === */
-
-/* --- Text wrapping and internal spacing --- */
-.bootstrap-select .dropdown-menu li a span.text {
-  white-space: normal !important;
-  word-break: break-word !important;
-  display: inline-block !important;
-  overflow-wrap: anywhere !important;
-  line-height: 1.3em !important;
-  padding-right: 10px !important;
-  max-width: 100% !important;
-}
-
-/* --- Scroll area for dropdown content --- */
-.bootstrap-select .dropdown-menu.inner.show {
-  padding-bottom: 0 !important;
-  margin-bottom: 0 !important;
-  max-height: none !important;
-  overflow-y: auto !important;
-}
-
-/* --- Dropdown menu box consistency --- */
-.bootstrap-select .dropdown-menu {
-  min-width: 100% !important;      /* Make all dropdowns same width as picker */
-  width: 100% !important;
-  white-space: normal !important;
-  border-radius: 6px !important;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
-  padding-bottom: 0 !important;
-  overflow: visible !important;
-  max-height: none !important;
-}
-
-/* --- Picker button (main visible area) --- */
-.bootstrap-select .dropdown-toggle {
-  width: 100% !important;
-  background-color: #f2f2f2 !important;
-  color: #333 !important;
-  border: 1px solid #ccc !important;
-  border-radius: 6px !important;
-  text-align: left !important;
-  padding: 6px 10px !important;
-  font-size: 14px !important;
-  font-weight: 400 !important;
-}
-
-/* --- Ensure dropdown opens BELOW picker --- */
-.bootstrap-select.dropup .dropdown-menu,
-.bootstrap-select:not(.dropup) .dropdown-menu {
-  top: 100% !important;
-  bottom: auto !important;
-  transform: none !important;
-}
-
-/* --- Clean hover for navbar dropdowns (still included) --- */
-.navbar .dropdown-menu > li > a:hover,
-.bslib-navbar .dropdown-menu > li > a:hover {
-  background-color: #2c3895 !important;
-  color: white !important;
-}
-
-/* --- Scrollbar styling for long dropdowns --- */
-.bootstrap-select .dropdown-menu.inner::-webkit-scrollbar {
-  width: 8px;
-}
-
-.bootstrap-select .dropdown-menu.inner::-webkit-scrollbar-thumb {
-  background-color: rgba(0, 0, 0, 0.2);
-  border-radius: 4px;
-}
-
-.bootstrap-select .dropdown-menu.inner::-webkit-scrollbar-thumb:hover {
-  background-color: rgba(0, 0, 0, 0.35);
-}
-
-/* --- Consistent picker height and spacing --- */
-.bootstrap-select {
-  width: 100% !important;
-  margin-bottom: 10px !important;
-}
-
-.bootstrap-select .filter-option-inner-inner {
-  text-overflow: ellipsis !important;
-  overflow: hidden !important;
-  white-space: nowrap !important;
-}
-
-/* --- Prevent dropdown from cutting off --- */
-.bootstrap-select .dropdown-menu.show {
-  z-index: 9999 !important;
-}
-  "))
-      )
-      ,
-      nav_menu(
-        title = tags$b("Data Explorer"),  # Dropdown menu
-        icon = bs_icon("table"),
-        
-        # --- Nav Panel 1: School Information ---
-        nav_panel(
-          title = tags$b("School Information"),
-          layout_sidebar(
-            sidebar = sidebar(
-              width = 350,
-              h6("Data Toggles:"),
-              
-              # Region picker
-              pickerInput(
-                inputId = "DataBuilder_HROD_Region",
-                label = "Select a Region:",
-                choices = sort(unique(uni$Region)),
-                selected = sort(unique(uni$Region)),
-                multiple = FALSE,
-                options = pickerOptions(
-                  actionsBox = TRUE,
-                  liveSearch = TRUE,
-                  header = "Select Categories",
-                  title = "No Category Selected",
-                  selectedTextFormat = "count > 3",
-                  dropupAuto = FALSE,
-                  dropup = FALSE
-                )
-              ),
-              uiOutput("DataBuilder_HROD_SDO"),
-              
-              pickerInput("School_Data_Toggles", strong("School Information Data Toggles"), 
-                          choices = c("School Size Typology" = "School.Size.Typology", 
-                                      "Curricular Offering" = "Modified.COC"),
-                          multiple = TRUE,
-                          options = pickerOptions(
-                            `actions-box` = TRUE,
-                            dropupAuto = FALSE,
-                            dropup = FALSE
-                          )
-              ),
-              
-              pickerInput("Teaching_Data_Toggles", strong("Teaching Data Toggles"), 
-                          choices = c("Total Teachers" = "TotalTeachers", 
-                                      "Teacher Excess" = "Total.Excess", 
-                                      "Teacher Shortage" = "Total.Shortage"),
-                          multiple = TRUE,
-                          options = pickerOptions(
-                            `actions-box` = TRUE,
-                            dropupAuto = FALSE,
-                            dropup = FALSE
-                          )
-              ),
-              
-              pickerInput("NTP_Data_Toggles", strong("Non-teaching Data Toggles"), 
-                          choices = c("COS" = "Outlier.Status", 
-                                      "AOII Clustering Status" = "Clustering.Status"),
-                          multiple = TRUE,
-                          options = pickerOptions(
-                            `actions-box` = TRUE,
-                            dropupAuto = FALSE,
-                            dropup = FALSE
-                          )
-              ),
-              
-              pickerInput("Enrolment_Data_Toggles", strong("Enrolment Data Toggles"), 
-                          choices = c("Total Enrolment" = "TotalEnrolment", "Kinder" = "Kinder", 
-                                      "Grade 1" = "G1", "Grade 2" = "G2", "Grade 3" = "G3", 
-                                      "Grade 4" = "G4", "Grade 5" = "G5", "Grade 6" = "G6", 
-                                      "Grade 7" = "G7", "Grade 8" = "G8", 
-                                      "Grade 9" = "G9", "Grade 10" = "G10", 
-                                      "Grade 11" = "G11", "Grade 12" = "G12"),
-                          multiple = TRUE,
-                          options = pickerOptions(
-                            `actions-box` = TRUE,
-                            dropupAuto = FALSE,
-                            dropup = FALSE
-                          )
-              ),
-              
-              pickerInput("Specialization_Data_Toggles", strong("Specialization Data Toggles"), 
-                          choices = c("English" = "English", "Mathematics" = "Mathematics", 
-                                      "Science" = "Science", 
-                                      "Biological Sciences" = "Biological.Sciences", 
-                                      "Physical Sciences" = "Physical.Sciences"),
-                          multiple = TRUE,
-                          options = pickerOptions(
-                            `actions-box` = TRUE,
-                            dropupAuto = FALSE,
-                            dropup = FALSE
-                          )
-              ),
-              
-              pickerInput("EFD_Data_Toggles", strong("Infrastructure Data Toggles"), 
-                          choices = c("Number of Buildings" = "Buildings", 
-                                      "Instructional Rooms" = "Instructional.Rooms.2023.2024", 
-                                      "Classroom Requirement" = "Classroom.Requirement", 
-                                      "Estimated Classroom Shortage" = "Est.CS", 
-                                      "Buildable Space" = "Buidable_space", 
-                                      "Congestion Index" = "Congestion.Index", 
-                                      "Shifting" = "Shifting", 
-                                      "Ownership Type" = "OwnershipType", 
-                                      "Electricity Source" = "ElectricitySource", 
-                                      "Water Source" = "WaterSource", 
-                                      "For Major Repairs" = "Major.Repair.2023.2024", 
-                                      "School Building Priority Index" = "SBPI", 
-                                      "Total Seats" = "Total.Seats.2023.2024", 
-                                      "Total Seats Shortage" = "Total.Seats.Shortage.2023.2024"),
-                          multiple = TRUE,
-                          options = pickerOptions(
-                            `actions-box` = TRUE,
-                            dropupAuto = FALSE,
-                            dropup = FALSE
-                          ))
-            ),
-            layout_columns(
-              card(
-                card_header(strong("HROD Data Panel")),
-                dataTableOutput("HROD_Table")
-              ),
-              col_widths = c(12,12)
-            )
-          )
-        ),
-        
-        # --- Nav Panel 2: Third Level Dashboard ---
-        nav_panel(
-          title = tags$b("Third Level Dashboard"),
-          layout_sidebar(
-            sidebar = sidebar(
-              width = 350,
-              h6("Strand Filter:"),
-              pickerInput(
-                inputId = "ThirdLevel_Strands",
-                label = "Select Strand(s):",
-                choices = c(
-                  "Administration",
-                  "Deped Attached Agencies",
-                  "Finance",
-                  "Human Resource And Organizational Development",
-                  "Learning System",
-                  "Legal And Legislative Affairs",
-                  "Office Of The Secretary",
-                  "Operations",
-                  "Procurement",
-                  "Strategic Management",
-                  "Teachers And Education Council Secretariat"
-                ),
-                selected = c(
-                  "Administration",
-                  "Deped Attached Agencies",
-                  "Finance",
-                  "Human Resource And Organizational Development",
-                  "Learning System",
-                  "Legal And Legislative Affairs",
-                  "Office Of The Secretary",
-                  "Operations",
-                  "Procurement",
-                  "Strategic Management",
-                  "Teachers And Education Council Secretariat"
-                ),
-                multiple = TRUE,
-                options = pickerOptions(
-                  actionsBox = TRUE,
-                  liveSearch = TRUE,
-                  header = "Select Strand(s)",
-                  title = "No Strand Selected",
-                  selectedTextFormat = "count > 3",
-                  dropupAuto = FALSE,
-                  dropup = FALSE
-                ),
-                choicesOpt = list(
-                  style = "white-space: normal; word-break: break-word; overflow-wrap: break-word;"
-                )
-              )
-            ),
-            
-            layout_columns(
-              card(
-                full_screen = TRUE,
-                style = "
-            width: 100%;
-            max-height: 85vh;
-            overflow-y: auto;
-            margin-bottom: 20px;
-          ",
-                card_header(
-                  strong("HROD Data Panel"),
-                  style = "
-              font-size: 22px;
-              padding: 15px 20px;
-              text-align: center;
-              background-color: #00234d;
-              border-bottom: 2px solid #dee2e6;
-            "
-                ),
-                card_body(
-                  div(
-                    style = "
-                padding: 10px;
-                overflow-x: auto;
-                height: calc(85vh - 80px);
-              ",
-                    dataTableOutput("ThirdLevel_Table")
-                  )
-                )
-              ),
-              col_widths = c(12)
-            )
-          )
-        ),
-        
-        # --- Nav Panel 3: EFD Database ---
-        nav_panel(
-          title = tags$b("EFD Database"),
-          layout_sidebar(
-            sidebar = sidebar(
-              width = 350,
-              h6("EFD Database Filters:"),
-              
-              # Region (single select)
-              pickerInput(
-                inputId = "EFD_Region",
-                label = "Select Region:",
-                choices = sort(unique(EFDDB$Region)),
-                selected = sort(unique(EFDDB$Region))[1],
-                multiple = FALSE,
-                options = pickerOptions(
-                  liveSearch = TRUE,
-                  header = "Select Region",
-                  title = "No Region Selected",
-                  dropupAuto = FALSE,
-                  dropup = FALSE
-                )
-              ),
-              
-              # Division (multi-select)
-              pickerInput(
-                inputId = "EFD_Division",
-                label = "Select Division:",
-                choices = sort(unique(EFDDB$Division)),
-                multiple = TRUE,
-                options = pickerOptions(
-                  `actions-box` = TRUE,
-                  liveSearch = TRUE,
-                  header = "Select Division(s)",
-                  title = "No Division Selected",
-                  dropupAuto = FALSE,
-                  dropup = FALSE
-                )
-              ),
-              
-              # Legislative District (multi-select)
-              pickerInput(
-                inputId = "EFD_LD",
-                label = "Select Legislative District:",
-                choices = sort(unique(EFDDB$Legislative.District)),
-                multiple = TRUE,
-                options = pickerOptions(
-                  `actions-box` = TRUE,
-                  liveSearch = TRUE,
-                  header = "Select Legislative District(s)",
-                  title = "No Legislative District Selected",
-                  dropupAuto = FALSE,
-                  dropup = FALSE
-                )
-              ),
-              
-              # Barangay (multi-select)
-              pickerInput(
-                inputId = "EFD_Barangay",
-                label = "Select Barangay:",
-                choices = sort(unique(EFDDB$Barangay)),
-                multiple = TRUE,
-                options = pickerOptions(
-                  `actions-box` = TRUE,
-                  liveSearch = TRUE,
-                  header = "Select Barangay(s)",
-                  title = "No Barangay Selected",
-                  dropupAuto = FALSE,
-                  dropup = FALSE
-                )
-              ),
-              
-              # EFD Toggles
-              pickerInput(
-                inputId = "EFD_Toggles",
-                label = strong("EFD Data Toggles"),
-                choices = names(EFDDB)[!names(EFDDB) %in% c(
-                  "Region", "Old.Region", "Division", "SchoolID", "School.Name",
-                  "District", "Legislative.District", "Barangay"
-                )],
-                multiple = TRUE,
-                options = pickerOptions(
-                  `actions-box` = TRUE,
-                  liveSearch = TRUE,
-                  header = "Select Data Columns",
-                  title = "No Data Column Selected",
-                  dropupAuto = FALSE,
-                  dropup = FALSE
-                )
-              )
-            ),
-            
-            layout_columns(
-              card(
-                full_screen = TRUE,
-                style = "
-          width: 100%;
-          max-height: 85vh;
-          overflow-y: auto;
-          margin-bottom: 20px;
-        ",
-                card_header(
-                  strong("EFD Database Panel"),
-                  style = "
-            font-size: 22px;
-            padding: 15px 20px;
-            text-align: center;
-            background-color: #00234d;
-            color: white;
-            border-bottom: 2px solid #dee2e6;
-          "
-                ),
-                card_body(
-                  div(
-                    style = "
-              padding: 10px;
-              overflow-x: auto;
-              height: calc(85vh - 80px);
-            ",
-                    dataTableOutput("EFD_Table")
-                  )
-                )
-              ),
-              col_widths = c(12)
-            )
-          )
-        )
-      ),
       
-      
-      # --- Quick School Search ---
-      nav_panel(
-        title = tags$b("Quick School Search"),
-        icon = bs_icon("search"),
-        layout_sidebar(
-          sidebar = sidebar(
-            textInput("text","Enter School Name"),
-            input_task_button("TextRun", icon_busy = fontawesome::fa_i("refresh", class = "fa-spin", "aria-hidden" = "true"), strong("Show Selection"), class = "btn-warning")),
-          layout_columns(
-            card(
-              card_header(strong("Search Output")),
-              dataTableOutput("TextTable")),
-            card(full_screen = TRUE,
-                 card_header(strong("School Mapping")),
-                 leafletOutput("TextMapping", height = 500, width = "100%")),
-            card(full_screen = TRUE,
-                 card_header(div(strong("School Details"),
-                                 tags$span(em("(Select a school from the table above)"),
-                                           style = "font-size: 0.7em; color: grey;"
-                                 ))),
-                 layout_columns(
-                   card(full_screen = TRUE,
-                        card_header(strong("Basic Information")),
-                        tableOutput("schooldetails")),
-                   card(full_screen = TRUE,
-                        card_header(strong("HR Data")),
-                        tableOutput("schooldetails2")),
-                   card(full_screen = TRUE,
-                        card_header(strong("Classroom Data")),
-                        tableOutput("schooldetails3")),
-                   card(full_screen = TRUE,
-                        card_header(div(strong("Specialization Data"),
-                                        tags$span(em("(based on eSF7 for SY 2023-2024)"),
-                                                  style = "font-size: 0.7em; color: grey;"
-                                        ))),
-                        tableOutput("schooldetails5")),
-                   col_widths = c(6,6,6,6))),
-            col_widths = c(6,6,12)))),
-      
-      # --- Resource Mapping ---
-      nav_panel(
-        title = tags$b("Resource Mapping"),
-        icon = bs_icon("map"),
-        layout_sidebar(
-          sidebar = sidebar(
-            width = 375,
-            title = "Resource Mapping Filters",
-            
-            # --- Data Filters Card for Resource Mapping ---
-            card(
-              height = 400,
-              card_header(tags$b("Data Filters")),
-              
-              # Region Picker
-              pickerInput(
-                inputId = "resource_map_region",
-                label = "Region:",
-                choices = c(
-                  "Region I" = "Region I","Region II" = "Region II","Region III" = "Region III",
-                  "Region IV-A" = "Region IV-A","MIMAROPA" = "MIMAROPA","Region V" = "Region V",
-                  "Region VI" = "Region VI","NIR" = "NIR","Region VII" = "Region VII",
-                  "Region VIII" = "Region VIII","Region IX" = "Region IX","Region X" = "Region X",
-                  "Region XI" = "Region XI","Region XII" = "Region XII","CARAGA" = "CARAGA",
-                  "CAR" = "CAR","NCR" = "NCR"
-                ),
-                selected = "Region I",
-                multiple = FALSE,
-                options = list(
-                  `actions-box` = FALSE,
-                  `none-selected-text` = "Select a region",
-                  dropupAuto = FALSE,
-                  dropup = FALSE
-                )
-              ),
-              
-              # Division Picker
-              pickerInput(
-                inputId = "Resource_SDO",
-                label = "Select a Division:",
-                choices = NULL,
-                selected = NULL,
-                multiple = FALSE,
-                options = list(
-                  `actions-box` = FALSE,
-                  `none-selected-text` = "Select a division",
-                  dropupAuto = FALSE,
-                  dropup = FALSE
-                )
-              ),
-              
-              # District Picker
-              pickerInput(
-                inputId = "Resource_LegDist",
-                label = "Select Legislative District(s):",
-                choices = NULL,
-                selected = NULL,
-                multiple = TRUE,
-                options = list(
-                  `actions-box` = TRUE,
-                  `none-selected-text` = "Select one or more districts",
-                  dropupAuto = FALSE,
-                  dropup = FALSE
-                )
-              ),
-              
-              input_task_button("Mapping_Run", strong("Show Selection"), class = "btn-warning")
-            ),
-            
-            hr(),
-            
-            # Resource Types
-            card(
-              card_header(tags$b("Resource Types")),
-              radioButtons(
-                inputId = "resource_type_selection",
-                label = NULL,
-                choices = c(
-                  "Teaching Deployment",
-                  "Non-teaching Deployment",
-                  "Classroom Inventory",
-                  "Learner Congestion",
-                  "Industries",
-                  "Facilities",
-                  "Last Mile School"
-                ),
-                selected = "Teaching Deployment"
-              )
-            )
-          ),
-          
-          # Main Panel
-          mainPanel(
-            width = 12,
-            uiOutput("dynamic_resource_panel")
-          )
-        )
-      ),
       # --- Last Top-Level Tab: About ---
       nav_panel(
         title = tags$b("About"),
@@ -4196,25 +4185,23 @@ server <- function(input, output, session) {
     )
   })
   
-  # --- Delay default setting until UI & df are ready ---
-  observe({
-    # Wait until df exists and has Region I data
+  observeEvent(TRUE, {
     req(df)
-    invalidateLater(500, session)  # keeps checking until successful
     
-    if (!is.null(input$resource_map_region) && input$resource_map_region == "Region I") {
-      filtered_division <- unique(df[df$Region == "Region I", "Division"])
-      filtered_division <- filtered_division[!is.na(filtered_division) & filtered_division != ""]
-      
-      if (length(filtered_division) > 0) {
+    # Initialize only once at startup
+    isolate({
+      if (!is.null(input$resource_map_region) && input$resource_map_region == "Region I") {
+        filtered_division <- unique(df[df$Region == "Region I", "Division"])
+        filtered_division <- filtered_division[!is.na(filtered_division) & filtered_division != ""]
+        
         shinyWidgets::updatePickerInput(
           session = session,
           inputId = "Resource_SDO",
           choices = filtered_division,
-          selected = filtered_division[1]
+          selected = if (length(filtered_division) > 0) filtered_division[1] else NULL
         )
       }
-    }
+    })
   })
   
   # Reactive value to store uploaded data
@@ -9903,59 +9890,47 @@ server <- function(input, output, session) {
   })
   
   output$HROD_Table <- DT::renderDT(server = TRUE, {
-    # Get all unique choices from the original dataset for comparison
     all_regions <- unique(uni$Region)
     all_divisions <- unique(uni$Division)
     
-    # Determine if all choices are selected in the pickerInputs
     all_regions_selected <- length(input$DataBuilder_HROD_Region) == length(all_regions)
     all_divisions_selected <- length(input$DataBuilder_SDO) == length(all_divisions)
     
-    # Create a reactive dataframe for your table
     filtered_uni <- reactive({
-      
-      # If both 'all regions' and 'all divisions' are selected, return the full dataset
       if (all_regions_selected && all_divisions_selected) {
         return(uni)
       } else {
-        # Otherwise, apply your normal filtering logic
         uni %>%
           filter(Region %in% input$DataBuilder_HROD_Region) %>%
           filter(Division %in% input$DataBuilder_SDO)
       }
     })
     
-    # Render the data table using the reactive dataframe
     datatable(
       filtered_uni() %>%
         mutate(across(where(is.character), ~ str_replace_all(., "ñ", "n"))) %>%
         mutate(across(18:43, ~ if_else(. == 0, "-", as.character(.)))) %>%
-        select(Region, School.Name, SchoolID, Division, District, input$School_Data_Toggles,
-               input$Teaching_Data_Toggles, input$NTP_Data_Toggles, input$Enrolment_Data_Toggles,
-               input$Specialization_Data_Toggles, input$EFD_Data_Toggles) %>%
+        # Removed input$EFD_Data_Toggles from selection
+        select(Region, School.Name, SchoolID, Division, District,
+               input$School_Data_Toggles,
+               input$Teaching_Data_Toggles,
+               input$NTP_Data_Toggles,
+               input$Enrolment_Data_Toggles,
+               input$Specialization_Data_Toggles) %>%
         arrange(desc(District)),
       extension = 'Buttons',
       filter = 'top',
       options = list(
         scrollX = TRUE,
-        fixedColumns = list(leftColumns = 6), 
+        fixedColumns = list(leftColumns = 6),
         pageLength = 10,
         columnDefs = list(list(className = 'dt-center', targets = "_all")),
         rownames = FALSE,
         dom = 'Bfrtip',
         buttons = list(
-          list(
-            extend = "csv",
-            exportOptions = list(modifier = list(page = "all"))
-          ),
-          list(
-            extend = "excel",
-            exportOptions = list(modifier = list(page = "all"))
-          ),
-          list(
-            extend = "print",
-            exportOptions = list(modifier = list(page = "all"))
-          )
+          list(extend = "csv", exportOptions = list(modifier = list(page = "all"))),
+          list(extend = "excel", exportOptions = list(modifier = list(page = "all"))),
+          list(extend = "print", exportOptions = list(modifier = list(page = "all")))
         )
       )
     )
@@ -10009,8 +9984,9 @@ server <- function(input, output, session) {
     )
   })
   
-  # --- EFD Database Server Logic ---
+  # --- EFD Database Server Logic (Updated - Barangay Picker Removed) ---
   
+  # Reactive filter logic
   filtered_EFD_reactive <- reactive({
     df <- EFDDB
     
@@ -10029,15 +10005,10 @@ server <- function(input, output, session) {
       df <- df %>% filter(Legislative.District %in% input$EFD_LD)
     }
     
-    # Barangay (multi)
-    if (!is.null(input$EFD_Barangay) && length(input$EFD_Barangay) > 0) {
-      df <- df %>% filter(Barangay %in% input$EFD_Barangay)
-    }
-    
     df
   })
   
-  # --- Render DT (Fixed version) ---
+  # --- Render DT (with robust "-" replacement for blanks/NA/#N/A) ---
   output$EFD_Table <- DT::renderDT(server = TRUE, {
     df <- filtered_EFD_reactive()
     
@@ -10052,17 +10023,32 @@ server <- function(input, output, session) {
       character(0)
     }
     
-    # Only atomic columns (avoid lists or nested objects)
+    # Ensure no list columns break the table
     df <- df %>%
       mutate(across(where(is.list), ~ sapply(., function(x) {
         if (length(x) == 0) return(NA)
         paste(as.character(x), collapse = ", ")
       })))
     
-    # Clean and select columns
+    # Base columns (Barangay still visible)
     base_cols <- c("Region", "Division", "Legislative.District", "Barangay", "School.Name", "SchoolID")
     base_cols <- base_cols[base_cols %in% names(df)]
     
+    # ✅ Replace NA, blank, or any form of "#N/A" (case-insensitive) with "-"
+    df <- df %>%
+      mutate(across(
+        everything(),
+        ~ {
+          val <- trimws(as.character(.))  # clean spaces and coerce to text
+          ifelse(
+            is.na(val) | val == "" | grepl("^#N/A$", val, ignore.case = TRUE),
+            "-",
+            val
+          )
+        }
+      ))
+    
+    # Prepare final display
     display_df <- df %>%
       mutate(across(where(is.character), ~ stringr::str_replace_all(., "ñ", "n"))) %>%
       select(all_of(base_cols), any_of(selected_cols))
@@ -10088,9 +10074,10 @@ server <- function(input, output, session) {
   })
   
   # =====================================================
-  # DYNAMIC CASCADING PICKER UPDATES
+  # DYNAMIC PICKER UPDATES (Barangay logic removed)
   # =====================================================
   
+  # When Region changes
   observeEvent(input$EFD_Region, {
     region_data <- EFDDB %>% filter(Region == input$EFD_Region)
     
@@ -10099,37 +10086,24 @@ server <- function(input, output, session) {
     
     lds <- sort(unique(region_data$Legislative.District))
     updatePickerInput(session, "EFD_LD", choices = lds, selected = lds[1])
-    
-    brgys <- sort(unique(region_data$Barangay))
-    updatePickerInput(session, "EFD_Barangay", choices = brgys, selected = brgys[1])
   }, ignoreNULL = TRUE, ignoreInit = FALSE)
   
+  # When Division changes
   observeEvent(input$EFD_Division, {
     req(input$EFD_Region)
+    
     div_data <- EFDDB %>%
       filter(Region == input$EFD_Region, Division %in% input$EFD_Division)
     
     lds <- sort(unique(div_data$Legislative.District))
     updatePickerInput(session, "EFD_LD", choices = lds, selected = lds[1])
-    
-    brgys <- sort(unique(div_data$Barangay))
-    updatePickerInput(session, "EFD_Barangay", choices = brgys, selected = brgys[1])
   }, ignoreNULL = TRUE)
   
+  # When Legislative District changes (Barangay logic removed)
   observeEvent(input$EFD_LD, {
     req(input$EFD_Region)
-    tmp <- EFDDB %>% filter(Region == input$EFD_Region)
-    if (!is.null(input$EFD_Division) && length(input$EFD_Division) > 0) {
-      tmp <- tmp %>% filter(Division %in% input$EFD_Division)
-    }
-    if (!is.null(input$EFD_LD) && length(input$EFD_LD) > 0) {
-      tmp <- tmp %>% filter(Legislative.District %in% input$EFD_LD)
-    }
-    
-    updatePickerInput(session, "EFD_Barangay",
-                      choices = sort(unique(tmp$Barangay)),
-                      selected = sort(unique(tmp$Barangay))[1])
   }, ignoreNULL = TRUE)
+  
   output$explorer_masterlist_data_table <- DT::renderDT(server = TRUE, {datatable(EFDMP %>% filter(Region == input$explorer_masterlist_region_filter) %>% filter(Division == input$explorer_masterlist_SDO) %>% arrange(desc(FundingYear)) %>% select(Region, Division, District, SchoolID, School.Name,FundingYear,Category,Allocation,Completion,Status), extension = 'Buttons', filter = 'top', options = list(scrollX = TRUE, pageLength = 10, columnDefs = list(list(className = 'dt-center', targets ="_all")), rownames = FALSE, dom = 'Bfrtip', buttons = list('csv','excel','print')))})
   
   output$explorer_efd_division_filter <- renderUI({
@@ -11256,6 +11230,7 @@ server <- function(input, output, session) {
           fixedHeader = TRUE,
           pageLength = 10,
           dom = 'Bfrtip',
+          destroy = TRUE, 
           buttons = list(
             list(extend = "csv", exportOptions = list(modifier = list(page = "all"))),
             list(extend = "excel", exportOptions = list(modifier = list(page = "all"))),
@@ -22296,7 +22271,7 @@ server <- function(input, output, session) {
     
     # Read data from Google Sheet
     users_db <- tryCatch({
-      googlesheets4::read_sheet(SHEET_URL)
+      googlesheets4::read_sheet(sheet_url)
     }, error = function(e) {
       showNotification(paste("Error reading database:", e$message,  
                              "Assuming sheet structure is correct."), type = "error")
@@ -22382,16 +22357,14 @@ server <- function(input, output, session) {
     ns <- NS(id)
     
     tagList(
-      # Fullscreen bubble background (30 bubbles)
-      div(
-        class = "bubble-bg",
-        lapply(1:30, function(i) div(class = paste0("bubble b", i)))
-      ),
+      # ✅ Animated gradient background (no bubbles)
+      div(class = "login-bg gradient-animated"),
       
       # Render the UI produced by the authentication module
       uiOutput(ns("auth_page"))
     )
   }
+  
   
   
   # 2️⃣  Define the main dynamic page switch
@@ -22449,7 +22422,7 @@ server <- function(input, output, session) {
   
   # 3️⃣  Activate the authentication module
   callModule(authentication_server, "auth", 
-             user_status, form_choice, SHEET_URL, user_database, db_trigger, 
+             user_status, form_choice, sheet_url, user_database, db_trigger, 
              authenticated_user)
   
   
@@ -22491,16 +22464,31 @@ authentication_server <- function(input, output, session, user_status,
       # LOGIN PANEL
       div(
         class = "login-container",
+        div(
+          class = "login-left",
         
         # LEFT SIDE
         div(
-          class = "login-left",
-          div(
-            class = "login-text-box",
-            h2(style = "color: #000000; font-size: 10.98rem; text-shadow: -10px 2px 2px #1C6EA4;", "STRIDE"),
-            p(style = "font-size: 30px;", "Education in Motion. Data Precision. Smart Decision.")
-          )
+          class = "login-text-box text-center",
+          
+          # Top slogan
+          p(class = "slogan-top", "Education in Motion."),
+          
+          # STRIDE title with DepEd-themed colors
+          h2(
+            HTML('
+    <span class="stride-str">Str</span>
+    <span class="stride-i">I</span>
+    <span class="stride-ide">de</span>
+  '),
+            class = "stride-logo-text"
+          ),
+          
+          # Bottom slogan
+          p(class = "slogan-bottom", "Data Precision. Smart Decision.")
+        )
         ),
+        
         
         # RIGHT SIDE
         div(
@@ -22577,6 +22565,28 @@ authentication_server <- function(input, output, session, user_status,
     }
   })
   
+  
+  # --- Station-Specific Inputs ---
+  output$station_specific_ui <- renderUI({
+    ns <- session$ns
+    req(input$govlev)
+    
+    if (input$govlev == "School") {
+      tagList(
+        textInput(ns("school_id"), "School ID:"),
+        tags$small("Enter your School ID (6 digits).", class = "text-muted")
+      )
+    } else if (input$govlev %in% c("Central Office", "Regional Office", "Schools Division Office")) {
+      tagList(
+        textInput(ns("office_name"), "Office Name:"),
+        tags$small("Enter Bureau/Division. Do not abbreviate!", class = "text-muted")
+      )
+    } else {
+      NULL
+    }
+  })
+  
+  
   # --- 3️⃣ LOGIN LOGIC ---
   observeEvent(input$do_login, {
     req(input$login_user, input$login_pass)
@@ -22623,414 +22633,391 @@ authentication_server <- function(input, output, session, user_status,
   })
   
   # --- 5️⃣ REGISTRATION LOGIC ---
+  # --- 4. Registration Logic ---
   observeEvent(input$do_register, {
     print("🔔 Register button clicked")
-    req(input$reg_user, input$reg_pass, input$reg_pass_confirm, input$govlev)
     
-    # Validation
-    if (input$govlev == "") {
-      output$register_message <- renderUI({
-        tags$p("Please select your Station.", class = "text-danger mt-2")
-      })
+    # Collect values safely
+    reg_user <- input$reg_user
+    reg_pass <- input$reg_pass
+    govlev <- input$govlev
+    school_id <- input$school_id
+    office_name <- input$office_name
+    
+    print(list(
+      reg_user = reg_user,
+      reg_pass = reg_pass,
+      govlev = govlev,
+      school_id = school_id,
+      office_name = office_name
+    ))
+    
+    # === VALIDATION ===
+    if (is.null(reg_user) || reg_user == "") {
+      print("❌ Missing reg_user")
+      return()
+    }
+    if (!endsWith(reg_user, "@deped.gov.ph")) {
+      print("❌ Invalid email domain")
+      return()
+    }
+    if (is.null(reg_pass) || reg_pass == "") {
+      print("❌ Missing password")
+      return()
+    }
+    if (is.null(govlev) || govlev == "") {
+      print("❌ Missing station")
       return()
     }
     
-    # Initialize vars
-    station_detail_id <- NA_character_
-    station_detail_office <- NA_character_
-    
-    if (input$govlev == "School") {
-      req(input$school_id)
-      school_id_trimmed <- trimws(input$school_id)
-      if (nchar(school_id_trimmed) != 6) {
-        output$register_message <- renderUI({
-          tags$p("School ID must be exactly 6 digits.", class = "text-danger mt-2")
-        })
-        return()
-      }
-      station_detail_id <- school_id_trimmed
-    } else {
-      req(input$office_name)
-      if (trimws(input$office_name) == "") {
-        output$register_message <- renderUI({
-          tags$p("Please enter your Office Name.", class = "text-danger mt-2")
-        })
-        return()
-      }
-      station_detail_office <- trimws(input$office_name)
-    }
-    
-    if (!endsWith(input$reg_user, "@deped.gov.ph")) {
-      output$register_message <- renderUI({
-        tags$p("Registration requires an official @deped.gov.ph email address.", class = "text-danger mt-2")
-      })
-      return()
-    }
-    
-    if (input$reg_pass != input$reg_pass_confirm) {
-      output$register_message <- renderUI({
-        tags$p("Passwords do not match.", class = "text-danger mt-2")
-      })
-      return()
-    }
-    
-    users_db <- user_database()
-    if (input$reg_user %in% users_db$Email_Address) {
-      output$register_message <- renderUI({
-        tags$p("This email is already registered.", class = "text-danger mt-2")
-      })
-      return()
-    }
-    
+    # --- Prepare new user ---
     new_user <- data.frame(
       Registration_Date = as.character(Sys.time()),
-      Email_Address = input$reg_user,
-      Password = input$reg_pass,
-      Station = input$govlev,
-      School_ID = station_detail_id,
-      Office = station_detail_office,
+      Email_Address = reg_user,
+      Password = reg_pass,
+      Station = govlev,
+      School_ID = ifelse(govlev == "School", school_id, NA),
+      Office = ifelse(govlev != "School", office_name, NA),
       stringsAsFactors = FALSE
     )
     
-    success <- tryCatch({
-      googlesheets4::sheet_append(sheet_url, data = new_user)
-      TRUE
-    }, error = function(e) {
-      output$register_message <- renderUI({
-        tags$p(paste("Error writing to database:", e$message), class = "text-danger mt-2")
-      })
-      FALSE
-    })
+    print("🧩 Preparing to write new user:")
+    print(new_user)
     
-    if (success) {
+    # --- TRY WRITING TO GOOGLE SHEET ---
+    tryCatch({
+      print("🟢 Attempting to append to sheet...")
+      googlesheets4::sheet_append(sheet_url, data = new_user)
+      print("✅ Successfully appended to Google Sheet")
+      
+      # Trigger refresh
       db_trigger(db_trigger() + 1)
       user_status("authenticated")
-      authenticated_user(input$reg_user)
+      authenticated_user(reg_user)
       
-      output$register_message <- renderUI({
-        tags$p("✅ Registration successful! Redirecting...", class = "text-success mt-2")
-      })
+      showNotification("✅ Registration successful!", type = "message")
       
-      session$sendCustomMessage("showLoader", "Setting up your account...")
-      later::later(function() {
-        session$sendCustomMessage("hideLoader", NULL)
-      }, 2)
-    }
+    }, error = function(e) {
+      print(paste("❌ Error during sheet append:", e$message))
+      showNotification(paste("❌ Error writing to sheet:", e$message), type = "error")
+    })
   })
+  
+  
 }
 # --- END OF AUTHENTICATION MODULE ---
 # ==========================================================
 
-  
-  
 
+
+
+
+# Reactive function to read the data (run once when server starts)
+observeEvent(TRUE, {
+  # This reads the data and stores it in the reactiveVal
+  tryCatch({
+    # Use read_sheet to read the data, forcing it to character to match inputs
+    data <- read_sheet(
+      ss = SHEET_ID, 
+      sheet = SHEET_NAME, 
+      col_types = "c", # Read all columns as character to prevent type mismatch
+      trim_ws = TRUE
+    )
+    school_data(data)
+  }, error = function(e) {
+    showModal(modalDialog(
+      title = "Authentication Error",
+      paste("Failed to read Google Sheet. Check Sheet ID, network, and permissions:", e$message),
+      footer = modalButton("Close")
+    ))
+    # Stop execution if data cannot be loaded
+    stop("Sheet read failed.")
+  })
+}, once = TRUE) # Run only once when the server starts
+
+# ... (Your validate_numeric_input function goes here) ...
+validate_numeric_input <- function(inputId, len) {
   
-  # Reactive function to read the data (run once when server starts)
-  observeEvent(TRUE, {
-    # This reads the data and stores it in the reactiveVal
-    tryCatch({
-      # Use read_sheet to read the data, forcing it to character to match inputs
-      data <- read_sheet(
-        ss = SHEET_ID, 
-        sheet = SHEET_NAME, 
-        col_types = "c", # Read all columns as character to prevent type mismatch
-        trim_ws = TRUE
-      )
-      school_data(data)
-    }, error = function(e) {
-      showModal(modalDialog(
-        title = "Authentication Error",
-        paste("Failed to read Google Sheet. Check Sheet ID, network, and permissions:", e$message),
-        footer = modalButton("Close")
-      ))
-      # Stop execution if data cannot be loaded
-      stop("Sheet read failed.")
+  observeEvent(input[[inputId]], {
+    
+    # Get the value from the input. 
+    val_str <- input[[inputId]]
+    
+    # --- FIX: Check for NULL, Empty String, OR NA ---
+    # We must explicitly handle NA before nchar or grepl is called.
+    if (is.null(val_str) || val_str == "" || is.na(val_str)) {
+      shinyjs::removeClass(id = inputId, class = "input-error")
+      return()
+    }
+    
+    # 2. Check if the input contains ONLY digits.
+    # We use isTRUE() as a safeguard, just in case grepl returns NA (though unlikely here)
+    # is_all_digits will be TRUE or FALSE, never NA.
+    is_all_digits <- isTRUE(grepl("^\\d+$", val_str))
+    
+    # 3. Check the exact character length.
+    is_correct_length <- nchar(val_str) == len
+    
+    # The input is valid only if both conditions are TRUE.
+    # R's '&&' is safe because is_all_digits is guaranteed TRUE/FALSE.
+    is_valid <- is_all_digits && is_correct_length
+    
+    if (is_valid) {
+      shinyjs::removeClass(id = inputId, class = "input-error")
+    } else {
+      shinyjs::addClass(id = inputId, class = "input-error")
+    }
+  }, ignoreNULL = FALSE) 
+}
+# ... (Your validation observers go here) ...
+validate_numeric_input(inputId = "school_id", len = 6)
+validate_numeric_input(inputId = "school_head_contact", len = 11)
+validate_numeric_input(inputId = "school_head_contact_alt", len = 11)
+
+# (Your email validation observers go here - they remain unchanged)
+observeEvent(input$school_head_email, {
+  id_val <- input$school_head_email
+  is_valid <- (id_val == "" || grepl("@deped.gov.ph", id_val))
+  if (is_valid) { shinyjs::removeClass(id = "school_head_email", class = "input-error") } 
+  else { shinyjs::addClass(id = "school_head_email", class = "input-error") }
+})
+
+observeEvent(input$school_head_email_alt, {
+  id_val <- input$school_head_email_alt
+  is_valid <- (id_val == "" || grepl("@", id_val))
+  if (is_valid) { shinyjs::removeClass(id = "school_head_email_alt", class = "input-error") } 
+  else { shinyjs::addClass(id = "school_head_email_alt", class = "input-error") }
+})
+
+# --- [UPDATED] List of all required input IDs for form data collection ---
+required_inputs <- c(
+  # ... (Your required_inputs list remains the same) ...
+  "school_id", "school_name", "school_head_gn", "school_head_mn", "school_head_ln",
+  "school_head_position", "region", "division", "curricular_offering",
+  "school_head_contact","school_head_contact_alt","school_head_email","school_head_email_alt",
+  "g1", "g2", "g3", "g4", "g5", "g6", "g7", "g8", "g9", "g10", "g11", "g12",
+  "org_g1", "org_g2", "org_g3", "org_g4", "org_g5", "org_g6",
+  "org_g7", "org_g8", "org_g9", "org_g10", "org_g11", "org_g12",
+  "teaching_elem", "teaching_jhs", "teaching_shs",
+  "instructional_rooms_es", "instructional_rooms_jhs", "instructional_rooms_shs",
+  "instructional_rooms_repair", "buildings", "buildings_repair",
+  "laptops", "laptops_repair", "chairs", "chairs_repair", "desk", "desk_repair",
+  "ecart", "ecart_repair", "toilet", "toilet_repair", "printer", "printer_repair",
+  "tv", "tv_repair", "science_lab", "computer_lab", "tvl_lab",
+  "english", "math", "science", "biological_science", "physical_science",
+  "general_education", "araling_panlipunan", "tle", "mapeh", "filipino",
+  "esp", "agriculture", "ece", "sped"
+)
+
+# --- Observer to enable/disable the submit button (This remains unchanged) ---
+# ... (Your observe({}) block for submit button logic remains the same) ...
+
+# --- Dynamic UI for Division based on Region selection (Requires 'df' to be defined) ---
+# Assuming 'df' is loaded elsewhere, this part remains unchanged.
+# output$division <- renderUI({ ... })
+
+# --- [REVISED] Observer to auto-load existing school records (From Google Sheet) ---
+observe({
+  req(school_data()) # Require that the data has been loaded
+  req(input$school_id)
+  current_school_id <- debounce(reactive(input$school_id), 500)
+  
+  if (is.null(current_school_id()) || current_school_id() == "") return()
+  
+  data_df <- school_data()
+  
+  # 1. Find the matching row
+  # Ensure School ID column is read correctly, assume it's "school_id"
+  # We use tolower(names(data_df)) just in case the column name has different case
+  match_row <- which(data_df[[tolower("school_id")]] == current_school_id())
+  
+  if (length(match_row) > 0) {
+    # --- IF RECORD FOUND: Load the data ---
+    showNotification("Existing school record loaded.", type = "message", duration = 3)
+    record_details <- data_df[match_row[1], ] # Use the first match
+    
+    # 2. Update UI elements using the loaded row
+    # Text Inputs
+    updateTextInput(session, "school_name", value = record_details$school_name)
+    updateTextInput(session, "school_head_gn", value = record_details$school_head_gn)
+    updateTextInput(session, "school_head_mn", value = record_details$school_head_mn)
+    updateTextInput(session, "school_head_ln", value = record_details$school_head_ln)
+    updateTextInput(session, "school_head_contact", value = record_details$school_head_contact)
+    updateTextInput(session, "school_head_contact_alt", value = record_details$school_head_contact_alt)
+    updateTextInput(session, "school_head_email", value = record_details$school_head_email)
+    updateTextInput(session, "school_head_email_alt", value = record_details$school_head_email_alt)
+    
+    # Select Inputs
+    updateSelectInput(session, "school_head_position", selected = record_details$school_head_position)
+    updateSelectInput(session, "region", selected = record_details$region)
+    # Assuming division updates dynamically based on region, but we update it anyway
+    updateSelectInput(session, "division", selected = record_details$division)
+    updateSelectInput(session, "curricular_offering", selected = record_details$curricular_offering)
+    
+    # Numeric Inputs (Using lapply to be concise)
+    numeric_ids <- c(
+      paste0("g", 1:12), paste0("org_g", 1:12), 
+      # ... (rest of your numeric IDs) ...
+      "teaching_elem", "teaching_jhs", "teaching_shs",
+      "instructional_rooms_es", "instructional_rooms_jhs", "instructional_rooms_shs", 
+      "instructional_rooms_repair", "buildings", "buildings_repair",
+      "laptops", "laptops_repair", "chairs", "chairs_repair", "desk", "desk_repair",
+      "ecart", "ecart_repair", "toilet", "toilet_repair", "printer", "printer_repair",
+      "tv", "tv_repair", "science_lab", "computer_lab", "tvl_lab",
+      "english", "math", "science", "biological_science", "physical_science",
+      "general_education", "araling_panlipunan", "tle", "mapeh", "filipino",
+      "esp", "agriculture", "ece", "sped"
+    )
+    
+    lapply(numeric_ids, function(id) {
+      # Need to convert loaded value to numeric for updateNumericInput
+      updateNumericInput(session, id, value = as.numeric(record_details[[tolower(id)]]))
     })
-  }, once = TRUE) # Run only once when the server starts
-  
-  # ... (Your validate_numeric_input function goes here) ...
-  validate_numeric_input <- function(inputId, len) {
     
-    observeEvent(input[[inputId]], {
-      
-      # Get the value from the input. 
-      val_str <- input[[inputId]]
-      
-      # --- FIX: Check for NULL, Empty String, OR NA ---
-      # We must explicitly handle NA before nchar or grepl is called.
-      if (is.null(val_str) || val_str == "" || is.na(val_str)) {
-        shinyjs::removeClass(id = inputId, class = "input-error")
-        return()
-      }
-      
-      # 2. Check if the input contains ONLY digits.
-      # We use isTRUE() as a safeguard, just in case grepl returns NA (though unlikely here)
-      # is_all_digits will be TRUE or FALSE, never NA.
-      is_all_digits <- isTRUE(grepl("^\\d+$", val_str))
-      
-      # 3. Check the exact character length.
-      is_correct_length <- nchar(val_str) == len
-      
-      # The input is valid only if both conditions are TRUE.
-      # R's '&&' is safe because is_all_digits is guaranteed TRUE/FALSE.
-      is_valid <- is_all_digits && is_correct_length
-      
-      if (is_valid) {
-        shinyjs::removeClass(id = inputId, class = "input-error")
-      } else {
-        shinyjs::addClass(id = inputId, class = "input-error")
-      }
-    }, ignoreNULL = FALSE) 
+  } else {
+    # --- IF NO RECORD FOUND: Clear all fields (same as your original logic) ---
+    # ... (Your clear fields logic remains the same) ...
+    showNotification("No matching record found. Starting new entry.", type = "warning", duration = 3)
+    
+    # Text Inputs
+    updateTextInput(session, "school_name", value = "")
+    updateTextInput(session, "school_head_gn", value = "")
+    updateTextInput(session, "school_head_mn", value = "")
+    updateTextInput(session, "school_head_ln", value = "")
+    updateTextInput(session, "school_head_contact", value = "")
+    updateTextInput(session, "school_head_contact_alt", value = "")
+    updateTextInput(session, "school_head_email", value = "")
+    updateTextInput(session, "school_head_email_alt", value = "")
+    
+    # Select Inputs (Reset to defaults/prompts)
+    updateSelectInput(session, "school_head_position", selected = "School Principal I") 
+    updateSelectInput(session, "region", selected = "--- Select a Region ---") # Use the prompt value from your UI
+    updateSelectInput(session, "division", selected = NULL)
+    updateSelectInput(session, "curricular_offering", selected = "--- Select a Curricular Offering ---") # Use the prompt value
+    
+    # Numeric Inputs: Clear all numeric fields by setting value = NA
+    numeric_ids <- c(
+      paste0("g", 1:12), paste0("org_g", 1:12), 
+      "teaching_elem", "teaching_jhs", "teaching_shs",
+      "instructional_rooms_es", "instructional_rooms_jhs", "instructional_rooms_shs", 
+      "instructional_rooms_repair", "buildings", "buildings_repair",
+      "laptops", "laptops_repair", "chairs", "chairs_repair", "desk", "desk_repair",
+      "ecart", "ecart_repair", "toilet", "toilet_repair", "printer", "printer_repair",
+      "tv", "tv_repair", "science_lab", "computer_lab", "tvl_lab",
+      "english", "math", "science", "biological_science", "physical_science",
+      "general_education", "araling_panlipunan", "tle", "mapeh", "filipino",
+      "esp", "agriculture", "ece", "sped"
+    )
+    
+    lapply(numeric_ids, function(id) {
+      updateNumericInput(session, id, value = NA) 
+    })
   }
-  # ... (Your validation observers go here) ...
-  validate_numeric_input(inputId = "school_id", len = 6)
-  validate_numeric_input(inputId = "school_head_contact", len = 11)
-  validate_numeric_input(inputId = "school_head_contact_alt", len = 11)
+})
+
+observeEvent(input$submit, {
   
-  # (Your email validation observers go here - they remain unchanged)
-  observeEvent(input$school_head_email, {
-    id_val <- input$school_head_email
-    is_valid <- (id_val == "" || grepl("@deped.gov.ph", id_val))
-    if (is_valid) { shinyjs::removeClass(id = "school_head_email", class = "input-error") } 
-    else { shinyjs::addClass(id = "school_head_email", class = "input-error") }
-  })
+  # --- DEBUGGING STEP 0 (MOVED OUTSIDE TRY/CATCH) ---
+  # If this notification shows, the observeEvent is definitely firing.
+  showNotification("--- Submission Triggered! ---", duration = 5, type = "warning")
   
-  observeEvent(input$school_head_email_alt, {
-    id_val <- input$school_head_email_alt
-    is_valid <- (id_val == "" || grepl("@", id_val))
-    if (is_valid) { shinyjs::removeClass(id = "school_head_email_alt", class = "input-error") } 
-    else { shinyjs::addClass(id = "school_head_email_alt", class = "input-error") }
-  })
+  # --- DEBUGGING STEP 1 (BREAKPOINT) ---
+  # If the console stops here, the execution is successful up to this point.
+  browser() # Press 'c' and Enter in the console to continue execution.
   
-  # --- [UPDATED] List of all required input IDs for form data collection ---
-  required_inputs <- c(
-    # ... (Your required_inputs list remains the same) ...
-    "school_id", "school_name", "school_head_gn", "school_head_mn", "school_head_ln",
-    "school_head_position", "region", "division", "curricular_offering",
-    "school_head_contact","school_head_contact_alt","school_head_email","school_head_email_alt",
-    "g1", "g2", "g3", "g4", "g5", "g6", "g7", "g8", "g9", "g10", "g11", "g12",
-    "org_g1", "org_g2", "org_g3", "org_g4", "org_g5", "org_g6",
-    "org_g7", "org_g8", "org_g9", "org_g10", "org_g11", "org_g12",
-    "teaching_elem", "teaching_jhs", "teaching_shs",
-    "instructional_rooms_es", "instructional_rooms_jhs", "instructional_rooms_shs",
-    "instructional_rooms_repair", "buildings", "buildings_repair",
-    "laptops", "laptops_repair", "chairs", "chairs_repair", "desk", "desk_repair",
-    "ecart", "ecart_repair", "toilet", "toilet_repair", "printer", "printer_repair",
-    "tv", "tv_repair", "science_lab", "computer_lab", "tvl_lab",
-    "english", "math", "science", "biological_science", "physical_science",
-    "general_education", "araling_panlipunan", "tle", "mapeh", "filipino",
-    "esp", "agriculture", "ece", "sped"
-  )
-  
-  # --- Observer to enable/disable the submit button (This remains unchanged) ---
-  # ... (Your observe({}) block for submit button logic remains the same) ...
-  
-  # --- Dynamic UI for Division based on Region selection (Requires 'df' to be defined) ---
-  # Assuming 'df' is loaded elsewhere, this part remains unchanged.
-  # output$division <- renderUI({ ... })
-  
-  # --- [REVISED] Observer to auto-load existing school records (From Google Sheet) ---
-  observe({
-    req(school_data()) # Require that the data has been loaded
-    req(input$school_id)
-    current_school_id <- debounce(reactive(input$school_id), 500)
+  # Use tryCatch to capture and display any errors during submission
+  tryCatch({
     
-    if (is.null(current_school_id()) || current_school_id() == "") return()
+    # Helper function to convert empty text/NA to a unified NA for sheet
+    empty_to_na <- function(x) {
+      if (is.character(x) && length(x) == 1 && x == "") {
+        return(NA_character_)
+      } else if (is.null(x) || is.na(x)) {
+        return(NA)
+      }
+      return(x)
+    }
     
+    # --- CRITICAL PRE-CHECKS (Verify access to globals) ---
+    if (!exists("SHEET_ID") || !exists("SHEET_NAME") || !is.function(school_data) || !exists("sheet_write")) {
+      # This will now be caught by the tryCatch block if it runs
+      stop("Fatal Error: One or more global dependencies (SHEET_ID, SHEET_NAME, school_data(), sheet_write/sheet_append functions) are missing or inaccessible.")
+    }
+    
+    # Check if a record with the given school_id already exists in the local data
     data_df <- school_data()
+    school_id_col <- tolower("school_id")
     
-    # 1. Find the matching row
-    # Ensure School ID column is read correctly, assume it's "school_id"
-    # We use tolower(names(data_df)) just in case the column name has different case
-    match_row <- which(data_df[[tolower("school_id")]] == current_school_id())
+    match_row_index <- which(data_df[[school_id_col]] == input$school_id)
+    record_exists <- length(match_row_index) > 0
     
-    if (length(match_row) > 0) {
-      # --- IF RECORD FOUND: Load the data ---
-      showNotification("Existing school record loaded.", type = "message", duration = 3)
-      record_details <- data_df[match_row[1], ] # Use the first match
+    # Collect all form data into a data frame
+    form_data_list <- lapply(required_inputs, function(id) {
+      empty_to_na(input[[id]])
+    })
+    
+    # Create the single-row data frame for submission
+    new_data <- as.data.frame(form_data_list, stringsAsFactors = FALSE)
+    names(new_data) <- required_inputs
+    
+    # Add a timestamp column (ensure column names match sheet headers)
+    new_data$submission_timestamp <- as.character(Sys.time())
+    
+    if (record_exists) {
+      # --- UPDATE existing record (Requires full sheet rewrite) ---
+      showNotification(paste("Updating entry for", input$school_name), type = "message", duration = NULL)
       
-      # 2. Update UI elements using the loaded row
-      # Text Inputs
-      updateTextInput(session, "school_name", value = record_details$school_name)
-      updateTextInput(session, "school_head_gn", value = record_details$school_head_gn)
-      updateTextInput(session, "school_head_mn", value = record_details$school_head_mn)
-      updateTextInput(session, "school_head_ln", value = record_details$school_head_ln)
-      updateTextInput(session, "school_head_contact", value = record_details$school_head_contact)
-      updateTextInput(session, "school_head_contact_alt", value = record_details$school_head_contact_alt)
-      updateTextInput(session, "school_head_email", value = record_details$school_head_email)
-      updateTextInput(session, "school_head_email_alt", value = record_details$school_head_email_alt)
+      # 1. Update the local reactive data frame
+      # Replace the row in the local data frame with the new data
+      data_df[match_row_index[1], names(new_data)] <- new_data
       
-      # Select Inputs
-      updateSelectInput(session, "school_head_position", selected = record_details$school_head_position)
-      updateSelectInput(session, "region", selected = record_details$region)
-      # Assuming division updates dynamically based on region, but we update it anyway
-      updateSelectInput(session, "division", selected = record_details$division)
-      updateSelectInput(session, "curricular_offering", selected = record_details$curricular_offering)
-      
-      # Numeric Inputs (Using lapply to be concise)
-      numeric_ids <- c(
-        paste0("g", 1:12), paste0("org_g", 1:12), 
-        # ... (rest of your numeric IDs) ...
-        "teaching_elem", "teaching_jhs", "teaching_shs",
-        "instructional_rooms_es", "instructional_rooms_jhs", "instructional_rooms_shs", 
-        "instructional_rooms_repair", "buildings", "buildings_repair",
-        "laptops", "laptops_repair", "chairs", "chairs_repair", "desk", "desk_repair",
-        "ecart", "ecart_repair", "toilet", "toilet_repair", "printer", "printer_repair",
-        "tv", "tv_repair", "science_lab", "computer_lab", "tvl_lab",
-        "english", "math", "science", "biological_science", "physical_science",
-        "general_education", "araling_panlipunan", "tle", "mapeh", "filipino",
-        "esp", "agriculture", "ece", "sped"
+      # 2. Write the entire modified data frame back to the sheet
+      # Overwrites the existing sheet content entirely
+      sheet_write(
+        data = data_df, 
+        ss = SHEET_ID, 
+        sheet = SHEET_NAME
       )
-      
-      lapply(numeric_ids, function(id) {
-        # Need to convert loaded value to numeric for updateNumericInput
-        updateNumericInput(session, id, value = as.numeric(record_details[[tolower(id)]]))
-      })
       
     } else {
-      # --- IF NO RECORD FOUND: Clear all fields (same as your original logic) ---
-      # ... (Your clear fields logic remains the same) ...
-      showNotification("No matching record found. Starting new entry.", type = "warning", duration = 3)
+      # --- INSERT new record (Use sheet_append) ---
+      showNotification(paste("New entry for", input$school_name, "submitted"), type = "message", duration = NULL)
       
-      # Text Inputs
-      updateTextInput(session, "school_name", value = "")
-      updateTextInput(session, "school_head_gn", value = "")
-      updateTextInput(session, "school_head_mn", value = "")
-      updateTextInput(session, "school_head_ln", value = "")
-      updateTextInput(session, "school_head_contact", value = "")
-      updateTextInput(session, "school_head_contact_alt", value = "")
-      updateTextInput(session, "school_head_email", value = "")
-      updateTextInput(session, "school_head_email_alt", value = "")
-      
-      # Select Inputs (Reset to defaults/prompts)
-      updateSelectInput(session, "school_head_position", selected = "School Principal I") 
-      updateSelectInput(session, "region", selected = "--- Select a Region ---") # Use the prompt value from your UI
-      updateSelectInput(session, "division", selected = NULL)
-      updateSelectInput(session, "curricular_offering", selected = "--- Select a Curricular Offering ---") # Use the prompt value
-      
-      # Numeric Inputs: Clear all numeric fields by setting value = NA
-      numeric_ids <- c(
-        paste0("g", 1:12), paste0("org_g", 1:12), 
-        "teaching_elem", "teaching_jhs", "teaching_shs",
-        "instructional_rooms_es", "instructional_rooms_jhs", "instructional_rooms_shs", 
-        "instructional_rooms_repair", "buildings", "buildings_repair",
-        "laptops", "laptops_repair", "chairs", "chairs_repair", "desk", "desk_repair",
-        "ecart", "ecart_repair", "toilet", "toilet_repair", "printer", "printer_repair",
-        "tv", "tv_repair", "science_lab", "computer_lab", "tvl_lab",
-        "english", "math", "science", "biological_science", "physical_science",
-        "general_education", "araling_panlipunan", "tle", "mapeh", "filipino",
-        "esp", "agriculture", "ece", "sped"
+      # 1. Append the new data to the sheet
+      sheet_append(
+        ss = SHEET_ID, 
+        sheet = SHEET_NAME, 
+        data = new_data
       )
       
-      lapply(numeric_ids, function(id) {
-        updateNumericInput(session, id, value = NA) 
-      })
+      # 2. Update the local reactive data frame with the new row
+      school_data(rbind(data_df, new_data))
     }
-  })
-  
-  observeEvent(input$submit, {
     
-    # --- DEBUGGING STEP 0 (MOVED OUTSIDE TRY/CATCH) ---
-    # If this notification shows, the observeEvent is definitely firing.
-    showNotification("--- Submission Triggered! ---", duration = 5, type = "warning")
+    # --- SUCCESS ACTIONS ---
+    showNotification("Submission Complete!", type = "success", duration = 5)
     
-    # --- DEBUGGING STEP 1 (BREAKPOINT) ---
-    # If the console stops here, the execution is successful up to this point.
-    browser() # Press 'c' and Enter in the console to continue execution.
+    # Hide the form and show a thank you message after submission
+    hide("form_container")
+    show("thank_you_section")
     
-    # Use tryCatch to capture and display any errors during submission
-    tryCatch({
-      
-      # Helper function to convert empty text/NA to a unified NA for sheet
-      empty_to_na <- function(x) {
-        if (is.character(x) && length(x) == 1 && x == "") {
-          return(NA_character_)
-        } else if (is.null(x) || is.na(x)) {
-          return(NA)
-        }
-        return(x)
-      }
-      
-      # --- CRITICAL PRE-CHECKS (Verify access to globals) ---
-      if (!exists("SHEET_ID") || !exists("SHEET_NAME") || !is.function(school_data) || !exists("sheet_write")) {
-        # This will now be caught by the tryCatch block if it runs
-        stop("Fatal Error: One or more global dependencies (SHEET_ID, SHEET_NAME, school_data(), sheet_write/sheet_append functions) are missing or inaccessible.")
-      }
-      
-      # Check if a record with the given school_id already exists in the local data
-      data_df <- school_data()
-      school_id_col <- tolower("school_id")
-      
-      match_row_index <- which(data_df[[school_id_col]] == input$school_id)
-      record_exists <- length(match_row_index) > 0
-      
-      # Collect all form data into a data frame
-      form_data_list <- lapply(required_inputs, function(id) {
-        empty_to_na(input[[id]])
-      })
-      
-      # Create the single-row data frame for submission
-      new_data <- as.data.frame(form_data_list, stringsAsFactors = FALSE)
-      names(new_data) <- required_inputs
-      
-      # Add a timestamp column (ensure column names match sheet headers)
-      new_data$submission_timestamp <- as.character(Sys.time())
-      
-      if (record_exists) {
-        # --- UPDATE existing record (Requires full sheet rewrite) ---
-        showNotification(paste("Updating entry for", input$school_name), type = "message", duration = NULL)
-        
-        # 1. Update the local reactive data frame
-        # Replace the row in the local data frame with the new data
-        data_df[match_row_index[1], names(new_data)] <- new_data
-        
-        # 2. Write the entire modified data frame back to the sheet
-        # Overwrites the existing sheet content entirely
-        sheet_write(
-          data = data_df, 
-          ss = SHEET_ID, 
-          sheet = SHEET_NAME
-        )
-        
-      } else {
-        # --- INSERT new record (Use sheet_append) ---
-        showNotification(paste("New entry for", input$school_name, "submitted"), type = "message", duration = NULL)
-        
-        # 1. Append the new data to the sheet
-        sheet_append(
-          ss = SHEET_ID, 
-          sheet = SHEET_NAME, 
-          data = new_data
-        )
-        
-        # 2. Update the local reactive data frame with the new row
-        school_data(rbind(data_df, new_data))
-      }
-      
-      # --- SUCCESS ACTIONS ---
-      showNotification("Submission Complete!", type = "success", duration = 5)
-      
-      # Hide the form and show a thank you message after submission
-      hide("form_container")
-      show("thank_you_section")
-      
-    }, error = function(e) {
-      # --- ERROR HANDLING ---
-      error_message <- paste("Submission Failed! Details:", e$message)
-      warning(error_message) # Log to console
-      showNotification(error_message, type = "error", duration = NULL) # Show persistent notification
-      
-      # Re-enable the form if it was hidden
-      show("form_container") 
-    })
+  }, error = function(e) {
+    # --- ERROR HANDLING ---
+    error_message <- paste("Submission Failed! Details:", e$message)
+    warning(error_message) # Log to console
+    showNotification(error_message, type = "error", duration = NULL) # Show persistent notification
+    
+    # Re-enable the form if it was hidden
+    show("form_container") 
   })
-  
-  
-  # --- Observer to handle the "Start Over" button (remains unchanged) ---
-  observeEvent(input$start_over, {
-    session$reload()
-  })
-  
-  
+})
+
+
+# --- Observer to handle the "Start Over" button (remains unchanged) ---
+observeEvent(input$start_over, {
+  session$reload()
+})
+
+
 
 shinyApp(ui, server)

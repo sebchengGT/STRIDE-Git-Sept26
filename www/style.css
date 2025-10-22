@@ -96,7 +96,7 @@ body.dashboard-bg {
 
 /* ==== HEADER ==== */
 .app-header {
-  background: linear-gradient(rgba(0, 45, 98, 0.9), rgba(0, 45, 98, 0.9));
+  background: #1c4b83;
   color: white;
   padding: 4px;
   text-align: center;
@@ -130,6 +130,7 @@ body.dashboard-bg {
 .bslib-navbar,
 .navbar {
   position: sticky !important;
+  height:37px;
   top: 115px; /* match or slightly exceed header height */
   z-index: 9999;
   background-color: #E6A545 !important;
@@ -653,10 +654,10 @@ body.dashboard-bg::before {
   left: 0;
   width: 100%;
   height: 100%;
-  background-color: rgba(0,0,0,0.7);
+  background-color: #ffffff;
   display: none;
   z-index: 100000 !important; /* higher than header/nav */
-  transition: opacity 0.3s ease;
+  transition: opacity 0.8s ease-in-out;
 }
 
 /* when login-hidden is present, hide header/footer and move nav up */
@@ -829,7 +830,7 @@ body.show-header-footer .app-footer {
   background: rgba(255, 255, 255, 0.9);
   padding: 40px 35px;
   border-radius: 20px;
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+  box-shadow: 13px 12px 3px rgb(0 0 0 / 19%);
   max-width: 380px;
   width: 100%;
   text-align: center;
@@ -956,14 +957,308 @@ body.show-header-footer .app-footer {
     @media (min-width: 992px) {
         .login-logo-top {
             width: 304px;
-            margin-bottom: -18px;
-            margin-top: -50px;
+            margin-bottom: 5px;
+            margin-top: -25px;
         }
     }
 }
 
 
+/* === TRANSITION CONTAINER === */
+.login-card {
+  position: relative;
+  overflow: hidden;
+}
 
+/* === AUTH FORM CONTAINER ANIMATION === */
+.auth-form {
+  opacity: 0;
+  transform: translateX(100%);
+  transition: all 0.6s ease-in-out;
+  position: absolute;
+  width: 100%;
+  top: 0;
+  left: 0;
+}
+
+.auth-form.active {
+  opacity: 1;
+  transform: translateX(0);
+  z-index: 2;
+  position: relative;
+}
+
+/* --- Animate Login & Register differently --- */
+.auth-form:nth-child(1).active {
+  animation: slideInLeft 0.6s ease forwards;
+}
+
+.auth-form:nth-child(2).active {
+  animation: slideInRight 0.6s ease forwards;
+}
+
+/* --- Keyframes for sliding transitions --- */
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* === Animated Gradient Background (DepEd Theme) === */
+.login-bg.gradient-animated {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: -1;
+  background: linear-gradient(-45deg, #113967, #c9c9c9, #dcd6cd, #0075ff);
+  background-size: 200% 200%;
+  animation: depedGradient 15s ease infinite;
+}
+
+/* --- Fix unwanted horizontal scroll --- */
+html, body {
+  overflow-x: hidden !important;
+  width: 100%;
+}
+
+/* Ensure background never causes overflow */
+.login-bg.gradient-animated {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+}
+
+
+/* Smooth gradient animation */
+@keyframes depedGradient {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+.login-bg.gradient-animated {
+  animation: depedGradient 25s ease infinite; /* Slower, smoother */
+}
+
+b,strong {
+    font-weight: bolder;
+    font-size: 17px;
+}
+
+/* === STRIDE Multi-Color Animation === */
+/* STRIDE title styling */
+/*.stride-multi {
+  font-size: 14rem;
+  font-weight: 900;
+  text-shadow: -5px 2px 2px rgba(0,0,0,0.3);
+  letter-spacing: -22px; /* <<< tight spacing 
+  display: inline-block;
+  margin: -45px;
+}*/
+
+/*.stride-multi span {
+  display: inline-block;
+  animation: glowPulse 3s infinite ease-in-out;
+}*/
+
+/* Color classes for each segment */
+/*.stride-multi .blue { color: #1e415d; }    /* DepEd blue */
+/*.stride-multi .yellow { color: #bf9a16; }  /* DepEd yellow */
+/*.stride-multi .red { color: #D62828; }*/     /* DepEd red */
+
+/* Gentle glowing animation */
+/*@keyframes glowPulse {
+  0%, 100% { text-shadow: 0 0 8px rgba(255,255,255,0.4); transform: scale(1); }
+  50% { text-shadow: 0 0 20px rgba(255,255,255,0.8); transform: scale(1.03); }
+}*/
+
+
+/* === Slogan Text Styling === */
+.slogan-top {
+  font-size: 2rem;
+  font-weight: 600;
+  color: #1e415d;
+  margin-bottom: 0.5rem;
+  animation: fadeInDown 2s ease;
+  text-shadow: 0px 3px #fffde4;
+}
+
+.slogan-bottom {
+  font-size: 2rem;
+  font-weight: 600;
+  color: #D62828;
+  margin-top: 0.5rem;
+  animation: fadeInUp 2s ease;
+  text-shadow: 0px 3px #fffde4;
+}
+
+/* Fade-in animations */
+@keyframes fadeInDown {
+  from { opacity: 0; transform: translateY(-20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+
+/* === GLOBAL SIDEBAR STYLING === */
+.sidebar {
+  background: linear-gradient(180deg, #003366 0%, #003366 100%);
+  color: #fff !important;
+  border-right: 3px solid #FFD43B;
+  min-height: 100vh;
+  padding-top: 1rem;
+  transition: all 0.3s ease;
+}
+
+/* Sidebar titles / headers */
+.sidebar .sidebar-title, .sidebar h2, .sidebar h3 {
+  color: #FFD43B !important;
+  text-transform: uppercase;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-align: center;
+}
+
+/* Sidebar links or buttons */
+.sidebar a, .sidebar .nav-link, .sidebar .menuItem, .sidebar .action-button {
+  color: black !important;
+  text-decoration: none;
+  display: block;
+  padding: 10px 16px;
+  font-weight: 500;
+  transition: all 0.25s ease;
+  border-radius: 8px;
+  margin: 4px 8px;
+}
+
+/* Hover + Active State */
+.sidebar a:hover, .sidebar .nav-link.active, .sidebar .menuItem.active {
+  background: #FFD43B !important;
+  color: #003366 !important;
+  transform: scale(1.02);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+}
+
+/* Icons inside sidebar links */
+.sidebar .nav-icon, .sidebar .fa, .sidebar i {
+  margin-right: 8px;
+  color: #FFD43B;
+}
+
+/* Divider line between groups */
+.sidebar hr {
+  border-color: rgba(255, 255, 255, 0.2);
+  margin: 12px 0;
+  position: relative;
+  top: 0;
+}
+
+/* === Remove gaps between sidebar and navmenu === */
+.sidebar {
+  margin: 0 !important;
+  padding-top: 0 !important;
+}
+
+.navbar, .navmenu, .bslib-navbar, .bslib-nav {
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+body, .main-container, .bslib-layout-sidebar {
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+/* Make sure sidebar and nav align top-to-top */
+
+
+.navbar, .navmenu {
+  position: relative;
+  top: 0;
+  left: 0;
+  z-index: 1050; /* ensures it stays above content if needed */
+}
+
+
+/* Base style for the STRIDE logo text */
+.stride-logo-text {
+  font-size: 13rem;
+  font-weight: 900;
+  font-family: "Poppins", sans-serif;
+  text-shadow: -5px 3px 2px #e0e4ce;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  position: relative;
+  gap: 0.05em;
+}
+
+/* Colors for STR and DE */
+.stride-str {
+  color: #003366; /* DepEd blue */
+}
+.stride-ide {
+  color: #D62828; /* DepEd yellow */
+}
+
+/* The "I" customization */
+.stride-i {
+  color: #bf9a16;
+  position: relative;
+  display: inline-block;
+  font-size: 184px;
+}
+
+/* Replace the dot above "I" with your logo */
+.stride-i::before {
+  content: "";
+  position: absolute;
+  top: -32px; /* adjust to move above the I */
+  left: 45%;
+  transform: translateX(-50%);
+  width: 100px;  /* adjust size to fit your logo */
+  height: 74px;
+  background-image: url("torch.png"); /* ← put your logo file in www/ */
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  filter: drop-shadow(-5px 3px 2px #e0e4ce);
+}
+
+.stride-i::before {
+  animation: bounceDot 2.5s ease-in-out infinite;
+}
+
+@keyframes bounceDot {
+  0%, 100% { transform: translate(-50%, 0); }
+  50% { transform: translate(-50%, -8px); }
+}
 
 
 
