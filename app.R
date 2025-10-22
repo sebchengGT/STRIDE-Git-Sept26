@@ -11230,6 +11230,7 @@ server <- function(input, output, session) {
           fixedHeader = TRUE,
           pageLength = 10,
           dom = 'Bfrtip',
+          destroy = TRUE, 
           buttons = list(
             list(extend = "csv", exportOptions = list(modifier = list(page = "all"))),
             list(extend = "excel", exportOptions = list(modifier = list(page = "all"))),
