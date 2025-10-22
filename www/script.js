@@ -182,6 +182,18 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 });
 
+// --- Enlarge register panel for HR/Engineer ---
+$(document).on("change", "select[id$='govlev']", function() {
+  const selected = $(this).val();
+  const $body = $("body");
+  
+  if (selected === "HR" || selected === "Engineer") {
+    $body.addClass("enlarge-panel");
+  } else {
+    $body.removeClass("enlarge-panel");
+  }
+});
+
 
 
 
