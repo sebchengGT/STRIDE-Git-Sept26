@@ -22475,13 +22475,13 @@ authentication_server <- function(input, output, session, user_status,
           p(class = "slogan-top", "Education in Motion."),
           
           # STRIDE title with DepEd-themed colors
-          div(class = "stride-multi tight",
-              span("S", class = "blue"),
-              span("t", class = "blue"),
-              span("r", class = "blue"),
-              span("i", class = "yellow"),
-              span("d", class = "red"),
-              span("e", class = "red")
+          h2(
+            HTML('
+    <span class="stride-str">Str</span>
+    <span class="stride-i">I</span>
+    <span class="stride-ide">de</span>
+  '),
+            class = "stride-logo-text"
           ),
           
           # Bottom slogan
