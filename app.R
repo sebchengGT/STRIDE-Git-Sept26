@@ -2512,21 +2512,21 @@ server <- function(input, output, session) {
                   ),
                   class = "w-100 btn-card"
                 ),
-                # Classroom Data Card
+                # School Information Card
                 actionButton(
-                  "select_classroom",
+                  "select_school",
                   label = tagList(
                     bs_icon("building", size = 24),
-                    tags$h5("Classroom Data")
+                    tags$h5("School Information")
                   ),
                   class = "w-100 btn-card"
                 ),
-                # Enrollment Data Card
+                #Classroom Data Card
                 actionButton(
-                  "select_enrollment",
+                  "select_classroom",
                   label = tagList(
                     bs_icon("bar-chart-line-fill", size = 24),
-                    tags$h5("Enrollment Data")
+                    tags$h5("Classroom Data")
                   ),
                   class = "w-100 btn-card"
                 )
@@ -7544,12 +7544,12 @@ server <- function(input, output, session) {
     home_selection("Human Resource")
   })
   
-  observeEvent(input$select_classroom, {
-    home_selection("Classroom Data")
+  observeEvent(input$select_school, {
+    home_selection("School Information")
   })
   
-  observeEvent(input$select_enrollment, {
-    home_selection("Enrollment Data")
+  observeEvent(input$select_classroom, {
+    home_selection("Classroom Data")
   })
   
   # --- Add visual feedback (highlight active card) ---
@@ -7561,8 +7561,8 @@ server <- function(input, output, session) {
   ", switch(
     home_selection(),
     "Human Resource" = "select_hr",
-    "Classroom Data" = "select_classroom",
-    "Enrollment Data" = "select_enrollment"
+    "School Information" = "select_school",
+    "Classroom Data" = "select_classroom"
   )))
   })
   
@@ -7602,7 +7602,7 @@ server <- function(input, output, session) {
         )
       )
       
-    } else if (selected_home_category == "Classroom Data") {
+    } else if (selected_home_category == "School Information") {
       tagList(
         h3("Classroom Data Overview"),
         hr(),
@@ -7628,9 +7628,9 @@ server <- function(input, output, session) {
         hr()
       )
       
-    } else if (selected_home_category == "Enrollment Data") {
+    } else if (selected_home_category == "Classroom Data") {
       tagList(
-        h3("Enrollment Data Overview"),
+        h3("Classroom Data Overview"),
         hr(),
         
         # --- Enrollment Summary Cards ---
