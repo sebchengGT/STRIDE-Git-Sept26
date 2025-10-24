@@ -14,13 +14,9 @@
 #t=hdhdh
 #updated as of oct 21,2025 48:55am
 #oct 21,2025 UDDDDDDDDDDDDDDD uppp
-#TESTTTTTTTTTTTTTTTTTTT
-<<<<<<< HEAD
-#hdhfhd
-=======
+
 #ttestclea
 #heue
->>>>>>> 62c10392c426d4de64dcf798e0c62ac9f0d67419
 library(tidyverse)
 library(DT)
 library(dplyr)
@@ -183,10 +179,6 @@ ui <- page_fluid(
       color: #fff !important;
     }
     ")),
-<<<<<<< HEAD
-=======
-    
->>>>>>> 62c10392c426d4de64dcf798e0c62ac9f0d67419
     
     # External files (ensure they are in the 'www' folder)
     includeCSS("www/style.css"),
@@ -224,7 +216,7 @@ ui <- page_fluid(
     )
   ),
   
-    
+  
   
   
   # 💡 CRITICAL FIX: The dynamic container for login/main app UI
@@ -2387,8 +2379,7 @@ server <- function(input, output, session) {
     "
       ),
       #data explorer css 
-<<<<<<< HEAD
-=======
+      
       #       tags$head(
       #         tags$style(HTML("
       # /* === FINAL FIX: Consistent Bootstrap-select picker design === */
@@ -4142,7 +4133,6 @@ server <- function(input, output, session) {
     "
       ),
       #data explorer css 
->>>>>>> 62c10392c426d4de64dcf798e0c62ac9f0d67419
       #       tags$head(
       #         tags$style(HTML("
       # /* === FINAL FIX: Consistent Bootstrap-select picker design === */
@@ -5694,9 +5684,7 @@ server <- function(input, output, session) {
             )
           ))),
       
-<<<<<<< HEAD
-      # --- Last Top-Level Tab: About ---
-=======
+      
       # --- HR Top-Level Tab ---
       nav_panel(
         title = tags$b("HR DATA"),
@@ -5869,7 +5857,7 @@ server <- function(input, output, session) {
       
       
       # --- Contact Us Top-Level Tab ---
->>>>>>> 62c10392c426d4de64dcf798e0c62ac9f0d67419
+      
       nav_panel(
         title = tags$b("About"),
         icon = bs_icon("info-circle"),
@@ -25309,7 +25297,6 @@ authentication_server <- function(input, output, session, user_status,
         class = "login-container",
         div(
           class = "login-left",
-<<<<<<< HEAD
           div(
             class = "login-text-box text-center",
             
@@ -25337,30 +25324,6 @@ authentication_server <- function(input, output, session, user_status,
         )
         ,
         
-=======
-          
-          # LEFT SIDE
-          div(
-            class = "login-text-box text-center",
-            
-            # Top slogan
-            p(class = "slogan-top", "Education in Motion."),
-            
-            # STRIDE title with DepEd-themed colors
-            h2(
-              HTML('
-    <span class="stride-str">Str</span>
-    <span class="stride-i">I</span>
-    <span class="stride-ide">de</span>
-  '),
-              class = "stride-logo-text"
-            ),
-            
-            # Bottom slogan
-            p(class = "slogan-bottom", "Data Precision. Smart Decision.")
-          )
-        ),
->>>>>>> 62c10392c426d4de64dcf798e0c62ac9f0d67419
         
         
         # RIGHT SIDE
@@ -25438,172 +25401,170 @@ authentication_server <- function(input, output, session, user_status,
     }
   })
   
+
+
+# --- Station-Specific Inputs ---
+output$station_specific_ui <- renderUI({
+  ns <- session$ns
+  req(input$govlev)
   
-  # --- Station-Specific Inputs ---
-  output$station_specific_ui <- renderUI({
-    ns <- session$ns
-    req(input$govlev)
-    
-    if (input$govlev == "School") {
-      tagList(
-        textInput(ns("school_id"), "School ID:"),
-        tags$small("Enter your School ID (6 digits).", class = "text-muted")
-      )
-    } else if (input$govlev %in% c("Central Office", "Regional Office", "Schools Division Office")) {
-      tagList(
-        textInput(ns("office_name"), "Office Name:"),
-        tags$small("Enter Bureau/Division. Do not abbreviate!", class = "text-muted")
-      )
-    } else {
-      NULL
-    }
-  })
-  
-<<<<<<< HEAD
-  # --- Dynamic Position Dropdown ---
-  # --- Dynamic Position Dropdown (from dfGMISPosCat$Position) ---
-  output$position_ui <- renderUI({
-    dfGMISPosCat <- read.csv("GMIS-Apr2025-PosCat.csv")
-    ns <- session$ns
-    req(input$govlev)  # wait until a station is selected
-    
-    # Extract and sort unique positions from dfGMISPosCat
-    positions <- sort(unique(dfGMISPosCat$Position))
-    
-    selectInput(
-      ns("position"),
-      "Position:",
-      choices = positions,
-      selected = NULL
+  if (input$govlev == "School") {
+    tagList(
+      textInput(ns("school_id"), "School ID:"),
+      tags$small("Enter your School ID (6 digits).", class = "text-muted")
     )
-  })
+  } else if (input$govlev %in% c("Central Office", "Regional Office", "Schools Division Office")) {
+    tagList(
+      textInput(ns("office_name"), "Office Name:"),
+      tags$small("Enter Bureau/Division. Do not abbreviate!", class = "text-muted")
+    )
+  } else {
+    NULL
+  }
+})
+
+
+# --- Dynamic Position Dropdown ---
+# --- Dynamic Position Dropdown (from dfGMISPosCat$Position) ---
+output$position_ui <- renderUI({
+  dfGMISPosCat <- read.csv("GMIS-Apr2025-PosCat.csv")
+  ns <- session$ns
+  req(input$govlev)  # wait until a station is selected
   
+  # Extract and sort unique positions from dfGMISPosCat
+  positions <- sort(unique(dfGMISPosCat$Position))
   
-=======
->>>>>>> 62c10392c426d4de64dcf798e0c62ac9f0d67419
+  selectInput(
+    ns("position"),
+    "Position:",
+    choices = positions,
+    selected = NULL
+  )
+})
+
+
+
+
+
+# --- 3️⃣ LOGIN LOGIC ---
+observeEvent(input$do_login, {
+  req(input$login_user, input$login_pass)
   
+  users_db <- user_database()
+  if (nrow(users_db) == 0) {
+    output$login_message <- renderUI({
+      tags$p("Database is empty or inaccessible.", class = "text-danger mt-2")
+    })
+    return()
+  }
   
-  
-  # --- 3️⃣ LOGIN LOGIC ---
-  observeEvent(input$do_login, {
-    req(input$login_user, input$login_pass)
-    
-    users_db <- user_database()
-    if (nrow(users_db) == 0) {
-      output$login_message <- renderUI({
-        tags$p("Database is empty or inaccessible.", class = "text-danger mt-2")
-      })
-      return()
-    }
-    
-    user_row <- users_db[users_db$Email_Address == input$login_user, ]
-    if (nrow(user_row) == 1 && user_row$Password == input$login_pass) {
-      user_status("authenticated")
-      authenticated_user(input$login_user)
-      
-      session$sendCustomMessage("showLoader", "Welcome to STRIDE...")
-      print(">>> Login success — showLoader triggered")
-      later::later(function() {
-        session$sendCustomMessage("hideLoader", NULL)
-      }, 2)
-      
-      updateTextInput(session, "login_user", value = "")
-      updateTextInput(session, "login_pass", value = "")
-      output$login_message <- renderUI({})
-    } else {
-      output$login_message <- renderUI({
-        tags$p("Invalid username or password.", class = "text-danger mt-2")
-      })
-    }
-  })
-  
-  # --- 4️⃣ GUEST MODE LOGIC ---
-  observeEvent(input$guest_mode, {
-    print("🟢 Guest mode activated")
+  user_row <- users_db[users_db$Email_Address == input$login_user, ]
+  if (nrow(user_row) == 1 && user_row$Password == input$login_pass) {
     user_status("authenticated")
-    authenticated_user("guest_user@stride")
+    authenticated_user(input$login_user)
     
-    session$sendCustomMessage("showLoader", "Entering STRIDE2 as Guest...")
+    session$sendCustomMessage("showLoader", "Welcome to STRIDE...")
+    print(">>> Login success — showLoader triggered")
     later::later(function() {
       session$sendCustomMessage("hideLoader", NULL)
     }, 2)
-  })
-  
-  # --- 5️⃣ REGISTRATION LOGIC ---
-  # --- 4. Registration Logic ---
-  observeEvent(input$do_register, {
-    print("🔔 Register button clicked")
     
-    # Collect values safely
-    reg_user <- input$reg_user
-    reg_pass <- input$reg_pass
-    govlev <- input$govlev
-    school_id <- input$school_id
-    office_name <- input$office_name
-    
-    print(list(
-      reg_user = reg_user,
-      reg_pass = reg_pass,
-      govlev = govlev,
-      school_id = school_id,
-      office_name = office_name
-    ))
-    
-    # === VALIDATION ===
-    if (is.null(reg_user) || reg_user == "") {
-      print("❌ Missing reg_user")
-      return()
-    }
-    if (!endsWith(reg_user, "@deped.gov.ph")) {
-      print("❌ Invalid email domain")
-      return()
-    }
-    if (is.null(reg_pass) || reg_pass == "") {
-      print("❌ Missing password")
-      return()
-    }
-    if (is.null(govlev) || govlev == "") {
-      print("❌ Missing station")
-      return()
-    }
-    
-    # --- Prepare new user ---
-    new_user <- data.frame(
-      Registration_Date = as.character(Sys.time()),
-      Email_Address = input$reg_user,
-      Password = input$reg_pass,
-      Station = input$govlev,
-      School_ID = ifelse(input$govlev == "School", input$school_id, NA),
-      Office = ifelse(input$govlev != "School", input$office_name, NA),
-      Position = ifelse(!is.null(input$position) && input$position != "", input$position, NA),
-      stringsAsFactors = FALSE
-    )
-    
-    
-    print("🧩 Preparing to write new user:")
-    print(new_user)
-    
-    # --- TRY WRITING TO GOOGLE SHEET ---
-    tryCatch({
-      print("🟢 Attempting to append to sheet...")
-      googlesheets4::sheet_append(sheet_url, data = new_user)
-      print("✅ Successfully appended to Google Sheet")
-      
-      # Trigger refresh
-      db_trigger(db_trigger() + 1)
-      user_status("authenticated")
-      authenticated_user(reg_user)
-      
-      showNotification("✅ Registration successful!", type = "message")
-      
-    }, error = function(e) {
-      print(paste("❌ Error during sheet append:", e$message))
-      showNotification(paste("❌ Error writing to sheet:", e$message), type = "error")
+    updateTextInput(session, "login_user", value = "")
+    updateTextInput(session, "login_pass", value = "")
+    output$login_message <- renderUI({})
+  } else {
+    output$login_message <- renderUI({
+      tags$p("Invalid username or password.", class = "text-danger mt-2")
     })
+  }
+})
+
+# --- 4️⃣ GUEST MODE LOGIC ---
+observeEvent(input$guest_mode, {
+  print("🟢 Guest mode activated")
+  user_status("authenticated")
+  authenticated_user("guest_user@stride")
+  
+  session$sendCustomMessage("showLoader", "Entering STRIDE2 as Guest...")
+  later::later(function() {
+    session$sendCustomMessage("hideLoader", NULL)
+  }, 2)
+})
+
+# --- 5️⃣ REGISTRATION LOGIC ---
+# --- 4. Registration Logic ---
+observeEvent(input$do_register, {
+  print("🔔 Register button clicked")
+  
+  # Collect values safely
+  reg_user <- input$reg_user
+  reg_pass <- input$reg_pass
+  govlev <- input$govlev
+  school_id <- input$school_id
+  office_name <- input$office_name
+  
+  print(list(
+    reg_user = reg_user,
+    reg_pass = reg_pass,
+    govlev = govlev,
+    school_id = school_id,
+    office_name = office_name
+  ))
+  
+  # === VALIDATION ===
+  if (is.null(reg_user) || reg_user == "") {
+    print("❌ Missing reg_user")
+    return()
+  }
+  if (!endsWith(reg_user, "@deped.gov.ph")) {
+    print("❌ Invalid email domain")
+    return()
+  }
+  if (is.null(reg_pass) || reg_pass == "") {
+    print("❌ Missing password")
+    return()
+  }
+  if (is.null(govlev) || govlev == "") {
+    print("❌ Missing station")
+    return()
+  }
+  
+  # --- Prepare new user ---
+  new_user <- data.frame(
+    Registration_Date = as.character(Sys.time()),
+    Email_Address = input$reg_user,
+    Password = input$reg_pass,
+    Station = input$govlev,
+    School_ID = ifelse(input$govlev == "School", input$school_id, NA),
+    Office = ifelse(input$govlev != "School", input$office_name, NA),
+    Position = ifelse(!is.null(input$position) && input$position != "", input$position, NA),
+    stringsAsFactors = FALSE
+  )
+  
+  
+  print("🧩 Preparing to write new user:")
+  print(new_user)
+  
+  # --- TRY WRITING TO GOOGLE SHEET ---
+  tryCatch({
+    print("🟢 Attempting to append to sheet...")
+    googlesheets4::sheet_append(sheet_url, data = new_user)
+    print("✅ Successfully appended to Google Sheet")
+    
+    # Trigger refresh
+    db_trigger(db_trigger() + 1)
+    user_status("authenticated")
+    authenticated_user(reg_user)
+    
+    showNotification("✅ Registration successful!", type = "message")
+    
+  }, error = function(e) {
+    print(paste("❌ Error during sheet append:", e$message))
+    showNotification(paste("❌ Error writing to sheet:", e$message), type = "error")
   })
-  
-  
-<<<<<<< HEAD
+})
+
+
 }
 # --- END OF AUTHENTICATION MODULE ---
 # ==========================================================
@@ -25637,11 +25598,10 @@ observeEvent(TRUE, {
 
 # ... (Your validate_numeric_input function goes here) ...
 validate_numeric_input <- function(inputId, len) {
-=======
+  
   
   # --- END OF AUTHENTICATION MODULE ---
   # ==========================================================
->>>>>>> 62c10392c426d4de64dcf798e0c62ac9f0d67419
   
   
   
@@ -25849,17 +25809,14 @@ validate_numeric_input <- function(inputId, len) {
       })
     }
   })
-<<<<<<< HEAD
-})
-
-
-# --- Observer to handle the "Start Over" button (remains unchanged) ---
-observeEvent(input$start_over, {
-  session$reload()
-})
-
-
-=======
+  
+  
+  
+  # --- Observer to handle the "Start Over" button (remains unchanged) ---
+  observeEvent(input$start_over, {
+    session$reload()
+  })
+  
   
   observeEvent(input$submit, {
     
@@ -25965,6 +25922,6 @@ observeEvent(input$start_over, {
   })
   
 }
->>>>>>> 62c10392c426d4de64dcf798e0c62ac9f0d67419
+
 
 shinyApp(ui, server)
