@@ -1316,8 +1316,55 @@ body, .main-container, .bslib-layout-sidebar {
 
 
 
+/* === LOGIN LEFT EXTRA LOGOS === */
+/*.login-left-logos {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 18px;
+  margin-bottom: 10px;
+}
 
+.login-left-logos .left-logo {
+  height: 65px;
+  width: auto;
+  filter: drop-shadow(0 2px 3px rgba(0,0,0,0.4));
+}*/
 
+/* === ADJUST TAGLINES === */
+.slogan-mid {
+  margin-top: -29px;
+        font-size: 45px;
+        color: #003366;
+        font-weight: 900;
+        text-shadow: 0px 3px #fffde4;
+        letter-spacing: 6px;
+}
 
+.slogan-bottom {
+  margin-top: -24px;
+        font-size: 34px;
+        color: #d62828;
+        text-shadow: 0px 3px #fffde4;
+}
 
+.login-left-logo-top {
+  height: 80px;
+  width: auto;
+  margin-bottom: 15px;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.4));
+}
+
+.login-left-logos {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.left-logo {
+  height: 161px;
+        width: auto;
+        filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.4));
+}
 
