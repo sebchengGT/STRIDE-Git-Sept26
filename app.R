@@ -236,6 +236,7 @@ ui <- page_fluid(
     div(
       id = "data_input_content",
       uiOutput("STRIDE_data"))),
+
   
   tags$div(
     id = "loading-overlay",
@@ -268,6 +269,8 @@ ui <- page_fluid(
   "))
   ),
   tags$link(rel = "preconnect", href = "https://fonts.gstatic.com", crossorigin = "anonymous"),
+  
+  
   
   
   
@@ -328,6 +331,8 @@ server <- function(input, output, session) {
       shinyjs::hide("app_footer")
     }
   })
+  
+
   
   observe({
     mode <- if (user_status() == "authenticated") "app" else "login"
@@ -2422,6 +2427,7 @@ server <- function(input, output, session) {
     }
     "
       ),
+      
       #data explorer css 
       
       #       tags$head(
@@ -2529,6 +2535,62 @@ server <- function(input, output, session) {
         icon = bs_icon("house-door-fill"),
         
         useShinyjs(),  # still needed for interactivity
+        
+        # --- Intro Section with Video Background ---
+        div(
+          id = "home_intro_section",
+          style = "
+    position: relative;
+    height: 400px;          /* only the intro section area */
+    overflow: hidden;
+    border-radius: 20px;
+    margin-bottom: 40px;
+  ",
+          
+          # Background Video (only inside this box)
+          tags$video(
+            src = "home_bg.mp4",   # ensure it's in www/
+            autoplay = NA,
+            loop = NA,
+            muted = NA,
+            playsinline = NA,
+            style = "
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      z-index: 0;
+      border-radius: 20px;
+    "
+          ),
+          
+          # Overlay description
+          div(
+            class = "video-description",
+            style = "
+      position: relative;
+      z-index: 2;
+      text-align: center;
+      color: white;
+      padding: 60px 20px;
+      background: rgba(0, 0, 0, 0.35);
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      border-radius: 20px;
+    ",
+            
+            h2("Welcome to DepEd STRIDE", style = "font-weight: 700; font-size: 2rem; margin-bottom: 10px;"),
+            p("Strategic Inventory for Deployment Efficiency", style = "font-size: 1.2rem; margin-bottom: 15px;"),
+            p("A unified data platform for smarter resource planning, teacher deployment, and infrastructure management.", 
+              style = "font-size: 1rem; max-width: 800px; color: #f2f2f2;")
+          )
+        ),
+        
         
         # --- Section: Data Category Buttons ---
         tags$h4("Select Data Category", class = "mb-3 fw-bold text-center"),
@@ -26603,16 +26665,21 @@ authentication_server <- function(input, output, session, user_status,
             ),
             h2(
               HTML('
-                <span class="stride-str">Str</span>
-                <span class="stride-i">I</span>
-                <span class="stride-ide">de</span>
-              '),
+        <span class="stride-str">Str</span>
+        <img src="i.png" class="stride-logo-i" alt="I Logo">
+        <span class="stride-ide">de</span>
+      '),
               class = "stride-logo-text mt-3"
             ),
-            p(class = "slogan-mid", "Education in Motion."),
-            p(class = "slogan-bottom", "Data Precision. Smart Decision.")
+            p(class = "slogan-mid", "Education in Motion!"),
+            div(
+              class = "slogan-bottom-row",
+              span(class = "slogan-left", "Data Precision."),
+              span(class = "slogan-right", "Smart Decision.")
+            )
           )
-        ),
+        )
+        ,
         div(
           class = "login-right",
           div(
