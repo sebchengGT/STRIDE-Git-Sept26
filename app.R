@@ -2484,64 +2484,311 @@ server <- function(input, output, session) {
         title = tags$b("Home"),
         icon = bs_icon("house-door-fill"),
         
-        layout_columns(
-          col_widths = c(3, 9),
+        useShinyjs(),  # still needed for interactivity
+        
+        # --- Section: Data Category Buttons ---
+        tags$h4("Select Data Category", class = "mb-3 fw-bold text-center"),
+        
+        layout_column_wrap(
+          width = 1/3,
           
-          # --- Left Card (Options/Filters) ---
-          card(
-            height = "100%",
-            card_header(tags$b("Select Data Category")),
-            card_body(
-              useShinyjs(),  # enable JavaScript interactions
-              
-              # --- Custom Card Buttons with Icons ---
-              layout_column_wrap(
-                width = 1/3,
-                # Human Resource Card
-                actionButton(
-                  "select_hr",
-                  label = tagList(
-                    bs_icon("people-fill", size = 24),
-                    tags$h5("Human Resource")
-                  ),
-                  class = "w-100 btn-card"
-                ),
-                # School Information Card
-                actionButton(
-                  "select_school",
-                  label = tagList(
-                    bs_icon("building", size = 24),
-                    tags$h5("School Information")
-                  ),
-                  class = "w-100 btn-card"
-                ),
-                #Classroom Data Card
-                actionButton(
-                  "select_classroom",
-                  label = tagList(
-                    bs_icon("bar-chart-line-fill", size = 24),
-                    tags$h5("Classroom Data")
-                  ),
-                  class = "w-100 btn-card"
-                )
-              ),
-              
-              hr(),
-              input_task_button("home_show_data", strong("Show Data"), class = "btn-warning w-100")
-            )
+          # Human Resource
+          actionButton(
+            "select_hr",
+            label = tagList(
+              bs_icon("people-fill", size = 24),
+              tags$h5("Human Resource")
+            ),
+            class = "w-100 btn-card"
           ),
           
-          # --- Right Card (Main Dynamic Content) ---
-          card(
-            full_screen = TRUE,
-            card_header(tags$b("STRIDE Overview")),
-            card_body(
-              uiOutput("home_dynamic_panel")  # dynamic content appears here
-            )
+          # Basic Info
+          actionButton(
+            "select_school",
+            label = tagList(
+              bs_icon("building", size = 24),
+              tags$h5("Basic Info")
+            ),
+            class = "w-100 btn-card"
+          ),
+          
+          # Infrastructure
+          actionButton(
+            "select_classroom",
+            label = tagList(
+              bs_icon("house-fill", size = 24),
+              tags$h5("Infrastructure")
+            ),
+            class = "w-100 btn-card"
+          ),
+          
+          # Financial
+          actionButton(
+            "select_financial",
+            label = tagList(
+              bs_icon("currency-exchange", size = 24),
+              tags$h5("Financial")
+            ),
+            class = "w-100 btn-card"
+          ),
+          
+          # Monitoring
+          actionButton(
+            "select_monitoring",
+            label = tagList(
+              bs_icon("graph-up-arrow", size = 24),
+              tags$h5("Monitoring")
+            ),
+            class = "w-100 btn-card"
+          ),
+          
+          # PPAs
+          actionButton(
+            "select_ppas",
+            label = tagList(
+              bs_icon("clipboard-data-fill", size = 24),
+              tags$h5("PPAs")
+            ),
+            class = "w-100 btn-card"
           )
         ),
         
-        # --- Styling for Interactive Cards ---
+        hr(),
+        
+        # --- Accordion Section for Each Category ---
+        accordion(
+          id = "home_accordion",
+          
+          # --- Human Resource Section ---
+          accordion_panel(
+            title = tags$b("Human Resource"),
+            value = "hr",
+            div(
+              id = "hr_section",
+              
+              tags$h4("Human Resource Overview", class = "fw-bold text-center mb-4"),
+              
+              # --- Value Boxes Layout ---
+              layout_column_wrap(
+                width = 1/3,
+                
+                # Total Number of Central Office Personnel
+                uiOutput("hr_total_central_office"),
+                
+                # Total Number of RO Personnel
+                uiOutput("hr_total_ro_personnel"),
+                
+                # Total Number of SDO Personnel
+                uiOutput("hr_total_sdo_personnel"),
+                
+                # Total Number of Teaching Personnel
+                uiOutput("hr_total_teaching_personnel"),
+                
+                # Total Number of Non-teaching Personnel
+                uiOutput("hr_total_nonteaching_personnel"),
+                
+                # Total Number of Teaching-related Personnel
+                uiOutput("hr_total_teaching_related_personnel")
+              )
+            )
+          ),
+          
+          
+          # --- Basic Info Section ---
+          accordion_panel(
+            title = tags$b("Basic Info"),
+            value = "school",
+            div(
+              id = "school_section",
+              
+              tags$h4("School Information Overview", class = "fw-bold text-center mb-4"),
+              
+              # 💡 Total Schools Value Box
+              layout_column_wrap(
+                width = 1/4,
+                uiOutput("total_schools_home")
+              ),
+              
+              br(),
+              
+              layout_column_wrap(
+                width = 1/2,
+                
+                # --- Number of Schools ---
+                card(
+                  card_header("Number of Schools (Click to Drill Down)"),
+                  full_screen = TRUE,
+                  plotlyOutput("totalschools_plot_home"),
+                  height = "420px"
+                ),
+                
+                # --- Curricular Offering ---
+                card(
+                  card_header("By Curricular Offering"),
+                  full_screen = TRUE,
+                  plotlyOutput("curricular_plot_home"),
+                  height = "420px"
+                ),
+                
+                # --- School Size Typology ---
+                card(
+                  card_header("School Size Typology"),
+                  full_screen = TRUE,
+                  plotlyOutput("typology_plot_home"),
+                  height = "420px"
+                ),
+                
+                # --- Last Mile Schools (Drilldown) ---
+                card(
+                  card_header("Last Mile Schools"),
+                  full_screen = TRUE,
+                  plotlyOutput("LMS_plot_home"),
+                  height = "420px"
+                )
+              )
+            )
+          ),
+          
+          # --- Infrastructure Section ---
+          accordion_panel(
+            title = tags$b("Infrastructure"),
+            value = "classroom",
+            div(
+              id = "classroom_section",
+              
+              tags$h4("Infrastructure Overview", class = "fw-bold text-center mb-4"),
+              
+              layout_column_wrap(
+                width = 1/5,  # 5 cards per row
+                
+                uiOutput("total_classrooms_home"),
+                uiOutput("schools_with_shortage_home"),
+                uiOutput("schools_with_excess_home"),
+                uiOutput("schools_with_balance_home"),
+                uiOutput("classrooms_needing_repair_home")
+              ),
+              
+              br(),
+              
+              # 🧱 Classroom Shortage Drilldown Chart
+              card(
+                card_header("Classroom Shortage Drilldown"),
+                full_screen = TRUE,
+                plotlyOutput("classroomshortage_plot_home"),
+                height = "420px"
+              )
+            )
+          ),
+          
+          # --- Financial Section ---
+          accordion_panel(
+            title = tags$b("Financial"),
+            value = "financial",
+            div(
+              id = "financial_section",
+              
+              tags$h4("Financial Overview", class = "fw-bold text-center mb-4"),
+              
+              layout_column_wrap(
+                width = 1/3,
+                
+                # --- Total Budget Allocation ---
+                uiOutput("fin_total_budget_allocation"),
+                
+                # --- Total MOOE Utilization ---
+                uiOutput("fin_total_mooe_utilization"),
+                
+                # --- Total Capital Outlay ---
+                uiOutput("fin_total_capital_outlay")
+              )
+            )
+          ),
+          
+          # --- Monitoring Section ---
+          accordion_panel(
+            title = tags$b("Monitoring"),
+            value = "monitoring",
+            div(id = "monitoring_section", "Monitoring content goes here.")
+          ),
+          
+          # --- PPAs Section ---
+          accordion_panel(
+            title = tags$b("PPAs"),
+            value = "ppas",
+            div(id = "ppas_section", "PPAs content goes here.")
+          )
+        ),
+        
+        # --- Back to Top Button ---
+        tags$button(
+          id = "back_to_top",
+          class = "btn btn-primary back-to-top",
+          onclick = "Shiny.setInputValue('scroll_top', Math.random());",
+          tags$i(class = "bi bi-arrow-up")
+        ),
+        tags$script(HTML("
+(function attachBackToTop() {
+  // helper that attaches listener if the button exists
+  function attach() {
+    var button = document.getElementById('back_to_top');
+    if (!button) return false;
+
+    // guard to avoid duplicate attachment per element instance
+    if (button._btp_attached) return true;
+    button._btp_attached = true;
+
+    // show/hide on scroll
+    function onScroll() {
+      if (window.scrollY > 400) {
+        button.classList.add('show');
+      } else {
+        button.classList.remove('show');
+      }
+    }
+
+    window.addEventListener('scroll', onScroll, { passive: true });
+
+    // ensure visible if already scrolled
+    onScroll();
+
+    return true;
+  }
+
+  // Try to attach now; if not present retry a few times
+  var attempts = 0;
+  var maxAttempts = 40;
+  var tryInterval = setInterval(function() {
+    attempts++;
+    if (attach() || attempts >= maxAttempts) {
+      clearInterval(tryInterval);
+    }
+  }, 150);
+
+  // Also observe DOM changes so if renderUI replaces the panel later we reattach
+  var observer = new MutationObserver(function(mutations) {
+    for (var m=0; m<mutations.length; m++) {
+      var added = mutations[m].addedNodes;
+      for (var i=0; i<added.length; i++) {
+        var node = added[i];
+        if (node.nodeType === 1) {
+          if (node.querySelector && node.querySelector('#back_to_top')) {
+            attach();
+            return;
+          }
+          if (node.id === 'back_to_top') {
+            attach();
+            return;
+          }
+        }
+      }
+    }
+  });
+
+  observer.observe(document.body, { childList: true, subtree: true });
+
+})();
+")),
+        # --- Styling ---
         tags$style(HTML("
     .btn-card {
       background-color: #f8f9fa;
@@ -2570,6 +2817,42 @@ server <- function(input, output, session) {
       margin-top: 10px;
       margin-bottom: 0;
     }
+/* --- Back to Top Button (better) --- */
+.back-to-top {
+  position: fixed;
+  bottom: 30px;
+  right: 30px;
+  z-index: 99999;
+  background-color: #2c3895;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 50px;
+  height: 50px;
+  text-align: center;
+  font-size: 22px;
+  cursor: pointer;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(12px) scale(0.98);
+  transition: opacity 0.28s ease, transform 0.28s ease, visibility 0.28s;
+  pointer-events: none;
+}
+
+/* visible state */
+.back-to-top.show {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0) scale(1);
+  pointer-events: auto;
+}
+
+/* hover */
+.back-to-top:hover {
+  transform: translateY(0) scale(1.08);
+  background-color: #1f2a6b;
+}
   "))
       ),
       # --- First Top-Level Tab: Dashboard ---
@@ -5897,183 +6180,321 @@ server <- function(input, output, session) {
     )
   })
   
-  # --- HOME CARD SELECTION STATE ---
-  home_selection <- reactiveVal("Human Resource")  # Default card
+  # --- Scroll to and open the corresponding accordion when a card is clicked ---
+  # ================================================================
+  # ========== CARD CLICK ACTIONS (scroll + open exact accordion) ==========
+  # ================================================================
   
-  # --- Observe card clicks ---
   observeEvent(input$select_hr, {
-    home_selection("Human Resource")
+    runjs("
+    $('#home_accordion .accordion-collapse').removeClass('show');
+    $('#home_accordion .accordion-button').addClass('collapsed').attr('aria-expanded', 'false');
+    var section = $('#hr_section').closest('.accordion-collapse');
+    var header = section.prev('.accordion-header').find('.accordion-button');
+    section.addClass('show');
+    header.removeClass('collapsed').attr('aria-expanded', 'true');
+    $('html, body').animate({ scrollTop: $('#hr_section').offset().top - 100 }, 600);
+  ")
   })
   
   observeEvent(input$select_school, {
-    home_selection("School Information")
+    runjs("
+    $('#home_accordion .accordion-collapse').removeClass('show');
+    $('#home_accordion .accordion-button').addClass('collapsed').attr('aria-expanded', 'false');
+    var section = $('#school_section').closest('.accordion-collapse');
+    var header = section.prev('.accordion-header').find('.accordion-button');
+    section.addClass('show');
+    header.removeClass('collapsed').attr('aria-expanded', 'true');
+    $('html, body').animate({ scrollTop: $('#school_section').offset().top - 100 }, 600);
+  ")
   })
   
   observeEvent(input$select_classroom, {
-    home_selection("Classroom Data")
+    runjs("
+    $('#home_accordion .accordion-collapse').removeClass('show');
+    $('#home_accordion .accordion-button').addClass('collapsed').attr('aria-expanded', 'false');
+    var section = $('#classroom_section').closest('.accordion-collapse');
+    var header = section.prev('.accordion-header').find('.accordion-button');
+    section.addClass('show');
+    header.removeClass('collapsed').attr('aria-expanded', 'true');
+    $('html, body').animate({ scrollTop: $('#classroom_section').offset().top - 100 }, 600);
+  ")
   })
   
-  # --- Add visual feedback (highlight active card) ---
-  observe({
-    req(home_selection())
-    runjs(sprintf("
-    $('.btn-card').removeClass('active');
-    $('#%s').addClass('active');
-  ", switch(
-    home_selection(),
-    "Human Resource" = "select_hr",
-    "School Information" = "select_school",
-    "Classroom Data" = "select_classroom"
-  )))
+  observeEvent(input$select_financial, {
+    runjs("
+    $('#home_accordion .accordion-collapse').removeClass('show');
+    $('#home_accordion .accordion-button').addClass('collapsed').attr('aria-expanded', 'false');
+    var section = $('#financial_section').closest('.accordion-collapse');
+    var header = section.prev('.accordion-header').find('.accordion-button');
+    section.addClass('show');
+    header.removeClass('collapsed').attr('aria-expanded', 'true');
+    $('html, body').animate({ scrollTop: $('#financial_section').offset().top - 100 }, 600);
+  ")
   })
   
-  # --- HOME PAGE Dynamic Content ---
-  output$home_dynamic_panel <- renderUI({
-    selected_home_category <- home_selection()  # ✅ replaced radioButtons input
+  observeEvent(input$select_monitoring, {
+    runjs("
+    $('#home_accordion .accordion-collapse').removeClass('show');
+    $('#home_accordion .accordion-button').addClass('collapsed').attr('aria-expanded', 'false');
+    var section = $('#monitoring_section').closest('.accordion-collapse');
+    var header = section.prev('.accordion-header').find('.accordion-button');
+    section.addClass('show');
+    header.removeClass('collapsed').attr('aria-expanded', 'true');
+    $('html, body').animate({ scrollTop: $('#monitoring_section').offset().top - 100 }, 600);
+  ")
+  })
+  
+  observeEvent(input$select_ppas, {
+    runjs("
+    $('#home_accordion .accordion-collapse').removeClass('show');
+    $('#home_accordion .accordion-button').addClass('collapsed').attr('aria-expanded', 'false');
+    var section = $('#ppas_section').closest('.accordion-collapse');
+    var header = section.prev('.accordion-header').find('.accordion-button');
+    section.addClass('show');
+    header.removeClass('collapsed').attr('aria-expanded', 'true');
+    $('html, body').animate({ scrollTop: $('#ppas_section').offset().top - 100 }, 600);
+  ")
+  })
+  
+  # ================================================================
+  # ========== BACK TO TOP BUTTON BEHAVIOR ==========
+  # ================================================================
+  
+
+  observeEvent(input$scroll_top, {
+    runjs("window.scrollTo({ top: 0, behavior: 'smooth' });")
+  })
+  
+  # ================================================================
+  # ========== DRILLDOWN SOURCES (HOME PANEL INCLUDED) ==========
+  # ================================================================
+  
+  source_to_data_map <- list(
+    "drilldown_source_1" = "uni",
+    "drilldown_source_2" = "LMS",
+    "drilldown_source_3" = "LMS",
+    "drilldown_source_4" = "df",
+    "drilldown_source_5" = "uni",
     
-    if (is.null(selected_home_category)) return(NULL)
-    
-    if (selected_home_category == "Human Resource") {
-      tagList(
-        h3("Human Resource Overview"),
-        hr(),
+    # 🆕 Home Panel Sources
+    "drilldown_source_home" = "uni",          # Total Schools
+    "drilldown_source_home_LMS" = "LMS",      # Last Mile Schools
+    "drilldown_source_home_infra" = "LMS"     # Classroom Shortage
+  )
+  
+  drilldown_sources <- names(source_to_data_map)
+  
+  # --- Track Region / Division / District
+  drilldown_state <- reactiveVal(list(region = NULL, division = NULL, district = NULL))
+  
+  lapply(drilldown_sources, function(source_id) {
+    observeEvent(event_data("plotly_click", source = source_id), {
+      click_data <- event_data("plotly_click", source = source_id)
+      if (!is.null(click_data)) {
+        y_val <- click_data$y
         
-        layout_column_wrap(
-          width = 1/7, 
-          uiOutput("total_teacher_shortage_home"),
-          uiOutput("SP_Shortage_home")
-        ),
+        # 🧭 Region → Division → District
+        state <- drilldown_state()
         
-        hr(),
-        
-        layout_columns(
-          col_widths = c(6, 6),
-          card(
-            card_header("Teacher Shortage"),
-            full_screen = TRUE,
-            plotlyOutput("home_teachershortage_plot"),
-            height = "420px"
-          ),
-          card(
-            card_header("School Principal Shortage"),
-            full_screen = TRUE,
-            plotlyOutput("home_principalshortage_plot"),
-            height = "420px"
-          )
-        )
-      )
-      
-    } else if (selected_home_category == "School Information") {
-      tagList(
-        h3("Classroom Data Overview"),
-        hr(),
-        
-        # Summary cards (4 across, responsive)
-        layout_column_wrap(
-          width = 1/6, 
-          uiOutput("total_classrooms_home"),
-          uiOutput("total_classroom_shortage_home"),
-          uiOutput("total_schools_home"),
-          uiOutput("total_LMS_home")
-        ),
-        
-        hr(),
-        
-        # --- Classroom Shortage Drilldown Graph ---
-        card(
-          full_screen = TRUE,
-          card_header(strong("Classroom Shortage Drilldown")),
-          plotlyOutput("home_classroomshortage_plot", height = "500px")
-        ),
-        
-        hr()
-      )
-      
-    } else if (selected_home_category == "Classroom Data") {
-      tagList(
-        h3("Classroom Data Overview"),
-        hr(),
-        
-        # --- Enrollment Summary Cards ---
-        layout_column_wrap(
-          width = 1/7, 
-          uiOutput("total_enrollment_home")
-        ),
-        
-        hr(),
-        
-        # --- Enrollment Table ---
-        card(
-          full_screen = TRUE,
-          card_header(strong("Enrollment by Region")),
-          dataTableOutput("enroll_table")
-        )
-      )
-    }
+        if (is.null(state$region)) {
+          # First click = Region
+          drilldown_state(list(region = y_val, division = NULL, district = NULL))
+          
+        } else if (is.null(state$division)) {
+          # Second click = Division
+          drilldown_state(list(region = state$region, division = y_val, district = NULL))
+          
+        } else if (is.null(state$district)) {
+          # Third click = District
+          drilldown_state(list(region = state$region, division = state$division, district = y_val))
+          
+        } else {
+          # Reset (after 3 levels)
+          drilldown_state(list(region = NULL, division = NULL, district = NULL))
+        }
+      }
+    })
   })
   
-  # --- FUNCTIONS FOR HOME NAV PANEL ---
   
-  # 1. Total Classrooms
+  # ================================================================
+# ========== FINANCIAL PLACEHOLDERS (UI ONLY) ============
+# ================================================================
+
+output$fin_total_budget_allocation <- renderUI({
+  bslib::card(
+    style = "background-color: #FFFFFF;",
+    bslib::card_header("Total Budget Allocation", class = "text-center"),
+    bslib::card_body(
+      tags$h3("—", style = "text-align: center; font-weight: 700; color: #999;")
+    )
+  )
+})
+
+output$fin_total_mooe_utilization <- renderUI({
+  bslib::card(
+    style = "background-color: #FFFFFF;",
+    bslib::card_header("Total MOOE Utilization", class = "text-center"),
+    bslib::card_body(
+      tags$h3("—", style = "text-align: center; font-weight: 700; color: #999;")
+    )
+  )
+})
+
+output$fin_total_capital_outlay <- renderUI({
+  bslib::card(
+    style = "background-color: #FFFFFF;",
+    bslib::card_header("Total Capital Outlay", class = "text-center"),
+    bslib::card_body(
+      tags$h3("—", style = "text-align: center; font-weight: 700; color: #999;")
+    )
+  )
+})
+  # ================================================================
+  # ========== HUMAN RESOURCE PLACEHOLDERS (UI ONLY) ============
+  # ================================================================
+  
+  output$hr_total_central_office <- renderUI({
+    bslib::card(
+      style = "background-color: #FFFFFF;",
+      bslib::card_header("Total Number of Central Office Personnel", class = "text-center"),
+      bslib::card_body(
+        tags$h3("—", style = "text-align: center; font-weight: 700; color: #999;")
+      )
+    )
+  })
+  
+  output$hr_total_ro_personnel <- renderUI({
+    bslib::card(
+      style = "background-color: #FFFFFF;",
+      bslib::card_header("Total Number of RO Personnel", class = "text-center"),
+      bslib::card_body(
+        tags$h3("—", style = "text-align: center; font-weight: 700; color: #999;")
+      )
+    )
+  })
+  
+  output$hr_total_sdo_personnel <- renderUI({
+    bslib::card(
+      style = "background-color: #FFFFFF;",
+      bslib::card_header("Total Number of SDO Personnel", class = "text-center"),
+      bslib::card_body(
+        tags$h3("—", style = "text-align: center; font-weight: 700; color: #999;")
+      )
+    )
+  })
+  
+  output$hr_total_teaching_personnel <- renderUI({
+    bslib::card(
+      style = "background-color: #FFFFFF;",
+      bslib::card_header("Total Number of Teaching Personnel", class = "text-center"),
+      bslib::card_body(
+        tags$h3("—", style = "text-align: center; font-weight: 700; color: #999;")
+      )
+    )
+  })
+  
+  output$hr_total_nonteaching_personnel <- renderUI({
+    bslib::card(
+      style = "background-color: #FFFFFF;",
+      bslib::card_header("Total Number of Non-teaching Personnel", class = "text-center"),
+      bslib::card_body(
+        tags$h3("—", style = "text-align: center; font-weight: 700; color: #999;")
+      )
+    )
+  })
+  
+  output$hr_total_teaching_related_personnel <- renderUI({
+    bslib::card(
+      style = "background-color: #FFFFFF;",
+      bslib::card_header("Total Number of Teaching-related Personnel", class = "text-center"),
+      bslib::card_body(
+        tags$h3("—", style = "text-align: center; font-weight: 700; color: #999;")
+      )
+    )
+  })
+  # ================================================================
+  # ========== INFRASTRUCTURE VALUE BOXES (HOME) ============
+  # ================================================================
+  
+  # 1. Total Number of Classrooms
   output$total_classrooms_home <- renderUI({
-    count <- sum(filtered_data_LMS_erdb()$Instructional_Rooms, na.rm = TRUE)
+    total <- sum(filtered_data_LMS_erdb()$Instructional_Rooms, na.rm = TRUE)
     
     bslib::card(
       style = "background-color: #FFFFFF;",
-      bslib::card_header("Available Classrooms", class = "text-center"),
-      bslib::card_body(
-        tags$h3(scales::comma(count), style = "text-align: center; font-weight: 700;")
-      )
-    )
-  })
-  
-  # 2. Classroom Shortage
-  output$total_classroom_shortage_home <- renderUI({
-    shortage <- sum(filtered_data_LMS_erdb()$Estimated_CL_Shortage, na.rm = TRUE)
-    
-    bslib::card(
-      style = "background-color: #FFE5CC;",
-      bslib::card_header("Classroom Shortage", class = "text-center"),
-      bslib::card_body(
-        tags$h3(scales::comma(shortage), style = "text-align: center; font-weight: 700;")
-      )
-    )
-  })
-  
-  # 3. Total Schools
-  output$total_schools_home <- renderUI({
-    total <- nrow(filtered_data_uni_erdb())
-    
-    bslib::card(
-      style = "background-color: #FFFFFF;",
-      bslib::card_header("Total Schools Count", class = "text-center"),
+      bslib::card_header("Total Number of Classrooms", class = "text-center"),
       bslib::card_body(
         tags$h3(scales::comma(total), style = "text-align: center; font-weight: 700;")
       )
     )
   })
   
-  # 4. Total Last Mile Schools
-  output$total_LMS_home <- renderUI({
-    count <- filtered_data_LMS_erdb() %>%
-      filter(LMS == 1) %>%
+  # 2. Total Number of Schools with Classroom Shortage
+  output$schools_with_shortage_home <- renderUI({
+    shortage_count <- filtered_data_LMS_erdb() %>%
+      filter(Estimated_CL_Shortage > 0) %>%
       nrow()
     
     bslib::card(
-      style = "background-color: #FFFFFF;",
-      bslib::card_header("Total Last Mile Schools", class = "text-center"),
+      style = "background-color: #FFE5CC;",
+      bslib::card_header("Schools with Classroom Shortage", class = "text-center"),
       bslib::card_body(
-        tags$h3(scales::comma(count), style = "text-align: center; font-weight: 700;")
+        tags$h3(scales::comma(shortage_count), style = "text-align: center; font-weight: 700;")
       )
     )
   })
   
-  # --- Classroom Shortage Drilldown ---
-  output$home_classroomshortage_plot <- renderPlotly({
+  # 3. Total Number of Schools with Classroom Excess
+  output$schools_with_excess_home <- renderUI({
+    excess_count <- filtered_data_LMS_erdb() %>%
+      filter(Estimated_CL_Excess > 0) %>%
+      nrow()
+    
+    bslib::card(
+      style = "background-color: #E0F7FA;",  # light teal for positive
+      bslib::card_header("Schools with Classroom Excess", class = "text-center"),
+      bslib::card_body(
+        tags$h3(scales::comma(excess_count), style = "text-align: center; font-weight: 700;")
+      )
+    )
+  })
+  
+  # 4. Total Number of Schools with Classroom Balance
+  output$schools_with_balance_home <- renderUI({
+    balance_count <- filtered_data_LMS_erdb() %>%
+      filter(Estimated_CL_Shortage == 0 & Estimated_CL_Excess == 0) %>%
+      nrow()
+    
+    bslib::card(
+      style = "background-color: #E8F5E9;",  # light green
+      bslib::card_header("Schools with Classroom Balance", class = "text-center"),
+      bslib::card_body(
+        tags$h3(scales::comma(balance_count), style = "text-align: center; font-weight: 700;")
+      )
+    )
+  })
+  
+  # 5. Total Number of Classrooms Needing Repairs
+  output$classrooms_needing_repair_home <- renderUI({
+    repair_count <- sum(filtered_data_LMS_erdb()$Rooms_Needing_Repairs, na.rm = TRUE)
+    
+    bslib::card(
+      style = "background-color: #FFF3CD; color: #664D03;",
+      bslib::card_header("Classrooms Needing Repairs", class = "text-center"),
+      bslib::card_body(
+        tags$h3(scales::comma(repair_count), style = "text-align: center; font-weight: 700;")
+      )
+    )
+  })
+  
+  # --- Classroom Shortage Drilldown (Infrastructure Accordion in Home Panel) ---
+  output$classroomshortage_plot_home <- renderPlotly({
     state <- drilldown_state()
     
     if (is.null(state$region)) {
-      # --- National View (by Region) ---
+      # National View -> Group by Region
       plot_data <- LMS %>%
         group_by(Region) %>%
         summarise(TotalShortage = sum(Estimated_CL_Shortage, na.rm = TRUE), .groups = 'drop')
@@ -6081,23 +6502,23 @@ server <- function(input, output, session) {
       max_schools <- max(plot_data$TotalShortage, na.rm = TRUE)
       
       p <- plot_ly(
-        data = plot_data,
+        data = plot_data, 
         y = ~Region,
         x = ~TotalShortage,
         type = 'bar',
-        source = "home_drilldown_source",
+        source = "drilldown_source_home_infra",
         text = ~TotalShortage,
         texttemplate = '%{x:,.0f}',
         textposition = 'outside'
       ) %>%
         layout(
-          title = "Classroom Shortage by Region",
+          title = "Classroom Shortage by Region", 
           xaxis = list(title = "Total Shortage", tickformat = ",", range = c(0, max_schools * 1.15)),
           yaxis = list(title = "", categoryorder = "total descending", autorange = "reversed")
         )
       
     } else if (is.null(state$division)) {
-      # --- Regional View (by Division) ---
+      # Regional View -> Group by Division
       plot_data <- LMS %>%
         filter(Region == state$region) %>%
         group_by(Division) %>%
@@ -6106,11 +6527,11 @@ server <- function(input, output, session) {
       max_schools <- max(plot_data$TotalShortage, na.rm = TRUE)
       
       p <- plot_ly(
-        data = plot_data,
+        data = plot_data, 
         y = ~Division,
         x = ~TotalShortage,
         type = 'bar',
-        source = "home_drilldown_source",
+        source = "drilldown_source_home_infra",
         text = ~TotalShortage,
         texttemplate = '%{x:,.0f}',
         textposition = 'outside'
@@ -6122,7 +6543,7 @@ server <- function(input, output, session) {
         )
       
     } else {
-      # --- Divisional View (by Legislative District) ---
+      # Divisional View -> Group by Legislative District
       plot_data <- LMS %>%
         filter(Region == state$region, Division == state$division) %>%
         group_by(Legislative.District) %>%
@@ -6145,242 +6566,262 @@ server <- function(input, output, session) {
           yaxis = list(title = "Legislative District", categoryorder = "total descending", autorange = "reversed")
         )
     }
-    
     p
   })
   
-  # --- Total Teacher Shortage ---
-  output$total_teacher_shortage_home <- renderUI({
-    shortage <- sum(filtered_data_df_erdb()$TeacherShortage, na.rm = TRUE)
-    
-    bslib::card(
-      style = "background-color: #F8D7DA;",
-      bslib::card_header("Teacher Shortage", class = "text-center"),
-      bslib::card_body(
-        tags$h3(
-          scales::comma(shortage),
-          style = "text-align: center; font-weight: 700;"
-        )
-      )
-    )
-  })
-  
-  # --- School Principal Shortage ---
-  output$SP_Shortage_home <- renderUI({
-    data_uni <- filtered_data_uni_erdb()
-    count <- sum(data_uni$Designation != "School Principal", na.rm = TRUE)
-    
-    bslib::card(
-      style = "background-color: #FFF3CD; color: #664D03;",
-      bslib::card_header("School Principal Shortage", class = "text-center"),
-      bslib::card_body(
-        tags$h3(
-          scales::comma(count),
-          style = "text-align: center; font-weight: 700;"
-        )
-      )
-    )
-  })
-  
-  # --- Teacher Shortage Drilldown ---
-  output$home_teachershortage_plot <- renderPlotly({
-    state <- drilldown_state()
-    
-    if (is.null(state$region)) {
-      # --- National View ---
-      plot_data <- df %>%
-        group_by(Region) %>%
-        summarise(TotalShortage = sum(TeacherShortage, na.rm = TRUE), .groups = 'drop')
-      
-      max_val <- max(plot_data$TotalShortage, na.rm = TRUE)
-      
-      p <- plot_ly(
-        data = plot_data,
-        y = ~Region,
-        x = ~TotalShortage,
-        type = 'bar',
-        source = "home_hr_drilldown_source_1",
-        text = ~TotalShortage,
-        texttemplate = '%{x:,.0f}',
-        textposition = 'outside'
-      ) %>%
-        layout(
-          title = "Teacher Shortage by Region",
-          xaxis = list(title = "Total Teacher Shortage", tickformat = ",", range = c(0, max_val * 1.15)),
-          yaxis = list(title = "", categoryorder = "total descending", autorange = "reversed")
-        )
-      
-    } else if (is.null(state$division)) {
-      # --- Regional View ---
-      plot_data <- df %>%
-        filter(Region == state$region) %>%
-        group_by(Division) %>%
-        summarise(TotalShortage = sum(TeacherShortage, na.rm = TRUE), .groups = 'drop')
-      
-      max_val <- max(plot_data$TotalShortage, na.rm = TRUE)
-      
-      p <- plot_ly(
-        data = plot_data,
-        y = ~Division,
-        x = ~TotalShortage,
-        type = 'bar',
-        source = "home_hr_drilldown_source_1",
-        text = ~TotalShortage,
-        texttemplate = '%{x:,.0f}',
-        textposition = 'outside'
-      ) %>%
-        layout(
-          title = paste("Teacher Shortage in", state$region),
-          xaxis = list(title = "Total Teacher Shortage", tickformat = ",", range = c(0, max_val * 1.15)),
-          yaxis = list(title = "", categoryorder = "total descending", autorange = "reversed")
-        )
-      
-    } else {
-      # --- Divisional View ---
-      plot_data <- df %>%
-        filter(Region == state$region, Division == state$division) %>%
-        group_by(Legislative.District) %>%
-        summarise(TotalShortage = sum(TeacherShortage, na.rm = TRUE), .groups = 'drop')
-      
-      max_val <- max(plot_data$TotalShortage, na.rm = TRUE)
-      
-      p <- plot_ly(
-        data = plot_data,
-        y = ~Legislative.District,
-        x = ~TotalShortage,
-        type = 'bar',
-        text = ~TotalShortage,
-        texttemplate = '%{x:,.0f}',
-        textposition = 'outside'
-      ) %>%
-        layout(
-          title = paste("Teacher Shortage in", state$division),
-          xaxis = list(title = "Total Teacher Shortage", tickformat = ",", range = c(0, max_val * 1.15)),
-          yaxis = list(title = "Legislative District", categoryorder = "total descending", autorange = "reversed")
-        )
-    }
-    
-    p
-  })
-  
-  # --- School Principal Shortage Drilldown ---
-  output$home_principalshortage_plot <- renderPlotly({
-    state <- drilldown_state()
-    
-    if (is.null(state$region)) {
-      # --- National View ---
-      plot_data <- uni %>%
-        filter(Designation != "School Principal") %>%
-        group_by(Region) %>%
-        summarise(Count = n(), .groups = 'drop')
-      
-      max_val <- max(plot_data$Count, na.rm = TRUE)
-      
-      p <- plot_ly(
-        data = plot_data,
-        y = ~Region,
-        x = ~Count,
-        type = 'bar',
-        source = "home_hr_drilldown_source_2",
-        text = ~Count,
-        texttemplate = '%{x:,.0f}',
-        textposition = 'outside'
-      ) %>%
-        layout(
-          title = "Schools w/o Principal by Region",
-          xaxis = list(title = "Number of Schools", tickformat = ",", range = c(0, max_val * 1.15)),
-          yaxis = list(title = "", categoryorder = "total descending", autorange = "reversed")
-        )
-      
-    } else if (is.null(state$division)) {
-      # --- Regional View ---
-      plot_data <- uni %>%
-        filter(Designation != "School Principal", Region == state$region) %>%
-        group_by(Division) %>%
-        summarise(Count = n(), .groups = 'drop')
-      
-      max_val <- max(plot_data$Count, na.rm = TRUE)
-      
-      p <- plot_ly(
-        data = plot_data,
-        y = ~Division,
-        x = ~Count,
-        type = 'bar',
-        source = "home_hr_drilldown_source_2",
-        text = ~Count,
-        texttemplate = '%{x:,.0f}',
-        textposition = 'outside'
-      ) %>%
-        layout(
-          title = paste("Schools w/o Principal in", state$region),
-          xaxis = list(title = "Number of Schools", tickformat = ",", range = c(0, max_val * 1.15)),
-          yaxis = list(title = "", categoryorder = "total descending", autorange = "reversed")
-        )
-      
-    } else {
-      # --- Divisional View ---
-      plot_data <- uni %>%
-        filter(Designation != "School Principal", Region == state$region, Division == state$division) %>%
-        group_by(Legislative.District) %>%
-        summarise(Count = n(), .groups = 'drop')
-      
-      max_val <- max(plot_data$Count, na.rm = TRUE)
-      
-      p <- plot_ly(
-        data = plot_data,
-        y = ~Legislative.District,
-        x = ~Count,
-        type = 'bar',
-        text = ~Count,
-        texttemplate = '%{x:,.0f}',
-        textposition = 'outside'
-      ) %>%
-        layout(
-          title = paste("Schools w/o Principal in", state$division),
-          xaxis = list(title = "Number of Schools", tickformat = ",", range = c(0, max_val * 1.15)),
-          yaxis = list(title = "Legislative District", categoryorder = "total descending", autorange = "reversed")
-        )
-    }
-    
-    p
-  })
-  
-  # --- Total Student Enrollment ---
-  output$total_enrollment_home <- renderUI({
-    count <- sum(filtered_data_uni_erdb()$TotalEnrolment, na.rm = TRUE)
+  # ================================================================
+  # ========== BASIC INFO: SCHOOL VISUALIZATIONS (HOME) ============
+  # ================================================================
+  output$total_schools_home <- renderUI({
+    total <- nrow(filtered_data_uni_erdb())  # reuse your existing filtered data
     
     bslib::card(
       style = "background-color: #FFFFFF;",
-      bslib::card_header("Total Student Enrolment", class = "text-center"),
+      bslib::card_header("Total Schools Count", class = "text-center"),
       bslib::card_body(
         tags$h3(
-          scales::comma(count),
+          scales::comma(total),
           style = "text-align: center; font-weight: 700;"
         )
       )
     )
   })
-  
-  # --- CLASSROOM SHORTAGE DRILLDOWN CLICK EVENTS ---
-  observeEvent(event_data("plotly_click", source = "home_drilldown_source"), {
-    click <- event_data("plotly_click", source = "home_drilldown_source")
+  # ========== TOTAL SCHOOLS PLOT ==========
+  output$totalschools_plot_home <- renderPlotly({
     state <- drilldown_state()
     
-    if (is.null(click)) return(NULL)
-    
     if (is.null(state$region)) {
-      # --- First click (Region → Division)
-      drilldown_state(list(region = click$y, division = NULL))
+      plot_data <- uni %>%
+        group_by(Region) %>%
+        summarise(TotalSchools = n(), .groups = 'drop')
+      
+      max_schools <- max(plot_data$TotalSchools, na.rm = TRUE)
+      
+      p <- plot_ly(
+        data = plot_data,
+        y = ~Region,
+        x = ~TotalSchools,
+        type = 'bar',
+        source = "drilldown_source_home",
+        text = ~TotalSchools,
+        texttemplate = '%{x:,.0f}',
+        textposition = 'outside'
+      ) %>%
+        layout(
+          title = "Total Schools by Region",
+          xaxis = list(title = "Number of Schools", tickformat = ",", range = c(0, max_schools * 1.15)),
+          yaxis = list(title = "", categoryorder = "total descending", autorange = "reversed")
+        )
+      
     } else if (is.null(state$division)) {
-      # --- Second click (Division → Legislative District)
-      drilldown_state(list(region = state$region, division = click$y))
+      plot_data <- uni %>%
+        filter(Region == state$region) %>%
+        group_by(Division) %>%
+        summarise(TotalSchools = n(), .groups = 'drop')
+      
+      max_schools <- max(plot_data$TotalSchools, na.rm = TRUE)
+      
+      p <- plot_ly(
+        data = plot_data,
+        y = ~Division,
+        x = ~TotalSchools,
+        type = 'bar',
+        text = ~TotalSchools,
+        texttemplate = '%{x:,.0f}',
+        textposition = 'outside'
+      ) %>%
+        layout(
+          title = paste("Schools in", state$region),
+          xaxis = list(title = "Number of Schools", tickformat = ",", range = c(0, max_schools * 1.15)),
+          yaxis = list(title = "", categoryorder = "total descending", autorange = "reversed")
+        )
+      
+    } else {
+      plot_data <- uni %>%
+        filter(Region == state$region, Division == state$division) %>%
+        group_by(Legislative.District) %>%
+        summarise(TotalSchools = n(), .groups = 'drop')
+      
+      max_schools <- max(plot_data$TotalSchools, na.rm = TRUE)
+      
+      p <- plot_ly(
+        data = plot_data,
+        y = ~Legislative.District,
+        x = ~TotalSchools,
+        type = 'bar',
+        text = ~TotalSchools,
+        texttemplate = '%{x:,.0f}',
+        textposition = 'outside'
+      ) %>%
+        layout(
+          title = paste("Schools in", state$division),
+          xaxis = list(title = "Number of Schools", tickformat = ",", range = c(0, max_schools * 1.15)),
+          yaxis = list(title = "Legislative District", categoryorder = "total descending", autorange = "reversed")
+        )
     }
+    
+    p
   })
   
-  # --- RESET BUTTON FOR DRILLDOWN ---
-  observeEvent(input$reset_button, {
-    drilldown_state(list(region = NULL, division = NULL))
+  # ========== CURRICULAR OFFERING PLOT ==========
+  output$curricular_plot_home <- renderPlotly({
+    state <- drilldown_state()
+    
+    plot_data <- if (is.null(state$region)) {
+      uni
+    } else if (is.null(state$division)) {
+      uni %>% filter(Region == state$region)
+    } else {
+      uni %>% filter(Region == state$region, Division == state$division)
+    }
+    
+    pie_data <- plot_data %>%
+      group_by(Modified.COC) %>%
+      summarise(Count = n(), .groups = 'drop')
+    
+    title_text <- if (is.null(state$region)) {
+      "By Curricular Offering (National)"
+    } else if (is.null(state$division)) {
+      paste("By Curricular Offering (", state$region, ")")
+    } else {
+      paste("By Curricular Offering (", state$division, ")")
+    }
+    
+    plot_ly(
+      data = pie_data,
+      labels = ~Modified.COC,
+      values = ~Count,
+      type = 'pie',
+      textinfo = 'percent',
+      insidetextorientation = 'radial'
+    ) %>%
+      layout(title = title_text, showlegend = TRUE)
   })
+  
+  # ========== LAST MILE SCHOOLS PLOT ==========
+  output$LMS_plot_home <- renderPlotly({
+    state <- drilldown_state()
+    
+    if (is.null(state$region)) {
+      # National View
+      plot_data <- LMS %>%
+        filter(LMS == 1) %>%
+        group_by(Region) %>%
+        summarise(Count = n(), .groups = 'drop')
+      
+      max_schools <- max(plot_data$Count, na.rm = TRUE)
+      
+      p <- plot_ly(
+        data = plot_data, 
+        y = ~Region,
+        x = ~Count,
+        type = 'bar',
+        source = "drilldown_source_home_LMS",
+        text = ~Count,
+        texttemplate = '%{x:,.0f}',
+        textposition = 'outside'
+      ) %>%
+        layout(
+          title = "Last Mile Schools by Region",
+          xaxis = list(title = "Number of LMS", tickformat = ",", range = c(0, max_schools * 1.15)),
+          yaxis = list(title = "", categoryorder = "total descending", autorange = "reversed")
+        )
+      
+    } else if (is.null(state$division)) {
+      # Regional View
+      plot_data <- LMS %>%
+        filter(LMS == 1, Region == state$region) %>%
+        group_by(Division) %>%
+        summarise(Count = n(), .groups = 'drop')
+      
+      max_schools <- max(plot_data$Count, na.rm = TRUE)
+      
+      p <- plot_ly(
+        data = plot_data, 
+        y = ~Division,
+        x = ~Count,
+        type = 'bar',
+        source = "drilldown_source_home_LMS",
+        text = ~Count,
+        texttemplate = '%{x:,.0f}',
+        textposition = 'outside'
+      ) %>%
+        layout(
+          title = paste("LMS in", state$region),
+          xaxis = list(title = "Number of LMS", tickformat = ",", range = c(0, max_schools * 1.15)),
+          yaxis = list(title = "", categoryorder = "total descending", autorange = "reversed")
+        )
+      
+    } else {
+      # Divisional View
+      plot_data <- LMS %>%
+        filter(LMS == 1, Region == state$region, Division == state$division) %>%
+        group_by(Legislative.District) %>%
+        summarise(Count = n(), .groups = 'drop')
+      
+      max_schools <- max(plot_data$Count, na.rm = TRUE)
+      
+      p <- plot_ly(
+        data = plot_data, 
+        y = ~Legislative.District,
+        x = ~Count,
+        type = 'bar',
+        text = ~Count,
+        texttemplate = '%{x:,.0f}',
+        textposition = 'outside'
+      ) %>%
+        layout(
+          title = paste("LMS in", state$division),
+          xaxis = list(title = "Number of LMS", tickformat = ",", range = c(0, max_schools * 1.15)),
+          yaxis = list(title = "Legislative District", categoryorder = "total descending", autorange = "reversed")
+        )
+    }
+    
+    p
+  })
+  
+  # ========== TYPOLOGY PLOT ==========
+  output$typology_plot_home <- renderPlotly({
+    state <- drilldown_state()
+    
+    plot_data <- if (is.null(state$region)) {
+      uni
+    } else if (is.null(state$division)) {
+      uni %>% filter(Region == state$region)
+    } else {
+      uni %>% filter(Region == state$region, Division == state$division)
+    }
+    
+    typology_data <- plot_data %>%
+      group_by(School.Size.Typology) %>%
+      summarise(Count = n(), .groups = 'drop')
+    
+    max_schools <- max(typology_data$Count, na.rm = TRUE)
+    
+    title_text <- if (is.null(state$region)) {
+      "By School Size (National)"
+    } else if (is.null(state$division)) {
+      paste("By School Size (", state$region, ")")
+    } else {
+      paste("By School Size (", state$division, ")")
+    }
+    
+    plot_ly(
+      data = typology_data,
+      y = ~School.Size.Typology,
+      x = ~Count,
+      type = 'bar',
+      text = ~Count,
+      texttemplate = '%{x:,.0f}',
+      textposition = 'outside'
+    ) %>%
+      layout(
+        title = title_text,
+        yaxis = list(title = "", categoryorder = "total descending", autorange = "reversed"),
+        xaxis = list(title = "Number of Schools", tickformat = ",", range = c(0, max_schools * 1.15))
+      )
+  })
+  
   
   # Reactive expression to generate the main panel content
   output$dynamic_resource_panel <- renderUI({
@@ -14534,10 +14975,27 @@ server <- function(input, output, session) {
       names_to = "Other Data",     # Name of the new column holding the original column names
       values_to = "Data")     # Name of the new column holding the original values
     
-    rowselected_table5 <- row_selected %>% select(English,Mathematics,Science,Biological.Sciences,Physical.Sciences,General.Ed,Araling.Panlipunan,TLE,MAPEH,Filipino,ESP,Agriculture,ECE,SPED) %>% rename("Biological Sciences" = Biological.Sciences,"Physical Sciences" = Physical.Sciences,"General Education" = General.Ed,"Araling Panlipunan" = Araling.Panlipunan,"Early Chilhood Education" = ECE) %>% mutate(dplyr::across(tidyr::everything(), as.character)) %>% pivot_longer(
-      cols = everything(),    # Pivot all columns selected in details_to_pivot
-      names_to = "Other Data",     # Name of the new column holding the original column names
-      values_to = "Data")     # Name of the new column holding the original values
+    rowselected_table5 <- row_selected %>%
+      select(English, Mathematics, Science, Biological.Sciences, Physical.Sciences,
+             General.Ed, Araling.Panlipunan, TLE, MAPEH, Filipino, ESP,
+             Agriculture, ECE, SPED) %>%
+      rename(
+        "Biological Sciences" = Biological.Sciences,
+        "Physical Sciences" = Physical.Sciences,
+        "General Education" = General.Ed,
+        "Araling Panlipunan" = Araling.Panlipunan,
+        "Early Childhood Education" = ECE
+      ) %>%
+      # Convert all to character first
+      mutate(across(everything(), as.character)) %>%
+      # 🪄 Replace all 0s with "-"
+      mutate(across(everything(), ~ ifelse(. == "0", "-", .))) %>%
+      pivot_longer(
+        cols = everything(),
+        names_to = "Specialization",
+        values_to = "Data"
+      )
+    
     
     output$schooldetails <- renderTable({
       # Pass the pivoted data frame directly
