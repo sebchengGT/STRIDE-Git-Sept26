@@ -292,6 +292,520 @@ ui <- page_fluid(
 # Define server logic required to draw a histogram
 server <- function(input, output, session) {
   
+  # --- Logic for Feature 1 (Drilldown) ---
+  
+  current_drilldown <- reactiveVal(list(level = "region", filter = NULL))
+  
+  current_totals <- reactive({
+    req(uni)
+    state <- current_drilldown()
+    
+    data_to_sum <- uni
+    
+    if (state$level == "division") {
+      data_to_sum <- uni %>% filter(Region == state$filter)
+    } else if (state$level == "district") {
+      data_to_sum <- uni %>% filter(Division == state$filter)
+    }
+    
+    list(
+      schools = nrow(data_to_sum), 
+      enroll = sum(as.numeric(data_to_sum$TotalEnrolment), na.rm = TRUE),
+      teach = sum(as.numeric(data_to_sum$TotalTeachers), na.rm = TRUE)
+    )
+  })
+  
+  output$card_enrollment <- renderUI({ 
+    req(current_totals())
+    card(
+      card_header("Total Enrollment"),
+      div(
+        style="font-size: 2rem; font-weight: bold;", 
+        class="text-primary text-center", 
+        format(round(current_totals()$enroll), nsmall = 0, big.mark = ",")
+      ),
+      class = "mb-1" 
+    )
+  })
+  
+  output$card_teachers <- renderUI({ 
+    req(current_totals())
+    card(
+      card_header("Total Teachers"),
+      div(
+        style="font-size: 2rem; font-weight: bold;", 
+        class="text-primary text-center",
+        format(round(current_totals()$teach), nsmall = 0, big.mark = ",")
+      ),
+      class = "mb-1"
+    )
+  })
+  
+  output$card_schools <- renderUI({ 
+    req(current_totals())
+    card(
+      card_header("Total Schools"),
+      div(
+        style="font-size: 2rem; font-weight: bold;", 
+        class="text-primary text-center",
+        format(round(current_totals()$schools), nsmall = 0, big.mark = ",")
+      ),
+      class = "mb-1"
+    )
+  })
+  
+  drilldown_data <- reactive({
+    req(uni)
+    state <- current_drilldown()
+    
+    if (state$level == "region") {
+      uni %>%
+        group_by(Region) %>%
+        summarise(
+          Total_Enrollment = sum(as.numeric(TotalEnrolment), na.rm = TRUE),
+          Total_Teachers = sum(as.numeric(TotalTeachers), na.rm = TRUE),
+          Total_Schools = n() 
+        ) %>%
+        filter(!is.na(Region)) %>%
+        rename(group_col = Region) 
+    } else if (state$level == "division") {
+      req(state$filter)
+      uni %>%
+        filter(Region == state$filter) %>%
+        group_by(Division) %>%
+        summarise(
+          Total_Enrollment = sum(as.numeric(TotalEnrolment), na.rm = TRUE),
+          Total_Teachers = sum(as.numeric(TotalTeachers), na.rm = TRUE),
+          Total_Schools = n()
+        ) %>%
+        filter(!is.na(Division)) %>%
+        rename(group_col = Division)
+    } else if (state$level == "district") {
+      req(state$filter)
+      uni %>%
+        filter(Division == state$filter) %>%
+        group_by(District) %>%
+        summarise(
+          Total_Enrollment = sum(as.numeric(TotalEnrolment), na.rm = TRUE),
+          Total_Teachers = sum(as.numeric(TotalTeachers), na.rm = TRUE),
+          Total_Schools = n()
+        ) %>%
+        filter(!is.na(District)) %>%
+        rename(group_col = District)
+    }
+  })
+  
+  output$plotly_enrollment <- renderPlotly({
+    req(drilldown_data())
+    plot_ly(
+      drilldown_data(), 
+      y = ~group_col, x = ~Total_Enrollment,
+      type = 'bar', color = I("#0d6efd"), source = "drilldown_plot",
+      text = ~Total_Enrollment,
+      texttemplate = '%{text:,.0f}',
+      textposition = 'outside',
+      textfont = list(color = '#000000', size = 10)
+    ) %>%
+      layout(
+        title = "Total Enrollment",
+        xaxis = list(title = "Enrollment"), 
+        yaxis = list(title = "", autorange = "reversed"),
+        showlegend = FALSE,
+        uniformtext_minsize=8, uniformtext_mode='show'
+      )
+  })
+  
+  output$plotly_teachers <- renderPlotly({
+    req(drilldown_data())
+    plot_ly(
+      drilldown_data(), 
+      y = ~group_col, x = ~Total_Teachers,
+      type = 'bar', color = I("#3d8bfd"), source = "drilldown_plot",
+      text = ~Total_Teachers,
+      texttemplate = '%{text:,.0f}',
+      textposition = 'outside',
+      textfont = list(color = '#000000', size = 10)
+    ) %>%
+      layout(
+        title = "Total Teachers",
+        xaxis = list(title = "Teachers"), 
+        yaxis = list(title = "", autorange = "reversed"),
+        showlegend = FALSE,
+        uniformtext_minsize=8, uniformtext_mode='show'
+      )
+  })
+  
+  output$plotly_schools <- renderPlotly({
+    req(drilldown_data())
+    plot_ly(
+      drilldown_data(), 
+      y = ~group_col, x = ~Total_Schools, 
+      type = 'bar', color = I("#6caefd"), source = "drilldown_plot",
+      text = ~Total_Schools, 
+      texttemplate = '%{text:,.0f}',
+      textposition = 'outside',
+      textfont = list(color = '#000000', size = 10)
+    ) %>%
+      layout(
+        title = "Total Schools", 
+        xaxis = list(title = "Schools"), 
+        yaxis = list(title = "", autorange = "reversed"),
+        showlegend = FALSE,
+        uniformtext_minsize=8, uniformtext_mode='show'
+      )
+  })
+  
+  observeEvent(event_data("plotly_click", source = "drilldown_plot"), {
+    clicked_value <- event_data("plotly_click", source = "drilldown_plot")$y
+    if (is.null(clicked_value)) return()
+    state <- current_drilldown()
+    if (state$level == "region") {
+      current_drilldown(list(level = "division", filter = clicked_value))
+    } else if (state$level == "division") {
+      current_drilldown(list(level = "district", filter = clicked_value))
+    }
+    
+    # --- MODIFIED: Hide school details when drilling down ---
+    shinyjs::hide("school_details_card") 
+    selected_school_data(NULL)
+  })
+  
+  observeEvent(input$btn_back, {
+    state <- current_drilldown()
+    if (state$level == "district") {
+      parent_region <- uni %>% 
+        filter(Division == state$filter) %>% 
+        slice(1) %>% 
+        pull(Region)
+      current_drilldown(list(level = "division", filter = parent_region))
+    } else if (state$level == "division") {
+      current_drilldown(list(level = "region", filter = NULL))
+    }
+    
+    # --- MODIFIED: Hide school details when going back ---
+    shinyjs::hide("school_details_card")
+    selected_school_data(NULL)
+  })
+  
+  observeEvent(current_drilldown(), {
+    if (current_drilldown()$level == "region") {
+      shinyjs::hide("btn_back")
+    } else {
+      shinyjs::show("btn_back")
+    }
+  })
+  
+  
+  # --- Logic for Feature 2 ---
+  feature_2_data <- reactiveVal(NULL)
+  
+  # --- NEW: ReactiveVal to store data for the clicked school ---
+  selected_school_data <- reactiveVal(NULL) 
+  
+  # --- MODIFIED: Load *all* columns needed for the card ---
+  observeEvent(uni, {
+    if (is.null(feature_2_data())) {
+      
+      # Define all columns we *want* for the card, based on your image
+      all_card_cols <- c(
+        "Region", "Province", "Municipality", "Division", "District", "Barangay",
+        "Street.Address", "SchoolID", "School.Name", "School.Head",
+        "School.Head.Position", "Implementing.Unit", "Modified.Curricular.Offering",
+        "Latitude", "Longitude",
+        "ES.Excess", "ES.Shortage", "JHS.Excess", "JHS.Shortage", "SHS.Excess", "SHS.Shortage",
+        "ES.Teachers", "JHS.Teachers", "SHS.Teachers", "ES.Enrolment", "JHS.Enrolment",
+        "SHS.Enrolment", "School.Size.Typology", "AO.II.Deployment", "COS.Deployment",
+        "TotalEnrolment" # Also used by map popup
+      )
+      
+      # Filter for valid lat/long first
+      valid_geo_data <- uni %>%
+        filter(!is.na(Latitude) & !is.na(Longitude) & Latitude != 0 & Longitude != 0)
+      
+      # IMPORTANT: Check which of our desired columns *actually exist* in the loaded CSV
+      # This prevents the app from crashing if "School.Head" or another column is missing
+      available_cols <- all_card_cols[all_card_cols %in% names(valid_geo_data)]
+      
+      # Select only the columns that are available
+      sample_data <- valid_geo_data %>%
+        select(all_of(available_cols)) %>%
+        sample_n(min(10, nrow(.))) # Sample 10 (or fewer if data is small)
+      
+      feature_2_data(sample_data) 
+    }
+  })
+  
+  output$demo_table_2 <- renderDT({
+    req(feature_2_data()) 
+    datatable(
+      feature_2_data()[, c("Region", "Division", "School.Name")], 
+      selection = 'single', 
+      rownames = FALSE,
+      options = list(
+        dom = 't',
+        # --- MODIFIED: Center all columns in the DT table ---
+        columnDefs = list(list(className = 'dt-center', targets = '_all'))
+      ) 
+    )
+  })
+  
+  output$demo_map <- renderLeaflet({
+    req(feature_2_data())
+    data <- feature_2_data()
+    
+    schoolIcon <- awesomeIcons(
+      icon = 'graduation-cap',
+      library = 'fa',
+      markerColor = 'blue'
+    )
+    
+    leaflet(data) %>%
+      addTiles() %>%
+      addAwesomeMarkers(
+        lng = ~Longitude, 
+        lat = ~Latitude,
+        popup = ~School.Name,
+        label = ~paste( 
+          "<strong>School:</strong>", `School.Name`, "<br>",
+          "<strong>Region:</strong>", Region, "<br>",
+          "<strong>Division:</strong>", Division, "<br>",
+          "<strong>Enrollment:</strong>", TotalEnrolment
+        ) %>% lapply(htmltools::HTML),
+        icon = schoolIcon,
+        labelOptions = labelOptions(noHide = FALSE)
+      )
+  })
+  
+  # --- MODIFIED: Observer for table row click ---
+  observeEvent(input$demo_table_2_rows_selected, {
+    req(input$demo_table_2_rows_selected) 
+    
+    selected_row_index <- input$demo_table_2_rows_selected
+    data <- feature_2_data() 
+    selected_school <- data[selected_row_index, ] 
+    
+    # --- NEW: Store data and show the card ---
+    selected_school_data(selected_school) # Store the full data for the selected school
+    shinyjs::show("school_details_card")   # Show the hidden div
+    # --- END NEW ---
+    
+    leafletProxy("demo_map") %>%
+      flyTo(lng = selected_school$Longitude, 
+            lat = selected_school$Latitude, 
+            zoom = 12,
+            options = list(duration = 0.5))
+  })
+  
+  # (This observer for map zoom is unchanged)
+  observeEvent(list(feature_2_data(), input$demo_map_zoom), {
+    
+    proxy <- leafletProxy("demo_map") %>% clearGroup("zoomed_label")
+    data <- feature_2_data()
+    zoom <- input$demo_map_zoom
+    
+    if (!is.null(data) && !is.null(zoom) && zoom >= 12) {
+      
+      label_content <- paste( 
+        "<strong>School:</strong>", data$School.Name, "<br>",
+        "<strong>Region:</strong>", data$Region, "<br>",
+        "<strong>Enrollment:</strong>", data$TotalEnrolment
+      ) %>% lapply(htmltools::HTML)
+      
+      proxy %>% addLabelOnlyMarkers(
+        lng = data$Longitude,
+        lat = data$Latitude,
+        label = label_content,
+        group = "zoomed_label",
+        labelOptions = labelOptions(
+          noHide = TRUE,
+          direction = 'auto',
+          textOnly = TRUE,
+          style = list(
+            "background-color" = "white",
+            "border-color" = "blue",
+            "border-width" = "1px",
+            "border-radius" = "3px",
+            "padding" = "5px",
+            "font-size" = "10px"
+          )
+        )
+      )
+    }
+  })
+  
+  # --- NEW: Render the School Details Card UI ---
+  output$school_details_ui <- renderUI({
+    # This UI will only render if selected_school_data() is not NULL
+    req(selected_school_data())
+    school_data <- selected_school_data()
+    
+    # Helper function to safely get data from the school's record
+    # This prevents the app from crashing if a column was missing from the CSV
+    get_data <- function(col_name) {
+      if (col_name %in% names(school_data)) {
+        val <- school_data[[col_name]]
+        # Return "N/A" if value is NA or an empty string
+        if (is.na(val) || val == "") "N/A" else val
+      } else {
+        "N/A" # Return "N/A" if the column doesn't exist
+      }
+    }
+    
+    # 1. Create the data frame for "Basic Information"
+    basic_info_df <- data.frame(
+      `Basic Info` = c("Region", "Province", "Municipality", "Division", "District",
+                       "Barangay", "Street Address", "School ID", "School Name", "School Head",
+                       "School Head Position", "Implementing Unit", "Modified Curricular Offering",
+                       "Latitude", "Longitude"),
+      Data = c(
+        get_data("Region"), get_data("Province"), get_data("Municipality"), get_data("Division"), get_data("District"),
+        get_data("Barangay"), get_data("Street.Address"), get_data("SchoolID"), get_data("School.Name"), get_data("School.Head"),
+        get_data("School.Head.Position"), get_data("Implementing.Unit"), get_data("Modified.Curricular.Offering"),
+        get_data("Latitude"), get_data("Longitude")
+      ),
+      check.names = FALSE # Allows spaces in the column name "Basic Info"
+    )
+    
+    # 2. Create the data frame for "HR Data"
+    hr_data_df <- data.frame(
+      `HR Data` = c("ES Excess", "ES Shortage", "JHS Excess", "JHS Shortage", "SHS Excess", "SHS Shortage",
+                    "ES Teachers", "JHS Teachers", "SHS Teachers", "ES Enrolment", "JHS Enrolment",
+                    "SHS Enrolment", "School Size Typology", "AO II Deployment", "COS Deployment"),
+      Data = c(
+        get_data("ES.Excess"), get_data("ES.Shortage"), get_data("JHS.Excess"), get_data("JHS.Shortage"), get_data("SHS.Excess"), get_data("SHS.Shortage"),
+        get_data("ES.Teachers"), get_data("JHS.Teachers"), get_data("SHS.Teachers"), get_data("ES.Enrolment"), get_data("JHS.Enrolment"),
+        get_data("SHS.Enrolment"), get_data("School.Size.Typology"), get_data("AO.II.Deployment"), get_data("COS.Deployment")
+      ),
+      check.names = FALSE
+    )
+    
+    # 3. Build the UI using tagList, layout_columns, and reactable
+    tagList(
+      layout_columns(
+        col_widths = c(6, 6), # Two equal-width columns
+        
+        # Card 1: Basic Information
+        card(
+          card_body(
+            padding = 0, # Remove body padding so table fits edge-to-edge
+            reactable(
+              basic_info_df,
+              columns = list(
+                `Basic Info` = colDef(
+                  # style = list(fontWeight = "bold"), # <-- REMOVED
+                  minWidth = 180,
+                  align = "center", 
+                  headerStyle = list(textAlign = "center", fontWeight = "bold") # <-- MODIFIED
+                ), 
+                Data = colDef(
+                  minWidth = 120, 
+                  align = "center",
+                  headerStyle = list(textAlign = "center", fontWeight = "bold") # <-- MODIFIED
+                ) 
+              ),
+              striped = TRUE, compact = TRUE, bordered = TRUE,
+              pagination = FALSE, # Remove pagination
+              fullWidth = TRUE
+            )
+          )
+        ),
+        
+        # Card 2: HR Data
+        card(
+          card_body(
+            padding = 0,
+            reactable(
+              hr_data_df,
+              columns = list(
+                `HR Data` = colDef(
+                  # style = list(fontWeight = "bold"), # <-- REMOVED
+                  minWidth = 180,
+                  align = "center", 
+                  headerStyle = list(textAlign = "center", fontWeight = "bold") # <-- MODIFIED
+                ),
+                Data = colDef(
+                  minWidth = 120, 
+                  align = "center",
+                  headerStyle = list(textAlign = "center", fontWeight = "bold") # <-- MODIFIED
+                ) 
+              ),
+              striped = TRUE, compact = TRUE, bordered = TRUE,
+              pagination = FALSE,
+              fullWidth = TRUE
+            )
+          )
+        )
+      )
+    )
+  })
+  
+  
+  # --- Logic for Feature 3 (MODIFIED) ---
+  
+  # Reactive to prepare the data for the reactable table
+  feature_3_data <- reactive({
+    req(uni)
+    uni %>%
+      select(
+        Region, 
+        Division, 
+        District, 
+        Legislative.District, # Make sure this column name is exact
+        School.Name, 
+        SchoolID, 
+        TotalEnrolment, 
+        TotalTeachers
+      ) %>%
+      mutate(
+        TotalEnrolment = as.numeric(TotalEnrolment),
+        TotalTeachers = as.numeric(TotalTeachers)
+      ) %>%
+      # Ensure data has rows before sampling
+      { if(nrow(.) > 0) sample_n(., min(500, nrow(.))) else . } # Sample up to 500 rows
+  })
+  
+  # Render the reactable table
+  output$feature_3_table <- renderReactable({
+    req(feature_3_data())
+    reactable(
+      feature_3_data(),
+      filterable = TRUE, 
+      searchable = TRUE, 
+      bordered = TRUE,
+      highlight = TRUE,
+      striped = TRUE,
+      compact = TRUE,
+      defaultPageSize = 10, 
+      defaultSorted = "Region",
+      showPageSizeOptions = TRUE,
+      pageSizeOptions = c(10, 25, 50, 100), # Allow up to 100 per page
+      # --- Center all columns AND headers (This was already correct!) ---
+      defaultColDef = colDef(
+        align = "center",
+        headerStyle = list(textAlign = "center") 
+      ) 
+    )
+  })
+  
+  # Download handler
+  output$download_feature3 <- downloadHandler(
+    filename = function() {
+      paste0("stride_sample_data_", Sys.Date(), ".csv")
+    },
+    content = function(file) {
+      req(feature_3_data())
+      write.csv(feature_3_data(), file, row.names = FALSE, na = "")
+    }
+  )
+  
+  
+  # --- Logic for Navigation ---
+  
+  observeEvent(input$btn_to_dashboard, {
+    nav_select(id = "main_nav", selected = "dashboard_tab")
+  })
+  
+  
   current_region <- reactiveVal(NULL)
   current_division <- reactiveVal(NULL)
   
@@ -2529,7 +3043,192 @@ server <- function(input, output, session) {
       #       ,
       
       nav_spacer(),
-      # --- HOME PAGE ---
+      nav_panel(
+        title = "Welcome",
+        value = "home_tab",
+        useShinyjs(),
+        
+        # 1. Custom CSS for Video Header
+        tags$head(
+          tags$style(HTML("
+        /* ... (CSS is unchanged) ... */
+        .video-container {
+          position: relative;
+          width: 100%;
+          height: 30vh;
+          overflow: hidden;
+          color: white;
+          text-align: center;
+        }
+        
+        .video-container video {
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          min-width: 100%;
+          min-height: 100%;
+          width: auto;
+          height: auto;
+          transform: translate(-50%, -50%);
+          z-index: 0;
+        }
+        
+        .video-container::after {
+          content: '';
+          position: absolute;
+          inset: 0;
+          background: rgba(0, 0, 0, 0.5);
+          z-index: 1;
+        }
+        
+        .video-overlay {
+          position: relative;
+          z-index: 2;
+          top: 50%;
+          transform: translateY(-50%);
+        }
+        
+        .video-overlay h1 {
+          font-size: 8rem;
+          font-weight: 900;
+          letter-spacing: 0.1em;
+          text-shadow: 2px 2px 8px rgba(0,0,0,0.7);
+          margin-bottom: 0;
+        }
+
+        .video-overlay h3 {
+          font-size: 2rem;
+          font-weight: 300;
+          letter-spacing: 0.05em;
+          text-shadow: 1px 1px 4px rgba(0,0,0,0.7);
+          line-height: 1.2;
+        }
+      "))
+        ),
+        
+        # 1. HTML for Video Header (Unchanged)
+        div(class = "video-container",
+            tags$video(
+              src = "challenge.mp4",
+              type = "video/mp4",
+              autoplay = TRUE,
+              loop = TRUE,
+              muted = TRUE
+            ),
+            div(class = "video-overlay",
+                tags$h1("STRIDE"),
+                tags$h3("Strategic Resource Inventory for Deployment Efficiency")
+            )
+        ),
+        
+        hr(),
+        # 2. Short Description Section (Unchanged)
+        layout_columns(
+          div(
+            class = "text-center p-5",
+            p(class = "lead",
+              strong("Education in Motion. Data Precision. Smarter Decisions."),
+              br(),
+              br(),
+              em("To turn this vision into reality, we developed the Strategic Resource Inventory for Deployment Efficiency (STRIDE) Dashboard, a system for quick analytics and intuitive data visualizations designed for data-driven decision-making across all governance levels. STRIDE provides a comprehensive, multi-tiered view of school information by integrating crucial infrastructure data with human resource (HR) data, all visualized on a geographical map. This holistic perspective empowers our field personnel to make precise, evidence-based decisions on resource distribution, mitigate disparities, and ensure the efficient deployment of school-based resources and personnel where they are needed most."),
+              br(),
+              br(),
+              strong("Take a sneak peek of what STRIDE can do!")
+            )
+          )
+        ),
+        
+        # 4. Feature Section
+        div(class = "mb-5 p-3",
+            
+            # --- Feature 1: Analytics (Unchanged) ---
+            layout_columns(
+              col_widths = c(-1, 10, -1),
+              div(
+                class = "text-center p-4 border rounded-3 shadow-sm mb-4", 
+                tags$h4("Feature 1: In-depth Analytics"),
+                p(em("The dashboard's interactive visualizations support drill-down functionality. Selecting a data point, such as a bar on a chart, reveals multi-tiered data summaries. This provides a comprehensive view across regional, division, and district governance levels, with totals dynamically aggregated to reflect the current data view.")),
+                layout_columns(
+                  col_widths = 4,
+                  uiOutput("card_enrollment"), 
+                  uiOutput("card_teachers"),   
+                  uiOutput("card_schools") 
+                ),
+                div(
+                  style = "text-align: left; margin-bottom: 10px; margin-top: 15px;",
+                  shinyjs::hidden(actionButton("btn_back", "Back One Level", class = "btn-primary"))
+                ),
+                card(
+                  card_body(
+                    layout_columns(
+                      col_widths = 4,
+                      plotlyOutput("plotly_enrollment"), 
+                      plotlyOutput("plotly_teachers"),   
+                      plotlyOutput("plotly_schools")     
+                    )
+                  )
+                )
+              )
+            ),
+            
+            # --- Feature 2: Mapping ---
+            layout_columns(
+              col_widths = c(-1, 10, -1),
+              div(
+                class = "text-center p-4 border rounded-3 shadow-sm mb-4",
+                tags$h4("Feature 2: Interactive Mapping"),
+                tags$p(em("The dashboard's data table is interactively linked to the geospatial display. Selecting a specific school entry will automatically center the map on its precise geographic location, integrating the tabular data with its physical context for a more holistic analysis.")),
+                card(
+                  card_body(
+                    layout_columns(
+                      col_widths = c(5, 7),
+                      DTOutput("demo_table_2"),
+                      leafletOutput("demo_map")
+                    )
+                  )
+                ),
+                
+                # --- NEW: Hidden UI Output for School Details ---
+                # This div is hidden by default and will be shown when a row is clicked
+                shinyjs::hidden(
+                  div(
+                    id = "school_details_card", # We use this ID to show/hide it
+                    uiOutput("school_details_ui")
+                  )
+                )
+                # --- END NEW ---
+              )
+            ),
+            
+            # --- Feature 3: Deployment (Unchanged) ---
+            layout_columns(
+              col_widths = c(-1, 10, -1), # Centered column
+              div(
+                class = "text-center p-4 border rounded-3 shadow-sm mb-4",
+                tags$h4("Feature 3: Data Deployment"),
+                tags$p(em("The platform features a comprehensive tabular display of school-level data. This interactive table includes robust filtering capabilities, enabling users to refine the data according to specific needs. Furthermore, registered users have the ability to export these customized datasets for offline analysis.")), # Updated text
+                card(
+                  card_body(
+                    tagList( 
+                      reactableOutput("feature_3_table"),
+                      div( 
+                        style = "text-align: right; margin-top: 15px;",
+                        downloadButton("download_feature3", "Download Sample Data", class = "btn-primary")
+                      )
+                    )
+                  )
+                )
+              )
+            )
+        ),
+        
+        # 5. Button to Dashboard (Unchanged)
+        hr(),
+        div(class = "text-center p-5",
+            h3("Ready to get started?"),
+            actionButton("btn_to_dashboard", "Go to the Dashboard", class = "btn-success btn-lg")
+        )
+      ),
       nav_panel(
         title = tags$b("Home"),
         icon = bs_icon("house-door-fill"),
@@ -4487,6 +5186,7 @@ server <- function(input, output, session) {
       # )
     )
   })
+  
   output$STRIDEHR <- renderUI({
     page_navbar(
       # no title, just the nav items
@@ -26632,6 +27332,7 @@ output$dynamic_erdb_panel <- renderUI({
     form_choice("login")  
     showNotification("Logged out successfully.", type = "message")
   })
+  
 }
 
 # --- Authentication Server (Handles the logic for login and registration) ---
@@ -27352,6 +28053,5 @@ validate_numeric_input <- function(inputId, len) {
   })
   
 }
-
 
 shinyApp(ui, server)
