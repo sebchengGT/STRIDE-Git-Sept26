@@ -25301,16 +25301,21 @@ authentication_server <- function(input, output, session, user_status,
             ),
             h2(
               HTML('
-                <span class="stride-str">Str</span>
-                <span class="stride-i">I</span>
-                <span class="stride-ide">de</span>
-              '),
+        <span class="stride-str">Str</span>
+        <img src="i.png" class="stride-logo-i" alt="I Logo">
+        <span class="stride-ide">de</span>
+      '),
               class = "stride-logo-text mt-3"
             ),
-            p(class = "slogan-mid", "Education in Motion."),
-            p(class = "slogan-bottom", "Data Precision. Smart Decision.")
+            p(class = "slogan-mid", "Education in Motion!"),
+            div(
+              class = "slogan-bottom-row",
+              span(class = "slogan-left", "Data Precision."),
+              span(class = "slogan-right", "Smart Decision.")
+            )
           )
-        ),
+        )
+        ,
         div(
           class = "login-right",
           div(

@@ -1105,10 +1105,18 @@ b,strong {
   text-shadow: 0px 3px #fffde4;
 }
 
-.slogan-bottom {
+.slogan-bottom-right {
   font-size: 2rem;
   font-weight: 600;
   color: #D62828;
+  margin-top: 0.5rem;
+  animation: fadeInUp 2s ease;
+  text-shadow: 0px 3px #fffde4;
+}
+.slogan-bottom-left {
+  font-size: 2rem;
+  font-weight: 600;
+  color: #1e415d;
   margin-top: 0.5rem;
   animation: fadeInUp 2s ease;
   text-shadow: 0px 3px #fffde4;
@@ -1208,15 +1216,17 @@ body, .main-container, .bslib-layout-sidebar {
 
 /* Base style for the STRIDE logo text */
 .stride-logo-text {
-  font-size: 13rem;
-  font-weight: 900;
-  font-family: "Poppins", sans-serif;
-  text-shadow: -5px 3px 2px #e0e4ce;
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
-  position: relative;
-  gap: 0.05em;
+  font-family: 'Poppins', sans-serif;
+        font-weight: 800;
+        font-size: 12rem;
+        letter-spacing: 2px;
+        color: #2c3895;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        text-shadow: -5px 3px 2px #e0e4ce;
+        position: relative;
+        gap: 0.05em;
 }
 
 /* Colors for STR and DE */
@@ -1335,18 +1345,14 @@ body, .main-container, .bslib-layout-sidebar {
 .slogan-mid {
   margin-top: -29px;
         font-size: 45px;
-        color: #003366;
+        color: #a38200;
         font-weight: 900;
         text-shadow: 0px 3px #fffde4;
-        letter-spacing: 6px;
+        letter-spacing: 2px;
+        font-style: italic;
 }
 
-.slogan-bottom {
-  margin-top: -24px;
-        font-size: 34px;
-        color: #d62828;
-        text-shadow: 0px 3px #fffde4;
-}
+
 
 .login-left-logo-top {
   height: 80px;
@@ -1400,5 +1406,53 @@ body, .main-container, .bslib-layout-sidebar {
 .login-card {
   flex-grow: 1;
 }
+
+/* STRIDE text with logo in the middle */
+.stride-logo-text {
+  font-family: 'Poppins', sans-serif;
+  font-weight: 800;
+        font-size: 12rem;
+        letter-spacing: 2px;
+        color: #2c3895;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+}
+
+.stride-logo-text .stride-str,
+.stride-logo-text .stride-ide {
+  display: inline-block;
+}
+
+.stride-logo-i {
+  height: 249px;
+        vertical-align: middle;
+        margin: 2px -125px;
+        transition: transform 0.3s ease;
+        margin-top: -60px;
+}
+
+.slogan-bottom-row {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  font-size: 32px;
+  font-weight: 500;
+  margin-top: -24px;
+  text-shadow: 0px 3px #fffde4;
+}
+
+
+
+/* Different colors for each */
+.slogan-left {
+  color: #2c3895; /* deep blue */
+}
+
+.slogan-right {
+  color: #d62828; /* warm yellow-orange */
+}
+
+
 
 
