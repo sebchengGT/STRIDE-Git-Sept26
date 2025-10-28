@@ -565,5 +565,19 @@ body.show-header-footer .app-footer { display: block !important; /* Or flex, dep
   font-weight: 600;
   color: #002D62; /* optional – DepEd blue */
 }
+
+/* --- PREVENT NAV ITEMS FROM WRAPPING --- */
+.navbar-nav {
+  flex-wrap: nowrap !important; /* Tells nav items not to wrap to a new line */
+  white-space: nowrap !important; /* Extra safeguard for some browsers */
+}
+
+/* --- ALLOW NAVBAR TO SCROLL INTERNALLY --- */
+.navbar .container-fluid {
+  flex-wrap: nowrap !important; /* Ensures brand and nav items stay on one line */
+}
+.navbar-collapse {
+  overflow-x: auto !important; /* Allows the nav items to scroll horizontally IF they overflow */
+}
     
 
