@@ -13960,85 +13960,227 @@ server <- function(input, output, session) {
   # This observer's ONLY job is to filter data and update the data_filtered object.
   observeEvent(input$Mapping_Run, {
     
-    # --- Requirements ---
-    req(df, LMS, uni, input$resource_map_region, input$Resource_SDO, input$Resource_LegDist)
+    # ... (All your renderLeaflet outputs are here, that's fine) ...
+    # ... (output$TeacherShortage_Mapping, output$SHSMapping, etc.) ...
     
-    # --- Get Inputs ---
+    # --- (Your original renderLeaflet code from line 2 to 109) ---
+    
+    output$TeacherShortage_Mapping <- renderLeaflet({
+      p = colorFactor(palette = c("red","deepskyblue","green"),domain = c("Shortage","Excess","Balanced"), ordered = T)
+      leaflet() %>%
+        setView(lng = 122, lat = 13, zoom =6) %>%
+        addProviderTiles(providers$Esri.WorldImagery, group = "Satellite") %>% 
+        addProviderTiles(providers$CartoDB.Positron, group = "Road Map") %>% 
+        addMeasure(position = "topright", primaryLengthUnit = "kilometers", primaryAreaUnit = "sqmeters") %>% 
+        addLegend(position = "bottomright", title = "Legend", pal = p, values = c("Shortage","Excess","Balanced")) %>% 
+        addLayersControl(
+          baseGroups = c("Satellite","Road Map"))
+    })
+    
+    output$SHSMapping <- renderLeaflet({
+      domain <- c("Manufacturing and Engineering",
+                  "Hospitality and Tourism",
+                  "Professional/Private Services",
+                  "Public Administration",
+                  "Business and Finance",
+                  "Agriculture and Agri-business")
+      
+      p <- colorFactor(
+        palette = c("red", "orange", "violet", "green", "blue", "magenta"),
+        levels = domain
+      )
+      
+      leaflet() %>%
+        setView(lng = 122, lat = 13, zoom = 6) %>%
+        addProviderTiles(providers$Esri.WorldImagery, group = "Satellite") %>% 
+        addProviderTiles(providers$CartoDB.Positron, group = "Road Map") %>% 
+        addMeasure(
+          position = "topright",
+          primaryLengthUnit = "kilometers",
+          primaryAreaUnit = "sqmeters"
+        ) %>% 
+        addLegend(
+          position = "bottomright",
+          title = "Industry Type",
+          pal = p,
+          values = domain
+        ) %>%
+        addLayersControl(
+          baseGroups = c("Satellite", "Road Map")
+        )
+    })
+    
+    
+    output$AO2Mapping <- renderLeaflet({
+      p = colorFactor(
+        palette = c("red","orange","green"),
+        domain = c("No AO II and PDO I","With at least 1 AO II or PDO I","With AO II and PDO I"),
+        ordered = TRUE
+      )
+      
+      leaflet() %>%
+        setView(lng = 122, lat = 13, zoom = 6) %>%
+        addProviderTiles(providers$Esri.WorldImagery, group = "Satellite") %>% 
+        addProviderTiles(providers$CartoDB.Positron, group = "Road Map") %>% 
+        addMeasure(position = "topright", primaryLengthUnit = "kilometers", primaryAreaUnit = "sqmeters") %>% 
+        addLegend(
+          position = "bottomright",
+          title = "Legend",
+          pal = p,
+          values = c("No AO II and PDO I","With at least 1 AO II or PDO I","With AO II and PDO I")
+        ) %>% 
+        addLayersControl(baseGroups = c("Satellite","Road Map"))
+    })
+    
+    # --- Base map with static legend ---
+    output$CLMapping <- renderLeaflet({
+      # Legend domain + palette
+      domain <- c(
+        "With Classroom Shortage", 
+        "Without Classroom Shortage"
+      )
+      
+      pal <- colorFactor(
+        palette = c("red","green"),
+        domain = domain,
+        ordered = TRUE
+      )
+      
+      leaflet() %>%
+        setView(lng = 122, lat = 13, zoom = 6) %>%
+        addProviderTiles(providers$Esri.WorldImagery, group = "Satellite") %>% 
+        addProviderTiles(providers$CartoDB.Positron, group = "Road Map") %>% 
+        addMeasure(
+          position = "topright",
+          primaryLengthUnit = "kilometers",
+          primaryAreaUnit = "sqmeters"
+        ) %>% 
+        addLegend(
+          position = "bottomright",
+          title = "Legend",
+          pal = pal,
+          values = domain
+        ) %>% 
+        addLayersControl(
+          baseGroups = c("Satellite","Road Map")
+        )
+    })
+    
+    
+    output$FacMapping <- renderLeaflet({
+      leaflet() %>%
+        setView(lng = 122, lat = 13, zoom =6) %>%
+        addProviderTiles(providers$Esri.WorldImagery, group = "Satellite") %>%
+        addProviderTiles(providers$CartoDB.Positron, group = "Road Map") %>%
+        addMeasure(position = "topright", primaryLengthUnit = "kilometers", primaryAreaUnit = "sqmeters") %>%
+        addLayersControl(
+          baseGroups = c("Satellite","Road Map")
+        )
+    })
+    
+    values.coord <- paste("Region: ", geojson_table$Region, "<br>",
+                          "Learner Congestion:",":", geojson_table$Congestion.Index) %>% lapply(htmltools::HTML)
+    
+    output$CongestMapping <- renderLeaflet({
+      
+      pal <- colorBin(
+        palette = c("green", "orange", "red"),
+        domain = geojson_table$Congestion.Index
+      )
+      
+      domain = c("Not Congested","Moderately Congested","Severely Congested")
+      p = colorFactor(palette = c("green","orange","red"), levels = as.factor(domain), ordered = F)
+      
+      leaflet() %>%
+        setView(lng = 122, lat = 13, zoom = 6) %>%
+        addProviderTiles(providers$Esri.WorldImagery, group = "Satellite") %>%
+        addProviderTiles(providers$CartoDB.Positron, group = "Road Map") %>%
+        addMeasure(position = "topright", primaryLengthUnit = "kilometers", primaryAreaUnit = "sqmeters") %>%
+        addLayersControl(
+          baseGroups = c("Satellite", "Road Map")
+        ) %>%
+        addTiles() %>%
+        addPolygons(
+          data = geojson_data,
+          stroke = FALSE,
+          weight = 4,
+          fillOpacity = 0.75,
+          fillColor = ~pal(geojson_table$Congestion.Index),
+          label = values.coord
+        ) %>% 
+        addLegend(
+          position = "bottomright", 
+          title = "Legend", 
+          pal = p, 
+          values = c("Not Congested","Moderately Congested","Severely Congested"))
+    })
+    
+    
+    # ... (Commented-out LMSTable) ...
+    
+    # --- LMS Map (initialize once) ---
+    
+    output$LMSMapping <- renderLeaflet({
+      # ... (LMSMapping renderLeaflet code) ...
+      
+      leaflet() %>%
+        addProviderTiles(providers$Esri.WorldImagery, group = "Satellite") %>%
+        addProviderTiles(providers$CartoDB.Positron, group = "Road Map") %>%
+        setView(lng = 122, lat = 13, zoom = 6) %>%
+        addLayersControl(
+          baseGroups = c("Satellite", "Road Map"),
+          options = layersControlOptions(collapsed = FALSE)
+        ) %>%
+        addLegend(
+          position = "bottomright",
+          title = "Last Mile Schools Status",
+          
+          # 1. Define the colors (must match the case_when output in leafletProxy)
+          colors = c("red", "green", "gray"),
+          
+          # 2. Define the labels (must describe the conditions that result in those colors)
+          labels = c(
+            "With Shortage + Without Buildable Space", 
+            "With Shortage + With Buildable Space", 
+            "Without Shortage + No Buildable Space"
+          )
+        )
+    })
+    
+    # ... (Commented-out code blocks) ...
+    
+    # --- (End of your original renderLeaflet code) ---
+    
+    
     RegRCT <- input$resource_map_region
     SDORCT1 <- input$Resource_SDO
     DistRCT1 <- input$Resource_LegDist
+    Lev <- input$resource_map_level
     TypeEFD <- input$EFD_Type
     
-    # --- Streamlined Filtering ---
-    # Create base filtered data frames to avoid re-filtering the same thing
-    
-    # Base filter for df (Region, Division, District)
-    df_filtered_dist <- df %>%
-      filter(Region == RegRCT) %>%
-      filter(Division == SDORCT1) %>%
-      filter(Legislative.District %in% DistRCT1)
-    
-    # Base filter for df (Region, Division)
-    df_filtered_div <- df %>% 
-      filter(Region == RegRCT) %>% 
-      filter(Division == SDORCT1)
-    
-    # Base filter for df (Region)
-    df_filtered_reg <- df %>% filter(Region == RegRCT)
-    
-    # Base filter for uni (Region, Division, District)
-    uni_filtered_dist <- uni %>%
-      filter(Region == RegRCT) %>%
-      filter(Division == SDORCT1) %>%
-      filter(Legislative.District %in% DistRCT1)
-    
-    # Base filter for uni (Region, Division)
-    uni_filtered_div <- uni %>% 
-      filter(Region == RegRCT) %>% 
-      filter(Division == SDORCT1)
-    
-    # Base filter for uni (Region)
-    uni_filtered_reg <- uni %>% filter(Region == RegRCT)
-    
-    # --- Check before proceeding ---
-    # Use the main filter for the check
-    if (nrow(df_filtered_dist) == 0) {
-      showNotification("⚠️ No data available for selected filters.", type = "warning")
-      return(NULL)
-    }
-    
-    # --- Assign all datasets to the reactiveValues object ---
-    # This will trigger all outputs and observers that depend on them.
-    
-    data_filtered$mainreact1 <- df_filtered_dist %>% arrange(desc(TeacherShortage))
-    data_filtered$mainreactreg <- df_filtered_reg
-    data_filtered$mainreactunireg <- uni_filtered_reg
-    data_filtered$mainreactunidiv <- uni_filtered_div
-    data_filtered$mainreactdiv <- df_filtered_div
-    data_filtered$mainreactNTP <- uni_filtered_dist
-    data_filtered$mainreactlevreg <- df_filtered_reg # Original code commented out Level filter
-    data_filtered$mainreactlevdiv <- df_filtered_div # Original code commented out Level filter
-    
-    data_filtered$mainreactCR <- uni_filtered_dist %>%
-      distinct(SchoolID, .keep_all = TRUE) %>%
-      arrange(desc(SBPI))
-    
-    data_filtered$mainreactSHS <- df_filtered_dist %>%
-      filter(Level == "SHS") %>%
-      distinct(SchoolID, .keep_all = TRUE)
-    
-    data_filtered$mainreactind <- ind %>% filter(Region == RegRCT)
-    
-    data_filtered$mainreactEFD <- EFDMP %>%
-      filter(!is.na(Old.Region), Old.Region != "") %>%
-      filter(!is.na(Latitude), !is.na(Longitude)) %>%
+    # --- DATA PREPARATION ---
+    # (Your mainreact... definitions are here)
+    mainreact1 <- df %>% filter(Region == RegRCT) %>% filter(Division == SDORCT1) %>% filter(Legislative.District == DistRCT1) %>% arrange(desc(TeacherShortage))
+    mainreactreg <- df %>% filter(Region == RegRCT)
+    mainreactunireg <- uni %>% filter(Region == RegRCT)
+    mainreactunidiv <- uni %>% filter(Region == RegRCT) %>% filter(Division == SDORCT1)
+    mainreactdiv <- df %>% filter(Region == RegRCT) %>% filter(Division == SDORCT1)
+    mainreactNTP <- uni %>% filter(Region == RegRCT) %>% filter(Division == SDORCT1) %>% filter(Legislative.District == DistRCT1)
+    mainreactlevreg <- df %>% filter(Region == RegRCT) #%>% filter(Level == Lev)
+    mainreactlevdiv <- df %>% filter(Region == RegRCT) %>% filter(Division == SDORCT1) #%>% filter(Level == Lev)
+    mainreactCR <- uni %>% filter(Region == RegRCT) %>% filter(Division == SDORCT1) %>% filter(Legislative.District == DistRCT1) %>% distinct(SchoolID, .keep_all = TRUE) %>% arrange(desc(SBPI))
+    mainreactSHS <- df %>% filter(Region == RegRCT) %>% filter(Division == SDORCT1) %>% filter(Legislative.District == DistRCT1) %>% filter(Level == "SHS") %>% distinct(SchoolID, .keep_all = TRUE) #Remove the filter of Pilot 2 CLEA4
+    mainreactind <- ind %>% filter(Region == RegRCT)
+    mainreactEFD <- EFDMP %>% 
+      filter(!is.na(Old.Region), Old.Region != "") %>% 
+      filter(!is.na(Latitude), !is.na(Longitude)) %>% 
       mutate(Latitude = as.numeric(Latitude),
-             Allocation = dollar(Allocation, prefix = "₱")) %>%
+             Allocation = dollar(Allocation, prefix = "₱")) %>% # Use 'dollar' to format Allocation) %>% 
       distinct(SchoolID, FundingYear, Allocation, Category, .keep_all = TRUE) %>%
       arrange(FundingYear) %>%
-      filter(Region == RegRCT) %>%
-      filter(Division == SDORCT1) %>%
-      filter(Category %in% TypeEFD) %>% # Use TypeEFD
+      filter(Region == input$resource_map_region) %>%
+      filter(Division == input$Resource_SDO) %>%
+      filter(Category %in% input$EFD_Type) %>% 
       mutate(FundingCategory = factor(
         case_when(
           FundingYear < 2025 ~ "Before 2025",
@@ -14047,57 +14189,123 @@ server <- function(input, output, session) {
         ),
         levels = c("Before 2025", "2025-2030", "After 2030")
       ))
-    
-    # --- LMS Filters ---
-    LMS_base <- LMS %>%
+    mainreactLMS <- LMS %>%
       filter(LMS == 1) %>%
-      left_join(uni %>% select(SchoolID, Latitude, Longitude), by = c("School_ID" = "SchoolID")) %>%
-      left_join(buildablecsv %>% select(SCHOOL.ID, OTHER.REMARKS..Buildable.Space..), by = c("School_ID" = "SCHOOL.ID"))
+      left_join(buildablecsv %>% select(SCHOOL.ID,OTHER.REMARKS..Buildable.Space..), by = c("School_ID" = "SCHOOL.ID")) %>% 
+      filter(Region == RegRCT) %>% filter(Division == SDORCT1)
+    mainreactLMSreg <- LMS %>%
+      filter(LMS == 1) %>%    # Step 1: LMS only
+      left_join(buildablecsv %>% select(SCHOOL.ID,OTHER.REMARKS..Buildable.Space..), by = c("School_ID" = "SCHOOL.ID")) %>% 
+      filter(Region == RegRCT)
+    mainreactLMSdiv <- LMS %>%
+      filter(LMS == 1) %>%    # Step 1: LMS only
+      left_join(buildablecsv %>% select(SCHOOL.ID,OTHER.REMARKS..Buildable.Space..), by = c("School_ID" = "SCHOOL.ID")) %>% 
+      filter(Region == RegRCT) %>% filter(Division == SDORCT1)
+    mainreactCRreg <- LMS %>% 
+      filter(Region == RegRCT)
+    mainreactCRdiv <- LMS %>% 
+      filter(Region == RegRCT) %>% filter(Division == SDORCT1)
     
-    LMS_filtered_reg <- LMS_base %>% filter(Region == RegRCT)
-    LMS_filtered_div <- LMS_filtered_reg %>% filter(Division == SDORCT1)
     
-    data_filtered$mainreactLMS <- LMS_filtered_div
-    data_filtered$mainreactLMSreg <- LMS_filtered_reg
-    data_filtered$mainreactLMSdiv <- LMS_filtered_div
+    # --- START DEBUGGING BLOCK ---
+    # We will print the column names and structure of EVERY data frame
+    # used for mapping. Look for "Latitude" and "Longitude".
     
-    # These seemed to be using LMS data in the original
-    data_filtered$mainreactCRreg <- LMS %>% filter(Region == RegRCT)
-    data_filtered$mainreactCRdiv <- LMS %>% filter(Region == RegRCT) %>% filter(Division == SDORCT1)
+    cat("\n\n=============== MAP DATA DEBUGGER ===============\n")
     
-    # --- Calculations ---
-    NetShortage <- df %>% 
-      select(Region, Division, Level, TeacherShortage, TeacherExcess) %>%
-      pivot_longer(cols = c(TeacherShortage, TeacherExcess), names_to = "Inventory", values_to = "Count") %>% 
-      mutate(Count = as.numeric(Count)) %>% na.omit(Count) %>% 
-      group_by(Region, Division, Level, Inventory) %>% 
-      summarize(Count = sum(Count)) %>% 
-      pivot_wider(names_from = "Inventory", values_from = "Count") %>% 
-      mutate(NetShortage = TeacherShortage - TeacherExcess) %>% 
-      mutate(NetShortage = ifelse(NetShortage < 0, 0, NetShortage))
-    
-    data_filtered$SDONetShortage <- NetShortage %>% 
-      filter(Region == RegRCT) %>% 
-      filter(Division == SDORCT1)
-    
-    # --- Store inputs for value boxes ---
-    data_filtered$RegRCT <- RegRCT
-    data_filtered$SDORCT1 <- SDORCT1
-  })
-  
-  # --- 3. Leaflet Proxy Observers ---
-  # Each map update is in its own observer, reacting to changes in data_filtered
-  
-  # --- LMSMapping Proxy ---
-  observe({
-    req(data_filtered$mainreactLMS)
-    mainreactLMS <- data_filtered$mainreactLMS
-    
-    # Stop if no data
-    if (nrow(mainreactLMS) == 0 || all(is.na(mainreactLMS$Longitude))) {
-      leafletProxy("LMSMapping") %>% clearMarkers() %>% clearMarkerClusters()
-      return()
+    # --- 1. Check data for LMSMapping ---
+    cat("\n--- [1] Data for LMSMapping (mainreactLMS) ---\n")
+    if (exists("mainreactLMS") && !is.null(mainreactLMS) && nrow(mainreactLMS) > 0) {
+      cat("Column Names:\n")
+      print(colnames(mainreactLMS))
+      cat("\nStructure:\n")
+      print(str(mainreactLMS[, c("School_Name", "Latitude", "Longitude")], 
+                list.len = 5)) # Only show relevant columns
+    } else {
+      cat("Data is NULL or has 0 rows!\n")
     }
+    
+    # --- 2. Check data for SHSMapping (Schools) ---
+    cat("\n--- [2] Data for SHSMapping (Schools: mainreactSHS) ---\n")
+    if (exists("mainreactSHS") && !is.null(mainreactSHS) && nrow(mainreactSHS) > 0) {
+      cat("Column Names:\n")
+      print(colnames(mainreactSHS))
+      cat("\nStructure:\n")
+      print(str(mainreactSHS[, c("School.Name", "Latitude", "Longitude")], 
+                list.len = 5))
+    } else {
+      cat("Data is NULL or has 0 rows!\n")
+    }
+    
+    # --- 3. Check data for SHSMapping (Industry) ---
+    cat("\n--- [3] Data for SHSMapping (Industry: mainreactind) ---\n")
+    if (exists("mainreactind") && !is.null(mainreactind) && nrow(mainreactind) > 0) {
+      cat("Column Names:\n")
+      print(colnames(mainreactind))
+      cat("\nStructure:\n")
+      # Assuming 'Company' is a column, adjust if needed
+      print(str(mainreactind[, c("Company", "Latitude", "Longitude")], 
+                list.len = 5)) 
+    } else {
+      cat("Data is NULL or has 0 rows!\n")
+    }
+    
+    # --- 4. Check data for CLMapping ---
+    cat("\n--- [4] Data for CLMapping (mainreactCR) ---\n")
+    if (exists("mainreactCR") && !is.null(mainreactCR) && nrow(mainreactCR) > 0) {
+      cat("Column Names:\n")
+      print(colnames(mainreactCR))
+      cat("\nStructure:\n")
+      print(str(mainreactCR[, c("School.Name", "Latitude", "Longitude")], 
+                list.len = 5))
+    } else {
+      cat("Data is NULL or has 0 rows!\n")
+    }
+    
+    # --- 5. Check data for AO2Mapping & CongestMapping ---
+    cat("\n--- [5] Data for AO2/Congest Maps (mainreactNTP) ---\n")
+    if (exists("mainreactNTP") && !is.null(mainreactNTP) && nrow(mainreactNTP) > 0) {
+      cat("Column Names:\n")
+      print(colnames(mainreactNTP))
+      cat("\nStructure:\n")
+      print(str(mainreactNTP[, c("School.Name", "Latitude", "Longitude")], 
+                list.len = 5))
+    } else {
+      cat("Data is NULL or has 0 rows!\n")
+    }
+    
+    # --- 6. Check data for TeacherShortage_Mapping ---
+    cat("\n--- [6] Data for TeacherShortage_Mapping (mainreact1) ---\n")
+    if (exists("mainreact1") && !is.null(mainreact1) && nrow(mainreact1) > 0) {
+      cat("Column Names:\n")
+      print(colnames(mainreact1))
+      cat("\nStructure:\n")
+      print(str(mainreact1[, c("School.Name", "Latitude", "Longitude")], 
+                list.len = 5))
+    } else {
+      cat("Data is NULL or has 0 rows!\n")
+    }
+    
+    # --- 7. Check data for FacMapping ---
+    cat("\n--- [7] Data for FacMapping (mainreactEFD) ---\n")
+    if (exists("mainreactEFD") && !is.null(mainreactEFD) && nrow(mainreactEFD) > 0) {
+      cat("Column Names:\n")
+      print(colnames(mainreactEFD))
+      cat("\nStructure:\n")
+      print(str(mainreactEFD[, c("School.Name", "Latitude", "Longitude")], 
+                list.len = 5))
+    } else {
+      cat("Data is NULL or has 0 rows!\n")
+    }
+    
+    cat("\n=============== END DEBUGGING ===============\n\n")
+    
+    # --- END DEBUGGING BLOCK ---
+    
+    
+    
+    # --- POPUP AND LABEL CREATION ---
+    # (Your original code for values... and leafletProxy calls)
     
     values.LMS <- paste(
       "School Name:",mainreactLMS$School_Name,
@@ -14107,6 +14315,16 @@ server <- function(input, output, session) {
       "<br>Classroom Requirement:", mainreactLMS$CL_Req,
       "<br>Estimated Classroom Shortage:", mainreactLMS$Estimated_CL_Shortage,
       "<br>Buildable Space:", ifelse(mainreactLMS$Buildable_space == 1, "Yes", "No")) %>% lapply(htmltools::HTML)
+    
+    
+    # This validate() line will STOP execution if the columns are missing
+    # This is a safer way to prevent the crash
+    validate(
+      need(
+        "Longitude" %in% colnames(mainreactLMS) && "Latitude" %in% colnames(mainreactLMS),
+        "Error: LMSMapping data is missing Latitude or Longitude columns."
+      )
+    )
     
     leafletProxy("LMSMapping") %>%
       clearMarkers() %>%
@@ -14123,29 +14341,102 @@ server <- function(input, output, session) {
         icon = makeAwesomeIcon(icon = "education", library = "glyphicon",
                                markerColor = case_when(
                                  (mainreactLMS$Buildable_space == 0 & mainreactLMS$Estimated_CL_Shortage == 0) ~ "gray",
-                                 mainreactLMS$Buildable_space == 0 ~ "red",
-                                 mainreactLMS$Buildable_space == 1 ~ "green",
-                                 TRUE ~ "gray" # Default case
+                                 mainreactLMS$Buildable_space == 0 ~ "red", # Corrected to '=='
+                                 mainreactLMS$Buildable_space == 1 ~ "green", # Corrected to '=='
                                )),
         label = values.LMS,
         labelOptions = labelOptions(noHide = F, textsize = "12px", direction = "top")
       )
-  })
-  
-  # --- SHSMapping Proxy ---
-  observe({
-    req(data_filtered$mainreactSHS, data_filtered$mainreactind)
-    mainreactSHS <- data_filtered$mainreactSHS
-    mainreactind <- data_filtered$mainreactind
     
-    # Stop if no data
-    if (nrow(mainreactSHS) == 0 || all(is.na(mainreactSHS$Longitude))) {
-      leafletProxy("SHSMapping") %>% clearMarkers() %>% clearMarkerClusters()
-      return()
-    }
+    df1 <- reactive({
+      
+      if (is.null(input$LMSMapping_bounds)) {
+        mainreactLMS
+      } else {
+        bounds <- input$LMSMapping_bounds
+        latRng <- range(bounds$north, bounds$south)
+        lngRng <- range(bounds$east, bounds$west)
+        
+        subset(mainreactLMS,
+               Latitude >= latRng[1] & Latitude <= latRng[2] & Longitude >= lngRng[1] & Longitude <= lngRng[2])
+      }
+    })
+    
+    
+    output$LMSTable <- renderDT(server = FALSE, {
+      
+      # ... (LMSTable code) ...
+      
+      # Final select
+      finalLMS <- df1() %>%
+        # 1. Convert Buildable_space from 1/0 to "Yes"/"No"
+        dplyr::mutate(
+          Buildable_space = dplyr::if_else(Buildable_space == 1, "Yes", "No")
+        ) %>%
+        # 2. Select the desired columns
+        dplyr::select(
+          School_Name,
+          Total_Enrollment,
+          Instructional_Rooms,
+          Estimated_CL_Shortage,
+          Buildable_space
+        ) %>%
+        # 3. Rename columns for display
+        dplyr::rename(
+          "School Name" = School_Name,
+          "Total Enrolment" = Total_Enrollment,,
+          "Classrooms Inventory" = Instructional_Rooms,
+          "Classroom Shortage" = Estimated_CL_Shortage,
+          "Buildable Space" = Buildable_space
+        )
+      
+      datatable(
+        finalLMS,
+        options = list(scrollX = TRUE, pageLength = 10, dom = 'Bfrtip',
+                       buttons = list('csv', 'excel', 'pdf', 'print'), columnDefs = list(list(className = 'dt-center', targets = "_all"))),
+        selection = "single",  # allow single row selection
+        extension = 'Buttons',
+        rownames = FALSE,
+        callback = JS("window.dispatchEvent(new Event('resize'));") # Final closing parenthesis was missing
+      )
+    })
+    
+    
+    NetShortage <- df %>% select(Region,Division,Level,TeacherShortage,TeacherExcess) %>%
+      pivot_longer(cols = c(TeacherShortage, TeacherExcess), names_to = "Inventory", values_to = "Count") %>% mutate(Count=as.numeric(Count)) %>% na.omit(Count) %>% group_by(Region, Division,Level, Inventory) %>% summarize(Count = sum(Count)) %>% pivot_wider(names_from = "Inventory", values_from = "Count") %>% mutate(NetShortage=TeacherShortage-TeacherExcess) %>% mutate(NetShortage = ifelse(NetShortage < 0, 0, NetShortage))
+    
+    SDONetShortage <- NetShortage %>% filter(Region == RegRCT) %>% filter(Division == SDORCT1) #%>% filter(Level == Lev)
+    
+    values_teacher_shortage <- paste(mainreact1$School.Name,"<br>Teacher Excess:", mainreact1$TeacherExcess,"<br>Teacher Shortage:", mainreact1$TeacherShortage) %>% lapply(htmltools::HTML)
+    
+    values_teacher_shortage_popup <- paste(strong("SCHOOL INFORMATION"),"<br>School Name:",mainreact1$School.Name,"<br>School ID:",mainreact1$SchoolID,"<br>Enrolment Size:",mainreact1$TotalEnrolment,"<br>","<br>",strong("TEACHING PERSONNEL DATA"),"<br>Teacher Inventory:", mainreact1$TotalTeachers,"<br>Teacher Excess:", mainreact1$TeacherExcess,"<br>Teacher Shortage:", mainreact1$TeacherShortage,"<br>","<br>",strong("SPECIALIZATION DATA"),"<br>English:", mainreact1$English,"<br>Mathematics:", mainreact1$Mathematics,"<br>Science:", mainreact1$Science,"<br>Biological Science:", mainreact1$Biological.Sciences,"<br>Physical Sciences:", mainreact1$Physical.Sciences,"<br>General Education:", mainreact1$General.Ed,"<br>Araling Panlipunan:", mainreact1$Araling.Panlipunan,"<br>TLE:", mainreact1$TLE,"<br>MAPEH:", mainreact1$MAPEH,"<br>Filipino:", mainreact1$Filipino,"<br>ESP:", mainreact1$ESP,"<br>Agriculture:", mainreact1$Agriculture,"<br>ECE:", mainreact1$ECE,"<br>SPED:", mainreact1$SPED) %>% lapply(htmltools::HTML)
+    
+    values.non_teaching <- mainreactNTP$School.Name %>% lapply(htmltools::HTML)
+    
+    values.non_teaching_popup <- paste(strong("SCHOOL INFORMATION"),"<br>School Name:",mainreactNTP$School.Name,"<br>School ID:",mainreactNTP$SchoolID,"<br>Enrolment Size:",mainreactNTP$TotalEnrolment,"<br>","<br>",strong("TEACHING PERSONNEL DATA"),"<br>Teacher Inventory:", mainreactNTP$TotalTeachers,"<br>Teacher Excess:", mainreactNTP$TeacherExcess,"<br>Teacher Shortage:", mainreactNTP$TeacherShortage,"<br>","<br>",strong("NON-TEACHING PERSONNEL DATA"),"<br>Plantilla Number of AOII:", mainreactNTP$Plantilla.Number,"<br>Clustering Status:", mainreactNTP$Clustering.Status,"<br>PDO I Deployment:", mainreactNTP$PDOI_Deployment) %>% lapply(htmltools::HTML)
+    
+    values_classrooom_shortage <- paste(mainreactCR$School.Name,"<br>Total Enrolment:",mainreactCR$Enrolment.2023.2024 ,"<br>Classroom Inventory:", mainreactCR$Instructional.Rooms.2023.2024, "<br>Classroom Shortage:", mainreactCR$Est.CS) %>% lapply(htmltools::HTML)
+    
+    values_classrooom_shortage_popup <- paste(strong("SCHOOL INFORMATION"),"<br>School Name:",mainreactCR$School.Name,"<br>School ID:",mainreactCR$SchoolID,"<br>Enrolment Size:",mainreactCR$TotalEnrolment,"<br>","<br>",strong("CLASSROOM DATA"),"<br>Estimate Classroom Shortage:", mainreactCR$Est.CS,"<br>Type of Ownership:", mainreactCR$OwnershipType,"<br>Shifting:", mainreactCR$Shifting,"<br>Electricity Source:", mainreactCR$ElectricitySource,"<br>Water Source:", mainreactCR$WaterSource) %>% lapply(htmltools::HTML)
+    
+    values.efdmasterlist <- paste(strong("SCHOOL INFORMATION"),"<br>School Name:",mainreactEFD$School.Name,"<br>School ID:",mainreactEFD$SchoolID,"<br>Category:",mainreactEFD$Category,"<br>Funding Year:",mainreactEFD$FundingYear,"<br>Allocation:",mainreactEFD$Allocation) %>% lapply(htmltools::HTML)
+    
     
     values_industry <- paste(strong("SCHOOL INFORMATION"),"<br>School Name:",mainreactSHS$School.Name,"<br>School ID:",mainreactSHS$SchoolID) %>% lapply(htmltools::HTML)
+    
     values.ind <- paste(mainreactind$Company,"<br>Province:",mainreactind$Province) %>% lapply(htmltools::HTML)
+    
+    # --- More validate() checks ---
+    validate(
+      need(
+        "Longitude" %in% colnames(mainreactSHS) && "Latitude" %in% colnames(mainreactSHS),
+        "Error: SHSMapping (Schools) data is missing Latitude or Longitude."
+      ),
+      need(
+        "Longitude" %in% colnames(mainreactind) && "Latitude" %in% colnames(mainreactind),
+        "Error: SHSMapping (Industry) data is missing Latitude or Longitude."
+      )
+    )
     
     leafletProxy("SHSMapping") %>%
       clearMarkers() %>%
@@ -14155,43 +14446,28 @@ server <- function(input, output, session) {
         lat = mainreactSHS$Latitude[1],
         zoom = 7
       ) %>%
-      # --- SHS Circles (background layer) ---
-      addCircleMarkers(
+      
+      # --- SHS Schools (always orange university icons) ---
+      addAwesomeMarkers(
+        clusterOptions = markerClusterOptions(disableClusteringAtZoom = 15),
         lng = mainreactSHS$Longitude,
         lat = mainreactSHS$Latitude,
-        radius = 80,
-        color = "black",
-        weight = 1,
-        fillColor = "orange",
-        fillOpacity = 0.5,
+        icon = makeAwesomeIcon(
+          icon = "university",
+          library = "fa",
+          markerColor = "orange"  
+        ),
         label = values_industry,
         labelOptions = labelOptions(
           noHide = FALSE,
           textsize = "12px",
           direction = "top",
+          fill = TRUE,
           style = list("border-color" = "rgba(0,0,0,0.5)")
-        ),
-        clusterOptions = markerClusterOptions(disableClusteringAtZoom = 15)
+        )
       ) %>%
-      # --- NEW: AwesomeMarkers above SHS circles ---
-      addAwesomeMarkers(
-        lng = mainreactSHS$Longitude,
-        lat = mainreactSHS$Latitude,
-        icon = makeAwesomeIcon(
-          icon = 'graduation-cap',
-          library = 'fa',
-          markerColor = 'blue',
-          iconColor = 'white'
-        ),
-        label = mainreactSHS$SchoolName, # FIXED: remove ~
-        labelOptions = labelOptions(
-          noHide = FALSE,
-          textsize = "12px",
-          direction = "top"
-        ),
-        clusterOptions = markerClusterOptions(disableClusteringAtZoom = 15)
-      ) %>%
-      # --- Industry markers (cog icons) ---
+      
+      # --- Industry markers (cog icons, colored by sector) ---
       addAwesomeMarkers(
         clusterOptions = markerClusterOptions(disableClusteringAtZoom = 12),
         lng = mainreactind$Longitude,
@@ -14200,13 +14476,13 @@ server <- function(input, output, session) {
           icon = "cog",
           library = "fa",
           markerColor = dplyr::case_when(
-            mainreactind$Sector == "Manufacturing and Engineering" ~ "red",
-            mainreactind$Sector == "Hospitality and Tourism" ~ "orange",
-            mainreactind$Sector == "Professional/Private Services" ~ "purple",
-            mainreactind$Sector == "Public Administration" ~ "green",
-            mainreactind$Sector == "Business and Finance" ~ "blue",
-            mainreactind$Sector == "Agriculture and Agri-business" ~ "pink",
-            TRUE ~ "gray"
+            mainreactind$Sector == "Manufacturing and Engineering"     ~ "red",
+            mainreactind$Sector == "Hospitality and Tourism"           ~ "orange",
+            mainreactind$Sector == "Professional/Private Services"     ~ "purple",
+            mainreactind$Sector == "Public Administration"             ~ "green",
+            mainreactind$Sector == "Business and Finance"              ~ "blue",
+            mainreactind$Sector == "Agriculture and Agri-business"     ~ "pink",
+            TRUE                                                      ~ "gray"
           )
         ),
         label = values.ind,
@@ -14216,67 +14492,59 @@ server <- function(input, output, session) {
           direction = "top"
         )
       )
-  })
-  
-  # --- CLMapping Proxy ---
-  observe({
-    req(data_filtered$mainreactCR)
-    mainreactCR <- data_filtered$mainreactCR
     
-    if (nrow(mainreactCR) == 0 || all(is.na(mainreactCR$Longitude))) {
-      leafletProxy("CLMapping") %>% clearMarkers() %>% clearMarkerClusters()
-      return()
-    }
-    
-    values_classrooom_shortage <- paste(mainreactCR$School.Name,"<br>Total Enrolment:",mainreactCR$Enrolment.2023.2024 ,"<br>Classroom Inventory:", mainreactCR$Instructional.Rooms.2023.2024, "<br>Classroom Shortage:", mainreactCR$Est.CS) %>% lapply(htmltools::HTML)
-    values_classrooom_shortage_popup <- paste(strong("SCHOOL INFORMATION"),"<br>School Name:",mainreactCR$School.Name,"<br>School ID:",mainreactCR$SchoolID,"<br>Enrolment Size:",mainreactCR$TotalEnrolment,"<br>","<br>",strong("CLASSROOM DATA"),"<br>Estimate Classroom Shortage:", mainreactCR$Est.CS,"<br>Type of Ownership:", mainreactCR$OwnershipType,"<br>Shifting:", mainreactCR$Shifting,"<br>Electricity Source:", mainreactCR$ElectricitySource,"<br>Water Source:", mainreactCR$WaterSource) %>% lapply(htmltools::HTML)
-    
-    icons <- awesomeIcons(
-      icon = "university",
-      library = "fa",
-      markerColor = case_when(
-        suppressWarnings(as.numeric(mainreactCR$Est.CS)) > 0 ~ "red",
-        TRUE ~ "green"
-      ),
-      iconColor = "white"
-    )
-    
-    leafletProxy("CLMapping") %>%
-      clearMarkers() %>%
-      clearMarkerClusters() %>%
-      setView(
-        lng = mainreactCR$Longitude[1],
-        lat = mainreactCR$Latitude[1],
-        zoom = 7
-      ) %>%
-      addAwesomeMarkers(
-        clusterOptions = markerClusterOptions(disableClusteringAtZoom = 15),
-        lng = mainreactCR$Longitude,
-        lat = mainreactCR$Latitude,
-        popup = values_classrooom_shortage_popup,
-        options = popupOptions(),
-        label = values_classrooom_shortage,
-        labelOptions = labelOptions(
-          noHide = FALSE,
-          textsize = "12px",
-          direction = "top"
-        ),
-        icon = icons
+    # --- Update markers with leafletProxy ---
+    observe({
+      req(mainreactCR)
+      
+      # --- Add validate() here too ---
+      validate(
+        need(
+          "Longitude" %in% colnames(mainreactCR) && "Latitude" %in% colnames(mainreactCR),
+          "Error: CLMapping data is missing Latitude or Longitude."
+        )
       )
-  })
-  
-  # --- AO2Mapping Proxy ---
-  observe({
-    req(data_filtered$mainreactNTP)
-    mainreactNTP <- data_filtered$mainreactNTP
+      
+      icons <- awesomeIcons(
+        icon = "university",
+        library = "fa",
+        markerColor = case_when(
+          suppressWarnings(as.numeric(mainreactCR$Est.CS)) > 0 ~ "red",
+          TRUE ~ "green"
+        ),
+        iconColor = "white"
+      )
+      
+      leafletProxy("CLMapping") %>%
+        clearMarkers() %>%
+        clearMarkerClusters() %>%
+        setView(
+          lng = mainreactCR$Longitude[1],
+          lat = mainreactCR$Latitude[1],
+          zoom = 7
+        ) %>%
+        addAwesomeMarkers(
+          clusterOptions = markerClusterOptions(disableClusteringAtZoom = 15),
+          lng = mainreactCR$Longitude,
+          lat = mainreactCR$Latitude,
+          popup = values_classrooom_shortage_popup,
+          options = popupOptions(),
+          label = values_classrooom_shortage,
+          labelOptions = labelOptions(
+            noHide = FALSE,
+            textsize = "12px",
+            direction = "top"
+          ),
+          icon = icons
+        )
+    })
     
-    if (nrow(mainreactNTP) == 0 || all(is.na(mainreactNTP$Longitude))) {
-      leafletProxy("AO2Mapping") %>% clearMarkers() %>% clearMarkerClusters()
-      return()
-    }
-    
-    values.non_teaching <- mainreactNTP$School.Name %>% lapply(htmltools::HTML)
-    values.non_teaching_popup <- paste(strong("SCHOOL INFORMATION"),"<br>School Name:",mainreactNTP$School.Name,"<br>School ID:",mainreactNTP$SchoolID,"<br>Enrolment Size:",mainreactNTP$TotalEnrolment,"<br>","<br>",strong("TEACHING PERSONNEL DATA"),"<br>Teacher Inventory:", mainreactNTP$TotalTeachers,"<br>Teacher Excess:", mainreactNTP$TeacherExcess,"<br>Teacher Shortage:", mainreactNTP$TeacherShortage,"<br>","<br>",strong("NON-TEACHING PERSONNEL DATA"),"<br>Plantilla Number of AOII:", mainreactNTP$Plantilla.Number,"<br>Clustering Status:", mainreactNTP$Clustering.Status,"<br>PDO I Deployment:", mainreactNTP$PDOI_Deployment) %>% lapply(htmltools::HTML)
+    validate(
+      need(
+        "Longitude" %in% colnames(mainreactNTP) && "Latitude" %in% colnames(mainreactNTP),
+        "Error: AO2Mapping data is missing Latitude or Longitude."
+      )
+    )
     
     leafletProxy("AO2Mapping") %>%
       clearMarkers() %>%
@@ -14302,58 +14570,222 @@ server <- function(input, output, session) {
           )
         )
       )
-  })
-  
-  # --- TeacherShortage_Mapping Proxy ---
-  observe({
-    req(data_filtered$mainreact1)
-    mainreact1 <- data_filtered$mainreact1
     
-    if (nrow(mainreact1) == 0 || all(is.na(mainreact1$Longitude))) {
-      leafletProxy("TeacherShortage_Mapping") %>% clearMarkers() %>% clearMarkerClusters()
-      return()
-    }
-    
-    values_teacher_shortage <- paste(mainreact1$School.Name,"<br>Teacher Excess:", mainreact1$TeacherExcess,"<br>Teacher Shortage:", mainreact1$TeacherShortage) %>% lapply(htmltools::HTML)
-    values_teacher_shortage_popup <- paste(strong("SCHOOL INFORMATION"),"<br>School Name:",mainreact1$School.Name,"<br>School ID:",mainreact1$SchoolID,"<br>Enrolment Size:",mainreact1$TotalEnrolment,"<br>","<br>",strong("TEACHING PERSONNEL DATA"),"<br>Teacher Inventory:", mainreact1$TotalTeachers,"<br>Teacher Excess:", mainreact1$TeacherExcess,"<br>Teacher Shortage:", mainreact1$TeacherShortage,"<br>","<br>",strong("SPECIALIZATION DATA"),"<br>English:", mainreact1$English,"<br>Mathematics:", mainreact1$Mathematics,"<br>Science:", mainreact1$Science,"<br>Biological Science:", mainreact1$Biological.Sciences,"<br>Physical Sciences:", mainreact1$Physical.Sciences,"<br>General Education:", mainreact1$General.Ed,"<br>Araling Panlipunan:", mainreact1$Araling.Panlipunan,"<br>TLE:", mainreact1$TLE,"<br>MAPEH:", mainreact1$MAPEH,"<br>Filipino:", mainreact1$Filipino,"<br>ESP:", mainreact1$ESP,"<br>Agriculture:", mainreact1$Agriculture,"<br>ECE:", mainreact1$ECE,"<br>SPED:", mainreact1$SPED) %>% lapply(htmltools::HTML)
-    
-    leafletProxy("TeacherShortage_Mapping") %>% 
-      clearMarkers() %>% 
-      clearMarkerClusters() %>% 
-      setView(lng = mainreact1$Longitude[1], lat = mainreact1$Latitude[1], zoom = 7) %>%
-      addAwesomeMarkers(
-        clusterOptions = markerClusterOptions(disableClusteringAtZoom = 15), 
-        lng = mainreact1$Longitude, 
-        lat = mainreact1$Latitude, 
-        popup = values_teacher_shortage_popup, 
-        options = popupOptions(), 
-        label = values_teacher_shortage, 
-        labelOptions = labelOptions(noHide = F, textsize = "12px", direction = "top"), 
-        icon = makeAwesomeIcon(
-          icon = "education", 
-          library = "glyphicon", 
-          markerColor = case_when(
-            mainreact1$TeacherShortage > 0 ~ "red", 
-            mainreact1$TeacherExcess > 0 ~ "blue", 
-            (mainreact1$TeacherExcess == 0 & mainreact1$TeacherShortage == 0) ~ "green", 
-            is.na(mainreact1$TeacherShortage) ~ "gray",
-            TRUE ~ "gray"
-          )
-        )
+    validate(
+      need(
+        "Longitude" %in% colnames(mainreact1) && "Latitude" %in% colnames(mainreact1),
+        "Error: TeacherShortage_Mapping data is missing Latitude or Longitude."
       )
-  })
-  
-  # --- FacMapping Proxy ---
-  observe({
-    req(data_filtered$mainreactEFD)
-    mainreactEFD <- data_filtered$mainreactEFD
+    )
     
-    if (nrow(mainreactEFD) == 0 || all(is.na(mainreactEFD$Longitude))) {
-      leafletProxy("FacMapping") %>% clearMarkers() %>% clearControls()
-      return()
-    }
+    leafletProxy("TeacherShortage_Mapping") %>% clearMarkers() %>% clearMarkerClusters() %>% setView(lng = mainreact1$Longitude[1], lat = mainreact1$Latitude[1], zoom = 7) %>% 
+      addAwesomeMarkers(clusterOptions = markerClusterOptions(disableClusteringAtZoom = 15), lng = mainreact1$Longitude, lat = mainreact1$Latitude, popup = values_teacher_shortage_popup, options = popupOptions(), label = values_teacher_shortage, labelOptions = labelOptions(noHide = F, textsize = "12px", direction = "top"), icon = makeAwesomeIcon(icon = "education", library = "glyphicon", markerColor = case_when(mainreact1$TeacherShortage > 0 ~ "red", mainreact1$TeacherExcess > 0 ~ "blue", (mainreact1$TeacherExcess == 0 & mainreact1$TeacherShortage == 0) ~ "green", is.na(mainreact1$TeacherShortage) ~ "gray")))
     
-    values.efdmasterlist <- paste(strong("SCHOOL INFORMATION"),"<br>School Name:",mainreactEFD$School.Name,"<br>School ID:",mainreactEFD$SchoolID,"<br>Category:",mainreactEFD$Category,"<br>Funding Year:",mainreactEFD$FundingYear,"<br>Allocation:",mainreactEFD$Allocation) %>% lapply(htmltools::HTML)
+    dfreact_TS <- reactive({
+      
+      if (is.null(input$TeacherShortage_Mapping_bounds)) {
+        mainreact1
+      } else {
+        bounds <- input$TeacherShortage_Mapping_bounds
+        latRng <- range(bounds$north, bounds$south)
+        lngRng <- range(bounds$east, bounds$west)
+        
+        subset(mainreact1,
+               Latitude >= latRng[1] & Latitude <= latRng[2] & Longitude >= lngRng[1] & Longitude <= lngRng[2])
+      }
+    })
+    
+    output$TeacherShortage_Table <- DT::renderDT(server = FALSE, {datatable(dfreact_TS() %>% select("School.Name","TeacherShortage","TeacherExcess") %>% rename("School" = School.Name, "Shortage" = TeacherShortage, "Excess" = TeacherExcess), extension = 'Buttons', rownames = FALSE, options = list(scrollX = TRUE, pageLength = 5, columnDefs = list(list(className = 'dt-center', targets ="_all")), dom = 'Bfrtip', buttons = list('csv','excel','pdf','print')))})
+    
+    # ... (All your renderValueBox and other outputs) ...
+    
+    output$a <- renderValueBox({
+      valueBox(tags$p(strong(SDO[which(SDO$Region==RegRCT & SDO$Division==SDORCT1),"FillUpRate"]), style = "font-family: Poppins; font-size: 20px; color: #111111; text-align: center;"), subtitle = NULL)
+    })
+    
+    output$b <- renderValueBox({
+      valueBox(tags$p(strong(SDO[which(SDO$Region==RegRCT & SDO$Division==SDORCT1),"Unfilled"]), style = "font-family: Poppins; font-size: 20px; color: #111111; text-align: center;"), subtitle = NULL)
+      
+    })
+    
+    output$e <- renderValueBox({
+      valueBox(tags$p(strong(SDONetShortage$NetShortage), style = "font-family: Poppins; font-size: 20px; color: #111111; text-align: center;"), subtitle = NULL)
+      
+    })
+    
+    output$c <- renderValueBox({
+      valueBox(tags$p(strong(sum(df1()$TeacherExcess)), style = "font-size: 65%;"), subtitle = NULL)
+      
+    })
+    
+    output$d <- renderValueBox({
+      valueBox(tags$p(strong("-"), style = "font-size: 65%;"), subtitle = NULL)})
+    
+    output$f <- renderValueBox({
+      valueBox(tags$p(strong(SDO[which(SDO$Division==RegRCT),"FillUpRate"]), style = "font-family: Poppins; font-size: 20px; color: #111111; text-align: center;"), subtitle = NULL)
+    })
+    
+    output$g <- renderValueBox({
+      valueBox(tags$p(strong(SDO[which(SDO$Division==RegRCT),"Unfilled"]), style = "font-family: Poppins; font-size: 20px; color: #111111; text-align: center;"), subtitle = NULL)
+      
+    })
+    
+    output$Single <- renderValueBox({
+      valueBox(strong(sum(mainreactdiv$Clustering.Status == "NOT CLUSTERED")), subtitle = strong("Number of Unclustered Schools (Division)"), icon = icon("users"), color = "green")
+    })
+    
+    output$Cluster <- renderValueBox({
+      valueBox(strong(sum(mainreactdiv$Clustering.Status == "CLUSTERED")), subtitle = strong("Number of Clustered Schools (Division)"), icon = icon("school"), color = "green")
+    })
+    
+    output$Outlier <- renderValueBox({
+      valueBox(strong(sum(mainreactdiv$Clustering.Status == "Outlier")), subtitle = strong("Number of Outlier Schools (Division)"), icon = icon("school"), color = "green")
+    })
+    
+    output$SingleR <- renderValueBox({
+      valueBox(strong(sum(mainreactreg$Clustering.Status == "NOT CLUSTERED")), subtitle = strong("Number of Unclustered Schools (Region)"), icon = icon("users"), color = "navy")
+    })
+    
+    output$ClusterR <- renderValueBox({
+      valueBox(strong(sum(mainreactreg$Clustering.Status == "CLUSTERED")), subtitle = strong("Number of Clustered Schools (Region)"), icon = icon("school"), color = "navy")
+    })
+    
+    output$OutlierR <- renderValueBox({
+      valueBox(strong(sum(mainreactreg$Clustering.Status == "Outlier")), subtitle = strong("Number of Outlier Schools (Region)"), icon = icon("school"), color = "navy")
+    })
+    
+    Ao21 <- reactive({
+      
+      if (is.null(input$AO2Mapping_bounds)) {
+        mainreactNTP
+      } else {
+        bounds <- input$AO2Mapping_bounds
+        latRng <- range(bounds$north, bounds$south)
+        lngRng <- range(bounds$east, bounds$west)
+        
+        subset(mainreactNTP,
+               Latitude >= latRng[1] & Latitude <= latRng[2] & Longitude >= lngRng[1] & Longitude <= lngRng[2])
+      }
+    })
+    
+    output$AO2Table <- DT::renderDT(Ao21() %>% select("School.Name","Clustering.Status","PDOI_Deployment") %>% rename("School" = School.Name, "AO II Deployment" = Clustering.Status, "PDOI Deployment" = PDOI_Deployment), rownames = FALSE, filter = 'top', options = list(scrollX = TRUE, columnDefs = list(list(className = 'dt-center', targets ="_all")), dom = 'Bfrtip', buttons = list('csv','excel','pdf','print')))
+    
+    output$f2 <- renderValueBox({
+      valueBox(tags$p(strong(sum(mainreactreg$Clustering.Status == "Clustered")), style = "font-family: Poppins; font-size: 20px; color: #111111; text-align: center;"), subtitle = NULL)
+    })
+    
+    output$g2 <- renderValueBox({
+      valueBox(tags$p(strong(sum(mainreactreg$Clustering.Status == "Dedicated")), style = "font-family: Poppins; font-size: 20px; color: #111111; text-align: center;"), subtitle = NULL)
+    })
+    
+    output$a2 <- renderValueBox({
+      valueBox(tags$p(strong(sum(mainreactdiv$Clustering.Status == "Clustered")), style = "font-family: Poppins; font-size: 20px; color: #111111; text-align: center;"), subtitle = NULL)
+    })
+    
+    output$b2 <- renderValueBox({
+      valueBox(tags$p(strong(sum(mainreactdiv$Clustering.Status == "Dedicated")), style = "font-family: Poppins; font-size: 20px; color: #111111; text-align: center;"), subtitle = NULL)
+    })
+    
+    output$e2 <- renderValueBox({
+      valueBox(tags$p(strong(sum(mainreactNTP$Clustering.Status == "Clustered")), style = "font-family: Poppins; font-size: 20px; color: #111111; text-align: center;"), subtitle = NULL)
+    })
+    
+    output$h2 <- renderValueBox({
+      valueBox(tags$p(strong(sum(mainreactNTP$Clustering.Status == "Dedicated")), style = "font-family: Poppins; font-size: 20px; color: #111111; text-align: center;"), subtitle = NULL)
+    })
+    
+    output$ROCRShort <- renderValueBox({
+      valueBox(tags$p(strong(sum(mainreactCRreg$Estimated_CL_Shortage, na.rm = TRUE)), style = "font-family: Poppins; font-size: 20px; color: #111111; text-align: center;"), subtitle = NULL)
+    })
+    
+    output$SDOCRShort <- renderValueBox({
+      valueBox(tags$p(strong(sum(mainreactCRdiv$Estimated_CL_Shortage, na.rm = TRUE)), style = "font-family: Poppins; font-size: 20px; color: #111111; text-align: center;"), subtitle = NULL)
+    })
+    
+    #output$DistCRShort <- renderValueBox({
+    #valueBox(tags$p(strong(sum(mainreactNTP$Est.CS, na.rm = TRUE)), style = "font-family: Poppins; font-size: 20px; color: #111111; text-align: center;"), subtitle = NULL)
+    #})
+    
+    # --- Total Last Mile Schools by Region ---
+    output$LMS_Total_Region <- renderValueBox({
+      total_region_lms <- nrow(mainreactLMSreg)  # <-- adjust dataset/column name if needed
+      
+      valueBox(
+        tags$p(
+          strong(scales::comma(total_region_lms)),
+          style = "font-family: Poppins; font-size: 20px; color: #111111; text-align: center;"),
+        subtitle = NULL
+      )
+    })
+    
+    
+    # --- Total Last Mile Schools by Division ---
+    output$LMS_Total_Division <- renderValueBox({
+      total_division_lms <-    nrow(mainreactLMSdiv)  # <-- adjust dataset/column name if needed
+      
+      valueBox(
+        tags$p(
+          strong(scales::comma(total_division_lms)),
+          style = "font-family: Poppins; font-size: 20px; color: #111111; text-align: center;"),
+        subtitle = NULL
+      )
+    })
+    
+    
+    dfreact_CL <- reactive({
+      
+      if (is.null(input$CLMapping_bounds)) {
+        mainreactCR
+      } else {
+        bounds <- input$CLMapping_bounds
+        latRng <- range(bounds$north, bounds$south)
+        lngRng <- range(bounds$east, bounds$west)
+        
+        subset(mainreactCR,
+               Latitude >= latRng[1] & Latitude <= latRng[2] & Longitude >= lngRng[1] & Longitude <= lngRng[2])
+      }
+    })
+    
+    output$CLTable <- DT::renderDT(server = FALSE, {datatable(dfreact_CL() %>% select("School.Name","Enrolment.2023.2024","Instructional.Rooms.2023.2024","Est.CS","Buidable_space") %>% rename("School" = School.Name, "Total Enrolment" = Enrolment.2023.2024, "Classroom Inventory" = Instructional.Rooms.2023.2024, "Estimate Classroom Shortage" = Est.CS, "Buildable Space" = Buidable_space), filter = 'top', options = list(scrollX = TRUE,scrollY= "300px", columnDefs = list(list(className = 'dt-center', targets ="_all")), rownames = FALSE, dom = 'Bfrtip', buttons = list('csv','excel','pdf','print')))})
+    
+    dfreact_SHS <- reactive({
+      
+      if (is.null(input$SHSMapping_bounds)) {
+        mainreactSHS
+      } else {
+        bounds <- input$SHSMapping_bounds
+        latRng <- range(bounds$north, bounds$south)
+        lngRng <- range(bounds$east, bounds$west)
+        
+        subset(mainreactSHS,
+               Latitude >= latRng[1] & Latitude <= latRng[2] & Longitude >= lngRng[1] & Longitude <= lngRng[2])
+      }
+    })
+    
+    output$SHSListTable <- DT::renderDT(server = FALSE, {datatable(dfreact_SHS() %>% select("School.Name", "TotalEnrolment") %>% rename("School" = School.Name, "Total Enrolment" = TotalEnrolment), extension = 'Buttons', rownames = FALSE, options = list(scrollX = TRUE, pageLength = 5, columnDefs = list(list(className = 'dt-center', targets ="_all")), dom = 'Bfrtip', buttons = list('csv','excel','pdf','print')))})
+    
+    output$SHSCount <- renderValueBox({
+      valueBox(tags$p(strong(nrow(mainreactSHS)), style = "font-size: 100%; text-align: center;"), subtitle = NULL)})
+    
+    SHS_count_reactive <- eventReactive(input$Mapping_Run, {
+      
+      mainvalue <- df %>% 
+        filter(Region == input$resource_map_region) %>% 
+        filter(Level == "SHS")
+      
+      # This returns the COUNT (a single number)
+      return(nrow(mainvalue))
+    })
+    
+    output$SHSCountUniv <- renderValueBox({
+      valueBox(tags$p(strong(SHS_count_reactive()), style = "font-size: 100%; text-align: center;"), subtitle = NULL)})
+    
+    output$IndCount <- renderValueBox({
+      valueBox(tags$p(strong(nrow(mainreactind)), style = "font-size: 100%; text-align: center;"), subtitle = NULL)})
+    
+    output$assessmentSHS <- renderUI({
+      p(HTML(paste(strong(RegRCT),"has",strong(nrow(mainreactSHS)),"senior high schools and a total of ",strong(nrow(mainreactind)),"industries composed of",strong(sum(mainreactind$Sector == "Food Establishments")),"industries on Food Establishments, ",strong(sum(mainreactind$Sector == "Professional/Private Services")),"industries on Professional/Private Services, ",strong(sum(mainreactind$Sector == "Transportation")),"industries on Transportation, ",strong(sum(mainreactind$Sector == "Utilities")),"industries on Utilities",", and",strong(sum(mainreactind$Sector == "Retail")),"industries on Retail")), style = "font-family: Century Gothic; font-size: 15px; color: #111111;")
+    })
     
     color_palette <- colorFactor(
       palette = c("red", "green", "blue"),
@@ -14361,6 +14793,14 @@ server <- function(input, output, session) {
       levels = levels(mainreactEFD$FundingCategory) # Ensure the order is respected
     )
     
+    validate(
+      need(
+        "Longitude" %in% colnames(mainreactEFD) && "Latitude" %in% colnames(mainreactEFD),
+        "Error: FacMapping data is missing Latitude or Longitude."
+      )
+    )
+    
+    # 3. Use the new factor variable and color palette in your leaflet code
     leafletProxy("FacMapping", data = mainreactEFD) %>%
       clearMarkers() %>%
       clearControls() %>%
@@ -14373,956 +14813,55 @@ server <- function(input, output, session) {
         icon = makeAwesomeIcon(
           icon = "education",
           library = "glyphicon",
-          markerColor = case_when(
-            mainreactEFD$FundingCategory == "Before 2025" ~ "red", 
-            mainreactEFD$FundingCategory == "2025-2030" ~ "green", 
-            mainreactEFD$FundingCategory == "After 2030" ~ "blue",
-            TRUE ~ "gray"
-          )
+          markerColor = case_when(mainreactEFD$FundingCategory == "Before 2025" ~ "red", mainreactEFD$FundingCategory == "2025-2030" ~ "green", mainreactEFD$FundingCategory == "After 2030" ~ "blue") # Use the new factor variable
         )
       ) %>%
       addLegend(
         "bottomright",
         pal = color_palette,
-        values = ~FundingCategory,
+        values = ~FundingCategory, # Use the new factor variable
         title = "Funding Year",
         opacity = 1
       )
-  })
-  
-  # --- CongestMapping Proxy ---
-  observe({
-    req(data_filtered$mainreactNTP)
-    mainreactNTP <- data_filtered$mainreactNTP
     
-    if (nrow(mainreactNTP) == 0 || all(is.na(mainreactNTP$Longitude))) {
-      leafletProxy("CongestMapping") %>% clearMarkers() %>% clearControls()
-      return()
-    }
+    dfreact_fac <- reactive({
+      if (is.null(input$FacMapping_bounds)) {
+        mainreactEFD
+      } else {
+        bounds <- input$FacMapping_bounds
+        latRng <- range(bounds$north, bounds$south)
+        lngRng <- range(bounds$east, bounds$west)
+        
+        subset(mainreactEFD,
+               Latitude >= latRng[1] & Latitude <= latRng[2] & Longitude >= lngRng[1] & Longitude <= lngRng[2])
+      }
+    })
     
-    values.congest <- paste(strong("SCHOOL INFORMATION"),"<br>School Name:",mainreactNTP$School.Name,"<br>School ID:",mainreactNTP$SchoolID,"<br>Instructional Rooms (2023-2024):",mainreactNTP$Instructional.Rooms.2023.2024,"<br>Enrolment (2023-2024):",mainreactNTP$Enrolment.2023.2024,"<br>Congestion Index:",mainreactNTP$Congestion.Index) %>% lapply(htmltools::HTML)
+    output$FacTable <- DT::renderDT(server = FALSE, {
+      datatable(dfreact_fac() %>% 
+                  select("Region","Division","School.Name","FundingYear","Allocation") %>%
+                  rename("School" = School.Name, "Funding Year" = FundingYear),
+                extension = 'Buttons',
+                rownames = FALSE,
+                options = list(scrollX = TRUE, pageLength = 10, columnDefs = list(list(className = 'dt-center', targets ="_all")), dom = 'Bfrtip', buttons = list('csv','excel','pdf','print')))
+    })
     
-    leafletProxy("CongestMapping", data = mainreactNTP) %>%
-      clearMarkers() %>%
-      clearControls() %>%
-      setView(lng = mainreactNTP$Longitude[1], lat = mainreactNTP$Latitude[1], zoom = 7) %>%
-      addAwesomeMarkers(
-        clusterOptions = markerClusterOptions(disableClusteringAtZoom = 15),
-        lng = ~Longitude,
-        lat = ~Latitude,
-        label = values.congest,
-        icon = makeAwesomeIcon(
-          icon = "education",
-          library = "glyphicon",
-          markerColor = case_when(
-            mainreactNTP$Congestion.Index >= 0 & mainreactNTP$Congestion.Index < 0.5 ~ "green", 
-            mainreactNTP$Congestion.Index >= 0.5 & mainreactNTP$Congestion.Index < 0.75 ~ "orange",
-            mainreactNTP$Congestion.Index >= 0.75 ~ "red",
-            TRUE ~ "gray"
-          )
-        )
-      )
-  })
-  
-  
-  # --- 4. Reactive Expressions for Map-Bound Tables ---
-  # These filter the data based on the user panning/zooming the map.
-  
-  df1 <- reactive({
-    req(data_filtered$mainreactLMS)
-    mainreactLMS <- data_filtered$mainreactLMS
-    
-    if (is.null(input$LMSMapping_bounds)) {
-      mainreactLMS
-    } else {
-      bounds <- input$LMSMapping_bounds
-      latRng <- range(bounds$north, bounds$south)
-      lngRng <- range(bounds$east, bounds$west)
-      
-      subset(mainreactLMS,
-             Latitude >= latRng[1] & Latitude <= latRng[2] & Longitude >= lngRng[1] & Longitude <= lngRng[2])
-    }
-  })
-  
-  dfreact_TS <- reactive({
-    req(data_filtered$mainreact1)
-    mainreact1 <- data_filtered$mainreact1
-    
-    if (is.null(input$TeacherShortage_Mapping_bounds)) {
-      mainreact1
-    } else {
-      bounds <- input$TeacherShortage_Mapping_bounds
-      latRng <- range(bounds$north, bounds$south)
-      lngRng <- range(bounds$east, bounds$west)
-      
-      subset(mainreact1,
-             Latitude >= latRng[1] & Latitude <= latRng[2] & Longitude >= lngRng[1] & Longitude <= lngRng[2])
-    }
-  })
-  
-  Ao21 <- reactive({
-    req(data_filtered$mainreactNTP)
-    mainreactNTP <- data_filtered$mainreactNTP
-    
-    if (is.null(input$AO2Mapping_bounds)) {
-      mainreactNTP
-    } else {
-      bounds <- input$AO2Mapping_bounds
-      latRng <- range(bounds$north, bounds$south)
-      lngRng <- range(bounds$east, bounds$west)
-      
-      subset(mainreactNTP,
-             Latitude >= latRng[1] & Latitude <= latRng[2] & Longitude >= lngRng[1] & Longitude <= lngRng[2])
-    }
-  })
-  
-  dfreact_CL <- reactive({
-    req(data_filtered$mainreactCR)
-    mainreactCR <- data_filtered$mainreactCR
-    
-    if (is.null(input$CLMapping_bounds)) {
-      mainreactCR
-    } else {
-      bounds <- input$CLMapping_bounds
-      latRng <- range(bounds$north, bounds$south)
-      lngRng <- range(bounds$east, bounds$west)
-      
-      subset(mainreactCR,
-             Latitude >= latRng[1] & Latitude <= latRng[2] & Longitude >= lngRng[1] & Longitude <= lngRng[2])
-    }
-  })
-  
-  dfreact_SHS <- reactive({
-    req(data_filtered$mainreactSHS)
-    mainreactSHS <- data_filtered$mainreactSHS
-    
-    if (is.null(input$SHSMapping_bounds)) {
-      mainreactSHS
-    } else {
-      bounds <- input$SHSMapping_bounds
-      latRng <- range(bounds$north, bounds$south)
-      lngRng <- range(bounds$east, bounds$west)
-      
-      subset(mainreactSHS,
-             Latitude >= latRng[1] & Latitude <= latRng[2] & Longitude >= lngRng[1] & Longitude <= lngRng[2])
-    }
-  })
-  
-  dfreact_fac <- reactive({
-    req(data_filtered$mainreactEFD)
-    mainreactEFD <- data_filtered$mainreactEFD
-    
-    if (is.null(input$FacMapping_bounds)) {
-      mainreactEFD
-    } else {
-      bounds <- input$FacMapping_bounds
-      latRng <- range(bounds$north, bounds$south)
-      lngRng <- range(bounds$east, bounds$west)
-      
-      subset(mainreactEFD,
-             Latitude >= latRng[1] & Latitude <= latRng[2] & Longitude >= lngRng[1] & Longitude <= lngRng[2])
-    }
-  })
-  
-  dfreact_cong <- reactive({
-    req(data_filtered$mainreactNTP)
-    mainreactNTP <- data_filtered$mainreactNTP
-    
-    if (is.null(input$CongestMapping_bounds)) {
-      mainreactNTP %>% arrange(desc(Congestion.Index))
-    } else {
-      bounds <- input$CongestMapping_bounds
-      latRng <- range(bounds$north, bounds$south)
-      lngRng <- range(bounds$east, bounds$west)
-      
-      subset(mainreactNTP,
-             Latitude >= latRng[1] & Latitude <= latRng[2] & Longitude >= lngRng[1] & Longitude <= lngRng[2])
-    }
-  })
-  
-  # This was an eventReactive, which is fine to stay as-is and outside.
-  SHS_count_reactive <- eventReactive(input$Mapping_Run, {
-    req(input$resource_map_region) # Make sure this input is available
-    mainvalue <- df %>%
-      filter(Region == input$resource_map_region) %>%
-      filter(Level == "SHS")
-    
-    return(nrow(mainvalue))
-  })
-  
-  
-  # --- 5. DataTable Renderers ---
-  # These now read from the reactive expressions above.
-  
-  # --- Empty Table Function ---
-  # Helper function to show a consistent "No data" message
-  render_empty_dt <- function(message = "No data available based on current selection.") {
-    DT::datatable(
-      data.frame("Message" = message),
-      options = list(dom = 't', scrollX = TRUE),
-      rownames = FALSE
-    )
-  }
-  
-  output$LMSTable <- DT::renderDT({
-    finalLMS <- df1() # Get data from reactive
-    
-    # Handle empty or null data
-    if (is.null(finalLMS) || nrow(finalLMS) == 0) {
-      return(render_empty_dt())
-    }
-    
-    finalLMS <- finalLMS %>%
-      dplyr::mutate(
-        Buildable_space = dplyr::if_else(Buildable_space == 1, "Yes", "No")
-      ) %>%
-      dplyr::select(
-        School_Name,
-        Total_Enrollment,
-        Instructional_Rooms,
-        Estimated_CL_Shortage,
-        Buildable_space
-      ) %>%
-      dplyr::rename(
-        "School Name" = School_Name,
-        "Total Enrolment" = Total_Enrollment,
-        "Classrooms Inventory" = Instructional_Rooms,
-        "Classroom Shortage" = Estimated_CL_Shortage,
-        "Buildable Space" = Buildable_space
-      )
-    
-    DT::datatable(
-      finalLMS,
-      extensions = c("Buttons", "FixedHeader"),
-      options = list(
-        scrollX = TRUE,
-        autoWidth = TRUE,
-        fixedHeader = TRUE,
-        pageLength = 10,
-        dom = 'Bfrtip',
-        buttons = list(
-          list(extend = "csv", exportOptions = list(modifier = list(page = "all"))),
-          list(extend = "excel", exportOptions = list(modifier = list(page = "all"))),
-          list(extend = "pdf", exportOptions = list(modifier = list(page = "all"))),
-          list(extend = "print", exportOptions = list(modifier = list(page = "all")))
-        ),
-        columnDefs = list(list(className = 'dt-center', targets = "_all"))
-      ),
-      filter = 'top',
-      selection = 'single',
-      rownames = FALSE,
-      callback = DT::JS("window.dispatchEvent(new Event('resize'));")
-    )
-  }, server = FALSE)
-  
-  output$TeacherShortage_Table <- DT::renderDT({
-    data_to_display <- dfreact_TS()
-    
-    if (is.null(data_to_display) || nrow(data_to_display) == 0) {
-      return(render_empty_dt())
-    }
-    
-    data_to_display <- data_to_display %>%
-      select(School.Name, TeacherShortage, TeacherExcess) %>%
-      rename(
-        "School" = School.Name,
-        "Shortage" = TeacherShortage,
-        "Excess" = TeacherExcess
-      )
-    
-    DT::datatable(
-      data_to_display,
-      extensions = c("Buttons", "FixedHeader"),
-      options = list(
-        scrollX = TRUE,
-        autoWidth = TRUE,
-        fixedHeader = TRUE,
-        pageLength = 10,
-        dom = 'Bfrtip',
-        destroy = TRUE,
-        buttons = list(
-          list(extend = "csv", exportOptions = list(modifier = list(page = "all"))),
-          list(extend = "excel", exportOptions = list(modifier = list(page = "all"))),
-          list(extend = "pdf", exportOptions = list(modifier = list(page = "all"))),
-          list(extend = "print", exportOptions = list(modifier = list(page = "all")))
-        ),
-        columnDefs = list(list(className = 'dt-center', targets = "_all"))
-      ),
-      filter = 'top',
-      selection = 'multiple',
-      rownames = FALSE
-    )
-  }, server = FALSE)
-  
-  output$AO2Table <- DT::renderDT({
-    data_to_display <- Ao21()
-    
-    if (is.null(data_to_display) || nrow(data_to_display) == 0) {
-      return(render_empty_dt())
-    }
-    
-    data_to_display <- data_to_display %>% 
-      select("School.Name","Clustering.Status","PDOI_Deployment") %>% 
-      rename("School" = School.Name, "AO II Deployment" = Clustering.Status, "PDOI Deployment" = PDOI_Deployment)
-    
-    datatable(
-      data_to_display, 
-      rownames = FALSE, 
-      filter = 'top', 
-      options = list(
-        scrollX = TRUE, 
-        columnDefs = list(list(className = 'dt-center', targets ="_all")), 
-        dom = 'Bfrtip', 
-        buttons = list('csv','excel','pdf','print')
-      )
-    )
-  })
-  
-  output$CLTable <- DT::renderDT({
-    data_to_display <- dfreact_CL()
-    
-    if (is.null(data_to_display) || nrow(data_to_display) == 0) {
-      return(render_empty_dt())
-    }
-    
-    data_to_display <- data_to_display %>% 
-      select("School.Name","Enrolment.2023.2024","Instructional.Rooms.2023.2024","Est.CS","Buidable_space") %>% 
-      rename("School" = School.Name, "Total Enrolment" = Enrolment.2023.2024, "Classroom Inventory" = Instructional.Rooms.2023.2024, "Estimate Classroom Shortage" = Est.CS, "Buildable Space" = Buidable_space)
-    
-    datatable(
-      data_to_display, 
-      filter = 'top', 
-      options = list(
-        scrollX = TRUE,
-        scrollY= "300px", 
-        columnDefs = list(list(className = 'dt-center', targets ="_all")), 
-        rownames = FALSE, 
-        dom = 'Bfrtip', 
-        buttons = list('csv','excel','pdf','print')
-      )
-    )
-  }, server = FALSE)
-  
-  output$SHSListTable <- DT::renderDT({
-    data_to_display <- dfreact_SHS()
-    
-    if (is.null(data_to_display) || nrow(data_to_display) == 0) {
-      return(render_empty_dt())
-    }
-    
-    data_to_display <- data_to_display %>%
-      select(School.Name, TotalEnrolment) %>%
-      rename(
-        "School" = School.Name,
-        "Total Enrolment" = TotalEnrolment
-      )
-    
-    DT::datatable(
-      data_to_display,
-      extensions = c("Buttons", "FixedHeader"),
-      options = list(
-        scrollX = TRUE,
-        autoWidth = TRUE,
-        fixedHeader = TRUE,
-        pageLength = 5,
-        dom = 'Bfrtip',
-        buttons = list(
-          list(extend = "csv", exportOptions = list(modifier = list(page = "all"))),
-          list(extend = "excel", exportOptions = list(modifier = list(page = "all"))),
-          list(extend = "pdf", exportOptions = list(modifier = list(page = "all"))),
-          list(extend = "print", exportOptions = list(modifier = list(page = "all")))
-        ),
-        columnDefs = list(list(className = 'dt-center', targets = "_all"))
-      ),
-      filter = 'top',
-      selection = 'single',
-      rownames = FALSE
-    )
-  }, server = FALSE)
-  
-  output$FacTable <- DT::renderDT({
-    data_to_display <- dfreact_fac()
-    
-    if (is.null(data_to_display) || nrow(data_to_display) == 0) {
-      return(render_empty_dt())
-    }
-    
-    data_to_display <- data_to_display %>%
-      arrange(FundingYear) %>%
-      select(Region, Division, School.Name, FundingYear, Allocation) %>%
-      rename(
-        "School" = School.Name,
-        "Funding Year" = FundingYear
-      )
-    
-    DT::datatable(
-      data_to_display,
-      extensions = c("Buttons", "FixedHeader"),
-      options = list(
-        scrollX = TRUE,
-        autoWidth = TRUE,
-        fixedHeader = TRUE,
-        pageLength = 10,
-        dom = 'Bfrtip',
-        buttons = list(
-          list(extend = "csv", exportOptions = list(modifier = list(page = "all"))),
-          list(extend = "excel", exportOptions = list(modifier = list(page = "all"))),
-          list(extend = "pdf", exportOptions = list(modifier = list(page = "all"))),
-          list(extend = "print", exportOptions = list(modifier = list(page = "all")))
-        ),
-        columnDefs = list(list(className = 'dt-center', targets = "_all"))
-      ),
-      filter = 'top',
-      selection = 'single',
-      rownames = FALSE
-    )
-  }, server = FALSE)
-  
-  output$CongestTable <- DT::renderDT({
-    data_to_display <- dfreact_cong()
-    
-    if (is.null(data_to_display) || nrow(data_to_display) == 0) {
-      return(render_empty_dt())
-    }
-    
-    data_to_display <- data_to_display %>%
-      select(Region, Division, School.Name, Instructional.Rooms.2023.2024, Enrolment.2023.2024, Congestion.Index) %>%
-      rename(
-        "School" = School.Name,
-        "Instructional Rooms" = Instructional.Rooms.2023.2024,
-        "Total Enrolment" = Enrolment.2023.2024,
-        "Congestion Index" = Congestion.Index
-      )
-    
-    datatable(
-      data_to_display,
-      extensions = c("Buttons", "FixedHeader"),
-      options = list(
-        scrollX = TRUE,
-        autoWidth = TRUE,
-        fixedHeader = TRUE,
-        pageLength = 10,
-        dom = 'Bfrtip',
-        buttons = list(
-          list(extend = "csv", exportOptions = list(modifier = list(page = "all"))),
-          list(extend = "excel", exportOptions = list(modifier = list(page = "all"))),
-          list(extend = "pdf", exportOptions = list(modifier = list(page = "all"))),
-          list(extend = "print", exportOptions = list(modifier = list(page = "all")))
-        ),
-        columnDefs = list(list(className = 'dt-center', targets = "_all"))
-      ),
-      filter = 'top',
-      selection = 'multiple',
-      rownames = FALSE
-    )
-  })
-  
-  
-  # --- 6. ValueBox Renderers ---
-  # These now read from data_filtered and are wrapped in req()
-  
-  output$a <- renderValueBox({
-    req(data_filtered$RegRCT, data_filtered$SDORCT1)
-    valueBox(tags$p(strong(SDO[which(SDO$Region==data_filtered$RegRCT & SDO$Division==data_filtered$SDORCT1),"FillUpRate"]), style = "font-family: Poppins; font-size: 20px; color: #111111; text-align: center;"), subtitle = NULL)
-  })
-  
-  output$b <- renderValueBox({
-    req(data_filtered$RegRCT, data_filtered$SDORCT1)
-    valueBox(tags$p(strong(SDO[which(SDO$Region==data_filtered$RegRCT & SDO$Division==data_filtered$SDORCT1),"Unfilled"]), style = "font-family: Poppins; font-size: 20px; color: #111111; text-align: center;"), subtitle = NULL)
-  })
-  
-  output$e <- renderValueBox({
-    req(data_filtered$SDONetShortage)
-    value <- if (nrow(data_filtered$SDONetShortage) > 0) data_filtered$SDONetShortage$NetShortage else 0
-    valueBox(tags$p(strong(value), style = "font-family: Poppins; font-size: 20px; color: #111111; text-align: center;"), subtitle = NULL)
-  })
-  
-  output$c <- renderValueBox({
-    # This depends on the map-bound reactive df1()
-    req(df1())
-    valueBox(tags$p(strong(sum(df1()$TeacherExcess, na.rm = TRUE)), style = "font-size: 65%;"), subtitle = NULL)
-  })
-  
-  output$d <- renderValueBox({
-    # This was static, so it can just be rendered
-    valueBox(tags$p(strong("-"), style = "font-size: 65%;"), subtitle = NULL)
-  })
-  
-  output$f <- renderValueBox({
-    req(data_filtered$RegRCT)
-    valueBox(tags$p(strong(SDO[which(SDO$Division==data_filtered$RegRCT),"FillUpRate"]), style = "font-family: Poppins; font-size: 20px; color: #111111; text-align: center;"), subtitle = NULL)
-  })
-  
-  output$g <- renderValueBox({
-    req(data_filtered$RegRCT)
-    valueBox(tags$p(strong(SDO[which(SDO$Division==data_filtered$RegRCT),"Unfilled"]), style = "font-family: Poppins; font-size: 20px; color: #111111; text-align: center;"), subtitle = NULL)
-  })
-  
-  output$Single <- renderValueBox({
-    req(data_filtered$mainreactdiv)
-    valueBox(strong(sum(data_filtered$mainreactdiv$Clustering.Status == "NOT CLUSTERED", na.rm = TRUE)), subtitle = strong("Number of Unclustered Schools (Division)"), icon = icon("users"), color = "green")
-  })
-  
-  output$Cluster <- renderValueBox({
-    req(data_filtered$mainreactdiv)
-    valueBox(strong(sum(data_filtered$mainreactdiv$Clustering.Status == "CLUSTERED", na.rm = TRUE)), subtitle = strong("Number of Clustered Schools (Division)"), icon = icon("school"), color = "green")
-  })
-  
-  output$Outlier <- renderValueBox({
-    req(data_filtered$mainreactdiv)
-    valueBox(strong(sum(data_filtered$mainreactdiv$Clustering.Status == "Outlier", na.rm = TRUE)), subtitle = strong("Number of Outlier Schools (Division)"), icon = icon("school"), color = "green")
-  })
-  
-  output$SingleR <- renderValueBox({
-    req(data_filtered$mainreactreg)
-    valueBox(strong(sum(data_filtered$mainreactreg$Clustering.Status == "NOT CLUSTERED", na.rm = TRUE)), subtitle = strong("Number of Unclustered Schools (Region)"), icon = icon("users"), color = "navy")
-  })
-  
-  output$ClusterR <- renderValueBox({
-    req(data_filtered$mainreactreg)
-    valueBox(strong(sum(data_filtered$mainreactreg$Clustering.Status == "CLUSTERED", na.rm = TRUE)), subtitle = strong("Number of Clustered Schools (Region)"), icon = icon("school"), color = "navy")
-  })
-  
-  output$OutlierR <- renderValueBox({
-    req(data_filtered$mainreactreg)
-    valueBox(strong(sum(data_filtered$mainreactreg$Clustering.Status == "Outlier", na.rm = TRUE)), subtitle = strong("Number of Outlier Schools (Region)"), icon = icon("school"), color = "navy")
-  })
-  
-  output$f2 <- renderValueBox({
-    req(data_filtered$mainreactreg)
-    valueBox(tags$p(strong(sum(data_filtered$mainreactreg$Clustering.Status == "Clustered", na.rm = TRUE)), style = "font-family: Poppins; font-size: 20px; color: #111111; text-align: center;"), subtitle = NULL)
-  })
-  
-  output$g2 <- renderValueBox({
-    req(data_filtered$mainreactreg)
-    valueBox(tags$p(strong(sum(data_filtered$mainreactreg$Clustering.Status == "Dedicated", na.rm = TRUE)), style = "font-family: Poppins; font-size: 20px; color: #111111; text-align: center;"), subtitle = NULL)
-  })
-  
-  output$a2 <- renderValueBox({
-    req(data_filtered$mainreactdiv)
-    valueBox(tags$p(strong(sum(data_filtered$mainreactdiv$Clustering.Status == "Clustered", na.rm = TRUE)), style = "font-family: Poppins; font-size: 20px; color: #111111; text-align: center;"), subtitle = NULL)
-  })
-  
-  output$b2 <- renderValueBox({
-    req(data_filtered$mainreactdiv)
-    valueBox(tags$p(strong(sum(data_filtered$mainreactdiv$Clustering.Status == "Dedicated", na.rm = TRUE)), style = "font-family: Poppins; font-size: 20px; color: #111111; text-align: center;"), subtitle = NULL)
-  })
-  
-  output$e2 <- renderValueBox({
-    req(data_filtered$mainreactNTP)
-    valueBox(tags$p(strong(sum(data_filtered$mainreactNTP$Clustering.Status == "Clustered", na.rm = TRUE)), style = "font-family: Poppins; font-size: 20px; color: #111111; text-align: center;"), subtitle = NULL)
-  })
-  
-  output$h2 <- renderValueBox({
-    req(data_filtered$mainreactNTP)
-    valueBox(tags$p(strong(sum(data_filtered$mainreactNTP$Clustering.Status == "Dedicated", na.rm = TRUE)), style = "font-family: Poppins; font-size: 20px; color: #111111; text-align: center;"), subtitle = NULL)
-  })
-  
-  output$ROCRShort <- renderValueBox({
-    req(data_filtered$mainreactCRreg)
-    valueBox(tags$p(strong(sum(data_filtered$mainreactCRreg$Estimated_CL_Shortage, na.rm = TRUE)), style = "font-family: Poppins; font-size: 20px; color: #111111; text-align: center;"), subtitle = NULL)
-  })
-  
-  output$SDOCRShort <- renderValueBox({
-    req(data_filtered$mainreactCRdiv)
-    valueBox(tags$p(strong(sum(data_filtered$mainreactCRdiv$Estimated_CL_Shortage, na.rm = TRUE)), style = "font-family: Poppins; font-size: 20px; color: #111111; text-align: center;"), subtitle = NULL)
-  })
-  
-  output$LMS_Total_Region <- renderValueBox({
-    req(data_filtered$mainreactLMSreg)
-    total_region_lms <- nrow(data_filtered$mainreactLMSreg)
-    valueBox(
-      tags$p(
-        strong(scales::comma(total_region_lms)),
-        style = "font-family: Poppins; font-size: 20px; color: #111111; text-align: center;"),
-      subtitle = NULL
-    )
-  })
-  
-  output$LMS_Total_Division <- renderValueBox({
-    req(data_filtered$mainreactLMSdiv)
-    total_division_lms <- nrow(data_filtered$mainreactLMSdiv)
-    valueBox(
-      tags$p(
-        strong(scales::comma(total_division_lms)),
-        style = "font-family: Poppins; font-size: 20px; color: #111111; text-align: center;"),
-      subtitle = NULL
-    )
-  })
-  
-  output$SHSCount <- renderValueBox({
-    req(data_filtered$mainreactSHS)
-    valueBox(tags$p(strong(nrow(data_filtered$mainreactSHS)), style = "font-size: 100%; text-align: center;"), subtitle = NULL)
-  })
-  
-  output$SHSCountUniv <- renderValueBox({
-    # This one depends on the eventReactive
-    valueBox(tags$p(strong(SHS_count_reactive()), style = "font-size: 100%; text-align: center;"), subtitle = NULL)
-  })
-  
-  output$IndCount <- renderValueBox({
-    req(data_filtered$mainreactind)
-    valueBox(tags$p(strong(nrow(data_filtered$mainreactind)), style = "font-size: 100%; text-align: center;"), subtitle = NULL)
-  })
-  
-  
-  # --- 7. UI Renderers ---
-  
-  output$assessmentSHS <- renderUI({
-    req(data_filtered$RegRCT, data_filtered$mainreactSHS, data_filtered$mainreactind)
-    
-    RegRCT <- data_filtered$RegRCT
-    mainreactSHS <- data_filtered$mainreactSHS
-    mainreactind <- data_filtered$mainreactind
-    
-    p(HTML(paste(
-      strong(RegRCT),"has",strong(nrow(mainreactSHS)),"senior high schools and a total of ",
-      strong(nrow(mainreactind)),"industries composed of",
-      strong(sum(mainreactind$Sector == "Food Establishments", na.rm = TRUE)),"industries on Food Establishments, ",
-      strong(sum(mainreactind$Sector == "Professional/Private Services", na.rm = TRUE)),"industries on Professional/Private Services, ",
-      strong(sum(mainreactind$Sector == "Transportation", na.rm = TRUE)),"industries on Transportation, ",
-      strong(sum(mainreactind$Sector == "Utilities", na.rm = TRUE)),"industries on Utilities",", and",
-      strong(sum(mainreactind$Sector == "Retail", na.rm = TRUE)),"industries on Retail"
-    )), style = "font-family: Century Gothic; font-size: 15px; color: #111111;")
-  })
-  
-  
-  # --- 1. Central Storage for Filtered Data ---
-  # This object will hold all our data after the "Run" button is clicked.
-  data_filtered <- reactiveValues()
-  
-  # --- 2. The "Run" Button Observer ---
-  # This observer's ONLY job is to filter data and update the data_filtered object.
-  # --- 1. Central Storage for Filtered Data ---
-  # This object will hold all our data after the "Run" button is clicked.
-  data_filtered <- reactiveValues()
-  
-  # --- 2. The "Run" Button Observer ---
-  # This observer's ONLY job is to filter data and update the data_filtered object.
-  # --- 1. Central Storage for Filtered Data ---
-  # This object will hold all our data after the "Run" button is clicked.
-  data_filtered <- reactiveValues()
-  
-  # --- 2. The "Run" Button Observer ---
-  # This observer's ONLY job is to filter data and update the data_filtered object.
-  
-  # --- 3. Leaflet Proxy Observers ---
-  # Each map update is in its own observer, reacting to changes in data_filtered
-  
-  # --- LMSMapping Proxy ---
-  observe({
-    req(data_filtered$mainreactLMS)
-    mainreactLMS <- data_filtered$mainreactLMS
-    
-    # Stop if no data
-    if (nrow(mainreactLMS) == 0 || all(is.na(mainreactLMS$Longitude))) {
-      leafletProxy("LMSMapping") %>% clearMarkers() %>% clearMarkerClusters()
-      return()
-    }
-    
-    values.LMS <- paste(
-      "School Name:",mainreactLMS$School_Name,
-      "<br>Division:", mainreactLMS$Division,
-      "<br>Leg. District:", mainreactLMS$Legislative_District,
-      "<br>Number of Classrooms:", mainreactLMS$Instructional_Rooms,
-      "<br>Classroom Requirement:", mainreactLMS$CL_Req,
-      "<br>Estimated Classroom Shortage:", mainreactLMS$Estimated_CL_Shortage,
-      "<br>Buildable Space:", ifelse(mainreactLMS$Buildable_space == 1, "Yes", "No")) %>% lapply(htmltools::HTML)
-    
-    leafletProxy("LMSMapping") %>%
-      clearMarkers() %>%
-      clearMarkerClusters() %>%
-      setView(
-        lng = mainreactLMS$Longitude[1],
-        lat = mainreactLMS$Latitude[1],
-        zoom = 7
-      ) %>%
-      addAwesomeMarkers(
-        clusterOptions = markerClusterOptions(disableClusteringAtZoom = 12),
-        lng = mainreactLMS$Longitude,
-        lat = mainreactLMS$Latitude,
-        icon = makeAwesomeIcon(icon = "education", library = "glyphicon",
-                               markerColor = case_when(
-                                 (mainreactLMS$Buildable_space == 0 & mainreactLMS$Estimated_CL_Shortage == 0) ~ "gray",
-                                 mainreactLMS$Buildable_space == 0 ~ "red",
-                                 mainreactLMS$Buildable_space == 1 ~ "green",
-                                 TRUE ~ "gray" # Default case
-                               )),
-        label = values.LMS,
-        labelOptions = labelOptions(noHide = F, textsize = "12px", direction = "top")
-      )
-  })
-  
-  # --- SHSMapping Proxy ---
-  observe({
-    req(data_filtered$mainreactSHS, data_filtered$mainreactind)
-    mainreactSHS <- data_filtered$mainreactSHS
-    mainreactind <- data_filtered$mainreactind
-    
-    # Stop if no data
-    if (nrow(mainreactSHS) == 0 || all(is.na(mainreactSHS$Longitude))) {
-      leafletProxy("SHSMapping") %>% clearMarkers() %>% clearMarkerClusters()
-      return()
-    }
-    
-    values_industry <- paste(strong("SCHOOL INFORMATION"),"<br>School Name:",mainreactSHS$School.Name,"<br>School ID:",mainreactSHS$SchoolID) %>% lapply(htmltools::HTML)
-    values.ind <- paste(mainreactind$Company,"<br>Province:",mainreactind$Province) %>% lapply(htmltools::HTML)
-    
-    leafletProxy("SHSMapping") %>%
-      clearMarkers() %>%
-      clearMarkerClusters() %>%
-      setView(
-        lng = mainreactSHS$Longitude[1],
-        lat = mainreactSHS$Latitude[1],
-        zoom = 7
-      ) %>%
-      # --- SHS Circles (background layer) ---
-      addCircleMarkers(
-        lng = mainreactSHS$Longitude,
-        lat = mainreactSHS$Latitude,
-        radius = 80,
-        color = "black",
-        weight = 1,
-        fillColor = "orange",
-        fillOpacity = 0.5,
-        label = values_industry,
-        labelOptions = labelOptions(
-          noHide = FALSE,
-          textsize = "12px",
-          direction = "top",
-          style = list("border-color" = "rgba(0,0,0,0.5)")
-        ),
-        clusterOptions = markerClusterOptions(disableClusteringAtZoom = 15)
-      ) %>%
-      # --- NEW: AwesomeMarkers above SHS circles ---
-      addAwesomeMarkers(
-        lng = mainreactSHS$Longitude,
-        lat = mainreactSHS$Latitude,
-        icon = makeAwesomeIcon(
-          icon = 'graduation-cap',
-          library = 'fa',
-          markerColor = 'blue',
-          iconColor = 'white'
-        ),
-        label = mainreactSHS$SchoolName, # FIXED: remove ~
-        labelOptions = labelOptions(
-          noHide = FALSE,
-          textsize = "12px",
-          direction = "top"
-        ),
-        clusterOptions = markerClusterOptions(disableClusteringAtZoom = 15)
-      ) %>%
-      # --- Industry markers (cog icons) ---
-      addAwesomeMarkers(
-        clusterOptions = markerClusterOptions(disableClusteringAtZoom = 12),
-        lng = mainreactind$Longitude,
-        lat = mainreactind$Latitude,
-        icon = makeAwesomeIcon(
-          icon = "cog",
-          library = "fa",
-          markerColor = dplyr::case_when(
-            mainreactind$Sector == "Manufacturing and Engineering" ~ "red",
-            mainreactind$Sector == "Hospitality and Tourism" ~ "orange",
-            mainreactind$Sector == "Professional/Private Services" ~ "purple",
-            mainreactind$Sector == "Public Administration" ~ "green",
-            mainreactind$Sector == "Business and Finance" ~ "blue",
-            mainreactind$Sector == "Agriculture and Agri-business" ~ "pink",
-            TRUE ~ "gray"
-          )
-        ),
-        label = values.ind,
-        labelOptions = labelOptions(
-          noHide = FALSE,
-          textsize = "12px",
-          direction = "top"
-        )
-      )
-  })
-  
-  # --- CLMapping Proxy ---
-  observe({
-    req(data_filtered$mainreactCR)
-    mainreactCR <- data_filtered$mainreactCR
-    
-    if (nrow(mainreactCR) == 0 || all(is.na(mainreactCR$Longitude))) {
-      leafletProxy("CLMapping") %>% clearMarkers() %>% clearMarkerClusters()
-      return()
-    }
-    
-    values_classrooom_shortage <- paste(mainreactCR$School.Name,"<br>Total Enrolment:",mainreactCR$Enrolment.2023.2024 ,"<br>Classroom Inventory:", mainreactCR$Instructional.Rooms.2023.2024, "<br>Classroom Shortage:", mainreactCR$Est.CS) %>% lapply(htmltools::HTML)
-    values_classrooom_shortage_popup <- paste(strong("SCHOOL INFORMATION"),"<br>School Name:",mainreactCR$School.Name,"<br>School ID:",mainreactCR$SchoolID,"<br>Enrolment Size:",mainreactCR$TotalEnrolment,"<br>","<br>",strong("CLASSROOM DATA"),"<br>Estimate Classroom Shortage:", mainreactCR$Est.CS,"<br>Type of Ownership:", mainreactCR$OwnershipType,"<br>Shifting:", mainreactCR$Shifting,"<br>Electricity Source:", mainreactCR$ElectricitySource,"<br>Water Source:", mainreactCR$WaterSource) %>% lapply(htmltools::HTML)
-    
-    icons <- awesomeIcons(
-      icon = "university",
-      library = "fa",
-      markerColor = case_when(
-        suppressWarnings(as.numeric(mainreactCR$Est.CS)) > 0 ~ "red",
-        TRUE ~ "green"
-      ),
-      iconColor = "white"
-    )
-    
-    leafletProxy("CLMapping") %>%
-      clearMarkers() %>%
-      clearMarkerClusters() %>%
-      setView(
-        lng = mainreactCR$Longitude[1],
-        lat = mainreactCR$Latitude[1],
-        zoom = 7
-      ) %>%
-      addAwesomeMarkers(
-        clusterOptions = markerClusterOptions(disableClusteringAtZoom = 15),
-        lng = mainreactCR$Longitude,
-        lat = mainreactCR$Latitude,
-        popup = values_classrooom_shortage_popup,
-        options = popupOptions(),
-        label = values_classrooom_shortage,
-        labelOptions = labelOptions(
-          noHide = FALSE,
-          textsize = "12px",
-          direction = "top"
-        ),
-        icon = icons
-      )
-  })
-  
-  # --- AO2Mapping Proxy ---
-  observe({
-    req(data_filtered$mainreactNTP)
-    mainreactNTP <- data_filtered$mainreactNTP
-    
-    if (nrow(mainreactNTP) == 0 || all(is.na(mainreactNTP$Longitude))) {
-      leafletProxy("AO2Mapping") %>% clearMarkers() %>% clearMarkerClusters()
-      return()
-    }
-    
-    values.non_teaching <- mainreactNTP$School.Name %>% lapply(htmltools::HTML)
-    values.non_teaching_popup <- paste(strong("SCHOOL INFORMATION"),"<br>School Name:",mainreactNTP$School.Name,"<br>School ID:",mainreactNTP$SchoolID,"<br>Enrolment Size:",mainreactNTP$TotalEnrolment,"<br>","<br>",strong("TEACHING PERSONNEL DATA"),"<br>Teacher Inventory:", mainreactNTP$TotalTeachers,"<br>Teacher Excess:", mainreactNTP$TeacherExcess,"<br>Teacher Shortage:", mainreactNTP$TeacherShortage,"<br>","<br>",strong("NON-TEACHING PERSONNEL DATA"),"<br>Plantilla Number of AOII:", mainreactNTP$Plantilla.Number,"<br>Clustering Status:", mainreactNTP$Clustering.Status,"<br>PDO I Deployment:", mainreactNTP$PDOI_Deployment) %>% lapply(htmltools::HTML)
-    
-    leafletProxy("AO2Mapping") %>%
-      clearMarkers() %>%
-      clearMarkerClusters() %>%
-      setView(lng = mainreactNTP$Longitude[1], lat = mainreactNTP$Latitude[1], zoom = 7) %>%
-      addAwesomeMarkers(
-        clusterOptions = markerClusterOptions(disableClusteringAtZoom = 15),
-        lng = mainreactNTP$Longitude,
-        lat = mainreactNTP$Latitude,
-        popup = values.non_teaching_popup,
-        options = popupOptions(),
-        label = values.non_teaching,
-        labelOptions = labelOptions(noHide = FALSE, textsize = "12px", direction = "top"),
-        icon = makeAwesomeIcon(
-          icon = "user",
-          library = "fa",
-          markerColor = case_when(
-            mainreactNTP$Clustering.Status %in% c("Dedicated","Clustered") & mainreactNTP$PDOI_Deployment == "With PDO I" ~ "green",
-            mainreactNTP$Clustering.Status %in% c("Dedicated","Clustered") & mainreactNTP$PDOI_Deployment == "Without PDO I" ~ "orange",
-            mainreactNTP$Clustering.Status == "None Deployed" & mainreactNTP$PDOI_Deployment == "With PDO I" ~ "orange",
-            mainreactNTP$Clustering.Status == "None Deployed" & mainreactNTP$PDOI_Deployment == "Without PDO I" ~ "red",
-            TRUE ~ "lightgray"
-          )
-        )
-      )
-  })
-  
-  # --- TeacherShortage_Mapping Proxy ---
-  observe({
-    req(data_filtered$mainreact1)
-    mainreact1 <- data_filtered$mainreact1
-    
-    if (nrow(mainreact1) == 0 || all(is.na(mainreact1$Longitude))) {
-      leafletProxy("TeacherShortage_Mapping") %>% clearMarkers() %>% clearMarkerClusters()
-      return()
-    }
-    
-    values_teacher_shortage <- paste(mainreact1$School.Name,"<br>Teacher Excess:", mainreact1$TeacherExcess,"<br>Teacher Shortage:", mainreact1$TeacherShortage) %>% lapply(htmltools::HTML)
-    values_teacher_shortage_popup <- paste(strong("SCHOOL INFORMATION"),"<br>School Name:",mainreact1$School.Name,"<br>School ID:",mainreact1$SchoolID,"<br>Enrolment Size:",mainreact1$TotalEnrolment,"<br>","<br>",strong("TEACHING PERSONNEL DATA"),"<br>Teacher Inventory:", mainreact1$TotalTeachers,"<br>Teacher Excess:", mainreact1$TeacherExcess,"<br>Teacher Shortage:", mainreact1$TeacherShortage,"<br>","<br>",strong("SPECIALIZATION DATA"),"<br>English:", mainreact1$English,"<br>Mathematics:", mainreact1$Mathematics,"<br>Science:", mainreact1$Science,"<br>Biological Science:", mainreact1$Biological.Sciences,"<br>Physical Sciences:", mainreact1$Physical.Sciences,"<br>General Education:", mainreact1$General.Ed,"<br>Araling Panlipunan:", mainreact1$Araling.Panlipunan,"<br>TLE:", mainreact1$TLE,"<br>MAPEH:", mainreact1$MAPEH,"<br>Filipino:", mainreact1$Filipino,"<br>ESP:", mainreact1$ESP,"<br>Agriculture:", mainreact1$Agriculture,"<br>ECE:", mainreact1$ECE,"<br>SPED:", mainreact1$SPED) %>% lapply(htmltools::HTML)
-    
-    leafletProxy("TeacherShortage_Mapping") %>% 
-      clearMarkers() %>% 
-      clearMarkerClusters() %>% 
-      setView(lng = mainreact1$Longitude[1], lat = mainreact1$Latitude[1], zoom = 7) %>%
-      addAwesomeMarkers(
-        clusterOptions = markerClusterOptions(disableClusteringAtZoom = 15), 
-        lng = mainreact1$Longitude, 
-        lat = mainreact1$Latitude, 
-        popup = values_teacher_shortage_popup, 
-        options = popupOptions(), 
-        label = values_teacher_shortage, 
-        labelOptions = labelOptions(noHide = F, textsize = "12px", direction = "top"), 
-        icon = makeAwesomeIcon(
-          icon = "education", 
-          library = "glyphicon", 
-          markerColor = case_when(
-            mainreact1$TeacherShortage > 0 ~ "red", 
-            mainreact1$TeacherExcess > 0 ~ "blue", 
-            (mainreact1$TeacherExcess == 0 & mainreact1$TeacherShortage == 0) ~ "green", 
-            is.na(mainreact1$TeacherShortage) ~ "gray",
-            TRUE ~ "gray"
-          )
-        )
-      )
-  })
-  
-  # --- FacMapping Proxy ---
-  observe({
-    req(data_filtered$mainreactEFD)
-    mainreactEFD <- data_filtered$mainreactEFD
-    
-    if (nrow(mainreactEFD) == 0 || all(is.na(mainreactEFD$Longitude))) {
-      leafletProxy("FacMapping") %>% clearMarkers() %>% clearControls()
-      return()
-    }
-    
-    values.efdmasterlist <- paste(strong("SCHOOL INFORMATION"),"<br>School Name:",mainreactEFD$School.Name,"<br>School ID:",mainreactEFD$SchoolID,"<br>Category:",mainreactEFD$Category,"<br>Funding Year:",mainreactEFD$FundingYear,"<br>Allocation:",mainreactEFD$Allocation) %>% lapply(htmltools::HTML)
-    
-    color_palette <- colorFactor(
+    color_palette_cong <- colorFactor(
       palette = c("red", "green", "blue"),
-      domain = mainreactEFD$FundingCategory,
-      levels = levels(mainreactEFD$FundingCategory) # Ensure the order is respected
+      domain = mainreactNTP$Congestion.Index,
+      levels = levels(mainreactNTP$Congestion.Index) # Ensure the order is respected
     )
-    
-    leafletProxy("FacMapping", data = mainreactEFD) %>%
-      clearMarkers() %>%
-      clearControls() %>%
-      setView(lng = mainreactEFD$Longitude[1], lat = mainreactEFD$Latitude[1], zoom = 7) %>%
-      addAwesomeMarkers(
-        clusterOptions = markerClusterOptions(disableClusteringAtZoom = 15),
-        lng = ~Longitude,
-        lat = ~Latitude,
-        popup = values.efdmasterlist,
-        icon = makeAwesomeIcon(
-          icon = "education",
-          library = "glyphicon",
-          markerColor = case_when(
-            mainreactEFD$FundingCategory == "Before 2025" ~ "red", 
-            mainreactEFD$FundingCategory == "2025-2030" ~ "green", 
-            mainreactEFD$FundingCategory == "After 2030" ~ "blue",
-            TRUE ~ "gray"
-          )
-        )
-      ) %>%
-      addLegend(
-        "bottomright",
-        pal = color_palette,
-        values = ~FundingCategory,
-        title = "Funding Year",
-        opacity = 1
-      )
-  })
-  
-  # --- CongestMapping Proxy ---
-  observe({
-    req(data_filtered$mainreactNTP)
-    mainreactNTP <- data_filtered$mainreactNTP
-    
-    if (nrow(mainreactNTP) == 0 || all(is.na(mainreactNTP$Longitude))) {
-      leafletProxy("CongestMapping") %>% clearMarkers() %>% clearControls()
-      return()
-    }
     
     values.congest <- paste(strong("SCHOOL INFORMATION"),"<br>School Name:",mainreactNTP$School.Name,"<br>School ID:",mainreactNTP$SchoolID,"<br>Instructional Rooms (2023-2024):",mainreactNTP$Instructional.Rooms.2023.2024,"<br>Enrolment (2023-2024):",mainreactNTP$Enrolment.2023.2024,"<br>Congestion Index:",mainreactNTP$Congestion.Index) %>% lapply(htmltools::HTML)
     
+    validate(
+      need(
+        "Longitude" %in% colnames(mainreactNTP) && "Latitude" %in% colnames(mainreactNTP),
+        "Error: CongestMapping data is missing Latitude or Longitude."
+      )
+    )
+    
+    # 3. Use the new factor variable and color palette in your leaflet code
     leafletProxy("CongestMapping", data = mainreactNTP) %>%
       clearMarkers() %>%
       clearControls() %>%
@@ -15335,2383 +14874,30 @@ server <- function(input, output, session) {
         icon = makeAwesomeIcon(
           icon = "education",
           library = "glyphicon",
-          markerColor = case_when(
-            mainreactNTP$Congestion.Index >= 0 & mainreactNTP$Congestion.Index < 0.5 ~ "green", 
-            mainreactNTP$Congestion.Index >= 0.5 & mainreactNTP$Congestion.Index < 0.75 ~ "orange",
-            mainreactNTP$Congestion.Index >= 0.75 ~ "red",
-            TRUE ~ "gray"
-          )
-        )
-      )
-  })
-  
-  
-  # --- 4. Reactive Expressions for Map-Bound Tables ---
-  # These filter the data based on the user panning/zooming the map.
-  
-  df1 <- reactive({
-    req(data_filtered$mainreactLMS)
-    mainreactLMS <- data_filtered$mainreactLMS
+          markerColor = case_when(mainreactNTP$Congestion.Index >= 0 & mainreactNTP$Congestion.Index < 0.25 ~ "green", mainreactNTP$Congestion.Index >= 0.25 & mainreactNTP$Congestion.Index < 0.5 ~ "green", mainreactNTP$Congestion.Index >= 0.5 & mainreactNTP$Congestion.Index < 0.75 ~ "orange",mainreactNTP$Congestion.Index >= 0.75 ~ "red")))
+    
+    dfreact_cong <- reactive({
+      if (is.null(input$CongestMapping_bounds)) {
+        mainreactNTP %>% arrange(desc(Congestion.Index))
+      } else {
+        bounds <- input$CongestMapping_bounds
+        latRng <- range(bounds$north, bounds$south)
+        lngRng <- range(bounds$east, bounds$west)
+        
+        subset(mainreactNTP,
+               Latitude >= latRng[1] & Latitude <= latRng[2] & Longitude >= lngRng[1] & Longitude <= lngRng[2])
+      }
+    })
+    
+    output$CongestTable <- DT::renderDT(server = FALSE, {
+      datatable(dfreact_cong() %>% 
+                  select("Region","Division","School.Name","Instructional.Rooms.2023.2024","Enrolment.2023.2024","Congestion.Index") %>%
+                  rename("School" = School.Name, "Instructional Rooms" = Instructional.Rooms.2023.2024, "Total Enrolment" = Enrolment.2023.2024, "Congestion Index" = Congestion.Index),
+                extension = 'Buttons',
+                rownames = FALSE,
+                options = list(scrollX = TRUE, pageLength = 10, columnDefs = list(list(className = 'dt-center', targets ="_all")), dom = 'Bfrtip', buttons = list('csv','excel','pdf','print')))
+    })
     
-    if (is.null(input$LMSMapping_bounds)) {
-      mainreactLMS
-    } else {
-      bounds <- input$LMSMapping_bounds
-      latRng <- range(bounds$north, bounds$south)
-      lngRng <- range(bounds$east, bounds$west)
-      
-      subset(mainreactLMS,
-             Latitude >= latRng[1] & Latitude <= latRng[2] & Longitude >= lngRng[1] & Longitude <= lngRng[2])
-    }
-  })
-  
-  dfreact_TS <- reactive({
-    req(data_filtered$mainreact1)
-    mainreact1 <- data_filtered$mainreact1
-    
-    if (is.null(input$TeacherShortage_Mapping_bounds)) {
-      mainreact1
-    } else {
-      bounds <- input$TeacherShortage_Mapping_bounds
-      latRng <- range(bounds$north, bounds$south)
-      lngRng <- range(bounds$east, bounds$west)
-      
-      subset(mainreact1,
-             Latitude >= latRng[1] & Latitude <= latRng[2] & Longitude >= lngRng[1] & Longitude <= lngRng[2])
-    }
-  })
-  
-  Ao21 <- reactive({
-    req(data_filtered$mainreactNTP)
-    mainreactNTP <- data_filtered$mainreactNTP
-    
-    if (is.null(input$AO2Mapping_bounds)) {
-      mainreactNTP
-    } else {
-      bounds <- input$AO2Mapping_bounds
-      latRng <- range(bounds$north, bounds$south)
-      lngRng <- range(bounds$east, bounds$west)
-      
-      subset(mainreactNTP,
-             Latitude >= latRng[1] & Latitude <= latRng[2] & Longitude >= lngRng[1] & Longitude <= lngRng[2])
-    }
-  })
-  
-  dfreact_CL <- reactive({
-    req(data_filtered$mainreactCR)
-    mainreactCR <- data_filtered$mainreactCR
-    
-    if (is.null(input$CLMapping_bounds)) {
-      mainreactCR
-    } else {
-      bounds <- input$CLMapping_bounds
-      latRng <- range(bounds$north, bounds$south)
-      lngRng <- range(bounds$east, bounds$west)
-      
-      subset(mainreactCR,
-             Latitude >= latRng[1] & Latitude <= latRng[2] & Longitude >= lngRng[1] & Longitude <= lngRng[2])
-    }
-  })
-  
-  dfreact_SHS <- reactive({
-    req(data_filtered$mainreactSHS)
-    mainreactSHS <- data_filtered$mainreactSHS
-    
-    if (is.null(input$SHSMapping_bounds)) {
-      mainreactSHS
-    } else {
-      bounds <- input$SHSMapping_bounds
-      latRng <- range(bounds$north, bounds$south)
-      lngRng <- range(bounds$east, bounds$west)
-      
-      subset(mainreactSHS,
-             Latitude >= latRng[1] & Latitude <= latRng[2] & Longitude >= lngRng[1] & Longitude <= lngRng[2])
-    }
-  })
-  
-  dfreact_fac <- reactive({
-    req(data_filtered$mainreactEFD)
-    mainreactEFD <- data_filtered$mainreactEFD
-    
-    if (is.null(input$FacMapping_bounds)) {
-      mainreactEFD
-    } else {
-      bounds <- input$FacMapping_bounds
-      latRng <- range(bounds$north, bounds$south)
-      lngRng <- range(bounds$east, bounds$west)
-      
-      subset(mainreactEFD,
-             Latitude >= latRng[1] & Latitude <= latRng[2] & Longitude >= lngRng[1] & Longitude <= lngRng[2])
-    }
-  })
-  
-  dfreact_cong <- reactive({
-    req(data_filtered$mainreactNTP)
-    mainreactNTP <- data_filtered$mainreactNTP
-    
-    if (is.null(input$CongestMapping_bounds)) {
-      mainreactNTP %>% arrange(desc(Congestion.Index))
-    } else {
-      bounds <- input$CongestMapping_bounds
-      latRng <- range(bounds$north, bounds$south)
-      lngRng <- range(bounds$east, bounds$west)
-      
-      subset(mainreactNTP,
-             Latitude >= latRng[1] & Latitude <= latRng[2] & Longitude >= lngRng[1] & Longitude <= lngRng[2])
-    }
-  })
-  
-  # This was an eventReactive, which is fine to stay as-is and outside.
-  SHS_count_reactive <- eventReactive(input$Mapping_Run, {
-    req(input$resource_map_region) # Make sure this input is available
-    mainvalue <- df %>%
-      filter(Region == input$resource_map_region) %>%
-      filter(Level == "SHS")
-    
-    return(nrow(mainvalue))
-  })
-  
-  
-  # --- 5. DataTable Renderers ---
-  # These now read from the reactive expressions above.
-  
-  # --- Empty Table Function ---
-  # Helper function to show a consistent "No data" message
-  render_empty_dt <- function(message = "No data available based on current selection.") {
-    DT::datatable(
-      data.frame("Message" = message),
-      options = list(dom = 't', scrollX = TRUE),
-      rownames = FALSE
-    )
-  }
-  
-  output$LMSTable <- DT::renderDT({
-    finalLMS <- df1() # Get data from reactive
-    
-    # Handle empty or null data
-    if (is.null(finalLMS) || nrow(finalLMS) == 0) {
-      return(render_empty_dt())
-    }
-    
-    finalLMS <- finalLMS %>%
-      dplyr::mutate(
-        Buildable_space = dplyr::if_else(Buildable_space == 1, "Yes", "No")
-      ) %>%
-      dplyr::select(
-        School_Name,
-        Total_Enrollment,
-        Instructional_Rooms,
-        Estimated_CL_Shortage,
-        Buildable_space
-      ) %>%
-      dplyr::rename(
-        "School Name" = School_Name,
-        "Total Enrolment" = Total_Enrollment,
-        "Classrooms Inventory" = Instructional_Rooms,
-        "Classroom Shortage" = Estimated_CL_Shortage,
-        "Buildable Space" = Buildable_space
-      )
-    
-    DT::datatable(
-      finalLMS,
-      extensions = c("Buttons", "FixedHeader"),
-      options = list(
-        scrollX = TRUE,
-        autoWidth = TRUE,
-        fixedHeader = TRUE,
-        pageLength = 10,
-        dom = 'Bfrtip',
-        buttons = list(
-          list(extend = "csv", exportOptions = list(modifier = list(page = "all"))),
-          list(extend = "excel", exportOptions = list(modifier = list(page = "all"))),
-          list(extend = "pdf", exportOptions = list(modifier = list(page = "all"))),
-          list(extend = "print", exportOptions = list(modifier = list(page = "all")))
-        ),
-        columnDefs = list(list(className = 'dt-center', targets = "_all"))
-      ),
-      filter = 'top',
-      selection = 'single',
-      rownames = FALSE,
-      callback = DT::JS("window.dispatchEvent(new Event('resize'));")
-    )
-  }, server = FALSE)
-  
-  output$TeacherShortage_Table <- DT::renderDT({
-    data_to_display <- dfreact_TS()
-    
-    if (is.null(data_to_display) || nrow(data_to_display) == 0) {
-      return(render_empty_dt())
-    }
-    
-    data_to_display <- data_to_display %>%
-      select(School.Name, TeacherShortage, TeacherExcess) %>%
-      rename(
-        "School" = School.Name,
-        "Shortage" = TeacherShortage,
-        "Excess" = TeacherExcess
-      )
-    
-    DT::datatable(
-      data_to_display,
-      extensions = c("Buttons", "FixedHeader"),
-      options = list(
-        scrollX = TRUE,
-        autoWidth = TRUE,
-        fixedHeader = TRUE,
-        pageLength = 10,
-        dom = 'Bfrtip',
-        destroy = TRUE,
-        buttons = list(
-          list(extend = "csv", exportOptions = list(modifier = list(page = "all"))),
-          list(extend = "excel", exportOptions = list(modifier = list(page = "all"))),
-          list(extend = "pdf", exportOptions = list(modifier = list(page = "all"))),
-          list(extend = "print", exportOptions = list(modifier = list(page = "all")))
-        ),
-        columnDefs = list(list(className = 'dt-center', targets = "_all"))
-      ),
-      filter = 'top',
-      selection = 'multiple',
-      rownames = FALSE
-    )
-  }, server = FALSE)
-  
-  output$AO2Table <- DT::renderDT({
-    data_to_display <- Ao21()
-    
-    if (is.null(data_to_display) || nrow(data_to_display) == 0) {
-      return(render_empty_dt())
-    }
-    
-    data_to_display <- data_to_display %>% 
-      select("School.Name","Clustering.Status","PDOI_Deployment") %>% 
-      rename("School" = School.Name, "AO II Deployment" = Clustering.Status, "PDOI Deployment" = PDOI_Deployment)
-    
-    datatable(
-      data_to_display, 
-      rownames = FALSE, 
-      filter = 'top', 
-      options = list(
-        scrollX = TRUE, 
-        columnDefs = list(list(className = 'dt-center', targets ="_all")), 
-        dom = 'Bfrtip', 
-        buttons = list('csv','excel','pdf','print')
-      )
-    )
-  })
-  
-  output$CLTable <- DT::renderDT({
-    data_to_display <- dfreact_CL()
-    
-    if (is.null(data_to_display) || nrow(data_to_display) == 0) {
-      return(render_empty_dt())
-    }
-    
-    data_to_display <- data_to_display %>% 
-      select("School.Name","Enrolment.2023.2024","Instructional.Rooms.2023.2024","Est.CS","Buidable_space") %>% 
-      rename("School" = School.Name, "Total Enrolment" = Enrolment.2023.2024, "Classroom Inventory" = Instructional.Rooms.2023.2024, "Estimate Classroom Shortage" = Est.CS, "Buildable Space" = Buidable_space)
-    
-    datatable(
-      data_to_display, 
-      filter = 'top', 
-      options = list(
-        scrollX = TRUE,
-        scrollY= "300px", 
-        columnDefs = list(list(className = 'dt-center', targets ="_all")), 
-        rownames = FALSE, 
-        dom = 'Bfrtip', 
-        buttons = list('csv','excel','pdf','print')
-      )
-    )
-  }, server = FALSE)
-  
-  output$SHSListTable <- DT::renderDT({
-    data_to_display <- dfreact_SHS()
-    
-    if (is.null(data_to_display) || nrow(data_to_display) == 0) {
-      return(render_empty_dt())
-    }
-    
-    data_to_display <- data_to_display %>%
-      select(School.Name, TotalEnrolment) %>%
-      rename(
-        "School" = School.Name,
-        "Total Enrolment" = TotalEnrolment
-      )
-    
-    DT::datatable(
-      data_to_display,
-      extensions = c("Buttons", "FixedHeader"),
-      options = list(
-        scrollX = TRUE,
-        autoWidth = TRUE,
-        fixedHeader = TRUE,
-        pageLength = 5,
-        dom = 'Bfrtip',
-        buttons = list(
-          list(extend = "csv", exportOptions = list(modifier = list(page = "all"))),
-          list(extend = "excel", exportOptions = list(modifier = list(page = "all"))),
-          list(extend = "pdf", exportOptions = list(modifier = list(page = "all"))),
-          list(extend = "print", exportOptions = list(modifier = list(page = "all")))
-        ),
-        columnDefs = list(list(className = 'dt-center', targets = "_all"))
-      ),
-      filter = 'top',
-      selection = 'single',
-      rownames = FALSE
-    )
-  }, server = FALSE)
-  
-  output$FacTable <- DT::renderDT({
-    data_to_display <- dfreact_fac()
-    
-    if (is.null(data_to_display) || nrow(data_to_display) == 0) {
-      return(render_empty_dt())
-    }
-    
-    data_to_display <- data_to_display %>%
-      arrange(FundingYear) %>%
-      select(Region, Division, School.Name, FundingYear, Allocation) %>%
-      rename(
-        "School" = School.Name,
-        "Funding Year" = FundingYear
-      )
-    
-    DT::datatable(
-      data_to_display,
-      extensions = c("Buttons", "FixedHeader"),
-      options = list(
-        scrollX = TRUE,
-        autoWidth = TRUE,
-        fixedHeader = TRUE,
-        pageLength = 10,
-        dom = 'Bfrtip',
-        buttons = list(
-          list(extend = "csv", exportOptions = list(modifier = list(page = "all"))),
-          list(extend = "excel", exportOptions = list(modifier = list(page = "all"))),
-          list(extend = "pdf", exportOptions = list(modifier = list(page = "all"))),
-          list(extend = "print", exportOptions = list(modifier = list(page = "all")))
-        ),
-        columnDefs = list(list(className = 'dt-center', targets = "_all"))
-      ),
-      filter = 'top',
-      selection = 'single',
-      rownames = FALSE
-    )
-  }, server = FALSE)
-  
-  output$CongestTable <- DT::renderDT({
-    data_to_display <- dfreact_cong()
-    
-    if (is.null(data_to_display) || nrow(data_to_display) == 0) {
-      return(render_empty_dt())
-    }
-    
-    data_to_display <- data_to_display %>%
-      select(Region, Division, School.Name, Instructional.Rooms.2023.2024, Enrolment.2023.2024, Congestion.Index) %>%
-      rename(
-        "School" = School.Name,
-        "Instructional Rooms" = Instructional.Rooms.2023.2024,
-        "Total Enrolment" = Enrolment.2023.2024,
-        "Congestion Index" = Congestion.Index
-      )
-    
-    datatable(
-      data_to_display,
-      extensions = c("Buttons", "FixedHeader"),
-      options = list(
-        scrollX = TRUE,
-        autoWidth = TRUE,
-        fixedHeader = TRUE,
-        pageLength = 10,
-        dom = 'Bfrtip',
-        buttons = list(
-          list(extend = "csv", exportOptions = list(modifier = list(page = "all"))),
-          list(extend = "excel", exportOptions = list(modifier = list(page = "all"))),
-          list(extend = "pdf", exportOptions = list(modifier = list(page = "all"))),
-          list(extend = "print", exportOptions = list(modifier = list(page = "all")))
-        ),
-        columnDefs = list(list(className = 'dt-center', targets = "_all"))
-      ),
-      filter = 'top',
-      selection = 'multiple',
-      rownames = FALSE
-    )
-  })
-  
-  
-  # --- 6. ValueBox Renderers ---
-  # These now read from data_filtered and are wrapped in req()
-  
-  output$a <- renderValueBox({
-    req(data_filtered$RegRCT, data_filtered$SDORCT1)
-    valueBox(tags$p(strong(SDO[which(SDO$Region==data_filtered$RegRCT & SDO$Division==data_filtered$SDORCT1),"FillUpRate"]), style = "font-family: Poppins; font-size: 20px; color: #111111; text-align: center;"), subtitle = NULL)
-  })
-  
-  output$b <- renderValueBox({
-    req(data_filtered$RegRCT, data_filtered$SDORCT1)
-    valueBox(tags$p(strong(SDO[which(SDO$Region==data_filtered$RegRCT & SDO$Division==data_filtered$SDORCT1),"Unfilled"]), style = "font-family: Poppins; font-size: 20px; color: #111111; text-align: center;"), subtitle = NULL)
-  })
-  
-  output$e <- renderValueBox({
-    req(data_filtered$SDONetShortage)
-    value <- if (nrow(data_filtered$SDONetShortage) > 0) data_filtered$SDONetShortage$NetShortage else 0
-    valueBox(tags$p(strong(value), style = "font-family: Poppins; font-size: 20px; color: #111111; text-align: center;"), subtitle = NULL)
-  })
-  
-  output$c <- renderValueBox({
-    # This depends on the map-bound reactive df1()
-    req(df1())
-    valueBox(tags$p(strong(sum(df1()$TeacherExcess, na.rm = TRUE)), style = "font-size: 65%;"), subtitle = NULL)
-  })
-  
-  output$d <- renderValueBox({
-    # This was static, so it can just be rendered
-    valueBox(tags$p(strong("-"), style = "font-size: 65%;"), subtitle = NULL)
-  })
-  
-  output$f <- renderValueBox({
-    req(data_filtered$RegRCT)
-    valueBox(tags$p(strong(SDO[which(SDO$Division==data_filtered$RegRCT),"FillUpRate"]), style = "font-family: Poppins; font-size: 20px; color: #111111; text-align: center;"), subtitle = NULL)
-  })
-  
-  output$g <- renderValueBox({
-    req(data_filtered$RegRCT)
-    valueBox(tags$p(strong(SDO[which(SDO$Division==data_filtered$RegRCT),"Unfilled"]), style = "font-family: Poppins; font-size: 20px; color: #111111; text-align: center;"), subtitle = NULL)
-  })
-  
-  output$Single <- renderValueBox({
-    req(data_filtered$mainreactdiv)
-    valueBox(strong(sum(data_filtered$mainreactdiv$Clustering.Status == "NOT CLUSTERED", na.rm = TRUE)), subtitle = strong("Number of Unclustered Schools (Division)"), icon = icon("users"), color = "green")
-  })
-  
-  output$Cluster <- renderValueBox({
-    req(data_filtered$mainreactdiv)
-    valueBox(strong(sum(data_filtered$mainreactdiv$Clustering.Status == "CLUSTERED", na.rm = TRUE)), subtitle = strong("Number of Clustered Schools (Division)"), icon = icon("school"), color = "green")
-  })
-  
-  output$Outlier <- renderValueBox({
-    req(data_filtered$mainreactdiv)
-    valueBox(strong(sum(data_filtered$mainreactdiv$Clustering.Status == "Outlier", na.rm = TRUE)), subtitle = strong("Number of Outlier Schools (Division)"), icon = icon("school"), color = "green")
-  })
-  
-  output$SingleR <- renderValueBox({
-    req(data_filtered$mainreactreg)
-    valueBox(strong(sum(data_filtered$mainreactreg$Clustering.Status == "NOT CLUSTERED", na.rm = TRUE)), subtitle = strong("Number of Unclustered Schools (Region)"), icon = icon("users"), color = "navy")
-  })
-  
-  output$ClusterR <- renderValueBox({
-    req(data_filtered$mainreactreg)
-    valueBox(strong(sum(data_filtered$mainreactreg$Clustering.Status == "CLUSTERED", na.rm = TRUE)), subtitle = strong("Number of Clustered Schools (Region)"), icon = icon("school"), color = "navy")
-  })
-  
-  output$OutlierR <- renderValueBox({
-    req(data_filtered$mainreactreg)
-    valueBox(strong(sum(data_filtered$mainreactreg$Clustering.Status == "Outlier", na.rm = TRUE)), subtitle = strong("Number of Outlier Schools (Region)"), icon = icon("school"), color = "navy")
-  })
-  
-  output$f2 <- renderValueBox({
-    req(data_filtered$mainreactreg)
-    valueBox(tags$p(strong(sum(data_filtered$mainreactreg$Clustering.Status == "Clustered", na.rm = TRUE)), style = "font-family: Poppins; font-size: 20px; color: #111111; text-align: center;"), subtitle = NULL)
-  })
-  
-  output$g2 <- renderValueBox({
-    req(data_filtered$mainreactreg)
-    valueBox(tags$p(strong(sum(data_filtered$mainreactreg$Clustering.Status == "Dedicated", na.rm = TRUE)), style = "font-family: Poppins; font-size: 20px; color: #111111; text-align: center;"), subtitle = NULL)
-  })
-  
-  output$a2 <- renderValueBox({
-    req(data_filtered$mainreactdiv)
-    valueBox(tags$p(strong(sum(data_filtered$mainreactdiv$Clustering.Status == "Clustered", na.rm = TRUE)), style = "font-family: Poppins; font-size: 20px; color: #111111; text-align: center;"), subtitle = NULL)
-  })
-  
-  output$b2 <- renderValueBox({
-    req(data_filtered$mainreactdiv)
-    valueBox(tags$p(strong(sum(data_filtered$mainreactdiv$Clustering.Status == "Dedicated", na.rm = TRUE)), style = "font-family: Poppins; font-size: 20px; color: #111111; text-align: center;"), subtitle = NULL)
-  })
-  
-  output$e2 <- renderValueBox({
-    req(data_filtered$mainreactNTP)
-    valueBox(tags$p(strong(sum(data_filtered$mainreactNTP$Clustering.Status == "Clustered", na.rm = TRUE)), style = "font-family: Poppins; font-size: 20px; color: #111111; text-align: center;"), subtitle = NULL)
-  })
-  
-  output$h2 <- renderValueBox({
-    req(data_filtered$mainreactNTP)
-    valueBox(tags$p(strong(sum(data_filtered$mainreactNTP$Clustering.Status == "Dedicated", na.rm = TRUE)), style = "font-family: Poppins; font-size: 20px; color: #111111; text-align: center;"), subtitle = NULL)
-  })
-  
-  output$ROCRShort <- renderValueBox({
-    req(data_filtered$mainreactCRreg)
-    valueBox(tags$p(strong(sum(data_filtered$mainreactCRreg$Estimated_CL_Shortage, na.rm = TRUE)), style = "font-family: Poppins; font-size: 20px; color: #111111; text-align: center;"), subtitle = NULL)
-  })
-  
-  output$SDOCRShort <- renderValueBox({
-    req(data_filtered$mainreactCRdiv)
-    valueBox(tags$p(strong(sum(data_filtered$mainreactCRdiv$Estimated_CL_Shortage, na.rm = TRUE)), style = "font-family: Poppins; font-size: 20px; color: #111111; text-align: center;"), subtitle = NULL)
-  })
-  
-  output$LMS_Total_Region <- renderValueBox({
-    req(data_filtered$mainreactLMSreg)
-    total_region_lms <- nrow(data_filtered$mainreactLMSreg)
-    valueBox(
-      tags$p(
-        strong(scales::comma(total_region_lms)),
-        style = "font-family: Poppins; font-size: 20px; color: #111111; text-align: center;"),
-      subtitle = NULL
-    )
-  })
-  
-  output$LMS_Total_Division <- renderValueBox({
-    req(data_filtered$mainreactLMSdiv)
-    total_division_lms <- nrow(data_filtered$mainreactLMSdiv)
-    valueBox(
-      tags$p(
-        strong(scales::comma(total_division_lms)),
-        style = "font-family: Poppins; font-size: 20px; color: #111111; text-align: center;"),
-      subtitle = NULL
-    )
-  })
-  
-  output$SHSCount <- renderValueBox({
-    req(data_filtered$mainreactSHS)
-    valueBox(tags$p(strong(nrow(data_filtered$mainreactSHS)), style = "font-size: 100%; text-align: center;"), subtitle = NULL)
-  })
-  
-  output$SHSCountUniv <- renderValueBox({
-    # This one depends on the eventReactive
-    valueBox(tags$p(strong(SHS_count_reactive()), style = "font-size: 100%; text-align: center;"), subtitle = NULL)
-  })
-  
-  output$IndCount <- renderValueBox({
-    req(data_filtered$mainreactind)
-    valueBox(tags$p(strong(nrow(data_filtered$mainreactind)), style = "font-size: 100%; text-align: center;"), subtitle = NULL)
-  })
-  
-  
-  # --- 7. UI Renderers ---
-  
-  output$assessmentSHS <- renderUI({
-    req(data_filtered$RegRCT, data_filtered$mainreactSHS, data_filtered$mainreactind)
-    
-    RegRCT <- data_filtered$RegRCT
-    mainreactSHS <- data_filtered$mainreactSHS
-    mainreactind <- data_filtered$mainreactind
-    
-    p(HTML(paste(
-      strong(RegRCT),"has",strong(nrow(mainreactSHS)),"senior high schools and a total of ",
-      strong(nrow(mainreactind)),"industries composed of",
-      strong(sum(mainreactind$Sector == "Food Establishments", na.rm = TRUE)),"industries on Food Establishments, ",
-      strong(sum(mainreactind$Sector == "Professional/Private Services", na.rm = TRUE)),"industries on Professional/Private Services, ",
-      strong(sum(mainreactind$Sector == "Transportation", na.rm = TRUE)),"industries on Transportation, ",
-      strong(sum(mainreactind$Sector == "Utilities", na.rm = TRUE)),"industries on Utilities",", and",
-      strong(sum(mainreactind$Sector == "Retail", na.rm = TRUE)),"industries on Retail"
-    )), style = "font-family: Century Gothic; font-size: 15px; color: #111111;")
-  })
-  
-  # --- 3. Leaflet Proxy Observers ---
-  # Each map update is in its own observer, reacting to changes in data_filtered
-  
-  # --- LMSMapping Proxy ---
-  observe({
-    req(data_filtered$mainreactLMS)
-    mainreactLMS <- data_filtered$mainreactLMS
-    
-    # Stop if no data
-    if (nrow(mainreactLMS) == 0 || all(is.na(mainreactLMS$Longitude))) {
-      leafletProxy("LMSMapping") %>% clearMarkers() %>% clearMarkerClusters()
-      return()
-    }
-    
-    values.LMS <- paste(
-      "School Name:",mainreactLMS$School_Name,
-      "<br>Division:", mainreactLMS$Division,
-      "<br>Leg. District:", mainreactLMS$Legislative_District,
-      "<br>Number of Classrooms:", mainreactLMS$Instructional_Rooms,
-      "<br>Classroom Requirement:", mainreactLMS$CL_Req,
-      "<br>Estimated Classroom Shortage:", mainreactLMS$Estimated_CL_Shortage,
-      "<br>Buildable Space:", ifelse(mainreactLMS$Buildable_space == 1, "Yes", "No")) %>% lapply(htmltools::HTML)
-    
-    leafletProxy("LMSMapping") %>%
-      clearMarkers() %>%
-      clearMarkerClusters() %>%
-      setView(
-        lng = mainreactLMS$Longitude[1],
-        lat = mainreactLMS$Latitude[1],
-        zoom = 7
-      ) %>%
-      addAwesomeMarkers(
-        clusterOptions = markerClusterOptions(disableClusteringAtZoom = 12),
-        lng = mainreactLMS$Longitude,
-        lat = mainreactLMS$Latitude,
-        icon = makeAwesomeIcon(icon = "education", library = "glyphicon",
-                               markerColor = case_when(
-                                 (mainreactLMS$Buildable_space == 0 & mainreactLMS$Estimated_CL_Shortage == 0) ~ "gray",
-                                 mainreactLMS$Buildable_space == 0 ~ "red",
-                                 mainreactLMS$Buildable_space == 1 ~ "green",
-                                 TRUE ~ "gray" # Default case
-                               )),
-        label = values.LMS,
-        labelOptions = labelOptions(noHide = F, textsize = "12px", direction = "top")
-      )
-  })
-  
-  # --- SHSMapping Proxy ---
-  observe({
-    req(data_filtered$mainreactSHS, data_filtered$mainreactind)
-    mainreactSHS <- data_filtered$mainreactSHS
-    mainreactind <- data_filtered$mainreactind
-    
-    # Stop if no data
-    if (nrow(mainreactSHS) == 0 || all(is.na(mainreactSHS$Longitude))) {
-      leafletProxy("SHSMapping") %>% clearMarkers() %>% clearMarkerClusters()
-      return()
-    }
-    
-    values_industry <- paste(strong("SCHOOL INFORMATION"),"<br>School Name:",mainreactSHS$School.Name,"<br>School ID:",mainreactSHS$SchoolID) %>% lapply(htmltools::HTML)
-    values.ind <- paste(mainreactind$Company,"<br>Province:",mainreactind$Province) %>% lapply(htmltools::HTML)
-    
-    leafletProxy("SHSMapping") %>%
-      clearMarkers() %>%
-      clearMarkerClusters() %>%
-      setView(
-        lng = mainreactSHS$Longitude[1],
-        lat = mainreactSHS$Latitude[1],
-        zoom = 7
-      ) %>%
-      # --- SHS Circles (background layer) ---
-      addCircleMarkers(
-        lng = mainreactSHS$Longitude,
-        lat = mainreactSHS$Latitude,
-        radius = 80,
-        color = "black",
-        weight = 1,
-        fillColor = "orange",
-        fillOpacity = 0.5,
-        label = values_industry,
-        labelOptions = labelOptions(
-          noHide = FALSE,
-          textsize = "12px",
-          direction = "top",
-          style = list("border-color" = "rgba(0,0,0,0.5)")
-        ),
-        clusterOptions = markerClusterOptions(disableClusteringAtZoom = 15)
-      ) %>%
-      # --- NEW: AwesomeMarkers above SHS circles ---
-      addAwesomeMarkers(
-        lng = mainreactSHS$Longitude,
-        lat = mainreactSHS$Latitude,
-        icon = makeAwesomeIcon(
-          icon = 'graduation-cap',
-          library = 'fa',
-          markerColor = 'blue',
-          iconColor = 'white'
-        ),
-        label = mainreactSHS$SchoolName,
-        labelOptions = labelOptions(
-          noHide = FALSE,
-          textsize = "12px",
-          direction = "top"
-        ),
-        clusterOptions = markerClusterOptions(disableClusteringAtZoom = 15)
-      ) %>%
-      # --- Industry markers (cog icons) ---
-      addAwesomeMarkers(
-        clusterOptions = markerClusterOptions(disableClusteringAtZoom = 12),
-        lng = mainreactind$Longitude,
-        lat = mainreactind$Latitude,
-        icon = makeAwesomeIcon(
-          icon = "cog",
-          library = "fa",
-          markerColor = dplyr::case_when(
-            mainreactind$Sector == "Manufacturing and Engineering" ~ "red",
-            mainreactind$Sector == "Hospitality and Tourism" ~ "orange",
-            mainreactind$Sector == "Professional/Private Services" ~ "purple",
-            mainreactind$Sector == "Public Administration" ~ "green",
-            mainreactind$Sector == "Business and Finance" ~ "blue",
-            mainreactind$Sector == "Agriculture and Agri-business" ~ "pink",
-            TRUE ~ "gray"
-          )
-        ),
-        label = values.ind,
-        labelOptions = labelOptions(
-          noHide = FALSE,
-          textsize = "12px",
-          direction = "top"
-        )
-      )
-  })
-  
-  # --- CLMapping Proxy ---
-  observe({
-    req(data_filtered$mainreactCR)
-    mainreactCR <- data_filtered$mainreactCR
-    
-    if (nrow(mainreactCR) == 0 || all(is.na(mainreactCR$Longitude))) {
-      leafletProxy("CLMapping") %>% clearMarkers() %>% clearMarkerClusters()
-      return()
-    }
-    
-    values_classrooom_shortage <- paste(mainreactCR$School.Name,"<br>Total Enrolment:",mainreactCR$Enrolment.2023.2024 ,"<br>Classroom Inventory:", mainreactCR$Instructional.Rooms.2023.2024, "<br>Classroom Shortage:", mainreactCR$Est.CS) %>% lapply(htmltools::HTML)
-    values_classrooom_shortage_popup <- paste(strong("SCHOOL INFORMATION"),"<br>School Name:",mainreactCR$School.Name,"<br>School ID:",mainreactCR$SchoolID,"<br>Enrolment Size:",mainreactCR$TotalEnrolment,"<br>","<br>",strong("CLASSROOM DATA"),"<br>Estimate Classroom Shortage:", mainreactCR$Est.CS,"<br>Type of Ownership:", mainreactCR$OwnershipType,"<br>Shifting:", mainreactCR$Shifting,"<br>Electricity Source:", mainreactCR$ElectricitySource,"<br>Water Source:", mainreactCR$WaterSource) %>% lapply(htmltools::HTML)
-    
-    icons <- awesomeIcons(
-      icon = "university",
-      library = "fa",
-      markerColor = case_when(
-        suppressWarnings(as.numeric(mainreactCR$Est.CS)) > 0 ~ "red",
-        TRUE ~ "green"
-      ),
-      iconColor = "white"
-    )
-    
-    leafletProxy("CLMapping") %>%
-      clearMarkers() %>%
-      clearMarkerClusters() %>%
-      setView(
-        lng = mainreactCR$Longitude[1],
-        lat = mainreactCR$Latitude[1],
-        zoom = 7
-      ) %>%
-      addAwesomeMarkers(
-        clusterOptions = markerClusterOptions(disableClusteringAtZoom = 15),
-        lng = mainreactCR$Longitude,
-        lat = mainreactCR$Latitude,
-        popup = values_classrooom_shortage_popup,
-        options = popupOptions(),
-        label = values_classrooom_shortage,
-        labelOptions = labelOptions(
-          noHide = FALSE,
-          textsize = "12px",
-          direction = "top"
-        ),
-        icon = icons
-      )
-  })
-  
-  # --- AO2Mapping Proxy ---
-  observe({
-    req(data_filtered$mainreactNTP)
-    mainreactNTP <- data_filtered$mainreactNTP
-    
-    if (nrow(mainreactNTP) == 0 || all(is.na(mainreactNTP$Longitude))) {
-      leafletProxy("AO2Mapping") %>% clearMarkers() %>% clearMarkerClusters()
-      return()
-    }
-    
-    values.non_teaching <- mainreactNTP$School.Name %>% lapply(htmltools::HTML)
-    values.non_teaching_popup <- paste(strong("SCHOOL INFORMATION"),"<br>School Name:",mainreactNTP$School.Name,"<br>School ID:",mainreactNTP$SchoolID,"<br>Enrolment Size:",mainreactNTP$TotalEnrolment,"<br>","<br>",strong("TEACHING PERSONNEL DATA"),"<br>Teacher Inventory:", mainreactNTP$TotalTeachers,"<br>Teacher Excess:", mainreactNTP$TeacherExcess,"<br>Teacher Shortage:", mainreactNTP$TeacherShortage,"<br>","<br>",strong("NON-TEACHING PERSONNEL DATA"),"<br>Plantilla Number of AOII:", mainreactNTP$Plantilla.Number,"<br>Clustering Status:", mainreactNTP$Clustering.Status,"<br>PDO I Deployment:", mainreactNTP$PDOI_Deployment) %>% lapply(htmltools::HTML)
-    
-    leafletProxy("AO2Mapping") %>%
-      clearMarkers() %>%
-      clearMarkerClusters() %>%
-      setView(lng = mainreactNTP$Longitude[1], lat = mainreactNTP$Latitude[1], zoom = 7) %>%
-      addAwesomeMarkers(
-        clusterOptions = markerClusterOptions(disableClusteringAtZoom = 15),
-        lng = mainreactNTP$Longitude,
-        lat = mainreactNTP$Latitude,
-        popup = values.non_teaching_popup,
-        options = popupOptions(),
-        label = values.non_teaching,
-        labelOptions = labelOptions(noHide = FALSE, textsize = "12px", direction = "top"),
-        icon = makeAwesomeIcon(
-          icon = "user",
-          library = "fa",
-          markerColor = case_when(
-            mainreactNTP$Clustering.Status %in% c("Dedicated","Clustered") & mainreactNTP$PDOI_Deployment == "With PDO I" ~ "green",
-            mainreactNTP$Clustering.Status %in% c("Dedicated","Clustered") & mainreactNTP$PDOI_Deployment == "Without PDO I" ~ "orange",
-            mainreactNTP$Clustering.Status == "None Deployed" & mainreactNTP$PDOI_Deployment == "With PDO I" ~ "orange",
-            mainreactNTP$Clustering.Status == "None Deployed" & mainreactNTP$PDOI_Deployment == "Without PDO I" ~ "red",
-            TRUE ~ "lightgray"
-          )
-        )
-      )
-  })
-  
-  # --- TeacherShortage_Mapping Proxy ---
-  observe({
-    req(data_filtered$mainreact1)
-    mainreact1 <- data_filtered$mainreact1
-    
-    if (nrow(mainreact1) == 0 || all(is.na(mainreact1$Longitude))) {
-      leafletProxy("TeacherShortage_Mapping") %>% clearMarkers() %>% clearMarkerClusters()
-      return()
-    }
-    
-    values_teacher_shortage <- paste(mainreact1$School.Name,"<br>Teacher Excess:", mainreact1$TeacherExcess,"<br>Teacher Shortage:", mainreact1$TeacherShortage) %>% lapply(htmltools::HTML)
-    values_teacher_shortage_popup <- paste(strong("SCHOOL INFORMATION"),"<br>School Name:",mainreact1$School.Name,"<br>School ID:",mainreact1$SchoolID,"<br>Enrolment Size:",mainreact1$TotalEnrolment,"<br>","<br>",strong("TEACHING PERSONNEL DATA"),"<br>Teacher Inventory:", mainreact1$TotalTeachers,"<br>Teacher Excess:", mainreact1$TeacherExcess,"<br>Teacher Shortage:", mainreact1$TeacherShortage,"<br>","<br>",strong("SPECIALIZATION DATA"),"<br>English:", mainreact1$English,"<br>Mathematics:", mainreact1$Mathematics,"<br>Science:", mainreact1$Science,"<br>Biological Science:", mainreact1$Biological.Sciences,"<br>Physical Sciences:", mainreact1$Physical.Sciences,"<br>General Education:", mainreact1$General.Ed,"<br>Araling Panlipunan:", mainreact1$Araling.Panlipunan,"<br>TLE:", mainreact1$TLE,"<br>MAPEH:", mainreact1$MAPEH,"<br>Filipino:", mainreact1$Filipino,"<br>ESP:", mainreact1$ESP,"<br>Agriculture:", mainreact1$Agriculture,"<br>ECE:", mainreact1$ECE,"<br>SPED:", mainreact1$SPED) %>% lapply(htmltools::HTML)
-    
-    leafletProxy("TeacherShortage_Mapping") %>% 
-      clearMarkers() %>% 
-      clearMarkerClusters() %>% 
-      setView(lng = mainreact1$Longitude[1], lat = mainreact1$Latitude[1], zoom = 7) %>%
-      addAwesomeMarkers(
-        clusterOptions = markerClusterOptions(disableClusteringAtZoom = 15), 
-        lng = mainreact1$Longitude, 
-        lat = mainreact1$Latitude, 
-        popup = values_teacher_shortage_popup, 
-        options = popupOptions(), 
-        label = values_teacher_shortage, 
-        labelOptions = labelOptions(noHide = F, textsize = "12px", direction = "top"), 
-        icon = makeAwesomeIcon(
-          icon = "education", 
-          library = "glyphicon", 
-          markerColor = case_when(
-            mainreact1$TeacherShortage > 0 ~ "red", 
-            mainreact1$TeacherExcess > 0 ~ "blue", 
-            (mainreact1$TeacherExcess == 0 & mainreact1$TeacherShortage == 0) ~ "green", 
-            is.na(mainreact1$TeacherShortage) ~ "gray",
-            TRUE ~ "gray"
-          )
-        )
-      )
-  })
-  
-  # --- FacMapping Proxy ---
-  observe({
-    req(data_filtered$mainreactEFD)
-    mainreactEFD <- data_filtered$mainreactEFD
-    
-    if (nrow(mainreactEFD) == 0 || all(is.na(mainreactEFD$Longitude))) {
-      leafletProxy("FacMapping") %>% clearMarkers() %>% clearControls()
-      return()
-    }
-    
-    values.efdmasterlist <- paste(strong("SCHOOL INFORMATION"),"<br>School Name:",mainreactEFD$School.Name,"<br>School ID:",mainreactEFD$SchoolID,"<br>Category:",mainreactEFD$Category,"<br>Funding Year:",mainreactEFD$FundingYear,"<br>Allocation:",mainreactEFD$Allocation) %>% lapply(htmltools::HTML)
-    
-    color_palette <- colorFactor(
-      palette = c("red", "green", "blue"),
-      domain = mainreactEFD$FundingCategory,
-      levels = levels(mainreactEFD$FundingCategory) # Ensure the order is respected
-    )
-    
-    leafletProxy("FacMapping", data = mainreactEFD) %>%
-      clearMarkers() %>%
-      clearControls() %>%
-      setView(lng = mainreactEFD$Longitude[1], lat = mainreactEFD$Latitude[1], zoom = 7) %>%
-      addAwesomeMarkers(
-        clusterOptions = markerClusterOptions(disableClusteringAtZoom = 15),
-        lng = ~Longitude,
-        lat = ~Latitude,
-        popup = values.efdmasterlist,
-        icon = makeAwesomeIcon(
-          icon = "education",
-          library = "glyphicon",
-          markerColor = case_when(
-            mainreactEFD$FundingCategory == "Before 2025" ~ "red", 
-            mainreactEFD$FundingCategory == "2025-2030" ~ "green", 
-            mainreactEFD$FundingCategory == "After 2030" ~ "blue",
-            TRUE ~ "gray"
-          )
-        )
-      ) %>%
-      addLegend(
-        "bottomright",
-        pal = color_palette,
-        values = ~FundingCategory,
-        title = "Funding Year",
-        opacity = 1
-      )
-  })
-  
-  # --- CongestMapping Proxy ---
-  observe({
-    req(data_filtered$mainreactNTP)
-    mainreactNTP <- data_filtered$mainreactNTP
-    
-    if (nrow(mainreactNTP) == 0 || all(is.na(mainreactNTP$Longitude))) {
-      leafletProxy("CongestMapping") %>% clearMarkers() %>% clearControls()
-      return()
-    }
-    
-    values.congest <- paste(strong("SCHOOL INFORMATION"),"<br>School Name:",mainreactNTP$School.Name,"<br>School ID:",mainreactNTP$SchoolID,"<br>Instructional Rooms (2023-2024):",mainreactNTP$Instructional.Rooms.2023.2024,"<br>Enrolment (2023-2024):",mainreactNTP$Enrolment.2023.2024,"<br>Congestion Index:",mainreactNTP$Congestion.Index) %>% lapply(htmltools::HTML)
-    
-    leafletProxy("CongestMapping", data = mainreactNTP) %>%
-      clearMarkers() %>%
-      clearControls() %>%
-      setView(lng = mainreactNTP$Longitude[1], lat = mainreactNTP$Latitude[1], zoom = 7) %>%
-      addAwesomeMarkers(
-        clusterOptions = markerClusterOptions(disableClusteringAtZoom = 15),
-        lng = ~Longitude,
-        lat = ~Latitude,
-        label = values.congest,
-        icon = makeAwesomeIcon(
-          icon = "education",
-          library = "glyphicon",
-          markerColor = case_when(
-            mainreactNTP$Congestion.Index >= 0 & mainreactNTP$Congestion.Index < 0.5 ~ "green", 
-            mainreactNTP$Congestion.Index >= 0.5 & mainreactNTP$Congestion.Index < 0.75 ~ "orange",
-            mainreactNTP$Congestion.Index >= 0.75 ~ "red",
-            TRUE ~ "gray"
-          )
-        )
-      )
-  })
-  
-  
-  # --- 4. Reactive Expressions for Map-Bound Tables ---
-  # These filter the data based on the user panning/zooming the map.
-  
-  df1 <- reactive({
-    req(data_filtered$mainreactLMS)
-    mainreactLMS <- data_filtered$mainreactLMS
-    
-    if (is.null(input$LMSMapping_bounds)) {
-      mainreactLMS
-    } else {
-      bounds <- input$LMSMapping_bounds
-      latRng <- range(bounds$north, bounds$south)
-      lngRng <- range(bounds$east, bounds$west)
-      
-      subset(mainreactLMS,
-             Latitude >= latRng[1] & Latitude <= latRng[2] & Longitude >= lngRng[1] & Longitude <= lngRng[2])
-    }
-  })
-  
-  dfreact_TS <- reactive({
-    req(data_filtered$mainreact1)
-    mainreact1 <- data_filtered$mainreact1
-    
-    if (is.null(input$TeacherShortage_Mapping_bounds)) {
-      mainreact1
-    } else {
-      bounds <- input$TeacherShortage_Mapping_bounds
-      latRng <- range(bounds$north, bounds$south)
-      lngRng <- range(bounds$east, bounds$west)
-      
-      subset(mainreact1,
-             Latitude >= latRng[1] & Latitude <= latRng[2] & Longitude >= lngRng[1] & Longitude <= lngRng[2])
-    }
-  })
-  
-  Ao21 <- reactive({
-    req(data_filtered$mainreactNTP)
-    mainreactNTP <- data_filtered$mainreactNTP
-    
-    if (is.null(input$AO2Mapping_bounds)) {
-      mainreactNTP
-    } else {
-      bounds <- input$AO2Mapping_bounds
-      latRng <- range(bounds$north, bounds$south)
-      lngRng <- range(bounds$east, bounds$west)
-      
-      subset(mainreactNTP,
-             Latitude >= latRng[1] & Latitude <= latRng[2] & Longitude >= lngRng[1] & Longitude <= lngRng[2])
-    }
-  })
-  
-  dfreact_CL <- reactive({
-    req(data_filtered$mainreactCR)
-    mainreactCR <- data_filtered$mainreactCR
-    
-    if (is.null(input$CLMapping_bounds)) {
-      mainreactCR
-    } else {
-      bounds <- input$CLMapping_bounds
-      latRng <- range(bounds$north, bounds$south)
-      lngRng <- range(bounds$east, bounds$west)
-      
-      subset(mainreactCR,
-             Latitude >= latRng[1] & Latitude <= latRng[2] & Longitude >= lngRng[1] & Longitude <= lngRng[2])
-    }
-  })
-  
-  dfreact_SHS <- reactive({
-    req(data_filtered$mainreactSHS)
-    mainreactSHS <- data_filtered$mainreactSHS
-    
-    if (is.null(input$SHSMapping_bounds)) {
-      mainreactSHS
-    } else {
-      bounds <- input$SHSMapping_bounds
-      latRng <- range(bounds$north, bounds$south)
-      lngRng <- range(bounds$east, bounds$west)
-      
-      subset(mainreactSHS,
-             Latitude >= latRng[1] & Latitude <= latRng[2] & Longitude >= lngRng[1] & Longitude <= lngRng[2])
-    }
-  })
-  
-  dfreact_fac <- reactive({
-    req(data_filtered$mainreactEFD)
-    mainreactEFD <- data_filtered$mainreactEFD
-    
-    if (is.null(input$FacMapping_bounds)) {
-      mainreactEFD
-    } else {
-      bounds <- input$FacMapping_bounds
-      latRng <- range(bounds$north, bounds$south)
-      lngRng <- range(bounds$east, bounds$west)
-      
-      subset(mainreactEFD,
-             Latitude >= latRng[1] & Latitude <= latRng[2] & Longitude >= lngRng[1] & Longitude <= lngRng[2])
-    }
-  })
-  
-  dfreact_cong <- reactive({
-    req(data_filtered$mainreactNTP)
-    mainreactNTP <- data_filtered$mainreactNTP
-    
-    if (is.null(input$CongestMapping_bounds)) {
-      mainreactNTP %>% arrange(desc(Congestion.Index))
-    } else {
-      bounds <- input$CongestMapping_bounds
-      latRng <- range(bounds$north, bounds$south)
-      lngRng <- range(bounds$east, bounds$west)
-      
-      subset(mainreactNTP,
-             Latitude >= latRng[1] & Latitude <= latRng[2] & Longitude >= lngRng[1] & Longitude <= lngRng[2])
-    }
-  })
-  
-  # This was an eventReactive, which is fine to stay as-is and outside.
-  SHS_count_reactive <- eventReactive(input$Mapping_Run, {
-    req(input$resource_map_region) # Make sure this input is available
-    mainvalue <- df %>%
-      filter(Region == input$resource_map_region) %>%
-      filter(Level == "SHS")
-    
-    return(nrow(mainvalue))
-  })
-  
-  
-  # --- 5. DataTable Renderers ---
-  # These now read from the reactive expressions above.
-  
-  # --- Empty Table Function ---
-  # Helper function to show a consistent "No data" message
-  render_empty_dt <- function(message = "No data available based on current selection.") {
-    DT::datatable(
-      data.frame("Message" = message),
-      options = list(dom = 't', scrollX = TRUE),
-      rownames = FALSE
-    )
-  }
-  
-  output$LMSTable <- DT::renderDT({
-    finalLMS <- df1() # Get data from reactive
-    
-    # Handle empty or null data
-    if (is.null(finalLMS) || nrow(finalLMS) == 0) {
-      return(render_empty_dt())
-    }
-    
-    finalLMS <- finalLMS %>%
-      dplyr::mutate(
-        Buildable_space = dplyr::if_else(Buildable_space == 1, "Yes", "No")
-      ) %>%
-      dplyr::select(
-        School_Name,
-        Total_Enrollment,
-        Instructional_Rooms,
-        Estimated_CL_Shortage,
-        Buildable_space
-      ) %>%
-      dplyr::rename(
-        "School Name" = School_Name,
-        "Total Enrolment" = Total_Enrollment,
-        "Classrooms Inventory" = Instructional_Rooms,
-        "Classroom Shortage" = Estimated_CL_Shortage,
-        "Buildable Space" = Buildable_space
-      )
-    
-    DT::datatable(
-      finalLMS,
-      extensions = c("Buttons", "FixedHeader"),
-      options = list(
-        scrollX = TRUE,
-        autoWidth = TRUE,
-        fixedHeader = TRUE,
-        pageLength = 10,
-        dom = 'Bfrtip',
-        buttons = list(
-          list(extend = "csv", exportOptions = list(modifier = list(page = "all"))),
-          list(extend = "excel", exportOptions = list(modifier = list(page = "all"))),
-          list(extend = "pdf", exportOptions = list(modifier = list(page = "all"))),
-          list(extend = "print", exportOptions = list(modifier = list(page = "all")))
-        ),
-        columnDefs = list(list(className = 'dt-center', targets = "_all"))
-      ),
-      filter = 'top',
-      selection = 'single',
-      rownames = FALSE,
-      callback = DT::JS("window.dispatchEvent(new Event('resize'));")
-    )
-  }, server = FALSE)
-  
-  output$TeacherShortage_Table <- DT::renderDT({
-    data_to_display <- dfreact_TS()
-    
-    if (is.null(data_to_display) || nrow(data_to_display) == 0) {
-      return(render_empty_dt())
-    }
-    
-    data_to_display <- data_to_display %>%
-      select(School.Name, TeacherShortage, TeacherExcess) %>%
-      rename(
-        "School" = School.Name,
-        "Shortage" = TeacherShortage,
-        "Excess" = TeacherExcess
-      )
-    
-    DT::datatable(
-      data_to_display,
-      extensions = c("Buttons", "FixedHeader"),
-      options = list(
-        scrollX = TRUE,
-        autoWidth = TRUE,
-        fixedHeader = TRUE,
-        pageLength = 10,
-        dom = 'Bfrtip',
-        destroy = TRUE,
-        buttons = list(
-          list(extend = "csv", exportOptions = list(modifier = list(page = "all"))),
-          list(extend = "excel", exportOptions = list(modifier = list(page = "all"))),
-          list(extend = "pdf", exportOptions = list(modifier = list(page = "all"))),
-          list(extend = "print", exportOptions = list(modifier = list(page = "all")))
-        ),
-        columnDefs = list(list(className = 'dt-center', targets = "_all"))
-      ),
-      filter = 'top',
-      selection = 'multiple',
-      rownames = FALSE
-    )
-  }, server = FALSE)
-  
-  output$AO2Table <- DT::renderDT({
-    data_to_display <- Ao21()
-    
-    if (is.null(data_to_display) || nrow(data_to_display) == 0) {
-      return(render_empty_dt())
-    }
-    
-    data_to_display <- data_to_display %>% 
-      select("School.Name","Clustering.Status","PDOI_Deployment") %>% 
-      rename("School" = School.Name, "AO II Deployment" = Clustering.Status, "PDOI Deployment" = PDOI_Deployment)
-    
-    datatable(
-      data_to_display, 
-      rownames = FALSE, 
-      filter = 'top', 
-      options = list(
-        scrollX = TRUE, 
-        columnDefs = list(list(className = 'dt-center', targets ="_all")), 
-        dom = 'Bfrtip', 
-        buttons = list('csv','excel','pdf','print')
-      )
-    )
-  })
-  
-  output$CLTable <- DT::renderDT({
-    data_to_display <- dfreact_CL()
-    
-    if (is.null(data_to_display) || nrow(data_to_display) == 0) {
-      return(render_empty_dt())
-    }
-    
-    data_to_display <- data_to_display %>% 
-      select("School.Name","Enrolment.2023.2024","Instructional.Rooms.2023.2024","Est.CS","Buidable_space") %>% 
-      rename("School" = School.Name, "Total Enrolment" = Enrolment.2023.2024, "Classroom Inventory" = Instructional.Rooms.2023.2024, "Estimate Classroom Shortage" = Est.CS, "Buildable Space" = Buidable_space)
-    
-    datatable(
-      data_to_display, 
-      filter = 'top', 
-      options = list(
-        scrollX = TRUE,
-        scrollY= "300px", 
-        columnDefs = list(list(className = 'dt-center', targets ="_all")), 
-        rownames = FALSE, 
-        dom = 'Bfrtip', 
-        buttons = list('csv','excel','pdf','print')
-      )
-    )
-  }, server = FALSE)
-  
-  output$SHSListTable <- DT::renderDT({
-    data_to_display <- dfreact_SHS()
-    
-    if (is.null(data_to_display) || nrow(data_to_display) == 0) {
-      return(render_empty_dt())
-    }
-    
-    data_to_display <- data_to_display %>%
-      select(School.Name, TotalEnrolment) %>%
-      rename(
-        "School" = School.Name,
-        "Total Enrolment" = TotalEnrolment
-      )
-    
-    DT::datatable(
-      data_to_display,
-      extensions = c("Buttons", "FixedHeader"),
-      options = list(
-        scrollX = TRUE,
-        autoWidth = TRUE,
-        fixedHeader = TRUE,
-        pageLength = 5,
-        dom = 'Bfrtip',
-        buttons = list(
-          list(extend = "csv", exportOptions = list(modifier = list(page = "all"))),
-          list(extend = "excel", exportOptions = list(modifier = list(page = "all"))),
-          list(extend = "pdf", exportOptions = list(modifier = list(page = "all"))),
-          list(extend = "print", exportOptions = list(modifier = list(page = "all")))
-        ),
-        columnDefs = list(list(className = 'dt-center', targets = "_all"))
-      ),
-      filter = 'top',
-      selection = 'single',
-      rownames = FALSE
-    )
-  }, server = FALSE)
-  
-  output$FacTable <- DT::renderDT({
-    data_to_display <- dfreact_fac()
-    
-    if (is.null(data_to_display) || nrow(data_to_display) == 0) {
-      return(render_empty_dt())
-    }
-    
-    data_to_display <- data_to_display %>%
-      arrange(FundingYear) %>%
-      select(Region, Division, School.Name, FundingYear, Allocation) %>%
-      rename(
-        "School" = School.Name,
-        "Funding Year" = FundingYear
-      )
-    
-    DT::datatable(
-      data_to_display,
-      extensions = c("Buttons", "FixedHeader"),
-      options = list(
-        scrollX = TRUE,
-        autoWidth = TRUE,
-        fixedHeader = TRUE,
-        pageLength = 10,
-        dom = 'Bfrtip',
-        buttons = list(
-          list(extend = "csv", exportOptions = list(modifier = list(page = "all"))),
-          list(extend = "excel", exportOptions = list(modifier = list(page = "all"))),
-          list(extend = "pdf", exportOptions = list(modifier = list(page = "all"))),
-          list(extend = "print", exportOptions = list(modifier = list(page = "all")))
-        ),
-        columnDefs = list(list(className = 'dt-center', targets = "_all"))
-      ),
-      filter = 'top',
-      selection = 'single',
-      rownames = FALSE
-    )
-  }, server = FALSE)
-  
-  output$CongestTable <- DT::renderDT({
-    data_to_display <- dfreact_cong()
-    
-    if (is.null(data_to_display) || nrow(data_to_display) == 0) {
-      return(render_empty_dt())
-    }
-    
-    data_to_display <- data_to_display %>%
-      select(Region, Division, School.Name, Instructional.Rooms.2023.2024, Enrolment.2023.2024, Congestion.Index) %>%
-      rename(
-        "School" = School.Name,
-        "Instructional Rooms" = Instructional.Rooms.2023.2024,
-        "Total Enrolment" = Enrolment.2023.2024,
-        "Congestion Index" = Congestion.Index
-      )
-    
-    datatable(
-      data_to_display,
-      extensions = c("Buttons", "FixedHeader"),
-      options = list(
-        scrollX = TRUE,
-        autoWidth = TRUE,
-        fixedHeader = TRUE,
-        pageLength = 10,
-        dom = 'Bfrtip',
-        buttons = list(
-          list(extend = "csv", exportOptions = list(modifier = list(page = "all"))),
-          list(extend = "excel", exportOptions = list(modifier = list(page = "all"))),
-          list(extend = "pdf", exportOptions = list(modifier = list(page = "all"))),
-          list(extend = "print", exportOptions = list(modifier = list(page = "all")))
-        ),
-        columnDefs = list(list(className = 'dt-center', targets = "_all"))
-      ),
-      filter = 'top',
-      selection = 'multiple',
-      rownames = FALSE
-    )
-  })
-  
-  
-  # --- 6. ValueBox Renderers ---
-  # These now read from data_filtered and are wrapped in req()
-  
-  output$a <- renderValueBox({
-    req(data_filtered$RegRCT, data_filtered$SDORCT1)
-    valueBox(tags$p(strong(SDO[which(SDO$Region==data_filtered$RegRCT & SDO$Division==data_filtered$SDORCT1),"FillUpRate"]), style = "font-family: Poppins; font-size: 20px; color: #111111; text-align: center;"), subtitle = NULL)
-  })
-  
-  output$b <- renderValueBox({
-    req(data_filtered$RegRCT, data_filtered$SDORCT1)
-    valueBox(tags$p(strong(SDO[which(SDO$Region==data_filtered$RegRCT & SDO$Division==data_filtered$SDORCT1),"Unfilled"]), style = "font-family: Poppins; font-size: 20px; color: #111111; text-align: center;"), subtitle = NULL)
-  })
-  
-  output$e <- renderValueBox({
-    req(data_filtered$SDONetShortage)
-    # Handle case where filter returns 0 rows
-    value <- if (nrow(data_filtered$SDONetShortage) > 0) {
-      data_filtered$SDONetShortage$NetShortage
-    } else {
-      0 # Or NA, or "N/A" depending on what you want to show
-    }
-    valueBox(tags$p(strong(value), style = "font-family: Poppins; font-size: 20px; color: #111111; text-align: center;"), subtitle = NULL)
-  })
-  
-  output$c <- renderValueBox({
-    # This depends on the map-bound reactive df1()
-    req(df1())
-    valueBox(tags$p(strong(sum(df1()$TeacherExcess, na.rm = TRUE)), style = "font-size: 65%;"), subtitle = NULL)
-  })
-  
-  output$d <- renderValueBox({
-    # This was static, so it can just be rendered
-    valueBox(tags$p(strong("-"), style = "font-size: 65%;"), subtitle = NULL)
-  })
-  
-  output$f <- renderValueBox({
-    req(data_filtered$RegRCT)
-    valueBox(tags$p(strong(SDO[which(SDO$Division==data_filtered$RegRCT),"FillUpRate"]), style = "font-family: Poppins; font-size: 20px; color: #111111; text-align: center;"), subtitle = NULL)
-  })
-  
-  output$g <- renderValueBox({
-    req(data_filtered$RegRCT)
-    valueBox(tags$p(strong(SDO[which(SDO$Division==data_filtered$RegRCT),"Unfilled"]), style = "font-family: Poppins; font-size: 20px; color: #111111; text-align: center;"), subtitle = NULL)
-  })
-  
-  output$Single <- renderValueBox({
-    req(data_filtered$mainreactdiv)
-    valueBox(strong(sum(data_filtered$mainreactdiv$Clustering.Status == "NOT CLUSTERED", na.rm = TRUE)), subtitle = strong("Number of Unclustered Schools (Division)"), icon = icon("users"), color = "green")
-  })
-  
-  output$Cluster <- renderValueBox({
-    req(data_filtered$mainreactdiv)
-    valueBox(strong(sum(data_filtered$mainreactdiv$Clustering.Status == "CLUSTERED", na.rm = TRUE)), subtitle = strong("Number of Clustered Schools (Division)"), icon = icon("school"), color = "green")
-  })
-  
-  output$Outlier <- renderValueBox({
-    req(data_filtered$mainreactdiv)
-    valueBox(strong(sum(data_filtered$mainreactdiv$Clustering.Status == "Outlier", na.rm = TRUE)), subtitle = strong("Number of Outlier Schools (Division)"), icon = icon("school"), color = "green")
-  })
-  
-  output$SingleR <- renderValueBox({
-    req(data_filtered$mainreactreg)
-    valueBox(strong(sum(data_filtered$mainreactreg$Clustering.Status == "NOT CLUSTERED", na.rm = TRUE)), subtitle = strong("Number of Unclustered Schools (Region)"), icon = icon("users"), color = "navy")
-  })
-  
-  output$ClusterR <- renderValueBox({
-    req(data_filtered$mainreactreg)
-    valueBox(strong(sum(data_filtered$mainreactreg$Clustering.Status == "CLUSTERED", na.rm = TRUE)), subtitle = strong("Number of Clustered Schools (Region)"), icon = icon("school"), color = "navy")
-  })
-  
-  output$OutlierR <- renderValueBox({
-    req(data_filtered$mainreactreg)
-    valueBox(strong(sum(data_filtered$mainreactreg$Clustering.Status == "Outlier", na.rm = TRUE)), subtitle = strong("Number of Outlier Schools (Region)"), icon = icon("school"), color = "navy")
-  })
-  
-  output$f2 <- renderValueBox({
-    req(data_filtered$mainreactreg)
-    valueBox(tags$p(strong(sum(data_filtered$mainreactreg$Clustering.Status == "Clustered", na.rm = TRUE)), style = "font-family: Poppins; font-size: 20px; color: #111111; text-align: center;"), subtitle = NULL)
-  })
-  
-  output$g2 <- renderValueBox({
-    req(data_filtered$mainreactreg)
-    valueBox(tags$p(strong(sum(data_filtered$mainreactreg$Clustering.Status == "Dedicated", na.rm = TRUE)), style = "font-family: Poppins; font-size: 20px; color: #111111; text-align: center;"), subtitle = NULL)
-  })
-  
-  output$a2 <- renderValueBox({
-    req(data_filtered$mainreactdiv)
-    valueBox(tags$p(strong(sum(data_filtered$mainreactdiv$Clustering.Status == "Clustered", na.rm = TRUE)), style = "font-family: Poppins; font-size: 20px; color: #111111; text-align: center;"), subtitle = NULL)
-  })
-  
-  output$b2 <- renderValueBox({
-    req(data_filtered$mainreactdiv)
-    valueBox(tags$p(strong(sum(data_filtered$mainreactdiv$Clustering.Status == "Dedicated", na.rm = TRUE)), style = "font-family: Poppins; font-size: 20px; color: #111111; text-align: center;"), subtitle = NULL)
-  })
-  
-  output$e2 <- renderValueBox({
-    req(data_filtered$mainreactNTP)
-    valueBox(tags$p(strong(sum(data_filtered$mainreactNTP$Clustering.Status == "Clustered", na.rm = TRUE)), style = "font-family: Poppins; font-size: 20px; color: #111111; text-align: center;"), subtitle = NULL)
-  })
-  
-  output$h2 <- renderValueBox({
-    req(data_filtered$mainreactNTP)
-    valueBox(tags$p(strong(sum(data_filtered$mainreactNTP$Clustering.Status == "Dedicated", na.rm = TRUE)), style = "font-family: Poppins; font-size: 20px; color: #111111; text-align: center;"), subtitle = NULL)
-  })
-  
-  output$ROCRShort <- renderValueBox({
-    req(data_filtered$mainreactCRreg)
-    valueBox(tags$p(strong(sum(data_filtered$mainreactCRreg$Estimated_CL_Shortage, na.rm = TRUE)), style = "font-family: Poppins; font-size: 20px; color: #111111; text-align: center;"), subtitle = NULL)
-  })
-  
-  output$SDOCRShort <- renderValueBox({
-    req(data_filtered$mainreactCRdiv)
-    valueBox(tags$p(strong(sum(data_filtered$mainreactCRdiv$Estimated_CL_Shortage, na.rm = TRUE)), style = "font-family: Poppins; font-size: 20px; color: #111111; text-align: center;"), subtitle = NULL)
-  })
-  
-  output$LMS_Total_Region <- renderValueBox({
-    req(data_filtered$mainreactLMSreg)
-    total_region_lms <- nrow(data_filtered$mainreactLMSreg)
-    valueBox(
-      tags$p(
-        strong(scales::comma(total_region_lms)),
-        style = "font-family: Poppins; font-size: 20px; color: #111111; text-align: center;"),
-      subtitle = NULL
-    )
-  })
-  
-  output$LMS_Total_Division <- renderValueBox({
-    req(data_filtered$mainreactLMSdiv)
-    total_division_lms <- nrow(data_filtered$mainreactLMSdiv)
-    valueBox(
-      tags$p(
-        strong(scales::comma(total_division_lms)),
-        style = "font-family: Poppins; font-size: 20px; color: #111111; text-align: center;"),
-      subtitle = NULL
-    )
-  })
-  
-  output$SHSCount <- renderValueBox({
-    req(data_filtered$mainreactSHS)
-    valueBox(tags$p(strong(nrow(data_filtered$mainreactSHS)), style = "font-size: 100%; text-align: center;"), subtitle = NULL)
-  })
-  
-  output$SHSCountUniv <- renderValueBox({
-    # This one depends on the eventReactive
-    valueBox(tags$p(strong(SHS_count_reactive()), style = "font-size: 100%; text-align: center;"), subtitle = NULL)
-  })
-  
-  output$IndCount <- renderValueBox({
-    req(data_filtered$mainreactind)
-    valueBox(tags$p(strong(nrow(data_filtered$mainreactind)), style = "font-size: 100%; text-align: center;"), subtitle = NULL)
-  })
-  
-  
-  # --- 7. UI Renderers ---
-  
-  output$assessmentSHS <- renderUI({
-    req(data_filtered$RegRCT, data_filtered$mainreactSHS, data_filtered$mainreactind)
-    
-    RegRCT <- data_filtered$RegRCT
-    mainreactSHS <- data_filtered$mainreactSHS
-    mainreactind <- data_filtered$mainreactind
-    
-    p(HTML(paste(
-      strong(RegRCT),"has",strong(nrow(mainreactSHS)),"senior high schools and a total of ",
-      strong(nrow(mainreactind)),"industries composed of",
-      strong(sum(mainreactind$Sector == "Food Establishments", na.rm = TRUE)),"industries on Food Establishments, ",
-      strong(sum(mainreactind$Sector == "Professional/Private Services", na.rm = TRUE)),"industries on Professional/Private Services, ",
-      strong(sum(mainreactind$Sector == "Transportation", na.rm = TRUE)),"industries on Transportation, ",
-      strong(sum(mainreactind$Sector == "Utilities", na.rm = TRUE)),"industries on Utilities",", and",
-      strong(sum(mainreactind$Sector == "Retail", na.rm = TRUE)),"industries on Retail"
-    )), style = "font-family: Century Gothic; font-size: 15px; color: #111111;")
-  })
-  
-  # --- 3. Leaflet Proxy Observers ---
-  # Each map update is in its own observer, reacting to changes in data_filtered
-  
-  # --- LMSMapping Proxy ---
-  observe({
-    req(data_filtered$mainreactLMS)
-    mainreactLMS <- data_filtered$mainreactLMS
-    
-    # Stop if no data
-    if (nrow(mainreactLMS) == 0 || all(is.na(mainreactLMS$Longitude))) {
-      leafletProxy("LMSMapping") %>% clearMarkers() %>% clearMarkerClusters()
-      return()
-    }
-    
-    values.LMS <- paste(
-      "School Name:",mainreactLMS$School_Name,
-      "<br>Division:", mainreactLMS$Division,
-      "<br>Leg. District:", mainreactLMS$Legislative_District,
-      "<br>Number of Classrooms:", mainreactLMS$Instructional_Rooms,
-      "<br>Classroom Requirement:", mainreactLMS$CL_Req,
-      "<br>Estimated Classroom Shortage:", mainreactLMS$Estimated_CL_Shortage,
-      "<br>Buildable Space:", ifelse(mainreactLMS$Buildable_space == 1, "Yes", "No")) %>% lapply(htmltools::HTML)
-    
-    leafletProxy("LMSMapping") %>%
-      clearMarkers() %>%
-      clearMarkerClusters() %>%
-      setView(
-        lng = mainreactLMS$Longitude[1],
-        lat = mainreactLMS$Latitude[1],
-        zoom = 7
-      ) %>%
-      addAwesomeMarkers(
-        clusterOptions = markerClusterOptions(disableClusteringAtZoom = 12),
-        lng = mainreactLMS$Longitude,
-        lat = mainreactLMS$Latitude,
-        icon = makeAwesomeIcon(icon = "education", library = "glyphicon",
-                               markerColor = case_when(
-                                 (mainreactLMS$Buildable_space == 0 & mainreactLMS$Estimated_CL_Shortage == 0) ~ "gray",
-                                 mainreactLMS$Buildable_space == 0 ~ "red",
-                                 mainreactLMS$Buildable_space == 1 ~ "green",
-                                 TRUE ~ "gray" # Default case
-                               )),
-        label = values.LMS,
-        labelOptions = labelOptions(noHide = F, textsize = "12px", direction = "top")
-      )
-  })
-  
-  # --- SHSMapping Proxy ---
-  observe({
-    req(data_filtered$mainreactSHS, data_filtered$mainreactind)
-    mainreactSHS <- data_filtered$mainreactSHS
-    mainreactind <- data_filtered$mainreactind
-    
-    # Stop if no data
-    if (nrow(mainreactSHS) == 0 || all(is.na(mainreactSHS$Longitude))) {
-      leafletProxy("SHSMapping") %>% clearMarkers() %>% clearMarkerClusters()
-      return()
-    }
-    
-    values_industry <- paste(strong("SCHOOL INFORMATION"),"<br>School Name:",mainreactSHS$School.Name,"<br>School ID:",mainreactSHS$SchoolID) %>% lapply(htmltools::HTML)
-    values.ind <- paste(mainreactind$Company,"<br>Province:",mainreactind$Province) %>% lapply(htmltools::HTML)
-    
-    leafletProxy("SHSMapping") %>%
-      clearMarkers() %>%
-      clearMarkerClusters() %>%
-      setView(
-        lng = mainreactSHS$Longitude[1],
-        lat = mainreactSHS$Latitude[1],
-        zoom = 7
-      ) %>%
-      # --- SHS Circles (background layer) ---
-      addCircleMarkers(
-        lng = mainreactSHS$Longitude,
-        lat = mainreactSHS$Latitude,
-        radius = 80,
-        color = "black",
-        weight = 1,
-        fillColor = "orange",
-        fillOpacity = 0.5,
-        label = values_industry,
-        labelOptions = labelOptions(
-          noHide = FALSE,
-          textsize = "12px",
-          direction = "top",
-          style = list("border-color" = "rgba(0,0,0,0.5)")
-        ),
-        clusterOptions = markerClusterOptions(disableClusteringAtZoom = 15)
-      ) %>%
-      # --- NEW: AwesomeMarkers above SHS circles ---
-      addAwesomeMarkers(
-        lng = mainreactSHS$Longitude,
-        lat = mainreactSHS$Latitude,
-        icon = makeAwesomeIcon(
-          icon = 'graduation-cap',
-          library = 'fa',
-          markerColor = 'blue',
-          iconColor = 'white'
-        ),
-        label = mainreactSHS$SchoolName, # FIXED: remove ~
-        labelOptions = labelOptions(
-          noHide = FALSE,
-          textsize = "12px",
-          direction = "top"
-        ),
-        clusterOptions = markerClusterOptions(disableClusteringAtZoom = 15)
-      ) %>%
-      # --- Industry markers (cog icons) ---
-      addAwesomeMarkers(
-        clusterOptions = markerClusterOptions(disableClusteringAtZoom = 12),
-        lng = mainreactind$Longitude,
-        lat = mainreactind$Latitude,
-        icon = makeAwesomeIcon(
-          icon = "cog",
-          library = "fa",
-          markerColor = dplyr::case_when(
-            mainreactind$Sector == "Manufacturing and Engineering" ~ "red",
-            mainreactind$Sector == "Hospitality and Tourism" ~ "orange",
-            mainreactind$Sector == "Professional/Private Services" ~ "purple",
-            mainreactind$Sector == "Public Administration" ~ "green",
-            mainreactind$Sector == "Business and Finance" ~ "blue",
-            mainreactind$Sector == "Agriculture and Agri-business" ~ "pink",
-            TRUE ~ "gray"
-          )
-        ),
-        label = values.ind,
-        labelOptions = labelOptions(
-          noHide = FALSE,
-          textsize = "12px",
-          direction = "top"
-        )
-      )
-  })
-  
-  # --- CLMapping Proxy ---
-  observe({
-    req(data_filtered$mainreactCR)
-    mainreactCR <- data_filtered$mainreactCR
-    
-    if (nrow(mainreactCR) == 0 || all(is.na(mainreactCR$Longitude))) {
-      leafletProxy("CLMapping") %>% clearMarkers() %>% clearMarkerClusters()
-      return()
-    }
-    
-    values_classrooom_shortage <- paste(mainreactCR$School.Name,"<br>Total Enrolment:",mainreactCR$Enrolment.2023.2024 ,"<br>Classroom Inventory:", mainreactCR$Instructional.Rooms.2023.2024, "<br>Classroom Shortage:", mainreactCR$Est.CS) %>% lapply(htmltools::HTML)
-    values_classrooom_shortage_popup <- paste(strong("SCHOOL INFORMATION"),"<br>School Name:",mainreactCR$School.Name,"<br>School ID:",mainreactCR$SchoolID,"<br>Enrolment Size:",mainreactCR$TotalEnrolment,"<br>","<br>",strong("CLASSROOM DATA"),"<br>Estimate Classroom Shortage:", mainreactCR$Est.CS,"<br>Type of Ownership:", mainreactCR$OwnershipType,"<br>Shifting:", mainreactCR$Shifting,"<br>Electricity Source:", mainreactCR$ElectricitySource,"<br>Water Source:", mainreactCR$WaterSource) %>% lapply(htmltools::HTML)
-    
-    icons <- awesomeIcons(
-      icon = "university",
-      library = "fa",
-      markerColor = case_when(
-        suppressWarnings(as.numeric(mainreactCR$Est.CS)) > 0 ~ "red",
-        TRUE ~ "green"
-      ),
-      iconColor = "white"
-    )
-    
-    leafletProxy("CLMapping") %>%
-      clearMarkers() %>%
-      clearMarkerClusters() %>%
-      setView(
-        lng = mainreactCR$Longitude[1],
-        lat = mainreactCR$Latitude[1],
-        zoom = 7
-      ) %>%
-      addAwesomeMarkers(
-        clusterOptions = markerClusterOptions(disableClusteringAtZoom = 15),
-        lng = mainreactCR$Longitude,
-        lat = mainreactCR$Latitude,
-        popup = values_classrooom_shortage_popup,
-        options = popupOptions(),
-        label = values_classrooom_shortage,
-        labelOptions = labelOptions(
-          noHide = FALSE,
-          textsize = "12px",
-          direction = "top"
-        ),
-        icon = icons
-      )
-  })
-  
-  # --- AO2Mapping Proxy ---
-  observe({
-    req(data_filtered$mainreactNTP)
-    mainreactNTP <- data_filtered$mainreactNTP
-    
-    if (nrow(mainreactNTP) == 0 || all(is.na(mainreactNTP$Longitude))) {
-      leafletProxy("AO2Mapping") %>% clearMarkers() %>% clearMarkerClusters()
-      return()
-    }
-    
-    values.non_teaching <- mainreactNTP$School.Name %>% lapply(htmltools::HTML)
-    values.non_teaching_popup <- paste(strong("SCHOOL INFORMATION"),"<br>School Name:",mainreactNTP$School.Name,"<br>School ID:",mainreactNTP$SchoolID,"<br>Enrolment Size:",mainreactNTP$TotalEnrolment,"<br>","<br>",strong("TEACHING PERSONNEL DATA"),"<br>Teacher Inventory:", mainreactNTP$TotalTeachers,"<br>Teacher Excess:", mainreactNTP$TeacherExcess,"<br>Teacher Shortage:", mainreactNTP$TeacherShortage,"<br>","<br>",strong("NON-TEACHING PERSONNEL DATA"),"<br>Plantilla Number of AOII:", mainreactNTP$Plantilla.Number,"<br>Clustering Status:", mainreactNTP$Clustering.Status,"<br>PDO I Deployment:", mainreactNTP$PDOI_Deployment) %>% lapply(htmltools::HTML)
-    
-    leafletProxy("AO2Mapping") %>%
-      clearMarkers() %>%
-      clearMarkerClusters() %>%
-      setView(lng = mainreactNTP$Longitude[1], lat = mainreactNTP$Latitude[1], zoom = 7) %>%
-      addAwesomeMarkers(
-        clusterOptions = markerClusterOptions(disableClusteringAtZoom = 15),
-        lng = mainreactNTP$Longitude,
-        lat = mainreactNTP$Latitude,
-        popup = values.non_teaching_popup,
-        options = popupOptions(),
-        label = values.non_teaching,
-        labelOptions = labelOptions(noHide = FALSE, textsize = "12px", direction = "top"),
-        icon = makeAwesomeIcon(
-          icon = "user",
-          library = "fa",
-          markerColor = case_when(
-            mainreactNTP$Clustering.Status %in% c("Dedicated","Clustered") & mainreactNTP$PDOI_Deployment == "With PDO I" ~ "green",
-            mainreactNTP$Clustering.Status %in% c("Dedicated","Clustered") & mainreactNTP$PDOI_Deployment == "Without PDO I" ~ "orange",
-            mainreactNTP$Clustering.Status == "None Deployed" & mainreactNTP$PDOI_Deployment == "With PDO I" ~ "orange",
-            mainreactNTP$Clustering.Status == "None Deployed" & mainreactNTP$PDOI_Deployment == "Without PDO I" ~ "red",
-            TRUE ~ "lightgray"
-          )
-        )
-      )
-  })
-  
-  # --- TeacherShortage_Mapping Proxy ---
-  observe({
-    req(data_filtered$mainreact1)
-    mainreact1 <- data_filtered$mainreact1
-    
-    if (nrow(mainreact1) == 0 || all(is.na(mainreact1$Longitude))) {
-      leafletProxy("TeacherShortage_Mapping") %>% clearMarkers() %>% clearMarkerClusters()
-      return()
-    }
-    
-    values_teacher_shortage <- paste(mainreact1$School.Name,"<br>Teacher Excess:", mainreact1$TeacherExcess,"<br>Teacher Shortage:", mainreact1$TeacherShortage) %>% lapply(htmltools::HTML)
-    values_teacher_shortage_popup <- paste(strong("SCHOOL INFORMATION"),"<br>School Name:",mainreact1$School.Name,"<br>School ID:",mainreact1$SchoolID,"<br>Enrolment Size:",mainreact1$TotalEnrolment,"<br>","<br>",strong("TEACHING PERSONNEL DATA"),"<br>Teacher Inventory:", mainreact1$TotalTeachers,"<br>Teacher Excess:", mainreact1$TeacherExcess,"<br>Teacher Shortage:", mainreact1$TeacherShortage,"<br>","<br>",strong("SPECIALIZATION DATA"),"<br>English:", mainreact1$English,"<br>Mathematics:", mainreact1$Mathematics,"<br>Science:", mainreact1$Science,"<br>Biological Science:", mainreact1$Biological.Sciences,"<br>Physical Sciences:", mainreact1$Physical.Sciences,"<br>General Education:", mainreact1$General.Ed,"<br>Araling Panlipunan:", mainreact1$Araling.Panlipunan,"<br>TLE:", mainreact1$TLE,"<br>MAPEH:", mainreact1$MAPEH,"<br>Filipino:", mainreact1$Filipino,"<br>ESP:", mainreact1$ESP,"<br>Agriculture:", mainreact1$Agriculture,"<br>ECE:", mainreact1$ECE,"<br>SPED:", mainreact1$SPED) %>% lapply(htmltools::HTML)
-    
-    leafletProxy("TeacherShortage_Mapping") %>% 
-      clearMarkers() %>% 
-      clearMarkerClusters() %>% 
-      setView(lng = mainreact1$Longitude[1], lat = mainreact1$Latitude[1], zoom = 7) %>%
-      addAwesomeMarkers(
-        clusterOptions = markerClusterOptions(disableClusteringAtZoom = 15), 
-        lng = mainreact1$Longitude, 
-        lat = mainreact1$Latitude, 
-        popup = values_teacher_shortage_popup, 
-        options = popupOptions(), 
-        label = values_teacher_shortage, 
-        labelOptions = labelOptions(noHide = F, textsize = "12px", direction = "top"), 
-        icon = makeAwesomeIcon(
-          icon = "education", 
-          library = "glyphicon", 
-          markerColor = case_when(
-            mainreact1$TeacherShortage > 0 ~ "red", 
-            mainreact1$TeacherExcess > 0 ~ "blue", 
-            (mainreact1$TeacherExcess == 0 & mainreact1$TeacherShortage == 0) ~ "green", 
-            is.na(mainreact1$TeacherShortage) ~ "gray",
-            TRUE ~ "gray"
-          )
-        )
-      )
-  })
-  
-  # --- FacMapping Proxy ---
-  observe({
-    req(data_filtered$mainreactEFD)
-    mainreactEFD <- data_filtered$mainreactEFD
-    
-    if (nrow(mainreactEFD) == 0 || all(is.na(mainreactEFD$Longitude))) {
-      leafletProxy("FacMapping") %>% clearMarkers() %>% clearControls()
-      return()
-    }
-    
-    values.efdmasterlist <- paste(strong("SCHOOL INFORMATION"),"<br>School Name:",mainreactEFD$School.Name,"<br>School ID:",mainreactEFD$SchoolID,"<br>Category:",mainreactEFD$Category,"<br>Funding Year:",mainreactEFD$FundingYear,"<br>Allocation:",mainreactEFD$Allocation) %>% lapply(htmltools::HTML)
-    
-    color_palette <- colorFactor(
-      palette = c("red", "green", "blue"),
-      domain = mainreactEFD$FundingCategory,
-      levels = levels(mainreactEFD$FundingCategory) # Ensure the order is respected
-    )
-    
-    leafletProxy("FacMapping", data = mainreactEFD) %>%
-      clearMarkers() %>%
-      clearControls() %>%
-      setView(lng = mainreactEFD$Longitude[1], lat = mainreactEFD$Latitude[1], zoom = 7) %>%
-      addAwesomeMarkers(
-        clusterOptions = markerClusterOptions(disableClusteringAtZoom = 15),
-        lng = ~Longitude,
-        lat = ~Latitude,
-        popup = values.efdmasterlist,
-        icon = makeAwesomeIcon(
-          icon = "education",
-          library = "glyphicon",
-          markerColor = case_when(
-            mainreactEFD$FundingCategory == "Before 2025" ~ "red", 
-            mainreactEFD$FundingCategory == "2025-2030" ~ "green", 
-            mainreactEFD$FundingCategory == "After 2030" ~ "blue",
-            TRUE ~ "gray"
-          )
-        )
-      ) %>%
-      addLegend(
-        "bottomright",
-        pal = color_palette,
-        values = ~FundingCategory,
-        title = "Funding Year",
-        opacity = 1
-      )
-  })
-  
-  # --- CongestMapping Proxy ---
-  observe({
-    req(data_filtered$mainreactNTP)
-    mainreactNTP <- data_filtered$mainreactNTP
-    
-    if (nrow(mainreactNTP) == 0 || all(is.na(mainreactNTP$Longitude))) {
-      leafletProxy("CongestMapping") %>% clearMarkers() %>% clearControls()
-      return()
-    }
-    
-    values.congest <- paste(strong("SCHOOL INFORMATION"),"<br>School Name:",mainreactNTP$School.Name,"<br>School ID:",mainreactNTP$SchoolID,"<br>Instructional Rooms (2023-2024):",mainreactNTP$Instructional.Rooms.2023.2024,"<br>Enrolment (2023-2024):",mainreactNTP$Enrolment.2023.2024,"<br>Congestion Index:",mainreactNTP$Congestion.Index) %>% lapply(htmltools::HTML)
-    
-    leafletProxy("CongestMapping", data = mainreactNTP) %>%
-      clearMarkers() %>%
-      clearControls() %>%
-      setView(lng = mainreactNTP$Longitude[1], lat = mainreactNTP$Latitude[1], zoom = 7) %>%
-      addAwesomeMarkers(
-        clusterOptions = markerClusterOptions(disableClusteringAtZoom = 15),
-        lng = ~Longitude,
-        lat = ~Latitude,
-        label = values.congest,
-        icon = makeAwesomeIcon(
-          icon = "education",
-          library = "glyphicon",
-          markerColor = case_when(
-            mainreactNTP$Congestion.Index >= 0 & mainreactNTP$Congestion.Index < 0.5 ~ "green", 
-            mainreactNTP$Congestion.Index >= 0.5 & mainreactNTP$Congestion.Index < 0.75 ~ "orange",
-            mainreactNTP$Congestion.Index >= 0.75 ~ "red",
-            TRUE ~ "gray"
-          )
-        )
-      )
-  })
-  
-  
-  # --- 4. Reactive Expressions for Map-Bound Tables ---
-  # These filter the data based on the user panning/zooming the map.
-  
-  df1 <- reactive({
-    req(data_filtered$mainreactLMS)
-    mainreactLMS <- data_filtered$mainreactLMS
-    
-    if (is.null(input$LMSMapping_bounds)) {
-      mainreactLMS
-    } else {
-      bounds <- input$LMSMapping_bounds
-      latRng <- range(bounds$north, bounds$south)
-      lngRng <- range(bounds$east, bounds$west)
-      
-      subset(mainreactLMS,
-             Latitude >= latRng[1] & Latitude <= latRng[2] & Longitude >= lngRng[1] & Longitude <= lngRng[2])
-    }
-  })
-  
-  dfreact_TS <- reactive({
-    req(data_filtered$mainreact1)
-    mainreact1 <- data_filtered$mainreact1
-    
-    if (is.null(input$TeacherShortage_Mapping_bounds)) {
-      mainreact1
-    } else {
-      bounds <- input$TeacherShortage_Mapping_bounds
-      latRng <- range(bounds$north, bounds$south)
-      lngRng <- range(bounds$east, bounds$west)
-      
-      subset(mainreact1,
-             Latitude >= latRng[1] & Latitude <= latRng[2] & Longitude >= lngRng[1] & Longitude <= lngRng[2])
-    }
-  })
-  
-  Ao21 <- reactive({
-    req(data_filtered$mainreactNTP)
-    mainreactNTP <- data_filtered$mainreactNTP
-    
-    if (is.null(input$AO2Mapping_bounds)) {
-      mainreactNTP
-    } else {
-      bounds <- input$AO2Mapping_bounds
-      latRng <- range(bounds$north, bounds$south)
-      lngRng <- range(bounds$east, bounds$west)
-      
-      subset(mainreactNTP,
-             Latitude >= latRng[1] & Latitude <= latRng[2] & Longitude >= lngRng[1] & Longitude <= lngRng[2])
-    }
-  })
-  
-  dfreact_CL <- reactive({
-    req(data_filtered$mainreactCR)
-    mainreactCR <- data_filtered$mainreactCR
-    
-    if (is.null(input$CLMapping_bounds)) {
-      mainreactCR
-    } else {
-      bounds <- input$CLMapping_bounds
-      latRng <- range(bounds$north, bounds$south)
-      lngRng <- range(bounds$east, bounds$west)
-      
-      subset(mainreactCR,
-             Latitude >= latRng[1] & Latitude <= latRng[2] & Longitude >= lngRng[1] & Longitude <= lngRng[2])
-    }
-  })
-  
-  dfreact_SHS <- reactive({
-    req(data_filtered$mainreactSHS)
-    mainreactSHS <- data_filtered$mainreactSHS
-    
-    if (is.null(input$SHSMapping_bounds)) {
-      mainreactSHS
-    } else {
-      bounds <- input$SHSMapping_bounds
-      latRng <- range(bounds$north, bounds$south)
-      lngRng <- range(bounds$east, bounds$west)
-      
-      subset(mainreactSHS,
-             Latitude >= latRng[1] & Latitude <= latRng[2] & Longitude >= lngRng[1] & Longitude <= lngRng[2])
-    }
-  })
-  
-  dfreact_fac <- reactive({
-    req(data_filtered$mainreactEFD)
-    mainreactEFD <- data_filtered$mainreactEFD
-    
-    if (is.null(input$FacMapping_bounds)) {
-      mainreactEFD
-    } else {
-      bounds <- input$FacMapping_bounds
-      latRng <- range(bounds$north, bounds$south)
-      lngRng <- range(bounds$east, bounds$west)
-      
-      subset(mainreactEFD,
-             Latitude >= latRng[1] & Latitude <= latRng[2] & Longitude >= lngRng[1] & Longitude <= lngRng[2])
-    }
-  })
-  
-  dfreact_cong <- reactive({
-    req(data_filtered$mainreactNTP)
-    mainreactNTP <- data_filtered$mainreactNTP
-    
-    if (is.null(input$CongestMapping_bounds)) {
-      mainreactNTP %>% arrange(desc(Congestion.Index))
-    } else {
-      bounds <- input$CongestMapping_bounds
-      latRng <- range(bounds$north, bounds$south)
-      lngRng <- range(bounds$east, bounds$west)
-      
-      subset(mainreactNTP,
-             Latitude >= latRng[1] & Latitude <= latRng[2] & Longitude >= lngRng[1] & Longitude <= lngRng[2])
-    }
-  })
-  
-  # This was an eventReactive, which is fine to stay as-is and outside.
-  SHS_count_reactive <- eventReactive(input$Mapping_Run, {
-    req(input$resource_map_region) # Make sure this input is available
-    mainvalue <- df %>%
-      filter(Region == input$resource_map_region) %>%
-      filter(Level == "SHS")
-    
-    return(nrow(mainvalue))
-  })
-  
-  
-  # --- 5. DataTable Renderers ---
-  # These now read from the reactive expressions above.
-  
-  # --- Empty Table Function ---
-  # Helper function to show a consistent "No data" message
-  render_empty_dt <- function(message = "No data available based on current selection.") {
-    DT::datatable(
-      data.frame("Message" = message),
-      options = list(dom = 't', scrollX = TRUE),
-      rownames = FALSE
-    )
-  }
-  
-  output$LMSTable <- DT::renderDT({
-    finalLMS <- df1() # Get data from reactive
-    
-    # Handle empty or null data
-    if (is.null(finalLMS) || nrow(finalLMS) == 0) {
-      return(render_empty_dt())
-    }
-    
-    finalLMS <- finalLMS %>%
-      dplyr::mutate(
-        Buildable_space = dplyr::if_else(Buildable_space == 1, "Yes", "No")
-      ) %>%
-      dplyr::select(
-        School_Name,
-        Total_Enrollment,
-        Instructional_Rooms,
-        Estimated_CL_Shortage,
-        Buildable_space
-      ) %>%
-      dplyr::rename(
-        "School Name" = School_Name,
-        "Total Enrolment" = Total_Enrollment,
-        "Classrooms Inventory" = Instructional_Rooms,
-        "Classroom Shortage" = Estimated_CL_Shortage,
-        "Buildable Space" = Buildable_space
-      )
-    
-    DT::datatable(
-      finalLMS,
-      extensions = c("Buttons", "FixedHeader"),
-      options = list(
-        scrollX = TRUE,
-        autoWidth = TRUE,
-        fixedHeader = TRUE,
-        pageLength = 10,
-        dom = 'Bfrtip',
-        buttons = list(
-          list(extend = "csv", exportOptions = list(modifier = list(page = "all"))),
-          list(extend = "excel", exportOptions = list(modifier = list(page = "all"))),
-          list(extend = "pdf", exportOptions = list(modifier = list(page = "all"))),
-          list(extend = "print", exportOptions = list(modifier = list(page = "all")))
-        ),
-        columnDefs = list(list(className = 'dt-center', targets = "_all"))
-      ),
-      filter = 'top',
-      selection = 'single',
-      rownames = FALSE,
-      callback = DT::JS("window.dispatchEvent(new Event('resize'));")
-    )
-  }, server = FALSE)
-  
-  output$TeacherShortage_Table <- DT::renderDT({
-    data_to_display <- dfreact_TS()
-    
-    if (is.null(data_to_display) || nrow(data_to_display) == 0) {
-      return(render_empty_dt())
-    }
-    
-    data_to_display <- data_to_display %>%
-      select(School.Name, TeacherShortage, TeacherExcess) %>%
-      rename(
-        "School" = School.Name,
-        "Shortage" = TeacherShortage,
-        "Excess" = TeacherExcess
-      )
-    
-    DT::datatable(
-      data_to_display,
-      extensions = c("Buttons", "FixedHeader"),
-      options = list(
-        scrollX = TRUE,
-        autoWidth = TRUE,
-        fixedHeader = TRUE,
-        pageLength = 10,
-        dom = 'Bfrtip',
-        destroy = TRUE,
-        buttons = list(
-          list(extend = "csv", exportOptions = list(modifier = list(page = "all"))),
-          list(extend = "excel", exportOptions = list(modifier = list(page = "all"))),
-          list(extend = "pdf", exportOptions = list(modifier = list(page = "all"))),
-          list(extend = "print", exportOptions = list(modifier = list(page = "all")))
-        ),
-        columnDefs = list(list(className = 'dt-center', targets = "_all"))
-      ),
-      filter = 'top',
-      selection = 'multiple',
-      rownames = FALSE
-    )
-  }, server = FALSE)
-  
-  output$AO2Table <- DT::renderDT({
-    data_to_display <- Ao21()
-    
-    if (is.null(data_to_display) || nrow(data_to_display) == 0) {
-      return(render_empty_dt())
-    }
-    
-    data_to_display <- data_to_display %>% 
-      select("School.Name","Clustering.Status","PDOI_Deployment") %>% 
-      rename("School" = School.Name, "AO II Deployment" = Clustering.Status, "PDOI Deployment" = PDOI_Deployment)
-    
-    datatable(
-      data_to_display, 
-      rownames = FALSE, 
-      filter = 'top', 
-      options = list(
-        scrollX = TRUE, 
-        columnDefs = list(list(className = 'dt-center', targets ="_all")), 
-        dom = 'Bfrtip', 
-        buttons = list('csv','excel','pdf','print')
-      )
-    )
-  })
-  
-  output$CLTable <- DT::renderDT({
-    data_to_display <- dfreact_CL()
-    
-    if (is.null(data_to_display) || nrow(data_to_display) == 0) {
-      return(render_empty_dt())
-    }
-    
-    data_to_display <- data_to_display %>% 
-      select("School.Name","Enrolment.2023.2024","Instructional.Rooms.2023.2024","Est.CS","Buidable_space") %>% 
-      rename("School" = School.Name, "Total Enrolment" = Enrolment.2023.2024, "Classroom Inventory" = Instructional.Rooms.2023.2024, "Estimate Classroom Shortage" = Est.CS, "Buildable Space" = Buidable_space)
-    
-    datatable(
-      data_to_display, 
-      filter = 'top', 
-      options = list(
-        scrollX = TRUE,
-        scrollY= "300px", 
-        columnDefs = list(list(className = 'dt-center', targets ="_all")), 
-        rownames = FALSE, 
-        dom = 'Bfrtip', 
-        buttons = list('csv','excel','pdf','print')
-      )
-    )
-  }, server = FALSE)
-  
-  output$SHSListTable <- DT::renderDT({
-    data_to_display <- dfreact_SHS()
-    
-    if (is.null(data_to_display) || nrow(data_to_display) == 0) {
-      return(render_empty_dt())
-    }
-    
-    data_to_display <- data_to_display %>%
-      select(School.Name, TotalEnrolment) %>%
-      rename(
-        "School" = School.Name,
-        "Total Enrolment" = TotalEnrolment
-      )
-    
-    DT::datatable(
-      data_to_display,
-      extensions = c("Buttons", "FixedHeader"),
-      options = list(
-        scrollX = TRUE,
-        autoWidth = TRUE,
-        fixedHeader = TRUE,
-        pageLength = 5,
-        dom = 'Bfrtip',
-        buttons = list(
-          list(extend = "csv", exportOptions = list(modifier = list(page = "all"))),
-          list(extend = "excel", exportOptions = list(modifier = list(page = "all"))),
-          list(extend = "pdf", exportOptions = list(modifier = list(page = "all"))),
-          list(extend = "print", exportOptions = list(modifier = list(page = "all")))
-        ),
-        columnDefs = list(list(className = 'dt-center', targets = "_all"))
-      ),
-      filter = 'top',
-      selection = 'single',
-      rownames = FALSE
-    )
-  }, server = FALSE)
-  
-  output$FacTable <- DT::renderDT({
-    data_to_display <- dfreact_fac()
-    
-    if (is.null(data_to_display) || nrow(data_to_display) == 0) {
-      return(render_empty_dt())
-    }
-    
-    data_to_display <- data_to_display %>%
-      arrange(FundingYear) %>%
-      select(Region, Division, School.Name, FundingYear, Allocation) %>%
-      rename(
-        "School" = School.Name,
-        "Funding Year" = FundingYear
-      )
-    
-    DT::datatable(
-      data_to_display,
-      extensions = c("Buttons", "FixedHeader"),
-      options = list(
-        scrollX = TRUE,
-        autoWidth = TRUE,
-        fixedHeader = TRUE,
-        pageLength = 10,
-        dom = 'Bfrtip',
-        buttons = list(
-          list(extend = "csv", exportOptions = list(modifier = list(page = "all"))),
-          list(extend = "excel", exportOptions = list(modifier = list(page = "all"))),
-          list(extend = "pdf", exportOptions = list(modifier = list(page = "all"))),
-          list(extend = "print", exportOptions = list(modifier = list(page = "all")))
-        ),
-        columnDefs = list(list(className = 'dt-center', targets = "_all"))
-      ),
-      filter = 'top',
-      selection = 'single',
-      rownames = FALSE
-    )
-  }, server = FALSE)
-  
-  output$CongestTable <- DT::renderDT({
-    data_to_display <- dfreact_cong()
-    
-    if (is.null(data_to_display) || nrow(data_to_display) == 0) {
-      return(render_empty_dt())
-    }
-    
-    data_to_display <- data_to_display %>%
-      select(Region, Division, School.Name, Instructional.Rooms.2023.2024, Enrolment.2023.2024, Congestion.Index) %>%
-      rename(
-        "School" = School.Name,
-        "Instructional Rooms" = Instructional.Rooms.2023.2024,
-        "Total Enrolment" = Enrolment.2023.2024,
-        "Congestion Index" = Congestion.Index
-      )
-    
-    datatable(
-      data_to_display,
-      extensions = c("Buttons", "FixedHeader"),
-      options = list(
-        scrollX = TRUE,
-        autoWidth = TRUE,
-        fixedHeader = TRUE,
-        pageLength = 10,
-        dom = 'Bfrtip',
-        buttons = list(
-          list(extend = "csv", exportOptions = list(modifier = list(page = "all"))),
-          list(extend = "excel", exportOptions = list(modifier = list(page = "all"))),
-          list(extend = "pdf", exportOptions = list(modifier = list(page = "all"))),
-          list(extend = "print", exportOptions = list(modifier = list(page = "all")))
-        ),
-        columnDefs = list(list(className = 'dt-center', targets = "_all"))
-      ),
-      filter = 'top',
-      selection = 'multiple',
-      rownames = FALSE
-    )
-  })
-  
-  
-  # --- 6. ValueBox Renderers ---
-  # These now read from data_filtered and are wrapped in req()
-  
-  output$a <- renderValueBox({
-    req(data_filtered$RegRCT, data_filtered$SDORCT1)
-    valueBox(tags$p(strong(SDO[which(SDO$Region==data_filtered$RegRCT & SDO$Division==data_filtered$SDORCT1),"FillUpRate"]), style = "font-family: Poppins; font-size: 20px; color: #111111; text-align: center;"), subtitle = NULL)
-  })
-  
-  output$b <- renderValueBox({
-    req(data_filtered$RegRCT, data_filtered$SDORCT1)
-    valueBox(tags$p(strong(SDO[which(SDO$Region==data_filtered$RegRCT & SDO$Division==data_filtered$SDORCT1),"Unfilled"]), style = "font-family: Poppins; font-size: 20px; color: #111111; text-align: center;"), subtitle = NULL)
-  })
-  
-  output$e <- renderValueBox({
-    req(data_filtered$SDONetShortage)
-    value <- if (nrow(data_filtered$SDONetShortage) > 0) data_filtered$SDONetShortage$NetShortage else 0
-    valueBox(tags$p(strong(value), style = "font-family: Poppins; font-size: 20px; color: #111111; text-align: center;"), subtitle = NULL)
-  })
-  
-  output$c <- renderValueBox({
-    # This depends on the map-bound reactive df1()
-    req(df1())
-    valueBox(tags$p(strong(sum(df1()$TeacherExcess, na.rm = TRUE)), style = "font-size: 65%;"), subtitle = NULL)
-  })
-  
-  output$d <- renderValueBox({
-    # This was static, so it can just be rendered
-    valueBox(tags$p(strong("-"), style = "font-size: 65%;"), subtitle = NULL)
-  })
-  
-  output$f <- renderValueBox({
-    req(data_filtered$RegRCT)
-    valueBox(tags$p(strong(SDO[which(SDO$Division==data_filtered$RegRCT),"FillUpRate"]), style = "font-family: Poppins; font-size: 20px; color: #111111; text-align: center;"), subtitle = NULL)
-  })
-  
-  output$g <- renderValueBox({
-    req(data_filtered$RegRCT)
-    valueBox(tags$p(strong(SDO[which(SDO$Division==data_filtered$RegRCT),"Unfilled"]), style = "font-family: Poppins; font-size: 20px; color: #111111; text-align: center;"), subtitle = NULL)
-  })
-  
-  output$Single <- renderValueBox({
-    req(data_filtered$mainreactdiv)
-    valueBox(strong(sum(data_filtered$mainreactdiv$Clustering.Status == "NOT CLUSTERED", na.rm = TRUE)), subtitle = strong("Number of Unclustered Schools (Division)"), icon = icon("users"), color = "green")
-  })
-  
-  output$Cluster <- renderValueBox({
-    req(data_filtered$mainreactdiv)
-    valueBox(strong(sum(data_filtered$mainreactdiv$Clustering.Status == "CLUSTERED", na.rm = TRUE)), subtitle = strong("Number of Clustered Schools (Division)"), icon = icon("school"), color = "green")
-  })
-  
-  output$Outlier <- renderValueBox({
-    req(data_filtered$mainreactdiv)
-    valueBox(strong(sum(data_filtered$mainreactdiv$Clustering.Status == "Outlier", na.rm = TRUE)), subtitle = strong("Number of Outlier Schools (Division)"), icon = icon("school"), color = "green")
-  })
-  
-  output$SingleR <- renderValueBox({
-    req(data_filtered$mainreactreg)
-    valueBox(strong(sum(data_filtered$mainreactreg$Clustering.Status == "NOT CLUSTERED", na.rm = TRUE)), subtitle = strong("Number of Unclustered Schools (Region)"), icon = icon("users"), color = "navy")
-  })
-  
-  output$ClusterR <- renderValueBox({
-    req(data_filtered$mainreactreg)
-    valueBox(strong(sum(data_filtered$mainreactreg$Clustering.Status == "CLUSTERED", na.rm = TRUE)), subtitle = strong("Number of Clustered Schools (Region)"), icon = icon("school"), color = "navy")
-  })
-  
-  output$OutlierR <- renderValueBox({
-    req(data_filtered$mainreactreg)
-    valueBox(strong(sum(data_filtered$mainreactreg$Clustering.Status == "Outlier", na.rm = TRUE)), subtitle = strong("Number of Outlier Schools (Region)"), icon = icon("school"), color = "navy")
-  })
-  
-  output$f2 <- renderValueBox({
-    req(data_filtered$mainreactreg)
-    valueBox(tags$p(strong(sum(data_filtered$mainreactreg$Clustering.Status == "Clustered", na.rm = TRUE)), style = "font-family: Poppins; font-size: 20px; color: #111111; text-align: center;"), subtitle = NULL)
-  })
-  
-  output$g2 <- renderValueBox({
-    req(data_filtered$mainreactreg)
-    valueBox(tags$p(strong(sum(data_filtered$mainreactreg$Clustering.Status == "Dedicated", na.rm = TRUE)), style = "font-family: Poppins; font-size: 20px; color: #111111; text-align: center;"), subtitle = NULL)
-  })
-  
-  output$a2 <- renderValueBox({
-    req(data_filtered$mainreactdiv)
-    valueBox(tags$p(strong(sum(data_filtered$mainreactdiv$Clustering.Status == "Clustered", na.rm = TRUE)), style = "font-family: Poppins; font-size: 20px; color: #111111; text-align: center;"), subtitle = NULL)
-  })
-  
-  output$b2 <- renderValueBox({
-    req(data_filtered$mainreactdiv)
-    valueBox(tags$p(strong(sum(data_filtered$mainreactdiv$Clustering.Status == "Dedicated", na.rm = TRUE)), style = "font-family: Poppins; font-size: 20px; color: #111111; text-align: center;"), subtitle = NULL)
-  })
-  
-  output$e2 <- renderValueBox({
-    req(data_filtered$mainreactNTP)
-    valueBox(tags$p(strong(sum(data_filtered$mainreactNTP$Clustering.Status == "Clustered", na.rm = TRUE)), style = "font-family: Poppins; font-size: 20px; color: #111111; text-align: center;"), subtitle = NULL)
-  })
-  
-  output$h2 <- renderValueBox({
-    req(data_filtered$mainreactNTP)
-    valueBox(tags$p(strong(sum(data_filtered$mainreactNTP$Clustering.Status == "Dedicated", na.rm = TRUE)), style = "font-family: Poppins; font-size: 20px; color: #111111; text-align: center;"), subtitle = NULL)
-  })
-  
-  output$ROCRShort <- renderValueBox({
-    req(data_filtered$mainreactCRreg)
-    valueBox(tags$p(strong(sum(data_filtered$mainreactCRreg$Estimated_CL_Shortage, na.rm = TRUE)), style = "font-family: Poppins; font-size: 20px; color: #111111; text-align: center;"), subtitle = NULL)
-  })
-  
-  output$SDOCRShort <- renderValueBox({
-    req(data_filtered$mainreactCRdiv)
-    valueBox(tags$p(strong(sum(data_filtered$mainreactCRdiv$Estimated_CL_Shortage, na.rm = TRUE)), style = "font-family: Poppins; font-size: 20px; color: #111111; text-align: center;"), subtitle = NULL)
-  })
-  
-  output$LMS_Total_Region <- renderValueBox({
-    req(data_filtered$mainreactLMSreg)
-    total_region_lms <- nrow(data_filtered$mainreactLMSreg)
-    valueBox(
-      tags$p(
-        strong(scales::comma(total_region_lms)),
-        style = "font-family: Poppins; font-size: 20px; color: #111111; text-align: center;"),
-      subtitle = NULL
-    )
-  })
-  
-  output$LMS_Total_Division <- renderValueBox({
-    req(data_filtered$mainreactLMSdiv)
-    total_division_lms <- nrow(data_filtered$mainreactLMSdiv)
-    valueBox(
-      tags$p(
-        strong(scales::comma(total_division_lms)),
-        style = "font-family: Poppins; font-size: 20px; color: #111111; text-align: center;"),
-      subtitle = NULL
-    )
-  })
-  
-  output$SHSCount <- renderValueBox({
-    req(data_filtered$mainreactSHS)
-    valueBox(tags$p(strong(nrow(data_filtered$mainreactSHS)), style = "font-size: 100%; text-align: center;"), subtitle = NULL)
-  })
-  
-  output$SHSCountUniv <- renderValueBox({
-    # This one depends on the eventReactive
-    valueBox(tags$p(strong(SHS_count_reactive()), style = "font-size: 100%; text-align: center;"), subtitle = NULL)
-  })
-  
-  output$IndCount <- renderValueBox({
-    req(data_filtered$mainreactind)
-    valueBox(tags$p(strong(nrow(data_filtered$mainreactind)), style = "font-size: 100%; text-align: center;"), subtitle = NULL)
-  })
-  
-  
-  # --- 7. UI Renderers ---
-  
-  output$assessmentSHS <- renderUI({
-    req(data_filtered$RegRCT, data_filtered$mainreactSHS, data_filtered$mainreactind)
-    
-    RegRCT <- data_filtered$RegRCT
-    mainreactSHS <- data_filtered$mainreactSHS
-    mainreactind <- data_filtered$mainreactind
-    
-    p(HTML(paste(
-      strong(RegRCT),"has",strong(nrow(mainreactSHS)),"senior high schools and a total of ",
-      strong(nrow(mainreactind)),"industries composed of",
-      strong(sum(mainreactind$Sector == "Food Establishments", na.rm = TRUE)),"industries on Food Establishments, ",
-      strong(sum(mainreactind$Sector == "Professional/Private Services", na.rm = TRUE)),"industries on Professional/Private Services, ",
-      strong(sum(mainreactind$Sector == "Transportation", na.rm = TRUE)),"industries on Transportation, ",
-      strong(sum(mainreactind$Sector == "Utilities", na.rm = TRUE)),"industries on Utilities",", and",
-      strong(sum(mainreactind$Sector == "Retail", na.rm = TRUE)),"industries on Retail"
-    )), style = "font-family: Century Gothic; font-size: 15px; color: #111111;")
   })
   
   observeEvent(input$LMSTable_rows_selected, {
@@ -17720,8 +14906,7 @@ server <- function(input, output, session) {
     SDORCT1 <- input$Resource_SDO
     
     mainreactLMS <- LMS %>%
-      filter(LMS == 1) %>%   # Step 1: LMS only
-      left_join(uni %>% select(SchoolID,Latitude,Longitude), by = c("School_ID" = "SchoolID")) %>%   # Step 2: lat/long
+      filter(LMS == 1) %>%
       left_join(buildablecsv %>% select(SCHOOL.ID,OTHER.REMARKS..Buildable.Space..), by = c("School_ID" = "SCHOOL.ID")) %>% 
       filter(Region == RegRCT) %>% filter(Division == SDORCT1)
     
