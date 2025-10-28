@@ -539,9 +539,7 @@ body.show-header-footer .app-footer { display: block !important; /* Or flex, dep
         scroll-behavior: smooth
     }
     
-<<<<<<< HEAD
-    
-=======
+
 /* ==== FIX: RESOURCE TYPE RADIO BUTTON ALIGNMENT ==== */
 #resource_type_selection {
   text-align: left !important;
@@ -570,4 +568,3 @@ body.show-header-footer .app-footer { display: block !important; /* Or flex, dep
 }
     
 
->>>>>>> 2bc1cf0d441e62950dfbadd179105bbcda83ff49
