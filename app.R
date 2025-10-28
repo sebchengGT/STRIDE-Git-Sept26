@@ -2909,9 +2909,11 @@ server <- function(input, output, session) {
     navbar_title_ui <- tags$a(
       class = "navbar-brand d-flex align-items-center me-auto",
       href = "#",
-      tags$img(src = "logo3.png", height = "65px", style = "margin-right: 9px; padding-top: 9px;"),
+      tags$img(src = "logo3.png", height = "87px", style = "margin-right: 9px;
+    margin-left: 20px;
+    margin-top: 20px;"),
       tags$div(
-        tags$img(src = "Stridelogo1.png", height = "50px", style = "margin-right: 9px; padding-top: 9px;"),
+        tags$img(src = "Stridelogo1.png", height = "74px", style = "margin-right: 9px; padding-top: 9px;"),
         tags$small("Strategic Inventory for Deployment Efficiency", style = "font-size: 17px; color: ##ffb81c; display: block; line-height: 1;")
       )
     ) # End of navbar_title_ui tags$a
@@ -2934,7 +2936,7 @@ server <- function(input, output, session) {
         position: sticky !important;
         position: -webkit-sticky !important; /* Safari */
         top: 0px !important;                 /* Stick to the very top */
-        z-index: 9999 !important;
+        z-index: 4 !important;
         background-color: #ffffff !important; /* White background */
         box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15) !important; /* Shadow */
         padding-top: 0.5rem !important;
