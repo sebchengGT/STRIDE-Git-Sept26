@@ -194,27 +194,27 @@ ui <- page_fluid(
   ),
   
   # Header (always visible)
-  shinyjs::hidden(
-    # --- Government-style Top Header ---
-    tags$div(
-      id = "app_header",
-      class = "app-header",
-      style = "display: flex; align-items: center; gap: 15px; justify-content: center;",
-      
-      # Left logo
-      tags$img(src = "logo3.png", class = "header-logo-left"),
-      
-      # Center text
-      tags$div(
-        class = "header-title",
-        h2("DepEd STRIDE"),
-        p("Strategic Inventory for Deployment Efficiency")
-      ),
-      
-      # Right logo
-      tags$img(src = "HROD LOGO1.png", class = "header-logo-right")
-    )
-  ),
+  # shinyjs::hidden(
+  #   # --- Government-style Top Header ---
+  #   tags$div(
+  #     id = "app_header",
+  #     class = "app-header",
+  #     style = "display: flex; align-items: center; gap: 15px; justify-content: center;",
+  #     
+  #     # Left logo
+  #     tags$img(src = "logo3.png", class = "header-logo-left"),
+  #     
+  #     # Center text
+  #     tags$div(
+  #       class = "header-title",
+  #       h2("DepEd STRIDE"),
+  #       p("Strategic Inventory for Deployment Efficiency")
+  #     ),
+  #     
+  #     # Right logo
+  #     tags$img(src = "HROD LOGO1.png", class = "header-logo-right")
+  #   )
+  # ),
   
   
   
@@ -2895,9 +2895,31 @@ server <- function(input, output, session) {
     )
   })
   
+  # Inside server function in Stride1.txt
+
+  # Inside server function in Stride1.txt
+  
+  # Inside server function in Stride1.txt
+  
+  # Inside server function in Stride1.txt
+  
   output$STRIDE2 <- renderUI({
+    
+    # --- Define the Title/Brand UI Element ---
+    navbar_title_ui <- tags$a(
+      class = "navbar-brand d-flex align-items-center me-auto",
+      href = "#",
+      tags$img(src = "logo3.png", height = "65px", style = "margin-right: 9px; padding-top: 9px;"),
+      tags$div(
+        tags$img(src = "Stridelogo1.png", height = "50px", style = "margin-right: 9px; padding-top: 9px;"),
+        tags$small("Strategic Inventory for Deployment Efficiency", style = "font-size: 17px; color: ##ffb81c; display: block; line-height: 1;")
+      )
+    ) # End of navbar_title_ui tags$a
+    
+    # --- Build the page_navbar ---
     page_navbar(
-      # no title, just the nav items
+      id = "STRIDE2_navbar",
+      title = navbar_title_ui,
       
       theme = bs_theme(
         version = 5,
@@ -2906,665 +2928,152 @@ server <- function(input, output, session) {
         base_font = font_google("Poppins")
       ) |> bs_add_rules(
         "
-    /* Ensure nav links remain bold */
-    .nav-tabs .nav-link,
-    .nav-pills .nav-link,
-    .accordion-button {
-      font-weight: bold;
-    }
+      /* --- Make Navbar Sticky at the Top --- */
+      .bslib-navbar,
+      .navbar {
+        position: sticky !important;
+        position: -webkit-sticky !important; /* Safari */
+        top: 0px !important;                 /* Stick to the very top */
+        z-index: 9999 !important;
+        background-color: #ffffff !important; /* White background */
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15) !important; /* Shadow */
+        padding-top: 0.5rem !important;
+        padding-bottom: 0.5rem !important;
+        border-bottom: 2px solid #dee2e6 !important; /* Add a subtle gray line */
+      }
 
-    /* Hide the top-level tabs of the main content area for 'page' navigation */
-    .card .nav-tabs {
-      display: none;
-    }
-    .card .card-header.bg-body-secondary ~ .tab-content {
-      border-top: none; /* Remove extra border if card-header is used for main content */
-    }
+      /* --- Style the Brand/Title Area --- */
+      .navbar-brand { padding-top: 0; padding-bottom: 0; }
+      .navbar-brand span { color: #003366 !important; text-shadow: 1px 1px 1px rgba(0,0,0,0.1); }
+      .navbar-brand small { color: #495057 !important; }
 
-    /* Custom rule for the main sidebar title */
-    .sidebar-title {
-      color: #002D62; /* DepEd Blue */
-      font-weight: bold;
-    }
+      /* --- Style Navigation Links --- */
+      .navbar-nav .nav-link {
+        color: #003366 !important; font-weight: 500;
+        padding-left: 1rem !important; padding-right: 1rem !important;
+        transition: color 0.2s ease, background-color 0.2s ease;
+      }
+      .navbar-nav .nav-link:hover,
+      .navbar-nav .nav-link:focus {
+        color: #0056b3 !important; background-color: rgba(0, 51, 102, 0.05); border-radius: 4px;
+      }
 
-    /* Custom rule for card headers within the sidebar */
-    .card-header {
-      background-color: #e6f0ff; /* Very light blue, subtle background */
-      color: #002D62; /* DepEd Blue for text */
-      border-bottom: 1px solid #cce0ff; /* Slightly darker light blue border */
-    }
+      /* --- Style Active Navigation Link --- */
+      .navbar-nav .nav-link.active {
+        color: #D62828 !important; font-weight: 700;
+        border-bottom: 3px solid #D62828; background-color: transparent !important;
+      }
 
-    /* Ensure other h4 elements in sidebar (like Data Toggles) also use DepEd Blue */
-    .sidebar h4 {
-      color: #002D62; /* DepEd Blue */
-      font-weight: bold;
-    }
-    "
-      ),
-      
-      #data explorer css 
-      
-      #       tags$head(
-      #         tags$style(HTML("
-      # /* === FINAL FIX: Consistent Bootstrap-select picker design === */
-      # 
-      # /* --- Text wrapping and internal spacing --- */
-      # .bootstrap-select .dropdown-menu li a span.text {
-      #   white-space: normal !important;
-      #   word-break: break-word !important;
-      #   display: inline-block !important;
-      #   overflow-wrap: anywhere !important;
-      #   line-height: 1.3em !important;
-      #   padding-right: 10px !important;
-      #   max-width: 100% !important;
-      # }
-      # 
-      # /* --- Scroll area for dropdown content --- */
-      # .bootstrap-select .dropdown-menu.inner.show {
-      #   padding-bottom: 0 !important;
-      #   margin-bottom: 0 !important;
-      #   max-height: none !important;
-      #   overflow-y: auto !important;
-      # }
-      # 
-      # /* --- Dropdown menu box consistency --- */
-      # .bootstrap-select .dropdown-menu {
-      #   min-width: 100% !important;      /* Make all dropdowns same width as picker */
-      #   width: 100% !important;
-      #   white-space: normal !important;
-      #   border-radius: 6px !important;
-      #   box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
-      #   padding-bottom: 0 !important;
-      #   overflow: visible !important;
-      #   max-height: none !important;
-      # }
-      # 
-      # /* --- Picker button (main visible area) --- */
-      # .bootstrap-select .dropdown-toggle {
-      #   width: 100% !important;
-      #   background-color: #f2f2f2 !important;
-      #   color: #333 !important;
-      #   border: 1px solid #ccc !important;
-      #   border-radius: 6px !important;
-      #   text-align: left !important;
-      #   padding: 6px 10px !important;
-      #   font-size: 14px !important;
-      #   font-weight: 400 !important;
-      # }
-      # 
-      # /* --- Ensure dropdown opens BELOW picker --- */
-      # .bootstrap-select.dropup .dropdown-menu,
-      # .bootstrap-select:not(.dropup) .dropdown-menu {
-      #   top: 100% !important;
-      #   bottom: auto !important;
-      #   transform: none !important;
-      # }
-      # 
-      # /* --- Clean hover for navbar dropdowns (still included) --- */
-      # .navbar .dropdown-menu > li > a:hover,
-      # .bslib-navbar .dropdown-menu > li > a:hover {
-      #   background-color: #2c3895 !important;
-      #   color: white !important;
-      # }
-      # 
-      # /* --- Scrollbar styling for long dropdowns --- */
-      # .bootstrap-select .dropdown-menu.inner::-webkit-scrollbar {
-      #   width: 8px;
-      # }
-      # 
-      # .bootstrap-select .dropdown-menu.inner::-webkit-scrollbar-thumb {
-      #   background-color: rgba(0, 0, 0, 0.2);
-      #   border-radius: 4px;
-      # }
-      # 
-      # .bootstrap-select .dropdown-menu.inner::-webkit-scrollbar-thumb:hover {
-      #   background-color: rgba(0, 0, 0, 0.35);
-      # }
-      # 
-      # /* --- Consistent picker height and spacing --- */
-      # .bootstrap-select {
-      #   width: 100% !important;
-      #   margin-bottom: 10px !important;
-      # }
-      # 
-      # .bootstrap-select .filter-option-inner-inner {
-      #   text-overflow: ellipsis !important;
-      #   overflow: hidden !important;
-      #   white-space: nowrap !important;
-      # }
-      # 
-      # /* --- Prevent dropdown from cutting off --- */
-      # .bootstrap-select .dropdown-menu.show {
-      #   z-index: 9999 !important;
-      # }
-      # 
-      #   "))
-      #       )
-      #       ,
+      /* --- Style Dropdown Menus --- */
+      .dropdown-menu { border: none !important; box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important; border-radius: 0 0 8px 8px !important; }
+      .dropdown-item { color: #003366 !important; font-weight: 500; }
+      .dropdown-item:hover, .dropdown-item:focus { background-color: rgba(0, 51, 102, 0.08) !important; color: #0056b3 !important; }
+
+      /* --- Ensure Right Alignment of Nav Items --- */
+      .navbar-collapse { justify-content: flex-end !important; }
+      .navbar-nav { margin-left: auto; }
+
+      /* Include other specific rules if needed */
+      .nav-tabs .nav-link, .nav-pills .nav-link, .accordion-button { font-weight: bold; }
+      .sidebar-title { color: #002D62; font-weight: bold; }
+      .sidebar h4 { color: #002D62; font-weight: bold; }
+
+      " # End of CSS string
+      ), # End of bs_add_rules
       nav_spacer(),
+      
+      # --- Navigation Panels and Menus ---
       nav_panel(
         title = tags$b("Home"),
         icon = bs_icon("house-door-fill"),
-        
-        useShinyjs(),  # still needed for interactivity
-        
-        
-        tags$head(
-          tags$style(HTML("
-      /* --- DEPED COLOR THEME --- */
-      :root {
-        --deped-blue: #003366;
-        --deped-gold: #FFB81C;
-        --deped-light: #f4f6fa;
-        --deped-white: #ffffff;
-      }
-
-      /* --- PAGE LAYOUT --- */
-      body, html {
-        height: 100%;
-        margin: 0;
-        background: var(--deped-light);
-        overflow-y: auto !important;
-        overflow-x: hidden;
-      }
-
-      .layout_erdb {
-        display: flex;
-        min-height: 100vh;
-        background: var(--deped-light);
-      }
-
-      /* --- SIDEBAR --- */
-      .sidebar_erdb {
-        width: 260px;
-        background: var(--deped-blue);
-        color: var(--deped-white);
-        padding: 20px;
-        border-radius: 0 12px 12px 0;
-        box-shadow: 2px 0 8px rgba(0,0,0,0.15);
-        position: sticky;
-        top: 0;
-        height: 100vh;
-        flex-shrink: 0;
-      }
-
-      .sidebar_erdb h4 {
-        color: var(--deped-gold);
-        font-weight: 700;
-        text-align: center;
-        margin-bottom: 20px;
-      }
-
-      /* --- SIDEBAR BUTTONS --- */
-      .btn-card {
-        background: rgba(255,255,255,0.1);
-        border: 1px solid rgba(255,255,255,0.15);
-        color: var(--deped-white);
-        border-radius: 10px;
-        text-align: left;
-        padding: 12px 16px;
-        display: flex;
-        align-items: center;
-        width: 100%;
-        transition: all 0.2s ease-in-out;
-      }
-
-      .btn-card:hover, .btn-card:focus {
-        background: var(--deped-gold) !important;
-        color: var(--deped-blue) !important;
-        transform: scale(1.02);
-        box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-      }
-
-      .btn-card h5 {
-        display: inline-block;
-        margin-left: 8px;
-        font-size: 1.05rem;
-        font-weight: 600;
-      }
-
-      /* --- MAIN CONTENT --- */
-      .main-content-erdb {
-        flex-grow: 1;
-        padding: 25px;
-        background: var(--deped-light);
-        overflow-x: hidden;
-      }
-
-      /* --- CARD STYLING --- */
-      .card {
-        border-radius: 12px;
-        border: none;
-        box-shadow: 0 3px 8px rgba(0,0,0,0.1);
-        background-color: var(--deped-white);
-        margin-bottom: 20px;
-      }
-
-      .card-header {
-        background-color: var(--deped-blue);
-        color: var(--deped-white);
-        font-weight: 600;
-        font-size: 1.05rem;
-        border-radius: 12px 12px 0 0;
-      }
-
-      /* --- GLOBAL SCROLLBAR --- */
-      ::-webkit-scrollbar {
-        width: 10px;
-      }
-      ::-webkit-scrollbar-thumb {
-        background: var(--deped-gold);
-        border-radius: 10px;
-      }
-      ::-webkit-scrollbar-track {
-        background: var(--deped-light);
-      }
-    "))
-        ),
-        
-        # --- MAIN LAYOUT ---
-        div(
-          class = "layout_erdb",
-          
-          # --- SIDEBAR ---
+        value = "home_tab",
+        # <<<--- PASTE YOUR HOME PAGE UI CODE (tagList) HERE --->>>
+        tagList(
+          useShinyjs(),  # Still needed here for this panel's interactivity
+          tags$head(
+            tags$style(HTML("
+            /* --- DEPED COLOR THEME --- */
+            :root { --deped-blue: #003366; --deped-gold: #FFB81C; --deped-light: #f4f6fa; --deped-white: #ffffff; } /* source: 184 */
+            /* --- PAGE LAYOUT (might conflict slightly with body rules, review if needed) --- */
+            /* body, html { height: 100%; margin: 0; background: var(--deped-light); overflow-y: auto !important; overflow-x: hidden; } */ /* Commented out body/html rules as they might conflict */ /* source: 184 */
+            .layout_erdb { display: flex; min-height: calc(100vh - 60px); /* Adjust height based on navbar */ background: var(--deped-light); } /* source: 184 */
+            /* --- SIDEBAR --- */
+            .sidebar_erdb { width: 260px; background: var(--deped-blue); color: var(--deped-white); padding: 20px; border-radius: 0 12px 12px 0; box-shadow: 2px 0 8px rgba(0,0,0,0.15); position: sticky; top: 60px; /* Adjust top based on navbar height */ height: calc(100vh - 60px); /* Adjust height based on navbar height */ flex-shrink: 0; overflow-y: auto; } /* source: 185 */
+            .sidebar_erdb h4 { color: var(--deped-gold); font-weight: 700; text-align: center; margin-bottom: 20px; } /* source: 185 */
+            /* --- SIDEBAR BUTTONS --- */
+            .btn-card { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.15); color: var(--deped-white); border-radius: 10px; text-align: left; padding: 12px 16px; display: flex; align-items: center; width: 100%; transition: all 0.2s ease-in-out; } /* source: 185 */
+            .btn-card:hover, .btn-card:focus { background: var(--deped-gold) !important; color: var(--deped-blue) !important; transform: scale(1.02); box-shadow: 0 4px 10px rgba(0,0,0,0.2); } /* source: 185 */
+            .btn-card h5 { display: inline-block; margin-left: 8px; font-size: 1.05rem; font-weight: 600; } /* source: 186 */
+            /* --- MAIN CONTENT --- */
+            .main-content-erdb { flex-grow: 1; padding: 25px; background: var(--deped-light); overflow-x: hidden; } /* source: 186 */
+            /* --- CARD STYLING (General - might conflict with other card styles, adjust selectors if needed) --- */
+             /* Applying styles directly inside bslib cards might be better than global .card */
+            /* .card { border-radius: 12px; border: none; box-shadow: 0 3px 8px rgba(0,0,0,0.1); background-color: var(--deped-white); margin-bottom: 20px; } */ /* source: 186 */
+            /* .card-header { background-color: var(--deped-blue); color: var(--deped-white); font-weight: 600; font-size: 1.05rem; border-radius: 12px 12px 0 0; } */ /* source: 186 */
+            /* --- GLOBAL SCROLLBAR --- */
+            ::-webkit-scrollbar { width: 10px; } /* source: 186 */
+            ::-webkit-scrollbar-thumb { background: var(--deped-gold); border-radius: 10px; } /* source: 186 */
+            ::-webkit-scrollbar-track { background: var(--deped-light); } /* source: 186 */
+          ")) # End HTML
+          ), # End tags$style
+          # --- MAIN LAYOUT Div ---
           div(
-            class = "sidebar_erdb",
-            h4("Select Category"),
-            
-            actionButton("erdb_hr", label = tagList(bs_icon("people-fill", size = 24), tags$h5("Human Resource")), class = "btn-card mb-2"),
-            actionButton("erdb_school", label = tagList(bs_icon("building", size = 24), tags$h5("Basic Info")), class = "btn-card mb-2"),
-            actionButton("erdb_infra", label = tagList(bs_icon("tools", size = 24), tags$h5("Infrastructure")), class = "btn-card mb-2"),
-            actionButton("erdb_financial", label = tagList(bs_icon("currency-dollar", size = 24), tags$h5("Financial")), class = "btn-card mb-2"),
-            actionButton("erdb_monitoring", label = tagList(bs_icon("graph-up", size = 24), tags$h5("Monitoring")), class = "btn-card mb-2"),
-            actionButton("erdb_ppas", label = tagList(bs_icon("clipboard-data", size = 24), tags$h5("PPAs")), class = "btn-card mb-2")
-          ),
-          
-          # --- MAIN CONTENT ---
-          div(
-            id = "main_erdb_content",
-            uiOutput("dynamic_erdb_panel"),
-            class = "main-content-erdb"
-          )
-        )
-      ),
-      #   navset_card_pill(
-      #     nav_spacer(),
-      #     nav_panel(
-      #       title = "School-level Data (SY 2024-2025)",
-      #       dataTableOutput("regprof_DT")),
-      #     nav_panel(
-      #       title = "Classroom Data (SY 2023-2024)",
-      #       dataTableOutput("regprof_DT_CL")),
-      # ),
-      # HROD panel
-      # nav_panel(
-      #   title = "Education Resource Information", # Your existing HROD content
-      #   layout_sidebar(
-      #     sidebar = sidebar(
-      #       width = 300, # Keep the sidebar width
-      #       title = "Dashboard Navigation", # Main sidebar title
-      #       
-      #       # Card for Main Category Picker (combining General Info, Resource Shortage, Other)
-      #       # Assuming this UI code is part of your sidebar or main UI definition
-      #       
-      #       card(height = 400, # Adjusted height to 500
-      #            card_header(tags$b("Select Category")),
-      #            card_body( # Wrapped pickerInput in card_body
-      #              pickerInput(
-      #                inputId = "hrod_main_category_picker",
-      #                label = NULL,
-      #                choices = c(
-      #                  "School Count" = "general_school_count",
-      #                  "School Size Typology" = "general_sosss",
-      #                  "Classroom Shortage" = "resource_shortage_classroom",
-      #                  "Last Mile School" = "resource_lms",
-      #                  "Teacher Shortage" = "resource_shortage_teacher",
-      #                  "School Principal Shortage" = "resource_shortage_principal",
-      #                  "Non-Teaching Personnel" = "resource_shortage_non_teaching",
-      #                  "Sufficiency" = "others_sufficiency"
-      #                ),
-      #                selected = "general_school_count", # Keep the default selected value
-      #                multiple = FALSE, # Keep as FALSE for single selection
-      #                options = pickerOptions(
-      #                  actionsBox = FALSE, # Keep as FALSE as it's single select
-      #                  liveSearch = TRUE,
-      #                  header = "Select a Category", # Keep existing header
-      #                  title = "Select Category",
-      #                  dropupAuto = FALSE, # This tells it NOT to automatically switch direction
-      #                  dropup = FALSE # Keep existing title
-      #                  # selectedTextFormat is not applicable for multiple = FALSE, so it's not added
-      #                ),
-      #                choicesOpt = list() # Added choicesOpt = list() for consistency
-      #              )
-      #            )
-      #       ),
-      #       
-      #       hr(), # Add a separator
-      #       
-      #       # Card for Region Picker
-      #       # Assuming this UI code is part of your sidebar or main UI definition
-      #       
-      #       # Region Filter
-      #       card(height = 400, # Adjusted height
-      #            card_header(tags$b("Region Filter")),
-      #            card_body( # Added card_body
-      #              pickerInput(
-      #                inputId = "dashboard_region_filter", # Keep the same inputId for server compatibility
-      #                label = NULL,
-      #                choices = c("Region I" = "Region I", "Region II" = "Region II", "Region III" = "Region III", "Region IV-A" = "Region IV-A", "MIMAROPA" = "MIMAROPA", "Region V" = "Region V", "Region VI" = "Region VI", "NIR" = "NIR", "Region VII" = "Region VII", "Region VIII" = "Region VIII", "Region IX" = "Region IX", "Region X" = "Region X", "Region XI" = "Region XI", "Region XII" = "Region XII", "CARAGA" = "CARAGA", "CAR" = "CAR", "NCR" = "NCR","BARMM" = "BARMM"),
-      #                selected = c("Region I"), # Keep the same default selected value
-      #                multiple = TRUE,
-      #                options = pickerOptions(
-      #                  actionsBox = TRUE, # Changed to TRUE
-      #                  liveSearch = TRUE,
-      #                  header = "Select Regions", # Changed header text
-      #                  title = "No Region Selected", # Changed title text
-      #                  selectedTextFormat = "count > 3",
-      #                  dropupAuto = FALSE, # This tells it NOT to automatically switch direction
-      #                  dropup = FALSE # Added this option
-      #                ),
-      #                choicesOpt = list() # Added choicesOpt
-      #              )
-      #            )
-      #       ),
-      #       
-      #       # Division Filter
-      #       card(height = 400, # Adjusted height
-      #            card_header(tags$b("Division Filter")),
-      #            card_body( # Added card_body
-      #              pickerInput(
-      #                inputId = "dashboard_division_filter", # Keep the same inputId for server compatibility
-      #                label = NULL,
-      #                choices = NULL, # Choices will be updated dynamically by the server
-      #                selected = NULL,
-      #                multiple = TRUE,
-      #                options = pickerOptions(
-      #                  actionsBox = TRUE, # Changed to TRUE
-      #                  liveSearch = TRUE,
-      #                  header = "Select Divisions", # Changed header text
-      #                  title = "No Division Selected", # Changed title text
-      #                  selectedTextFormat = "count > 3",
-      #                  dropupAuto = FALSE, # This tells it NOT to automatically switch direction
-      #                  dropup = FALSE # Added this option
-      #                ),
-      #                choicesOpt = list() # Added choicesOpt
-      #              )
-      #            )
-      #       )), # End of sidebar
-      #     # Main content for Dashboard tab, controlled by uiOutput
-      #     uiOutput("dashboard_main_content_area")
-      #   ) # End of layout_sidebar
-      # ),
-        
-        # --- Back to Top Button ---
-        tags$button(
-          id = "back_to_top",
-          class = "btn btn-primary back-to-top",
-          onclick = "Shiny.setInputValue('scroll_top', Math.random());",
-          tags$i(class = "bi bi-arrow-up")
-        ),
-        tags$script(HTML("
-(function attachBackToTop() {
-  // helper that attaches listener if the button exists
-  function attach() {
-    var button = document.getElementById('back_to_top');
-    if (!button) return false;
-
-    // guard to avoid duplicate attachment per element instance
-    if (button._btp_attached) return true;
-    button._btp_attached = true;
-
-    // show/hide on scroll
-    function onScroll() {
-      if (window.scrollY > 400) {
-        button.classList.add('show');
-      } else {
-        button.classList.remove('show');
-      }
-    }
-
-    window.addEventListener('scroll', onScroll, { passive: true });
-
-    // ensure visible if already scrolled
-    onScroll();
-
-    return true;
-  }
-
-  // Try to attach now; if not present retry a few times
-  var attempts = 0;
-  var maxAttempts = 40;
-  var tryInterval = setInterval(function() {
-    attempts++;
-    if (attach() || attempts >= maxAttempts) {
-      clearInterval(tryInterval);
-    }
-  }, 150);
-
-  // Also observe DOM changes so if renderUI replaces the panel later we reattach
-  var observer = new MutationObserver(function(mutations) {
-    for (var m=0; m<mutations.length; m++) {
-      var added = mutations[m].addedNodes;
-      for (var i=0; i<added.length; i++) {
-        var node = added[i];
-        if (node.nodeType === 1) {
-          if (node.querySelector && node.querySelector('#back_to_top')) {
-            attach();
-            return;
-          }
-          if (node.id === 'back_to_top') {
-            attach();
-            return;
-          }
-        }
-      }
-    }
-  });
-
-  observer.observe(document.body, { childList: true, subtree: true });
-
-})();
-")),
-        # --- Styling ---
-        tags$style(HTML("
-    .btn-card {
-      background-color: #f8f9fa;
-      border: 2px solid #dee2e6;
-      border-radius: 10px;
-      padding: 20px;
-      text-align: center;
-      font-weight: 600;
-      transition: all 0.2s ease-in-out;
-      color: #000000;
-    }
-
-    .btn-card:hover {
-      background-color: #2c3895;
-      color: white !important;
-      transform: scale(1.03);
-    }
-
-    .btn-card.active {
-      background-color: #2c3895 !important;
-      color: white !important;
-      border-color: #2c3895;
-    }
-
-    .btn-card h5 {
-      margin-top: 10px;
-      margin-bottom: 0;
-    }
-/* --- Back to Top Button (better) --- */
-.back-to-top {
-  position: fixed;
-  bottom: 30px;
-  right: 30px;
-  z-index: 99999;
-  background-color: #2c3895;
-  color: white;
-  border: none;
-  border-radius: 50%;
-  width: 50px;
-  height: 50px;
-  text-align: center;
-  font-size: 22px;
-  cursor: pointer;
-  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-  opacity: 0;
-  visibility: hidden;
-  transform: translateY(12px) scale(0.98);
-  transition: opacity 0.28s ease, transform 0.28s ease, visibility 0.28s;
-  pointer-events: none;
-}
-
-/* visible state */
-.back-to-top.show {
-  opacity: 1;
-  visibility: visible;
-  transform: translateY(0) scale(1);
-  pointer-events: auto;
-}
-
-/* hover */
-.back-to-top:hover {
-  transform: translateY(0) scale(1.08);
-  background-color: #1f2a6b;
-}
-  ")),
-      # --- First Top-Level Tab: Dashboard ---
-    nav_menu(
-      title = tagList(bs_icon("speedometer"),
-                      tags$b("Dashboard")),
-      nav_panel(
-        title = "Education Resource Dashboard",
-        # --- ROW OF 6 VALUE BOXES ---
-        # Switched to shinydashboard::valueBoxOutput
-        fluidRow(
-          column(
-            width = 1,
-            actionButton(
-              "reset_button",
-              label = tagList(bs_icon("arrow-left"), "Back"),
-              class = "btn-primary mb-3"
+            class = "layout_erdb",
+            # --- SIDEBAR Div ---
+            div(
+              class = "sidebar_erdb",
+              h4("Select Category"),
+              actionButton("erdb_hr", label = tagList(bs_icon("people-fill", size = 24), tags$h5("Human Resource")), class = "btn-card mb-2"), # source: 187
+              actionButton("erdb_school", label = tagList(bs_icon("building", size = 24), tags$h5("Basic Info")), class = "btn-card mb-2"), # source: 187
+              actionButton("erdb_infra", label = tagList(bs_icon("tools", size = 24), tags$h5("Infrastructure")), class = "btn-card mb-2"), # source: 188
+              actionButton("erdb_financial", label = tagList(bs_icon("currency-dollar", size = 24), tags$h5("Financial")), class = "btn-card mb-2"), # source: 188
+              actionButton("erdb_monitoring", label = tagList(bs_icon("graph-up", size = 24), tags$h5("Monitoring")), class = "btn-card mb-2"), # source: 188
+              actionButton("erdb_ppas", label = tagList(bs_icon("clipboard-data", size = 24), tags$h5("PPAs")), class = "btn-card mb-2") # source: 188
+            ), # End Sidebar Div
+            # --- MAIN CONTENT Div ---
+            div(
+              id = "main_erdb_content",
+              uiOutput("dynamic_erdb_panel"), # This will render the content based on sidebar clicks
+              class = "main-content-erdb"
+            ) # End Main Content Div
+          ) # End Main Layout Div
+        ) # End tagList for Home content
+      ), # End of Home nav_panel - COMMA is correct here
+      
+      nav_menu(
+        title = tagList(bs_icon("speedometer"), tags$b("Dashboard")),
+        value = "dashboard_menu",
+        nav_panel(
+          title = "Education Resource Dashboard",
+          value = "dashboard_main_panel",
+          # --- START: Content for Education Resource Dashboard ---
+          fluidRow(
+            column(width = 1, actionButton("reset_button", tagList(bs_icon("arrow-left"), "Back"), class = "btn-primary mb-3")),
+            layout_column_wrap(
+              width = 1/7,
+              uiOutput("total_schools_erdb"), uiOutput("total_enrolment_erdb"), uiOutput("total_classrooms_erdb"),
+              uiOutput("total_LMS_erdb"), uiOutput("total_teacher_shortage_erdb"), uiOutput("SP_Shortage_erdb"),
+              uiOutput("total_classroom_shortage_erdb")
             )
           ),
-          # 2. Use layout_column_wrap for perfect 6-column responsiveness
-          layout_column_wrap(
-            width = 1/7, 
-            
-            # 3. Use the modern valueBoxOutput
-            uiOutput("total_schools_erdb"),
-            uiOutput("total_enrolment_erdb"),
-            uiOutput("total_classrooms_erdb"),
-            uiOutput("total_LMS_erdb"),
-            uiOutput("total_teacher_shortage_erdb"),
-            uiOutput("SP_Shortage_erdb"),
-            uiOutput("total_classroom_shortage_erdb")
+          layout_columns(
+            col_widths = c(4, 4, 4),
+            card(card_header("Number of Schools"), full_screen = TRUE, plotlyOutput("totalschools_plot_erdb"), height = "420px"),
+            card(card_header("Curricular Offering"), full_screen = TRUE, plotlyOutput("curricular_plot_erdb"), height = "420px"),
+            card(card_header("School Size Typology"), full_screen = TRUE, plotlyOutput("typology_plot_erdb"), height = "420px")
+          ),
+          layout_columns(
+            col_widths = c(3, 3, 3, 3, 6, 6),
+            card(card_header("Classroom Shortage"), full_screen = TRUE, plotlyOutput("classroomshortage_plot_erdb"), height = "420px"),
+            card(card_header("Last Mile Schools"), full_screen = TRUE, plotlyOutput("LMS_plot_erdb"), height = "420px"),
+            card(card_header("Teacher Shortage"), full_screen = TRUE, plotlyOutput("teachershortage_plot_erdb"), height = "420px"),
+            card(card_header("School Principal Shortage"), full_screen = TRUE, plotlyOutput("principalshortage_plot_erdb"), height = "420px"),
+            card(card_header("Data Table"), full_screen = TRUE, dataTableOutput("dashboarddt_erdb"), height = "500px"),
+            card(card_header("School Mapping"), full_screen = TRUE, leafletOutput("mapping_erdb"), height = "500px")
           )
-        ),
-        
-        # --- ADJUSTED 3x2 GRID OF PLOTS ---
-        
-        # -- Row 1 --
-        layout_columns(
-          col_widths = c(4, 4, 4),
-          card(card_header("Number of Schools (Click to Drill Down)"),full_screen = TRUE, plotlyOutput("totalschools_plot_erdb"), height = "420px"),
-          card(card_header("Curricular Offering"),full_screen = TRUE, plotlyOutput("curricular_plot_erdb"), height = "420px"),
-          card(card_header("School Size Typology"),full_screen = TRUE, plotlyOutput("typology_plot_erdb"), height = "420px")
-        ),
-        # -- Row 2 --
-        layout_columns(
-          col_widths = c(3, 3, 3, 3 ,6, 6),
-          card(card_header("Classroom Shortage"),full_screen = TRUE, plotlyOutput("classroomshortage_plot_erdb"), height = "420px"),
-          card(card_header("Last Mile Schools"),full_screen = TRUE, plotlyOutput("LMS_plot_erdb"), height = "420px"),
-          card(card_header("Teacher Shortage"),full_screen = TRUE, plotlyOutput("teachershortage_plot_erdb"), height = "420px"),
-          card(card_header("School Principal Shortage"),full_screen = TRUE, plotlyOutput("principalshortage_plot_erdb"), height = "420px"),
-          card(card_header("Data Table"),full_screen = TRUE, dataTableOutput("dashboarddt_erdb"), height = "500px"),
-          card(card_header("School Mapping"),full_screen = TRUE, leafletOutput("mapping_erdb"), height = "500px")
-        ),
-        card(full_screen = TRUE,
-             card_header(div(strong("School Details"),
-                             tags$span(em("(Select a school from the table above)"),
-                                       style = "font-size: 0.7em; color: grey;"
-                             ))),
-             layout_columns(
-               card(full_screen = TRUE,
-                    card_header(strong("Basic Information")),
-                    tableOutput("schooldetails_erdb")),
-               card(full_screen = TRUE,
-                    card_header(strong("HR Data")),
-                    tableOutput("schooldetails2_erdb")),
-               card(full_screen = TRUE,
-                    card_header(strong("Classroom Data")),
-                    tableOutput("schooldetails3_erdb")),
-               card(full_screen = TRUE,
-                    card_header(div(strong("Specialization Data"),
-                                    tags$span(em("(based on eSF7 for SY 2023-2024)"),
-                                              style = "font-size: 0.7em; color: grey;"
-                                    ))),
-                    tableOutput("schooldetails5_erdb")),
-               col_widths = c(6,6,6,6))),
-        hr(),
-        card(
-          full_screen = TRUE,
-          card_header("Priority Divisions"),
-          
-          # --- NEW CODE: Use layout_column_wrap to format the plots ---
-          layout_column_wrap(
-            width = 1/3, # This tells R to fit 3 items per row (1/3 of the width each)
-            heights_equal = "row", # Ensures all plots in the row have the same height
-            
-            # Plot Outputs (These will be arranged based on the 'width' setting)
-            # Card for the first plot
-            card(
-              full_screen = TRUE,
-              card_header("Teacher Deployment Priorities"),
-              plotlyOutput("Teaching_Deployment_Division_Graph1")
-            ),
-            
-            # Card for the second plot
-            card(
-              full_screen = TRUE,
-              card_header("Classroom Shortage Priorities"),
-              plotlyOutput("Classroom_Shortage_Division_Graph2")
-            ),
-            
-            # Card for the third plot
-            card(
-              full_screen = TRUE,
-              card_header("Last Mile School Priorities"),
-              plotlyOutput("LMS_Division_Graph2")
-            )),
-          card(
-            full_screen = TRUE,
-            card_header("SDO Ranking"),
-            
-            # ✅ Add this here
-            tags$head(
-              tags$style(HTML("
-      .reactable thead th {
-        white-space: normal !important;
-        word-wrap: break-word !important;
-        line-height: 1.1;
-        text-align: center;
-      }
-      .reactable .rt-thead.-header { height: auto !important; }
-      .reactable .rt-th {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        text-align: center;
-      }
-    "))
-            ),
-            height = 800,
-            reactable::reactableOutput("priority_division_erdb"),
-            hr(), # Adds a horizontal line
-            downloadButton(
-              "download_priority_data",  # This is the ID for the server
-              "Download SDO Ranking as CSV", class = "btn-success"   # This is the text on the button
-            )
-          ))),
+          # ... (Add the rest of the cards for details, priorities, SDO ranking here if they belong to this panel)
+          # --- END: Content for Education Resource Dashboard ---
+        ), # End of Education Resource nav_panel - COMMA is correct
         nav_panel("Plantilla Positions",  #GMIS
                   layout_sidebar(
                     sidebar = sidebar(
@@ -3653,8 +3162,7 @@ server <- function(input, output, session) {
                       card(
                         card_header(strong("GMIS Data")),
                         dataTableOutput("GMISTable1")),
-                      col_widths = c(12,12)))),
-        # NEW CONTENT FOR EFD NAV_PANEL STARTS HERE
+                      col_widths = c(12,12)))), # End of Plantilla nav_panel - COMMA is correct
         nav_panel(
           title = "Infrastructure and Education Facilities",
           layout_sidebar(
@@ -3791,9 +3299,8 @@ server <- function(input, output, session) {
               )
             ) # End of layout_columns for main content and filters
           ) # End of tagList for EFD
-        )), # End of nav_menu
+        )), # End of Dashboard nav_menu - COMMA is correct here
       
-      # --- Second Top-Level Tab: Data Explorer --
       nav_menu(
         title = tags$b("Data Explorer"),  # Dropdown menu
         icon = bs_icon("table"),
@@ -3910,9 +3417,7 @@ server <- function(input, output, session) {
               col_widths = c(12)
             )
           )
-        ),
-        
-        # --- Nav Panel 2: Infrastructure Database ---
+        ), # End of HR DB nav_panel - COMMA is correct
         nav_panel(
           title = tags$b("Infrastructure Database"),
           layout_sidebar(
@@ -4011,8 +3516,7 @@ server <- function(input, output, session) {
               col_widths = c(12, 12)
             )
           )
-        ),
-        # --- Nav Panel 3: DepEd Officials ---
+        ), # End of Infra DB nav_panel - COMMA is correct
         nav_panel(
           title = tags$b("DepEd Officials"),
           layout_sidebar(
@@ -4098,8 +3602,8 @@ server <- function(input, output, session) {
             )
           )
         )
-      ),
-      # --- Quick School Search ---
+      ), # End of Data Explorer nav_menu - COMMA is correct here
+      
       nav_panel(
         title = tags$b("Quick School Search"),
         icon = bs_icon("search"),
@@ -4136,9 +3640,8 @@ server <- function(input, output, session) {
                                         ))),
                         tableOutput("schooldetails5")),
                    col_widths = c(6,6,6,6))),
-            col_widths = c(6,6,12)))),
+            col_widths = c(6,6,12)))), # End of Quick Search nav_panel - COMMA is correct here
       
-      # --- Resource Mapping ---
       nav_panel(
         title = tags$b("Resource Mapping"),
         icon = bs_icon("map"),
@@ -4235,7 +3738,8 @@ server <- function(input, output, session) {
             uiOutput("dynamic_resource_panel")
           )
         )
-      ),
+      ), # End of Mapping nav_panel - COMMA is correct here
+      
       nav_menu(
         title = tagList(bs_icon("cloud"),
                         tags$b("CLOUD")),
@@ -4295,8 +3799,7 @@ server <- function(input, output, session) {
           ), # End of sidebar
           # Main content for Dashboard tab, controlled by uiOutput
           uiOutput("cloud_profile_main_content_area") # End of layout_sidebar
-        ), # End of nav_panel("HROD")
-        
+        ), # End of nav_panel("HROD") # End of CLOUD Regional nav_panel - COMMA is correct
         nav_panel(
           title = "CLOUD (SDO Breakdown)", # Your existing HROD content
           layout_sidebar(
@@ -4426,7 +3929,6 @@ server <- function(input, output, session) {
             uiOutput("cloud_main_content_area")
           ) # End of layout_sidebar
         ), # End of nav_panel("HROD")
-        
         nav_panel(
           title = tagList("CLOUD", em("(Multi-variable)")), # Your existing HROD content
           
@@ -4792,19 +4294,8 @@ server <- function(input, output, session) {
                 )
               )
             )
-          ))),
+          ))), # End of CLOUD nav_menu - COMMA is correct here
       
-      # # --- Last Top-Level Tab: About ---
-      # nav_panel(
-      #   title = tags$b("About"),
-      #   icon = bs_icon("info-circle"),
-      #   tagList(
-      #     layout_columns(
-      #       HTML('<img src="Contactus.png" width="100%" height="auto">'))
-      #   )),
-      
-      
-      # --- Contact Us Top-Level Tab ---
       nav_panel(
         title = tags$b("Contact Us"),
         icon = bs_icon("envelope"),
@@ -4821,19 +4312,20 @@ server <- function(input, output, session) {
                    marginwidth = "0")
           )
         )
-      ),
+      ), # End of Contact Us nav_panel - COMMA is correct here
       
-      # ✅ Logout button shown as its own nav tab
-      # nav_panel(
-      #   title = tagList(bs_icon("box-arrow-right"), "Log Out"),
-      #   shinyauthr::logoutUI(
-      #     id = "logout",
-      #     label = "Log Out",
-      #     icon = icon("sign-out-alt"),
-      #     class = "btn btn-danger")
-      # )
-    )
-  })
+      # nav_spacer(), # COMMA is correct here
+      # 
+      # nav_item(
+      #   tags$button(
+      #     id = "main_app-logout",
+      #     class = "btn btn-danger btn-sm",
+      #     bs_icon("box-arrow-right"), "Log Out"
+      #   )
+      # ) # End of Logout nav_item - NO COMMA needed as it's the LAST item overall
+      
+    ) # End page_navbar
+  }) # End renderUI
   
 #   # --- Scroll to and open the corresponding accordion when a card is clicked ---
 #   # ================================================================
@@ -12886,7 +12378,7 @@ output$dynamic_erdb_panel <- renderUI({
           
           # Background Video (only inside this box)
           tags$video(
-            src = "home_bg.mp4",   # ensure it's in www/
+            src = "home_bg1.mp4",   # ensure it's in www/
             autoplay = NA,
             loop = NA,
             muted = NA,
