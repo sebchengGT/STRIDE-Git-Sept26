@@ -3004,14 +3004,7 @@ server <- function(input, output, session) {
       --deped-white: #ffffff;
     }
 
-    /* =====================================================
-       PAGE LAYOUT
-       ===================================================== */
-    .layout_erdb {
-      display: flex;
-      min-height: calc(100vh - 60px); /* Adjust height based on navbar */
-      background: var(--deped-light);
-    }
+
 
     /* =====================================================
        SIDEBAR
@@ -3068,15 +3061,7 @@ server <- function(input, output, session) {
       font-weight: 600;
     }
 
-    /* =====================================================
-       MAIN CONTENT AREA
-       ===================================================== */
-    .main-content-erdb {
-      flex-grow: 1;
-      padding: 25px;
-      background: var(--deped-light);
-      overflow-x: hidden;
-    }
+
 
     /* =====================================================
        GLOBAL SCROLLBAR

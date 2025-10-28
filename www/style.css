@@ -444,7 +444,7 @@ body.dashboard-bg::before {
   width: 100%;
   border-top: 1px solid #ccc;
   font-size: 0.9em;
-  z-index: 9998 !important; /* High z-index */
+  z-index: 0 !important; /* High z-index */
 }
 
 /* Loading Overlay */
@@ -538,3 +538,5 @@ body.show-header-footer .app-footer { display: block !important; /* Or flex, dep
     :root {
         scroll-behavior: smooth
     }
+    
+    
