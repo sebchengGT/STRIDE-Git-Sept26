@@ -3296,141 +3296,141 @@ server <- function(input, output, session) {
       #   ) # End of layout_sidebar
       # ),
       
-      # --- Back to Top Button ---
-      tags$button(
-        id = "back_to_top",
-        class = "btn btn-primary back-to-top",
-        onclick = "Shiny.setInputValue('scroll_top', Math.random());",
-        tags$i(class = "bi bi-arrow-up")
-      ),
-      tags$script(HTML("
-(function attachBackToTop() {
-  // helper that attaches listener if the button exists
-  function attach() {
-    var button = document.getElementById('back_to_top');
-    if (!button) return false;
-
-    // guard to avoid duplicate attachment per element instance
-    if (button._btp_attached) return true;
-    button._btp_attached = true;
-
-    // show/hide on scroll
-    function onScroll() {
-      if (window.scrollY > 400) {
-        button.classList.add('show');
-      } else {
-        button.classList.remove('show');
-      }
-    }
-
-    window.addEventListener('scroll', onScroll, { passive: true });
-
-    // ensure visible if already scrolled
-    onScroll();
-
-    return true;
-  }
-
-  // Try to attach now; if not present retry a few times
-  var attempts = 0;
-  var maxAttempts = 40;
-  var tryInterval = setInterval(function() {
-    attempts++;
-    if (attach() || attempts >= maxAttempts) {
-      clearInterval(tryInterval);
-    }
-  }, 150);
-
-  // Also observe DOM changes so if renderUI replaces the panel later we reattach
-  var observer = new MutationObserver(function(mutations) {
-    for (var m=0; m<mutations.length; m++) {
-      var added = mutations[m].addedNodes;
-      for (var i=0; i<added.length; i++) {
-        var node = added[i];
-        if (node.nodeType === 1) {
-          if (node.querySelector && node.querySelector('#back_to_top')) {
-            attach();
-            return;
-          }
-          if (node.id === 'back_to_top') {
-            attach();
-            return;
-          }
-        }
-      }
-    }
-  });
-
-  observer.observe(document.body, { childList: true, subtree: true });
-
-})();
-")),
-      # --- Styling ---
-      tags$style(HTML("
-    .btn-card {
-      background-color: #f8f9fa;
-      border: 2px solid #dee2e6;
-      border-radius: 10px;
-      padding: 20px;
-      text-align: center;
-      font-weight: 600;
-      transition: all 0.2s ease-in-out;
-      color: #000000;
-    }
-
-    .btn-card:hover {
-      background-color: #2c3895;
-      color: white !important;
-      transform: scale(1.03);
-    }
-
-    .btn-card.active {
-      background-color: #2c3895 !important;
-      color: white !important;
-      border-color: #2c3895;
-    }
-
-    .btn-card h5 {
-      margin-top: 10px;
-      margin-bottom: 0;
-    }
-/* --- Back to Top Button (better) --- */
-.back-to-top {
-  position: fixed;
-  bottom: 30px;
-  right: 30px;
-  z-index: 99999;
-  background-color: #2c3895;
-  color: white;
-  border: none;
-  border-radius: 50%;
-  width: 50px;
-  height: 50px;
-  text-align: center;
-  font-size: 22px;
-  cursor: pointer;
-  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-  opacity: 0;
-  visibility: hidden;
-  transform: translateY(12px) scale(0.98);
-  transition: opacity 0.28s ease, transform 0.28s ease, visibility 0.28s;
-  pointer-events: none;
-}
-
-/* visible state */
-.back-to-top.show {
-  opacity: 1;
-  visibility: visible;
-  transform: translateY(0) scale(1);
-  pointer-events: auto;
-}
-
-/* hover */
-.back-to-top:hover {
-  transform: translateY(0) scale(1.08);
-  background-color: #1f2a6b;
-}
-  ")),
+#       # --- Back to Top Button ---
+#       tags$button(
+#         id = "back_to_top",
+#         class = "btn btn-primary back-to-top",
+#         onclick = "Shiny.setInputValue('scroll_top', Math.random());",
+#         tags$i(class = "bi bi-arrow-up")
+#       ),
+#       tags$script(HTML("
+# (function attachBackToTop() {
+#   // helper that attaches listener if the button exists
+#   function attach() {
+#     var button = document.getElementById('back_to_top');
+#     if (!button) return false;
+# 
+#     // guard to avoid duplicate attachment per element instance
+#     if (button._btp_attached) return true;
+#     button._btp_attached = true;
+# 
+#     // show/hide on scroll
+#     function onScroll() {
+#       if (window.scrollY > 400) {
+#         button.classList.add('show');
+#       } else {
+#         button.classList.remove('show');
+#       }
+#     }
+# 
+#     window.addEventListener('scroll', onScroll, { passive: true });
+# 
+#     // ensure visible if already scrolled
+#     onScroll();
+# 
+#     return true;
+#   }
+# 
+#   // Try to attach now; if not present retry a few times
+#   var attempts = 0;
+#   var maxAttempts = 40;
+#   var tryInterval = setInterval(function() {
+#     attempts++;
+#     if (attach() || attempts >= maxAttempts) {
+#       clearInterval(tryInterval);
+#     }
+#   }, 150);
+# 
+#   // Also observe DOM changes so if renderUI replaces the panel later we reattach
+#   var observer = new MutationObserver(function(mutations) {
+#     for (var m=0; m<mutations.length; m++) {
+#       var added = mutations[m].addedNodes;
+#       for (var i=0; i<added.length; i++) {
+#         var node = added[i];
+#         if (node.nodeType === 1) {
+#           if (node.querySelector && node.querySelector('#back_to_top')) {
+#             attach();
+#             return;
+#           }
+#           if (node.id === 'back_to_top') {
+#             attach();
+#             return;
+#           }
+#         }
+#       }
+#     }
+#   });
+# 
+#   observer.observe(document.body, { childList: true, subtree: true });
+# 
+# })();
+# ")),
+#       # --- Styling ---
+#       tags$style(HTML("
+#     .btn-card {
+#       background-color: #f8f9fa;
+#       border: 2px solid #dee2e6;
+#       border-radius: 10px;
+#       padding: 20px;
+#       text-align: center;
+#       font-weight: 600;
+#       transition: all 0.2s ease-in-out;
+#       color: #000000;
+#     }
+# 
+#     .btn-card:hover {
+#       background-color: #2c3895;
+#       color: white !important;
+#       transform: scale(1.03);
+#     }
+# 
+#     .btn-card.active {
+#       background-color: #2c3895 !important;
+#       color: white !important;
+#       border-color: #2c3895;
+#     }
+# 
+#     .btn-card h5 {
+#       margin-top: 10px;
+#       margin-bottom: 0;
+#     }
+# /* --- Back to Top Button (better) --- */
+# .back-to-top {
+#   position: fixed;
+#   bottom: 30px;
+#   right: 30px;
+#   z-index: 99999;
+#   background-color: #2c3895;
+#   color: white;
+#   border: none;
+#   border-radius: 50%;
+#   width: 50px;
+#   height: 50px;
+#   text-align: center;
+#   font-size: 22px;
+#   cursor: pointer;
+#   box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+#   opacity: 0;
+#   visibility: hidden;
+#   transform: translateY(12px) scale(0.98);
+#   transition: opacity 0.28s ease, transform 0.28s ease, visibility 0.28s;
+#   pointer-events: none;
+# }
+# 
+# /* visible state */
+# .back-to-top.show {
+#   opacity: 1;
+#   visibility: visible;
+#   transform: translateY(0) scale(1);
+#   pointer-events: auto;
+# }
+# 
+# /* hover */
+# .back-to-top:hover {
+#   transform: translateY(0) scale(1.08);
+#   background-color: #1f2a6b;
+# }
+#   ")),
       # --- First Top-Level Tab: Dashboard ---
       nav_menu(
         title = tagList(bs_icon("speedometer"),
