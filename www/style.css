@@ -1453,6 +1453,50 @@ body, .main-container, .bslib-layout-sidebar {
   color: #d62828; /* warm yellow-orange */
 }
 
+#home_section {
+  height: 100vh;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
 
+.video-overlay h1 {
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+}
 
+.video-overlay p {
+  font-size: 1.2rem;
+  line-height: 1.5;
+}
 
+#home_intro {
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.video-overlay h1 {
+  color: #fff;
+  text-shadow: 0 4px 10px rgba(0,0,0,0.6);
+}
+
+.video-overlay p {
+  color: #f0f0f0;
+  line-height: 1.5;
+}
+
+#home_intro_section {
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.video-description h2,
+.video-description p {
+  text-shadow: 0 3px 10px rgba(0,0,0,0.6);
+}
