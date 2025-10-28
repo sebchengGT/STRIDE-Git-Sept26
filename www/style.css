@@ -1,786 +1,63 @@
+/* General Body & Font Styles */
 body {
   background-color: #f9fafc;
-  font-family: 'Poppins', sans-serif; /* Updated font */
+  font-family: 'Poppins', sans-serif;
   margin: 0;
-  padding-bottom: 60px; /* leave space so footer doesn’t overlap */
-  opacity: 1; /* keep content fully visible */
+  padding-bottom: 60px; /* leave space for footer */
+  opacity: 1;
+  overflow-x: hidden !important; /* Prevent horizontal scroll */
+  width: 100%; /* Prevent horizontal scroll */
 }
 
 * {
   font-family: 'Poppins', sans-serif !important;
 }
 
+html {
+  overflow-x: hidden !important; /* Prevent horizontal scroll */
+}
 
+/* Login Page Specific Styles */
 body.login-bg {
-  background: none;
-  background-size: cover;
-  background-attachment: fixed;
+  background: none; /* Gradient is applied separately */
   color: white;
 }
 
-/* Watermark logo */
-body.login-bg::before {
-  content: "";
-  position: fixed;
-  top: -100px; left: 0;
-  width: 100%; height: 100%;
-  background: url("STRIDE logo.png") no-repeat center; /* changed */
-  background-size: 50%;  /* you can also reduce size */
-  opacity: 0.7;   /* 👈 adjust watermark visibility */
-  z-index: -1;
-}
-
-body.dashboard-bg {
-  background-color: #f9fafc;
-  background-image: none;
-  color: #333;
-}
-
-/* Login page wrapper */
-.login-page {
-  display: flex;
-  justify-content: center;
-  margin-top: 60px;   /* 👈 space between header and login */
-  padding: 20px;
-}
-
-/* Login panel (choose ONE method) */
-#login-panel {
-  width: 400px;
-  max-width: 100%;
-  margin: 350px auto !important;  /* pushes login panel down */
-  padding: 20px;
-  position: fixed !important;
-  top: 20% !important;
-  left: 50% !important;
-  transform: translate(-50%, -50%)
-  
-  /* If you want vertical center instead, replace margin with:
-     position: relative;
-     top: 50%;
-     transform: translateY(-50%);
-  */
-}
-
-/* Style the login card */
-#login .panel,
-#login .card, 
-#login .well {
-  background-color: rgba(0, 45, 98, 0.9) !important; /* dark blue card */
-  color: #fff !important;
-  padding: 25px;
-  border-radius: 12px;
-  box-shadow: 0 8px 20px rgba(0,0,0,0.3);
-  max-width: 400px;
-  margin: auto;
-  text-align: left;
-}
-/* Animate the login box */
-/*#login-login_ui {
-  animation: slideUp 1s ease-out;
-}
-.fade-in {
-  animation: slideUp 1s ease-out;
-}
-
-@keyframes slideUp {
-  0% {
-    transform: translateY(40px);
-    opacity: 0;
-  }
-  100% {
-    transform: translateY(0);
-    opacity: 1;
-  }
-}
-
-/* ==== HEADER ==== */
-.app-header {
-  background: #1c4b83;
-  color: white;
-  padding: 4px;
-  text-align: center;
-  position: sticky;
-  top: 0;
-  z-index: 10000; /* slightly higher than navbar */
-}
-
-.app-header h2 {
-  text-align: center;
-  margin: 0;
-  font-size: 1.8em;
-}
-
-.app-header p {
-  margin: 0;
-  font-size: 0.9em;
-  opacity: 0.8;
-}
-
-.header-logo-left {
-  height: 110px;
-  width: auto;
-}
-
-.header-logo-right {
-  height: 100px;
-  width: auto;
-}
-
-.bslib-navbar,
-.navbar {
-  position: sticky !important;
-  height:37px;
-  top: 115px; /* match or slightly exceed header height */
-  z-index: 9999;
-  background-color: #E6A545 !important;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-}
-
-/* Well box */
-.well {
-  display: block;
-  background-color: #13345ade;
-  color: white;
-  padding: 1rem;
-  border-radius: 2.375rem;
-  text-shadow: 2px 3px black;
-}
-
-/* ==== FOOTER ==== */
-.app-footer {
-  background-color: #f1f1f1;
-  color: #444;
-  text-align: center;
-  padding: 10px;
-  position: fixed;
-  bottom: 0;
-  width: 100%;
-  border-top: 1px solid #ccc;
-  font-size: 0.9em;
-  z-index: 9999 !important;
-}
-
-/* ==== CUSTOM CARDS ==== */
-/*.card-header {
-  background-color: #e6f0ff !important;
-  color: #002D62 !important;
-  font-weight: bold;
-}
-
-/* ==== VALUE BOX ==== */
-.value-box .value {
-  font-size: 1.2em;
-  color: #d63384;
-}
-.value-box .title {
-  white-space: normal !important;
-}
-.navbar-nav {
-  justify-content: flex-start !important;
-  --bs-nav-link-color: #000;
-}
-.navbar-collapse {
-  justify-content: flex-start !important;
-}
-
-.navbar .nav-item {
-  margin: auto;
-  font-size: 20px;
-}
-
-.navbar.navbar-inverse {
-    /* Set the background color to the yellowish/orange */
-    background-color: #f0ad4e !important;
-    
-    /* Bootstrap variable overrides for emphasis/text color */
-    --bs-emphasis-color: #000;
-    --bs-emphasis-color-rgb: 0, 0, 0;
-    --bs-navbar-active-color: rgb(32, 33, 36);
-    --bs-navbar-hover-color: rgb(224 0 0);
-
-}
-
-@media (min-width: 992px) {
-    .navbar-expand-lg,.navbar:not(.navbar-expand):not(.navbar-expand-sm):not(.navbar-expand-md):not(.navbar-expand-lg):not(.navbar-expand-xl) {
-        flex-wrap:nowrap;
-        -webkit-flex-wrap: nowrap;
-        justify-content: flex-start;
-        -webkit-justify-content: flex-start;
-        background-color: #f0ad4e;
-    }
-
-
-.dashboard-container {
-  transform-origin: top left;
-  transform: scale(var(--zoom-scale, 1)); /* Controlled by JS */
-  transition: transform 0.2s ease-out;
-}
-
-/* Prevent text from compressing */
-.card,
-.card-body,
-.card-header {
-  text-align: center;
-  font-size: 15px; /* base size */
-  line-height: 1.3;
-  overflow: visible;
-  white-space: normal;
-  font-weight: bolder;
-  font-family: 'Poppins', sans-serif; /* Updated font */
-  box-shadow: 2px 1px 3px 0px rgba(0, 0, 0, 0.98);
-}
-
-
-  
-/*.card {
-  text-align: -webkit-center;
-}
-
-.card.animate {
-  opacity: 1;
-  transform: translateY(0);
-}*/
-
-.bslib-sidebar-layout>.sidebar>.sidebar-content {
-    display: flex;
-    flex-direction: column;
-    gap: var(--bslib-spacer, 1rem);
-    padding: var(--_padding);
-    padding-top: var(--_padding-icon);
-    background: #23558f;
-    font-family: 'Poppins', sans-serif; /* Updated font */
-    font-size: 17px;
-    text-shadow: 1px 2px 2px #black;
-    letter-spacing: 0px;
-    word-spacing: -0.4px;
-    color: #FFFFFF;
-    font-weight: 700;
-    text-decoration: none;
-    font-style: normal;
-    font-variant: normal;
-    text-transform: none;
-    text-align: center;
-    overflow-y: visible !important;
-    
-}
-.bslib-sidebar-layout .sidebar .sidebar-title {
-  color: #ffffff !important; /* Change to your desired color */
-  font-size: 28px;
-  font-weight: 900;
-  text-shadow: 2px 2px 3px black;
-}
-
-
-.bslib-accordion-panel-3227 {
-    box-shadow: 2px 2px 7px 1px #306a90;
-    font-weight: 800;
-}
-.sidebar-content>.bslib-gap-spacing{
-  sidebar-width: auto;
-}
-
-body.dashboard-bg {
-  /*background-color: #c8d5cd;*/
-  background-repeat: no-repeat;     
-  background-attachment: scroll;    
-  background-size: cover;           
-  background-position: center top;  
-}
-
-body.dashboard-bg::before {
-  content: "";
+/* Animated Gradient Background for Login */
+.login-bg.gradient-animated {
   position: fixed;
   top: 0; left: 0; right: 0; bottom: 0;
-  background-color: #acbfd6;
-  /*background: url("backg5.png") no-repeat center top / cover;*/
-  opacity: 0.3; /* 👈 adjust transparency: 0 = invisible, 1 = solid */
+  width: 100vw; height: 100vh;
   z-index: -1;
+  background: linear-gradient(-45deg, #113967, #c9c9c9, #dcd6cd, #0075ff);
+  background-size: 200% 200%;
+  animation: depedGradient 25s ease infinite; /* Slower */
+  overflow: hidden; /* Prevent scroll */
 }
 
-.accordion .accordion-button:not(.collapsed) {
-    box-shadow: none;
-    font-weight: bolder;
-    font-size: 20px;
-    color: #ffffff;
-    text-shadow: 2px 2px black;
-    background-color: #002D62;
+@keyframes depedGradient {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
 }
 
-#Curricular_Offering_Bar, #School_Size_Typology_Bar {
-  border-radius: 12px;
-  background: #fff;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-  padding: 10px;
-}
-
-.card-header b {
-  text-align: left;
-}
-
-.card-header:first-child {
-    font-size: 20px;
-    color: #ffffff;
-    background-color: #002D62;
-    text-shadow: 1px 0px 2px #020202;
-    border-radius: var(--bs-card-inner-border-radius) var(--bs-card-inner-border-radius) 0 0;
-}
-
-#curricular_graphs {
-  transition: opacity 0.5s ease;
-}
-
-#curricular_graphs[style*="display: none"] {
-  opacity: 0;
-}
-
-.app-header h2 {
-    text-align: center;
-    margin: 0;
-    font-size: 40px;
-    text-shadow: 5px 4px 2px #000000;
-    
-}
-
-.app-header p {
-    margin: 0;
-    font-size: 23px;
-    opacity: 0.8;
-    text-shadow: 5px 4px 2px #000000;
-}
-
-.value-box .title {
-  color: #002D62 !important; /* DepEd blue or choose your color */
-  font-weight: 800;
-  font-size: 1em;
-  text-transform: uppercase;
-  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.4);
-  letter-spacing: 0.5px;
-}
-.value-box .value {
-  color: #FFD700 !important; /* gold */
-  font-size: 1.4em;
-  font-weight: 900;
-  text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.5);
-}
-
-.value-box {
-  background-color: #f0f4ff;
-  border-radius: 10px;
-  padding: 12px;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.15);
-  transition: transform 0.2s ease;
-}
-
-.value-box:hover {
-  transform: translateY(-3px);
-}
-
- ==== CARD HEADERS (Dashboard Section Titles) ==== */
-.card-header {
-  background: linear-gradient(90deg, #002D62, #004c99); /* DepEd Blue gradient */
-  color: #ffffff !important;
-  font-weight: 900;
-  font-size: 20px;
-  letter-spacing: 0.5px;
-  text-shadow: 2px 2px 3px rgba(0, 0, 0, 0.4);
-  border-radius: 10px 10px 0 0; /* Rounded top corners */
-  text-align: center;
-  padding: 10px 15px;
-  box-shadow: 0 4px 8px rgba(0,0,0,0.15);
-}
-
-/* ==== FIX: RESOURCE TYPE RADIO BUTTON ALIGNMENT ==== */
-#resource_type_selection {
-  text-align: left !important;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start !important;
-  justify-content: flex-start !important;
-  padding-left: 15px;
-}
-
-/* Make sure each radio button stacks neatly left */
-#resource_type_selection .shiny-options-group {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start !important;
-  gap: 6px; /* adds small spacing between items */
-}
-
-/* Align labels and text cleanly */
-#resource_type_selection .radio label,
-#resource_type_selection label,
-#resource_type_selection span {
-  text-align: left !important;
-  font-weight: 600;
-  color: #002D62; /* optional – DepEd blue */
-}
-
-.nav-pills .nav-link.active,.nav-pills :where(ul.nav.navbar-nav > li)>a.active,.nav-pills .nav-tabs>li>a.active,.nav-pills>li>a.active,.nav-pills .nav-link:hover,.nav-pills :where(ul.nav.navbar-nav > li)>a:hover,.nav-pills .nav-tabs>li>a:hover,.nav-pills>li>a:hover,.nav-pills .nav-link:focus,.nav-pills :where(ul.nav.navbar-nav > li)>a:focus,.nav-pills .nav-tabs>li>a:focus,.nav-pills>li>a:focus {
-    background-color: #ffffff;
-    color: black;
-    text-shadow: none;
-    border-color: #dfd7ca
-}
-.nav-pills .nav-link,.nav-pills :where(ul.nav.navbar-nav > li)>a,.nav-pills .nav-tabs>li>a,.nav-pills>li>a {
-    color: #ffffff;
-    border: 1px solid transparent
-}
-
-
-/* ==== NATIONAL STATISTICS VALUE BOX TITLES & VALUES ==== */
-
-/* Make the text titles (e.g., "Purely ES", "Small", etc.) bold */
-.bslib-value-box .value-box-title {
-  font-weight: 900 !important;
-  font-size: 22px !important;   /* increase title size */
-  color: #black !important;      /* DepEd blue */
-  text-transform: none;           /* keep normal case */
-  letter-spacing: 0.3px;
-}
-
-/* Make the numbers (e.g., 35,036) bold too */
-.bslib-value-box .value-box-value {
-  font-weight: 900 !important;
-  font-size: 25px !important;
-  color: #004c99 !important;
-}
-
-/* Optional: add a subtle text-shadow for better readability */
-.bslib-value-box .value-box-title,
-.bslib-value-box .value-box-value {
-  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
-}
-
-/* ==== SCHOOL DETAILS CARDS STYLING ==== */
-
-/* Center all card headers under the Quick School Search section */
-#schooldetails, 
-#schooldetails2, 
-#schooldetails3, 
-#schooldetails5 {
-  margin-left: auto;
-  margin-right: auto;
-}
-
-/* ==== CENTER TABLE CONTENTS INSIDE SCHOOL DETAILS CARDS ==== */
-
-/* Center all table headers and cells */
-#schooldetails th, #schooldetails td,
-#schooldetails2 th, #schooldetails2 td,
-#schooldetails3 th, #schooldetails3 td,
-#schooldetails5 th, #schooldetails5 td {
-  text-align: center !important;
-  vertical-align: middle !important;
-}
-
-/* Optional: make headers stand out */
-#schooldetails th,
-#schooldetails2 th,
-#schooldetails3 th,
-#schooldetails5 th {
-  font-weight: 900;
-  background-color: #002D62;
-  color: #ffffff;
-}
-
-/* Optional: zebra rows for readability */
-#schooldetails tr:nth-child(even),
-#schooldetails2 tr:nth-child(even),
-#schooldetails3 tr:nth-child(even),
-#schooldetails5 tr:nth-child(even) {
-  background-color: #f9f9f9;
-}
-
-/* === AUTO-DROPDOWN ON HOVER === */
-.navbar-nav li.nav-item.dropdown:hover > .dropdown-menu {
-  display: block;
-  margin-top: 0; /* Removes jump */
-  animation: dropdownFade 0.3s ease-in-out;
-}
-
-/* Smooth fade-in animation for dropdown */
-@keyframes dropdownFade {
-  from {
-    opacity: 0;
-    transform: translateY(-8px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-/* Optional: make hover menus stay visible a bit longer */
-.navbar-nav li.nav-item.dropdown {
-  position: relative;
-}
-
-.navbar-nav li.nav-item.dropdown .dropdown-menu {
-  display: none;
-  position: absolute;
-  top: 100%;
-  left: 0;
-  background-color: white;
-  border-radius: 0 0 8px 8px;
-  box-shadow: 0 4px 8px rgba(0,0,0,0.15);
-}
-
-/* === FIXED SIDEBAR BELOW HEADER + NAVBAR === */
-.bslib-sidebar-layout > .sidebar {
-  position: -webkit-sticky !important; /* For Safari */
-  position: sticky !important;
-  top: 185px; /* offset to sit below header + navbar */
-  align-self: flex-start;
-  max-height: calc(100vh - 185px);
-  overflow-y: auto !important;
-  background-color: #23558f; /* same as your theme */
-  z-index: 10; /* below navbar/header */
-  scrollbar-width: thin;
-  scrollbar-color: #002D62 #f9fafc;
-  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.1);
-}
-
-/* === LEAFLET MARKER FADE-IN ANIMATION === */
-
-/* === MARKER DROP-IN ANIMATION === */
-@keyframes dropMarker {
-  0% {
-    opacity: 0;
-    transform: translateY(-15px) scale(0.9);
-  }
-  70% {
-    opacity: 1;
-    transform: translateY(2px) scale(1.05);
-  }
-  100% {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-}
-
-
-/* === SIDEBAR SLIDE-IN ANIMATION === */
-.bslib-sidebar-layout > .sidebar {
-  animation: sidebarSlideIn 0.6s ease-out;
-  transform-origin: left;
-}
-
-@keyframes sidebarSlideIn {
-  0% {
-    opacity: 0;
-    transform: translateX(-30px);
-  }
-  100% {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-
-/* Optional: make inner cards appear smoothly too */
-.bslib-sidebar-layout > .sidebar .card {
-  opacity: 0;
-  transform: translateY(10px);
-  animation: cardFadeUp 0.6s ease forwards;
-  animation-delay: 0.3s;
-}
-
-@keyframes cardFadeUp {
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-
-
-/* === MAIN BODY FADE + SLIDE ANIMATION === */
-.bslib-sidebar-layout > .main {
-  animation: bodyFadeIn 0.7s ease-out;
-  transform-origin: top;
-  animation-delay: 0.1s;
-}
-
-@keyframes bodyFadeIn {
-  0% {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  100% {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-
-/* === BODY CARD STAGGERED ENTRANCE === */
-.bslib-sidebar-layout > .main .card {
-  opacity: 0;
-  transform: translateY(15px);
-  animation: cardUp 0.6s ease forwards;
-  animation-delay: 0.3s;
-}
-
-@keyframes cardUp {
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.navbar .nav-link.active {
-  border-bottom: 3px solid #ffffff;
-  color: #002D62 !important;
-  transition: all 0.3s ease;
-}
-.navbar .nav-link:hover {
-  color: #ffffff !important;
-}
-@media (max-width: 768px) {
-  .sidebar {
-    width: 100%;
-  }
-  .card {
-    font-size: 14px;
-  }
-}
-
-
-/* === FIX LOADING OVERLAY VISIBILITY === */
-#loading-overlay {
-  position: fixed !important;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: #ffffff;
-  display: none;
-  z-index: 100000 !important; /* higher than header/nav */
-  transition: opacity 0.8s ease-in-out;
-}
-
-/* when login-hidden is present, hide header/footer and move nav up */
-body.login-hidden .app-header,
-body.login-hidden .app-footer {
-  display: none !important;
-}
-
-/* when header hidden, bring navbar to top so it doesn't leave a gap */
-body.login-hidden .bslib-navbar,
-body.login-hidden .navbar {
-  top: 0 !important;
-}
-
-/* Hide header & footer before Shiny finishes initializing */
-.app-header,
-.app-footer {
-  display: none;
-}
-
-/* When Shiny fully loaded and authenticated, show them again */
-body.show-header-footer .app-header,
-body.show-header-footer .app-footer {
-  display: flex !important;
-}
-
-
-.bubble-bg {
-  position: fixed;
-  top: 0; left: 0;
-  width: 100vw;
-  height: 100vh;
-  overflow: hidden;
-  z-index: -1;
-  background-color: #fdfdfd; /* light neutral base */
-}
-
-/* Shared bubble styling */
-.bubble {
-  position: absolute;
-  border-radius: 50%;
-  opacity: 0.85;
-}
-
-/* 25 bubbles with DepEd colors */
-.b1  {width:220px;height:220px;background:#17428C;top:5%;left:10%;}
-.b2  {width:300px;height:300px;background:#7BA7E1;top:60%;left:5%;}
-.b3  {width:250px;height:250px;background:#E43E3E;top:30%;left:25%;}
-.b4  {width:180px;height:180px;background:#7BA7E1;top:10%;left:45%;}
-.b5  {width:350px;height:350px;background:#FFD700;top:55%;left:35%;}
-.b6  {width:150px;height:150px;background:#17428C;top:75%;left:55%;}
-.b7  {width:280px;height:280px;background:#E43E3E;top:20%;left:65%;}
-.b8  {width:200px;height:200px;background:#17428C;top:65%;left:75%;}
-.b9  {width:240px;height:240px;background:#17428C;top:15%;left:85%;}
-.b10 {width:320px;height:320px;background:#E43E3E;top:45%;left:85%;}
-
-/* Extra bubbles for more color depth */
-.b11 {width:180px;height:180px;background:#7BA7E1;top:75%;left:15%;}
-.b12 {width:260px;height:260px;background:#7BA7E1;top:35%;left:5%;}
-.b13 {width:210px;height:210px;background:#E43E3E;top:10%;left:70%;}
-.b14 {width:170px;height:170px;background:#FFD700;top:80%;left:30%;}
-.b15 {width:280px;height:280px;background:#17428C;top:50%;left:50%;}
-.b16 {width:130px;height:130px;background:#BBD7FF;top:25%;left:60%;}
-.b17 {width:300px;height:300px;background:#E43E3E;top:40%;left:75%;}
-.b18 {width:210px;height:210px;background:#7BA7E1;top:5%;left:55%;}
-.b19 {width:250px;height:250px;background:#17428C;top:65%;left:90%;}
-.b20 {width:180px;height:180px;background:#FFF176;top:85%;left:50%;}
-.b21 {width:200px;height:200px;background:#E43E3E;top:20%;left:40%;}
-.b22 {width:230px;height:230px;background:#7BA7E1;top:70%;left:60%;}
-.b23 {width:160px;height:160px;background:#FFD700;top:25%;left:80%;}
-.b24 {width:190px;height:190px;background:#17428C;top:55%;left:20%;}
-.b25 {width:220px;height:220px;background:#E43E3E;top:15%;left:90%;}
-
-/* optional soft overlay to blend colors smoothly */
-.bubble-bg::after {
-  content: "";
-  position: absolute;
-  top: 0; left: 0;
-  width: 100%; height: 100%;
-  background: rgba(255,255,255,0.12);
-  z-index: 1;
-  
-}
-/* animation */
-@keyframes floatBubble {
-  0%   { transform: translate(0,0) scale(1); opacity: 0.3; }
-  50%  { transform: translate(40px,-60px) scale(1.15); opacity: 0.8; }
-  100% { transform: translate(0,0) scale(1); opacity: 0.3; }
-}
-
-/* === LOGIN LAYOUT ADJUSTMENTS === */
+/* Login Container & Layout */
 .login-container {
   position: relative;
   display: flex;
-  height: 100vh; /* slightly transparent beige overlay */
+  height: 100vh;
   align-items: center;
   justify-content: center;
-  z-index: 1; /* sits above bubbles */
+  z-index: 1; /* Sits above bubbles/gradient */
 }
 
 .login-left {
   flex: 1;
-  color: #333;
+  color: #333; /* Color for text over gradient */
   display: flex;
   align-items: center;
   justify-content: center;
   text-align: center;
-}
-
-.login-text {
-  position: relative;
-  z-index: 2;
-}
-
-.login-text h2 {
-  font-size: 2.2rem;
-  margin-bottom: 0.5rem;
-  margin-left: 20px;
-}
-
-.login-text p {
-  font-size: 1.1rem;
-  margin-left: 20px;
 }
 
 .login-right {
@@ -788,44 +65,77 @@ body.show-header-footer .app-footer {
   display: flex;
   align-items: center;
   justify-content: center;
+  transition: all 0.4s ease; /* For register panel enlarge */
 }
 
-.bubble {
-  position: absolute;
-  border-radius: 50%;
-  opacity: 0.85;
-  transition: transform 0.8s ease, opacity 0.8s ease;
-  will-change: transform;
-  cursor: pointer;
+.login-text-box { /* Container for left-side text/logos */
+  position: relative;
+  z-index: 2;
 }
 
-/* floating animation */
-@keyframes gentleFloat {
-  0%   { transform: translate(0, 0) scale(1); }
-  50%  { transform: translate(15px, -25px) scale(1.05); }
-  100% { transform: translate(0, 0) scale(1); }
+.login-left-logos {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 10px;
 }
 
-/* add gentle float to all bubbles */
-.bubble {
-  animation: gentleFloat 12s ease-in-out infinite;
+.left-logo {
+  height: 161px;
+  width: auto;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.4));
 }
 
-/* bubble hover reaction */
-.bubble:hover {
-  transform: scale(1.2) rotate(3deg);
-  opacity: 1;
+/* STRIDE Logo Text Styling (Login Left) */
+.stride-logo-text {
+  font-family: 'Poppins', sans-serif;
+  font-weight: 800;
+  font-size: 12rem; /* Consider reducing if too large */
+  letter-spacing: 2px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-shadow: -5px 3px 2px #e0e4ce;
+  position: relative;
+  gap: 0.05em;
 }
 
-/* bubble click pulse */
-@keyframes pulsePop {
-  0%   { transform: scale(1); opacity: 1; }
-  50%  { transform: scale(1.3); opacity: 0.7; }
-  100% { transform: scale(1); opacity: 1; }
+.stride-str { color: #003366; /* DepEd blue */ }
+.stride-ide { color: #D62828; /* DepEd red */ }
+
+.stride-logo-i { /* Image used for 'I' */
+  height: 249px;
+  vertical-align: middle;
+  margin: 2px -125px;
+  transition: transform 0.3s ease;
+  margin-top: -60px;
 }
 
+/* Login Slogans */
+.slogan-mid {
+  margin-top: -29px;
+  font-size: 45px;
+  color: #a38200; /* Gold/Yellow */
+  font-weight: 900;
+  text-shadow: 0px 3px #fffde4;
+  letter-spacing: 2px;
+  font-style: italic;
+}
 
-/* === LOGIN CARD STYLE === */
+.slogan-bottom-row {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  font-size: 32px;
+  font-weight: 500;
+  margin-top: -24px;
+  text-shadow: 0px 3px #fffde4;
+}
+
+.slogan-left { color: #2c3895; font-weight: 900; /* deep blue */ }
+.slogan-right { color: #d62828; font-weight: 900; /* red */ }
+
+/* Login Card Styling (Right Side) */
 .login-card {
   background: rgba(255, 255, 255, 0.9);
   padding: 40px 35px;
@@ -836,47 +146,79 @@ body.show-header-footer .app-footer {
   text-align: center;
   position: relative;
   backdrop-filter: blur(6px);
+  overflow: hidden; /* For transition animation */
 }
 
-/* Top logo */
-.login-logo-top {
+.login-logo-top { /* Logo inside login card */
   width: 120px;
   margin-bottom: 20px;
 }
 
-/* Input fields */
-.login-form input {
+@media (min-width: 992px) {
+  .login-logo-top {
+    width: 304px;
+    margin-bottom: 5px;
+    margin-top: -25px;
+  }
+}
+
+/* Input Fields */
+#auth input, #auth select { /* Target inputs/selects inside auth module */
   border-radius: 10px !important;
-  border: 1px solid #ccc;
-  padding: 12px;
+  border: 1px solid #ccc !important;
+  padding: 10px 12px !important;
+  margin-bottom: 10px !important;
+  width: 100% !important;
   font-size: 1rem;
   transition: border 0.2s, box-shadow 0.2s;
 }
 
-.login-form input:focus {
-  border-color: #17428C;
-  box-shadow: 0 0 0 3px rgba(23, 66, 140, 0.2);
+#auth input:focus {
+  border-color: #17428C !important; /* DepEd Blue */
+  box-shadow: 0 0 0 3px rgba(23, 66, 140, 0.15);
 }
 
-/* Login button */
-.btn-login {
-  background-color: #17428C !important;
+/* Buttons (Login/Register/Guest) */
+#auth .btn, #auth-do_login, #auth-do_register, .btn-login {
+  background-color: #17428C !important; /* DepEd Blue */
   color: white !important;
   border-radius: 10px !important;
   padding: 12px;
   font-size: 1rem;
-  font-weight: 600;
+  font-weight: 600 !important;
   margin-top: 10px;
-  border: none;
+  border: none !important;
+  width: 100%;
   transition: background 0.3s, transform 0.2s;
 }
 
-.btn-login:hover {
-  background-color: #0e2c60 !important;
+#auth .btn:hover, .btn-login:hover {
+  background-color: #0e2c60 !important; /* Darker Blue */
   transform: translateY(-2px);
 }
 
-/* Bottom logos section */
+/* Guest Button Specifics (if needed, otherwise inherits from .btn) */
+#auth-guest_mode {
+  background-color: #6c757d !important; /* Bootstrap secondary grey */
+  /* Add hover effect if desired */
+}
+#auth-guest_mode:hover {
+   background-color: #5a6268 !important;
+}
+
+
+/* Links (Register/Back to Login) */
+.register-link {
+  display: block; /* Ensure it takes full width for centering if needed */
+  margin-top: 10px; /* Add some space above */
+  color: #0d6efd; /* Standard link blue */
+  text-decoration: none;
+}
+.register-link:hover {
+  text-decoration: underline;
+}
+
+/* Bottom Logos */
 .login-logos-bottom {
   display: flex;
   justify-content: center;
@@ -896,672 +238,303 @@ body.show-header-footer .app-footer {
   transform: scale(1.05);
 }
 
-
-/* Make the module's buttons & inputs match the new style */
-/* Hide the old module title and extra wrapper card */
-#auth-card, 
-#auth-card > div:first-child, 
-#auth-card h4, 
-#auth-card .card-header, 
-#auth-card .card-title,
-#auth .card-header, 
-#auth .card-title, 
-#auth h4 {
+/* Hiding default auth module card styles */
+#auth-card, #auth-card > div:first-child, #auth-card h4,
+#auth-card .card-header, #auth-card .card-title,
+#auth .card-header, #auth .card-title, #auth h4 {
   display: none !important;
 }
-
-/* Make the form content inside the module fit the new design */
 #auth .card {
-  background: transparent !important;
-  box-shadow: none !important;
-  border: none !important;
-  padding: 0 !important;
+  background: transparent !important; box-shadow: none !important;
+  border: none !important; padding: 0 !important;
 }
+#auth .card-body { padding: 0 !important; }
 
-/* Align module's form inputs nicely */
-#auth input, #auth select {
-  border-radius: 10px !important;
-  border: 1px solid #ccc !important;
-  padding: 10px 12px !important;
-  margin-bottom: 10px !important;
-  width: 100% !important;
-}
-
-#auth input:focus {
-  border-color: #17428C !important;
-  box-shadow: 0 0 0 3px rgba(23, 66, 140, 0.15);
-}
-
-/* Match your new Sign In button style */
-#auth .btn, #auth-do_login, #auth-do_register {
-  background-color: #17428C !important;
-  border: none !important;
-  border-radius: 10px !important;
-  color: #fff !important;
-  font-weight: 600 !important;
-  padding: 10px;
-  width: 100%;
-  transition: 0.3s;
-}
-
-#auth .btn:hover {
-  background-color: #0e2c60 !important;
-}
-
-/* Optional: remove extra spacing inside the module */
-#auth .card-body {
-  padding: 0 !important;
-}
-
-@media (min-width: 992px) {
-    @media (min-width: 992px) {
-        .login-logo-top {
-            width: 304px;
-            margin-bottom: 5px;
-            margin-top: -25px;
-        }
-    }
-}
-
-
-/* === TRANSITION CONTAINER === */
-.login-card {
-  position: relative;
-  overflow: hidden;
-}
-
-/* === AUTH FORM CONTAINER ANIMATION === */
+/* Login/Register Form Transition */
 .auth-form {
   opacity: 0;
   transform: translateX(100%);
   transition: all 0.6s ease-in-out;
-  position: absolute;
-  width: 100%;
-  top: 0;
-  left: 0;
+  position: absolute; /* Needed for transition */
+  width: 100%; top: 0; left: 0;
+  padding: inherit; /* Inherit padding from .login-card */
 }
 
 .auth-form.active {
   opacity: 1;
   transform: translateX(0);
-  z-index: 2;
-  position: relative;
+  z-index: 2; /* Bring active form to front */
+  position: relative; /* Take up space in layout */
 }
 
-/* --- Animate Login & Register differently --- */
-.auth-form:nth-child(1).active {
-  animation: slideInLeft 0.6s ease forwards;
-}
+/* Keyframes for sliding */
+@keyframes slideInLeft { from { opacity: 0; transform: translateX(-100%); } to { opacity: 1; transform: translateX(0); } }
+@keyframes slideInRight { from { opacity: 0; transform: translateX(100%); } to { opacity: 1; transform: translateX(0); } }
 
-.auth-form:nth-child(2).active {
-  animation: slideInRight 0.6s ease forwards;
-}
+/* Apply animations */
+.auth-form:nth-child(1).active { animation: slideInLeft 0.6s ease forwards; }
+.auth-form:nth-child(2).active { animation: slideInRight 0.6s ease forwards; }
 
-/* --- Keyframes for sliding transitions --- */
-@keyframes slideInLeft {
-  from {
-    opacity: 0;
-    transform: translateX(-100%);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-
-@keyframes slideInRight {
-  from {
-    opacity: 0;
-    transform: translateX(100%);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-
-/* === Animated Gradient Background (DepEd Theme) === */
-.login-bg.gradient-animated {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  z-index: -1;
-  background: linear-gradient(-45deg, #113967, #c9c9c9, #dcd6cd, #0075ff);
-  background-size: 200% 200%;
-  animation: depedGradient 15s ease infinite;
-}
-
-/* --- Fix unwanted horizontal scroll --- */
-html, body {
-  overflow-x: hidden !important;
-  width: 100%;
-}
-
-/* Ensure background never causes overflow */
-.login-bg.gradient-animated {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  width: 100vw;
-  height: 100vh;
-  overflow: hidden;
-}
-
-
-/* Smooth gradient animation */
-@keyframes depedGradient {
-  0% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
-}
-.login-bg.gradient-animated {
-  animation: depedGradient 25s ease infinite; /* Slower, smoother */
-}
-
-b,strong {
-    font-weight: bolder;
-    font-size: 17px;
-}
-
-/* === STRIDE Multi-Color Animation === */
-/* STRIDE title styling */
-/*.stride-multi {
-  font-size: 14rem;
-  font-weight: 900;
-  text-shadow: -5px 2px 2px rgba(0,0,0,0.3);
-  letter-spacing: -22px; /* <<< tight spacing 
-  display: inline-block;
-  margin: -45px;
-}*/
-
-/*.stride-multi span {
-  display: inline-block;
-  animation: glowPulse 3s infinite ease-in-out;
-}*/
-
-/* Color classes for each segment */
-/*.stride-multi .blue { color: #1e415d; }    /* DepEd blue */
-/*.stride-multi .yellow { color: #bf9a16; }  /* DepEd yellow */
-/*.stride-multi .red { color: #D62828; }*/     /* DepEd red */
-
-/* Gentle glowing animation */
-/*@keyframes glowPulse {
-  0%, 100% { text-shadow: 0 0 8px rgba(255,255,255,0.4); transform: scale(1); }
-  50% { text-shadow: 0 0 20px rgba(255,255,255,0.8); transform: scale(1.03); }
-}*/
-
-
-/* === Slogan Text Styling === */
-.slogan-top {
-  font-size: 2rem;
-  font-weight: 600;
-  color: #1e415d;
-  margin-bottom: 0.5rem;
-  animation: fadeInDown 2s ease;
-  text-shadow: 0px 3px #fffde4;
-}
-
-.slogan-bottom-right {
-  font-size: 2rem;
-  font-weight: 600;
-  color: #D62828;
-  margin-top: 0.5rem;
-  animation: fadeInUp 2s ease;
-  text-shadow: 0px 3px #fffde4;
-}
-.slogan-bottom-left {
-  font-size: 2rem;
-  font-weight: 600;
-  color: #1e415d;
-  margin-top: 0.5rem;
-  animation: fadeInUp 2s ease;
-  text-shadow: 0px 3px #fffde4;
-}
-
-/* Fade-in animations */
-@keyframes fadeInDown {
-  from { opacity: 0; transform: translateY(-20px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-@keyframes fadeInUp {
-  from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-
-/* === GLOBAL SIDEBAR STYLING === */
-.sidebar {
-  background: linear-gradient(180deg, #003366 0%, #003366 100%);
-  color: #fff !important;
-  border-right: 3px solid #FFD43B;
-  min-height: 100vh;
-  padding-top: 1rem;
-  transition: all 0.3s ease;
-}
-
-/* Sidebar titles / headers */
-.sidebar .sidebar-title, .sidebar h2, .sidebar h3 {
-  color: #FFD43B !important;
-  text-transform: uppercase;
-  font-weight: 700;
-  letter-spacing: 1px;
-  text-align: center;
-}
-
-/* Sidebar links or buttons */
-.sidebar a, .sidebar .nav-link, .sidebar .menuItem, .sidebar .action-button {
-  color: black !important;
-  text-decoration: none;
-  display: block;
-  padding: 10px 16px;
-  font-weight: 500;
-  transition: all 0.25s ease;
-  border-radius: 8px;
-  margin: 4px 8px;
-}
-
-/* Hover + Active State */
-.sidebar a:hover, .sidebar .nav-link.active, .sidebar .menuItem.active {
-  background: #FFD43B !important;
-  color: #003366 !important;
-  transform: scale(1.02);
-  box-shadow: 0 2px 6px rgba(0,0,0,0.2);
-}
-
-/* Icons inside sidebar links */
-.sidebar .nav-icon, .sidebar .fa, .sidebar i {
-  margin-right: 8px;
-  color: #FFD43B;
-}
-
-/* Divider line between groups */
-.sidebar hr {
-  border-color: rgba(255, 255, 255, 0.2);
-  margin: 12px 0;
-  position: relative;
-  top: 0;
-}
-
-/* === Remove gaps between sidebar and navmenu === */
-.sidebar {
-  margin: 0 !important;
-  padding-top: 0 !important;
-}
-
-.navbar, .navmenu, .bslib-navbar, .bslib-nav {
-  margin: 0 !important;
-  padding: 0 !important;
-}
-
-body, .main-container, .bslib-layout-sidebar {
-  margin: 0 !important;
-  padding: 0 !important;
-}
-
-/* Make sure sidebar and nav align top-to-top */
-
-
-.navbar, .navmenu {
-  position: relative;
-  top: 0;
-  left: 0;
-  z-index: 1050; /* ensures it stays above content if needed */
-}
-
-
-/* Base style for the STRIDE logo text */
-.stride-logo-text {
-  font-family: 'Poppins', sans-serif;
-        font-weight: 800;
-        font-size: 12rem;
-        letter-spacing: 2px;
-        color: #2c3895;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        text-shadow: -5px 3px 2px #e0e4ce;
-        position: relative;
-        gap: 0.05em;
-}
-
-/* Colors for STR and DE */
-.stride-str {
-  color: #003366; /* DepEd blue */
-}
-.stride-ide {
-  color: #D62828; /* DepEd yellow */
-}
-
-/* The "I" customization */
-.stride-i {
-  color: #bf9a16;
-  position: relative;
-  display: inline-block;
-  font-size: 184px;
-}
-
-/* Replace the dot above "I" with your logo */
-.stride-i::before {
-  content: "";
-  position: absolute;
-  top: -32px; /* adjust to move above the I */
-  left: 45%;
-  transform: translateX(-50%);
-  width: 100px;  /* adjust size to fit your logo */
-  height: 74px;
-  background-image: url("torch.png"); /* ← put your logo file in www/ */
-  background-size: contain;
-  background-repeat: no-repeat;
-  background-position: center;
-  filter: drop-shadow(-5px 3px 2px #e0e4ce);
-}
-
-.stride-i::before {
-  animation: bounceDot 2.5s ease-in-out infinite;
-}
-
-@keyframes bounceDot {
-  0%, 100% { transform: translate(-50%, 0); }
-  50% { transform: translate(-50%, -8px); }
-}
-
-/* --- GLOBAL NAV PANEL STYLING --- */
-
-/* Make all nav items semi-transparent by default */
-.nav-item .nav-link {
-  opacity: 0.3;
-  transition: opacity 0.3s ease, color 0.3s ease;
-}
-
-/* On hover, increase visibility slightly */
-.nav-item .nav-link:hover {
-  opacity: 0.8;
-  color: #ffffff !important; /* DepEd blue accent */
-}
-
-/* Active tab — full opacity and colored text */
-.nav-item .nav-link.active,
-.nav-item .nav-link.active:focus {
-  opacity: 1;
-  color: black !important; /* Highlight color for active tab */
-  font-weight: 600;
-  border-bottom: 3px solid #ffffff; /* Optional underline */
-}
-
-/* Optional: remove extra outlines when clicking */
-.nav-item .nav-link:focus {
-  box-shadow: none !important;
-}
-
-/* Smooth transition for register panel */
-.login-right {
-  transition: all 0.4s ease;
-  flex: 1;
-}
-
-/* Enlarge panel when HR/Engineer selected */
-.enlarge-panel .login-right {
-  transform: scale(1.12);
-  transition: transform 0.4s ease;
-}
-
-/* Clean HR/Engineer registration form styling */
-.hr-form-container {
-  background: rgba(255, 255, 255, 0.95);
-  padding: 20px 25px;
-  border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-}
-
-/* Subtle fade-in animation */
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(15px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-
-
-/* === LOGIN LEFT EXTRA LOGOS === */
-/*.login-left-logos {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 18px;
-  margin-bottom: 10px;
-}
-
-.login-left-logos .left-logo {
-  height: 65px;
-  width: auto;
-  filter: drop-shadow(0 2px 3px rgba(0,0,0,0.4));
-}*/
-
-/* === ADJUST TAGLINES === */
-.slogan-mid {
-  margin-top: -29px;
-        font-size: 45px;
-        color: #a38200;
-        font-weight: 900;
-        text-shadow: 0px 3px #fffde4;
-        letter-spacing: 2px;
-        font-style: italic;
-}
-
-
-
-.login-left-logo-top {
-  height: 80px;
-  width: auto;
-  margin-bottom: 15px;
-  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.4));
-}
-
-.login-left-logos {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  margin-bottom: 10px;
-}
-
-.left-logo {
-  height: 161px;
-        width: auto;
-        filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.4));
-}
-
-
+/* Registration Specific Layout */
 .register-wrapper {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
   gap: 2rem;
   width: 100%;
-  max-width: 1100px;
+  max-width: 1100px; /* Adjust as needed */
   margin: auto;
   padding-top: 1rem;
 }
 
-.engineer-panel {
-  flex: 0 0 35%;
-  animation: slideInLeft 0.4s ease-out;
+.engineer-panel { /* Left panel for HR/Engineer */
+  flex: 0 0 35%; /* Adjust width ratio */
+  animation: slideInLeft 0.4s ease-out; /* Match animation name if needed */
   box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  background: rgba(255, 255, 255, 0.95); /* Match login card */
+  padding: 20px 25px;
+  border-radius: 12px;
 }
 
-@keyframes slideInLeft {
-  from {
-    opacity: 0;
-    transform: translateX(-40px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-
-.login-card {
+.login-right.flex-grow-1 { /* Ensure right panel grows */
   flex-grow: 1;
 }
 
-/* STRIDE text with logo in the middle */
-.stride-logo-text {
-  font-family: 'Poppins', sans-serif;
-  font-weight: 800;
-        font-size: 12rem;
-        letter-spacing: 2px;
-        color: #2c3895;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-}
-
-.stride-logo-text .stride-str,
-.stride-logo-text .stride-ide {
-  display: inline-block;
-}
-
-.stride-logo-i {
-  height: 249px;
-        vertical-align: middle;
-        margin: 2px -125px;
-        transition: transform 0.3s ease;
-        margin-top: -60px;
-}
-
-.slogan-bottom-row {
-  display: flex;
-  justify-content: center;
-  gap: 10px;
-  font-size: 32px;
-  font-weight: 500;
-  margin-top: -24px;
-  text-shadow: 0px 3px #fffde4;
+/* Enlarge register panel on condition */
+.enlarge-panel .login-right {
+  /* This might conflict with flex layout, consider adjusting .register-wrapper width instead */
+  /* transform: scale(1.12); */
+  transition: transform 0.4s ease;
 }
 
 
-
-/* Different colors for each */
-.slogan-left {
-  color: #2c3895; /* deep blue */
+/* Dashboard General Styles */
+body.dashboard-bg {
+  background-color: #f9fafc; /* Light grey background */
+  background-image: none;
+  color: #333; /* Default text color */
 }
 
-.slogan-right {
-  color: #d62828; /* warm yellow-orange */
-}
-
-#home_section {
-  height: 100vh;
-  overflow: hidden;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  position: relative;
-}
-
-.video-overlay h1 {
-  font-size: 2.5rem;
-  font-weight: 700;
-  margin-bottom: 1rem;
-}
-
-.video-overlay p {
-  font-size: 1.2rem;
-  line-height: 1.5;
-}
-
-#home_intro {
-  height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  position: relative;
-  overflow: hidden;
-}
-
-.video-overlay h1 {
-  color: #fff;
-  text-shadow: 0 4px 10px rgba(0,0,0,0.6);
-}
-
-.video-overlay p {
-  color: #f0f0f0;
-  line-height: 1.5;
-}
-
-#home_intro_section {
-  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-}
-
-.video-description h2,
-.video-description p {
-  text-shadow: 0 3px 10px rgba(0,0,0,0.6);
-}
-
-
- .btn-card {
-      background-color: #f8f9fa;
-      border: 2px solid #dee2e6;
-      border-radius: 10px;
-      padding: 20px;
-      text-align: center;
-      font-weight: 600;
-      transition: all 0.2s ease-in-out;
-      color: #000000;
-    }
-
-    .btn-card:hover {
-      background-color: #2c3895;
-      color: white !important;
-      transform: scale(1.03);
-    }
-
-    .btn-card.active {
-      background-color: #2c3895 !important;
-      color: white !important;
-      border-color: #2c3895;
-    }
-
-    .btn-card h5 {
-      margin-top: 10px;
-      margin-bottom: 0;
-    }
-/* --- Back to Top Button (better) --- */
-.back-to-top {
+/* Optional subtle background pattern/overlay */
+body.dashboard-bg::before {
+  content: "";
   position: fixed;
-  bottom: 30px;
-  right: 30px;
-  z-index: 99999;
-  background-color: #2c3895;
-  color: white;
-  border: none;
-  border-radius: 50%;
-  width: 50px;
-  height: 50px;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-color: #acbfd6; /* Light blue-grey tint */
+  opacity: 0.1; /* Very subtle */
+  z-index: -1;
+}
+
+/* General Card Styling */
+.card {
   text-align: center;
-  font-size: 22px;
-  cursor: pointer;
-  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-  opacity: 0;
-  visibility: hidden;
-  transform: translateY(12px) scale(0.98);
-  transition: opacity 0.28s ease, transform 0.28s ease, visibility 0.28s;
-  pointer-events: none;
+  font-size: 15px;
+  line-height: 1.3;
+  overflow: visible;
+  white-space: normal;
+  font-weight: bolder;
+  font-family: 'Poppins', sans-serif;
+  box-shadow: 2px 1px 3px 0px rgba(0, 0, 0, 0.2); /* Softened shadow */
+  border-radius: 10px; /* Consistent rounding */
+  border: none; /* Remove default border */
+  margin-bottom: 1rem; /* Space between cards */
 }
 
-/* visible state */
-.back-to-top.show {
-  opacity: 1;
-  visibility: visible;
-  transform: translateY(0) scale(1);
-  pointer-events: auto;
+.card-header { /* Style for dashboard section titles */
+  background: linear-gradient(90deg, #002D62, #004c99); /* DepEd Blue gradient */
+  color: #ffffff !important;
+  font-weight: 900;
+  font-size: 18px; /* Slightly adjusted size */
+  letter-spacing: 0.5px;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3); /* Softer shadow */
+  border-radius: 10px 10px 0 0 !important; /* Match card rounding, override */
+  text-align: center;
+  padding: 10px 15px;
+  /* Removed box-shadow as card has one */
+}
+.card-header:first-child { /* Override default first-child rule if needed */
+   font-size: 18px; /* Consistent size */
+   /* Keep other specific styles from previous block */
 }
 
-/* hover */
-.back-to-top:hover {
-  transform: translateY(0) scale(1.08);
-  background-color: #1f2a6b;
+
+/* Accordion Button Styling */
+.accordion .accordion-button:not(.collapsed) {
+  box-shadow: none;
+  font-weight: bolder;
+  font-size: 18px; /* Adjusted size */
+  color: #ffffff;
+  text-shadow: 1px 1px 1px black; /* Softer shadow */
+  background-color: #002D62; /* DepEd Blue */
 }
+
+/* Value Box Styling */
+.bslib-value-box { /* Target bslib value boxes specifically */
+  background-color: #f0f4ff; /* Light blue background */
+  border-radius: 10px;
+  padding: 12px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1); /* Softer shadow */
+  transition: transform 0.2s ease;
+  height: 100%; /* Make boxes fill column height */
+}
+.bslib-value-box:hover { transform: translateY(-3px); }
+
+.bslib-value-box .value-box-title {
+  font-weight: 700 !important; /* Bold but not excessive */
+  font-size: 1em !important;   /* Standard size */
+  color: #002D62 !important;   /* DepEd blue */
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  text-shadow: none; /* Removed shadow for cleaner look */
+  white-space: normal !important; /* Allow wrapping */
+  line-height: 1.2; /* Adjust line height */
+}
+.bslib-value-box .value-box-value {
+  font-weight: 800 !important; /* Bold number */
+  font-size: 2em !important; /* Larger number */
+  color: #004c99 !important; /* Slightly lighter blue */
+  text-shadow: none; /* Removed shadow */
+}
+
+/* Sidebar Styling */
+.bslib-sidebar-layout > .sidebar {
+  background: linear-gradient(180deg, #003366 0%, #003366 100%); /* DepEd Blue */
+  color: #fff !important;
+  border-right: 3px solid #FFD43B; /* DepEd Yellow border */
+  /* Sticky positioning - KEEP THIS if using sidebar layout */
+  position: -webkit-sticky !important; position: sticky !important;
+  top: 60px; /* Adjust this based on your FINAL navbar height */
+  align-self: flex-start;
+  max-height: calc(100vh - 60px); /* Adjust based on top offset */
+  overflow-y: auto !important;
+  z-index: 10; /* Below navbar */
+  scrollbar-width: thin; scrollbar-color: #002D62 #f9fafc;
+  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.1);
+  padding-top: 1rem; /* Add padding back if needed */
+  margin: 0 !important; /* Remove gaps */
+}
+
+.bslib-sidebar-layout .sidebar .sidebar-title {
+  color: #FFD43B !important; /* Yellow */
+  text-transform: uppercase; font-weight: 700;
+  letter-spacing: 1px; text-align: center;
+  font-size: 24px; /* Adjusted size */
+  text-shadow: 1px 1px 2px black;
+}
+
+/* Sidebar Content (specific rules if needed) */
+.bslib-sidebar-layout > .sidebar > .sidebar-content {
+  background: transparent; /* Inherit from .sidebar */
+  font-family: 'Poppins', sans-serif;
+  font-size: 16px; /* Slightly adjusted */
+  color: #FFFFFF;
+  font-weight: 600; /* Adjusted weight */
+  text-align: center;
+  overflow-y: visible !important; /* Check if really needed */
+}
+
+/* Footer Styling */
+.app-footer {
+  background-color: #f1f1f1;
+  color: #444;
+  text-align: center;
+  padding: 10px;
+  position: fixed;
+  bottom: 0;
+  width: 100%;
+  border-top: 1px solid #ccc;
+  font-size: 0.9em;
+  z-index: 9998 !important; /* High z-index */
+}
+
+/* Loading Overlay */
+#loading-overlay {
+  position: fixed !important; top: 0; left: 0;
+  width: 100%; height: 100%;
+  background-color: #ffffff;
+  display: flex; /* Use flex to center content */
+  align-items: center;
+  justify-content: center;
+  z-index: 100000 !important;
+  transition: opacity 0.8s ease-in-out;
+  /* Ensure it's hidden initially if controlled by JS */
+  /* display: none; */ /* Uncomment if JS doesn't hide it fast enough */
+}
+#loading-overlay > div { /* Center the inner div content */
+  text-align: center;
+  color: black; font-size: 1.3em;
+}
+
+/* Login State Body Classes */
+body.login-hidden .app-footer { /* Hide footer when logged out */
+  display: none !important;
+}
+body.login-hidden .bslib-navbar,
+body.login-hidden .navbar { /* Ensure navbar is at top when header is hidden */
+  top: 0 !important;
+}
+
+/* Hide footer initially */
+.app-footer { display: none; }
+/* Show footer when authenticated */
+body.show-header-footer .app-footer { display: block !important; /* Or flex, depending on content */ }
+
+
+/* School Details Tables */
+#schooldetails th, #schooldetails td,
+#schooldetails2 th, #schooldetails2 td,
+#schooldetails3 th, #schooldetails3 td,
+#schooldetails5 th, #schooldetails5 td {
+  text-align: center !important;
+  vertical-align: middle !important;
+  font-size: 0.9em; /* Adjust font size if needed */
+}
+#schooldetails th, #schooldetails2 th, #schooldetails3 th, #schooldetails5 th {
+  font-weight: 700; /* Adjusted weight */
+  background-color: #002D62; /* DepEd Blue */
+  color: #ffffff;
+}
+#schooldetails tr:nth-child(even), #schooldetails2 tr:nth-child(even),
+#schooldetails3 tr:nth-child(even), #schooldetails5 tr:nth-child(even) {
+  background-color: #f9f9f9; /* Zebra striping */
+}
+
+/* Animations (Keep if desired) */
+@keyframes sidebarSlideIn { 0% { opacity: 0; transform: translateX(-30px); } 100% { opacity: 1; transform: translateX(0); } }
+@keyframes cardFadeUp { to { opacity: 1; transform: translateY(0); } }
+@keyframes bodyFadeIn { 0% { opacity: 0; transform: translateY(20px); } 100% { opacity: 1; transform: translateY(0); } }
+@keyframes cardUp { to { opacity: 1; transform: translateY(0); } }
+
+.bslib-sidebar-layout > .sidebar { animation: sidebarSlideIn 0.6s ease-out; }
+.bslib-sidebar-layout > .sidebar .card {
+  opacity: 0; transform: translateY(10px);
+  animation: cardFadeUp 0.6s ease forwards; animation-delay: 0.3s;
+}
+.bslib-sidebar-layout > .main { animation: bodyFadeIn 0.7s ease-out; animation-delay: 0.1s; }
+.bslib-sidebar-layout > .main .card {
+  opacity: 0; transform: translateY(15px);
+  animation: cardUp 0.6s ease forwards; animation-delay: 0.3s;
+}
+
+/* Utility to remove container padding (use cautiously) */
+.container, .container-fluid, .container-xxl, .container-xl, .container-lg, .container-md, .container-sm {
+  --bs-gutter-x: 0; /* Removes horizontal padding */
+}
+
+@media (min-width: 992px) {
+    .navbar-expand-lg,.navbar:not(.navbar-expand):not(.navbar-expand-sm):not(.navbar-expand-md):not(.navbar-expand-lg):not(.navbar-expand-xl) {
+        flex-wrap:nowrap;
+        -webkit-flex-wrap: nowrap;
+        justify-content: flex-start;
+        border-bottom: 7px solid #003366 !important;
+        -webkit-justify-content: flex-start
+    }
+    
+*,*::before,*::after {
+    box-sizing: border-box;
+    margin-block: -3px;}
+
+@media (prefers-reduced-motion: no-preference) {
+    :root {
+        scroll-behavior: smooth
+    }
