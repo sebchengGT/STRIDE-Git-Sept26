@@ -2994,30 +2994,105 @@ server <- function(input, output, session) {
           useShinyjs(),  # Still needed here for this panel's interactivity
           tags$head(
             tags$style(HTML("
-            /* --- DEPED COLOR THEME --- */
-            :root { --deped-blue: #003366; --deped-gold: #FFB81C; --deped-light: #f4f6fa; --deped-white: #ffffff; } /* source: 184 */
-            /* --- PAGE LAYOUT (might conflict slightly with body rules, review if needed) --- */
-            /* body, html { height: 100%; margin: 0; background: var(--deped-light); overflow-y: auto !important; overflow-x: hidden; } */ /* Commented out body/html rules as they might conflict */ /* source: 184 */
-            .layout_erdb { display: flex; min-height: calc(100vh - 60px); /* Adjust height based on navbar */ background: var(--deped-light); } /* source: 184 */
-            /* --- SIDEBAR --- */
-            .sidebar_erdb { width: 260px; background: var(--deped-blue); color: var(--deped-white); padding: 20px; border-radius: 0 12px 12px 0; box-shadow: 2px 0 8px rgba(0,0,0,0.15); position: sticky; top: 60px; /* Adjust top based on navbar height */ height: calc(100vh - 60px); /* Adjust height based on navbar height */ flex-shrink: 0; overflow-y: auto; } /* source: 185 */
-            .sidebar_erdb h4 { color: var(--deped-gold); font-weight: 700; text-align: center; margin-bottom: 20px; } /* source: 185 */
-            /* --- SIDEBAR BUTTONS --- */
-            .btn-card { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.15); color: var(--deped-white); border-radius: 10px; text-align: left; padding: 12px 16px; display: flex; align-items: center; width: 100%; transition: all 0.2s ease-in-out; } /* source: 185 */
-            .btn-card:hover, .btn-card:focus { background: var(--deped-gold) !important; color: var(--deped-blue) !important; transform: scale(1.02); box-shadow: 0 4px 10px rgba(0,0,0,0.2); } /* source: 185 */
-            .btn-card h5 { display: inline-block; margin-left: 8px; font-size: 1.05rem; font-weight: 600; } /* source: 186 */
-            /* --- MAIN CONTENT --- */
-            .main-content-erdb { flex-grow: 1; padding: 25px; background: var(--deped-light); overflow-x: hidden; } /* source: 186 */
-            /* --- CARD STYLING (General - might conflict with other card styles, adjust selectors if needed) --- */
-             /* Applying styles directly inside bslib cards might be better than global .card */
-            /* .card { border-radius: 12px; border: none; box-shadow: 0 3px 8px rgba(0,0,0,0.1); background-color: var(--deped-white); margin-bottom: 20px; } */ /* source: 186 */
-            /* .card-header { background-color: var(--deped-blue); color: var(--deped-white); font-weight: 600; font-size: 1.05rem; border-radius: 12px 12px 0 0; } */ /* source: 186 */
-            /* --- GLOBAL SCROLLBAR --- */
-            ::-webkit-scrollbar { width: 10px; } /* source: 186 */
-            ::-webkit-scrollbar-thumb { background: var(--deped-gold); border-radius: 10px; } /* source: 186 */
-            ::-webkit-scrollbar-track { background: var(--deped-light); } /* source: 186 */
-          ")) # End HTML
-          ), # End tags$style
+    /* =====================================================
+       DEPED COLOR THEME
+       ===================================================== */
+    :root {
+      --deped-blue: #003366;
+      --deped-gold: #FFB81C;
+      --deped-light: #f4f6fa;
+      --deped-white: #ffffff;
+    }
+
+    /* =====================================================
+       PAGE LAYOUT
+       ===================================================== */
+    .layout_erdb {
+      display: flex;
+      min-height: calc(100vh - 60px); /* Adjust height based on navbar */
+      background: var(--deped-light);
+    }
+
+    /* =====================================================
+       SIDEBAR
+       ===================================================== */
+    .sidebar_erdb {
+      width: 260px;
+      background: var(--deped-blue);
+      color: var(--deped-white);
+      padding: 20px;
+      border-radius: 0 12px 12px 0;
+      box-shadow: 2px 0 8px rgba(0,0,0,0.15);
+      position: sticky;
+      top: 60px; /* Adjust top based on navbar height */
+      height: calc(100vh - 60px); /* Adjust height based on navbar height */
+      flex-shrink: 0;
+      overflow-y: auto;
+    }
+
+    .sidebar_erdb h4 {
+      color: var(--deped-gold);
+      font-weight: 700;
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    /* =====================================================
+       SIDEBAR BUTTONS
+       ===================================================== */
+    .btn-card {
+      background: rgba(255,255,255,0.1);
+      border: 1px solid rgba(255,255,255,0.15);
+      color: var(--deped-white);
+      border-radius: 10px;
+      text-align: left;
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      width: 100%;
+      transition: all 0.2s ease-in-out;
+    }
+
+    .btn-card:hover,
+    .btn-card:focus {
+      background: var(--deped-gold) !important;
+      color: var(--deped-blue) !important;
+      transform: scale(1.02);
+      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    }
+
+    .btn-card h5 {
+      display: inline-block;
+      margin-left: 8px;
+      font-size: 1.05rem;
+      font-weight: 600;
+    }
+
+    /* =====================================================
+       MAIN CONTENT AREA
+       ===================================================== */
+    .main-content-erdb {
+      flex-grow: 1;
+      padding: 25px;
+      background: var(--deped-light);
+      overflow-x: hidden;
+    }
+
+    /* =====================================================
+       GLOBAL SCROLLBAR
+       ===================================================== */
+    ::-webkit-scrollbar {
+      width: 10px;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background:  #003366;
+      border-radius: 10px;
+    }
+
+
+  "))
+          ),
           # --- MAIN LAYOUT Div ---
           div(
             class = "layout_erdb",
@@ -3345,118 +3420,6 @@ server <- function(input, output, session) {
           layout_sidebar(
             sidebar = sidebar(
               width = 350,
-              h6("EFD Database Filters:"),
-              
-              # Region (single select)
-              pickerInput(
-                inputId = "EFD_Region",
-                label = "Select Region:",
-                choices = sort(unique(EFDDB$Region)),
-                selected = sort(unique(EFDDB$Region))[1],
-                multiple = FALSE,
-                options = pickerOptions(
-                  liveSearch = TRUE,
-                  header = "Select Region",
-                  title = "No Region Selected",
-                  dropupAuto = FALSE,
-                  dropup = FALSE
-                )
-              ),
-              
-              # Division (multi-select)
-              pickerInput(
-                inputId = "EFD_Division",
-                label = "Select Division:",
-                choices = sort(unique(EFDDB$Division)),
-                multiple = TRUE,
-                options = pickerOptions(
-                  `actions-box` = TRUE,
-                  liveSearch = TRUE,
-                  header = "Select Division(s)",
-                  title = "No Division Selected",
-                  dropupAuto = FALSE,
-                  dropup = FALSE
-                )
-              ),
-              
-              # Legislative District (multi-select)
-              pickerInput(
-                inputId = "EFD_LD",
-                label = "Select Legislative District:",
-                choices = sort(unique(EFDDB$Legislative.District)),
-                multiple = TRUE,
-                options = pickerOptions(
-                  `actions-box` = TRUE,
-                  liveSearch = TRUE,
-                  header = "Select Legislative District(s)",
-                  title = "No Legislative District Selected",
-                  dropupAuto = FALSE,
-                  dropup = FALSE
-                )
-              ),
-              
-              # Barangay picker removed
-              
-              # EFD Toggles (retained)
-              pickerInput(
-                inputId = "EFD_Toggles",
-                label = strong("EFD Data Toggles"),
-                choices = names(EFDDB)[!names(EFDDB) %in% c(
-                  "Region", "Old.Region", "Division", "SchoolID", "School.Name",
-                  "District", "Legislative.District", "Barangay"
-                )],
-                multiple = TRUE,
-                options = pickerOptions(
-                  `actions-box` = TRUE,
-                  liveSearch = TRUE,
-                  header = "Select Data Columns",
-                  title = "No Data Column Selected",
-                  dropupAuto = FALSE,
-                  dropup = FALSE
-                )
-              )
-            ),
-            
-            layout_columns(
-              card(
-                full_screen = TRUE,
-                style = "
-          width: 100%;
-          max-height: 85vh;
-          overflow-y: auto;
-          margin-bottom: 20px;
-        ",
-                card_header(
-                  strong("EFD Database Panel"),
-                  style = "
-            font-size: 22px;
-            padding: 15px 20px;
-            text-align: center;
-            background-color: #00234d;
-            color: white;
-            border-bottom: 2px solid #dee2e6;
-          "
-                ),
-                card_body(
-                  div(
-                    style = "
-              padding: 10px;
-              overflow-x: auto;
-              height: calc(85vh - 80px);
-            ",
-                    dataTableOutput("EFD_Table")
-                  )
-                )
-              ),
-              col_widths = c(12)
-            )
-          )
-        ), # End of HR DB nav_panel - COMMA is correct
-        nav_panel(
-          title = tags$b("Infrastructure Database"),
-          layout_sidebar(
-            sidebar = sidebar(
-              width = 350,
               h6("Data Toggles:"),
               
               pickerInput(
@@ -3538,8 +3501,6 @@ server <- function(input, output, session) {
                             dropup = FALSE
                           )
               )
-              
-              # Removed: EFD_Data_Toggles picker
             ),
             
             layout_columns(
@@ -3550,7 +3511,120 @@ server <- function(input, output, session) {
               col_widths = c(12, 12)
             )
           )
-        ), # End of Infra DB nav_panel - COMMA is correct
+        ), # End of Human Resource DB nav_panel
+        
+        
+        # --- Nav Panel 2: Infrastructure Database ---
+        nav_panel(
+          title = tags$b("Infrastructure Database"),
+          layout_sidebar(
+            sidebar = sidebar(
+              width = 350,
+              h6("EFD Database Filters:"),
+              
+              # Region (single select)
+              pickerInput(
+                inputId = "EFD_Region",
+                label = "Select Region:",
+                choices = sort(unique(EFDDB$Region)),
+                selected = sort(unique(EFDDB$Region))[1],
+                multiple = FALSE,
+                options = pickerOptions(
+                  liveSearch = TRUE,
+                  header = "Select Region",
+                  title = "No Region Selected",
+                  dropupAuto = FALSE,
+                  dropup = FALSE
+                )
+              ),
+              
+              # Division (multi-select)
+              pickerInput(
+                inputId = "EFD_Division",
+                label = "Select Division:",
+                choices = sort(unique(EFDDB$Division)),
+                multiple = TRUE,
+                options = pickerOptions(
+                  `actions-box` = TRUE,
+                  liveSearch = TRUE,
+                  header = "Select Division(s)",
+                  title = "No Division Selected",
+                  dropupAuto = FALSE,
+                  dropup = FALSE
+                )
+              ),
+              
+              # Legislative District (multi-select)
+              pickerInput(
+                inputId = "EFD_LD",
+                label = "Select Legislative District:",
+                choices = sort(unique(EFDDB$Legislative.District)),
+                multiple = TRUE,
+                options = pickerOptions(
+                  `actions-box` = TRUE,
+                  liveSearch = TRUE,
+                  header = "Select Legislative District(s)",
+                  title = "No Legislative District Selected",
+                  dropupAuto = FALSE,
+                  dropup = FALSE
+                )
+              ),
+              
+              # EFD Toggles
+              pickerInput(
+                inputId = "EFD_Toggles",
+                label = strong("EFD Data Toggles"),
+                choices = names(EFDDB)[!names(EFDDB) %in% c(
+                  "Region", "Old.Region", "Division", "SchoolID", "School.Name",
+                  "District", "Legislative.District", "Barangay"
+                )],
+                multiple = TRUE,
+                options = pickerOptions(
+                  `actions-box` = TRUE,
+                  liveSearch = TRUE,
+                  header = "Select Data Columns",
+                  title = "No Data Column Selected",
+                  dropupAuto = FALSE,
+                  dropup = FALSE
+                )
+              )
+            ),
+            
+            layout_columns(
+              card(
+                full_screen = TRUE,
+                style = "
+          width: 100%;
+          max-height: 85vh;
+          overflow-y: auto;
+          margin-bottom: 20px;
+        ",
+                card_header(
+                  strong("EFD Database Panel"),
+                  style = "
+            font-size: 22px;
+            padding: 15px 20px;
+            text-align: center;
+            background-color: #00234d;
+            color: white;
+            border-bottom: 2px solid #dee2e6;
+          "
+                ),
+                card_body(
+                  div(
+                    style = "
+              padding: 10px;
+              overflow-x: auto;
+              height: calc(85vh - 80px);
+            ",
+                    dataTableOutput("EFD_Table")
+                  )
+                )
+              ),
+              col_widths = c(12)
+            )
+          )
+        ),
         nav_panel(
           title = tags$b("DepEd Officials"),
           layout_sidebar(
@@ -6327,7 +6401,8 @@ server <- function(input, output, session) {
       # =====================================================
       # DEFAULT DASHBOARD HOME
       # =====================================================
-    } else {
+    }
+    else {
       tagList(
         h3("Education Resource Dashboard Overview"),
         hr(),
@@ -28544,7 +28619,7 @@ authentication_server <- function(input, output, session, user_status,
             br(),
             actionLink(ns("btn_register"), "Create an account", class = "register-link"),
             br(),
-            actionButton(ns("guest_mode"), "Continue as Guest", class = "btn-secondary w-100 mt-2"),
+            # actionButton(ns("guest_mode"), "Continue as Guest", class = "btn-secondary w-100 mt-2"),
             div(
               class = "login-logos-bottom",
               tags$img(src = "HROD LOGO1.png", class = "bottom-logo")
