@@ -3102,6 +3102,7 @@ server <- function(input, output, session) {
         ) # End tagList for Home content
       ), # End of Home nav_panel - COMMA is correct here
       
+      #EDUCATION RESOURCE DASHBOARD
       nav_menu(
         title = tagList(bs_icon("speedometer"), tags$b("Dashboard")),
         value = "dashboard_menu",
@@ -3121,6 +3122,13 @@ server <- function(input, output, session) {
               # Sidebar Buttons (Cards)
               div(
                 class = "d-grid gap-3",  # Bootstrap spacing for stacked layout
+                
+                actionButton(
+                  "erdb_overview",
+                  label = tagList(bs_icon("house", size = 24), tags$h5("Overview")),
+                  class = "w-100 btn-card"
+                ),
+                
                 
                 actionButton(
                   "erdb_hr",
@@ -5857,6 +5865,7 @@ server <- function(input, output, session) {
   erdb_selection <- reactiveVal("education resource dashboard")
   
   # --- Observe Sidebar Button Clicks ---
+  observeEvent(input$erdb_overview, { erdb_selection("Overview") })
   observeEvent(input$erdb_hr,         { erdb_selection("Human Resource") })
   observeEvent(input$erdb_basic,      { erdb_selection("Basic Info") })
   observeEvent(input$erdb_infra,      { erdb_selection("Infrastructure") })
@@ -5870,9 +5879,59 @@ server <- function(input, output, session) {
     selected <- erdb_selection()
     
     # =====================================================
+    # OVERVIEW SECTION
+    # =====================================================
+    if (selected == "Overview") {
+      tagList(
+        h3("Education Resource Dashboard Overview"),
+        hr(),
+        
+        # --- Summary Cards Section ---
+        layout_column_wrap(
+          width = 1/3,
+          heights_equal = "row",
+          
+          card(
+            full_screen = TRUE,
+            card_header("Total Schools"),
+            valueBox("10,542", subtitle = "Nationwide", status = "primary")
+          ),
+          
+          card(
+            full_screen = TRUE,
+            card_header("Total Teachers"),
+            valueBox("850,230", subtitle = "Active Personnel", status = "success")
+          ),
+          
+          card(
+            full_screen = TRUE,
+            card_header("Total Classrooms"),
+            valueBox("523,410", subtitle = "Across Regions", status = "info")
+          )
+        ),
+        
+        hr(),
+        
+        # --- Overview Chart Section ---
+        layout_columns(
+          card(
+            full_screen = TRUE,
+            card_header("Regional Summary Snapshot"),
+            plotlyOutput("overview_plot", height = "450px")
+          ),
+          card(
+            full_screen = TRUE,
+            card_header("Key Indicators"),
+            plotlyOutput("overview_indicators", height = "450px")
+          ),
+          col_widths = c(6, 6)
+        )
+      )
+    }
+    # =====================================================
     # HUMAN RESOURCE SECTION
     # =====================================================
-    if (selected == "Human Resource") {
+    else if (selected == "Human Resource") {
       tagList(
         h3("Human Resource Overview"),
         
