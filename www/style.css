@@ -80,10 +80,23 @@ body.login-bg {
   margin-bottom: 10px;
 }
 
-.left-logo {
-  height: 161px;
-  width: auto;
-  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.4));
+
+.login-left-logos img:first-child {
+    transform: translateX(-414px);
+    margin-bottom: -110px;
+    height: 185px;
+    width: auto;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.4));
+}
+
+/* Example: Shift the second logo slightly down */
+.login-left-logos img:last-child {
+      transform: translateY(-74px);
+    margin-left: -616px;
+    height: 132px;
+    width: auto;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.4));
+    margin-right: -25px;
 }
 
 /* STRIDE Logo Text Styling (Login Left) */
@@ -150,8 +163,9 @@ body.login-bg {
 }
 
 .login-logo-top { /* Logo inside login card */
-  width: 120px;
-  margin-bottom: 20px;
+  width: 158px;
+  margin-bottom: 23px;
+  margin-top: -15px;
 }
 
 @media (min-width: 992px) {

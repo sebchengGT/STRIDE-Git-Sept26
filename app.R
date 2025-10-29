@@ -25908,8 +25908,8 @@ authentication_server <- function(input, output, session, user_status,
             class = "login-text-box text-center",
             div(
               class = "login-left-logos",
-              tags$img(src = "logo2.png", class = "left-logo"),
-              tags$img(src = "logo3.png", class = "left-logo")
+              tags$img(src = "logo1.png", class = "left-logo"),
+              tags$img(src = "logo2.png", class = "left-logo")
             ),
             h2(
               HTML('
@@ -25932,7 +25932,7 @@ authentication_server <- function(input, output, session, user_status,
           class = "login-right",
           div(
             class = "login-card",
-            tags$img(src = "logo1.png", class = "login-logo-top"),
+            tags$img(src = "logo3.png", class = "login-logo-top"),
             textInput(ns("login_user"), NULL, placeholder = "DepEd Email"),
             passwordInput(ns("login_pass"), NULL, placeholder = "Password"),
             actionButton(ns("do_login"), "Sign In", class = "btn-login w-100"),
