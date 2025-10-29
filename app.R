@@ -687,29 +687,34 @@ server <- function(input, output, session) {
         # Card 1: Basic Information
         card(
           card_body(
-            padding = 0, # Remove body padding so table fits edge-to-edge
-            reactable(
+            # padding = 0, # <-- Removed. DT tables usually look better with default padding.
+            DT::datatable(
               basic_info_df,
-              columns = list(
-                `Basic Info` = colDef(
-                  # style = list(fontWeight = "bold"), # <-- REMOVED
-                  minWidth = 180,
-                  align = "center", 
-                  headerStyle = list(textAlign = "center", fontWeight = "bold") # <-- MODIFIED
-                ), 
-                Data = colDef(
-                  minWidth = 120, 
-                  align = "center",
-                  headerStyle = list(textAlign = "center", fontWeight = "bold") # <-- MODIFIED
-                ) 
-              ),
-              striped = TRUE, compact = TRUE, bordered = TRUE,
-              pagination = FALSE, # Remove pagination
-              fullWidth = TRUE
+              class = 'stripe compact cell-border', # <-- Translated from striped, compact, bordered
+              width = "100%",                       # <-- Translated from fullWidth = TRUE
+              rownames = FALSE,                     # <-- Good practice to hide row names
+              extensions = 'Buttons',               # <-- Enables the Buttons extension
+              options = list(
+                # --- Feature: Download Buttons & Filter (Search) ---
+                dom = 'Bfrti', # 'B'=Buttons, 'f'=filter, 'r'=processing, 't'=table, 'i'=info
+                buttons = c('copy', 'csv', 'excel', 'pdf', 'print'), # Specify buttons
+                
+                # --- Feature: Disable Pagination ---
+                paging = FALSE, # <-- Translated from pagination = FALSE
+                
+                # --- Style: Column Definitions ---
+                columnDefs = list(
+                  # Center-align all columns (header and body)
+                  list(targets = '_all', className = 'dt-center'),
+                  
+                  # Set widths (equivalent to minWidth)
+                  list(targets = 0, width = '180px'), # 'Basic Info' column
+                  list(targets = 1, width = '120px')  # 'Data' column
+                )
+              )
             )
           )
         ),
-        
         # Card 2: HR Data
         card(
           card_body(
@@ -765,25 +770,55 @@ server <- function(input, output, session) {
   })
   
   # Render the reactable table
-  output$feature_3_table <- renderReactable({
+  output$feature_3_table <- DT::renderDataTable(server = FALSE, {
     req(feature_3_data())
-    reactable(
+    
+    # --- Find the column index for "Region" ---
+    # DT::datatable uses 0-based indexing for 'order'
+    region_col_index <- which(colnames(feature_3_data()) == "Region") - 1
+    
+    # Handle case where "Region" column might not exist
+    default_sort <- list()
+    if (length(region_col_index) > 0) {
+      default_sort <- list(list(region_col_index, 'asc')) # list(list(col_index, 'asc'/'desc'))
+    }
+    
+    DT::datatable(
       feature_3_data(),
-      filterable = TRUE, 
-      searchable = TRUE, 
-      bordered = TRUE,
-      highlight = TRUE,
-      striped = TRUE,
-      compact = TRUE,
-      defaultPageSize = 10, 
-      defaultSorted = "Region",
-      showPageSizeOptions = TRUE,
-      pageSizeOptions = c(10, 25, 50, 100), # Allow up to 100 per page
-      # --- Center all columns AND headers (This was already correct!) ---
-      defaultColDef = colDef(
-        align = "center",
-        headerStyle = list(textAlign = "center") 
-      ) 
+      
+      # --- Features ---
+      extensions = 'Buttons',         # Enables download buttons
+      filter = 'top',                 # <-- 'filterable = TRUE' (adds column filters)
+      rownames = FALSE,               # Good practice
+      
+      # --- Styling ---
+      class = 'stripe hover cell-border compact', # <-- 'striped', 'highlight', 'bordered', 'compact'
+      
+      # --- Options List ---
+      options = list(
+        # --- Layout ---
+        # 'l' = length menu
+        # 'B' = Buttons
+        # 'f' = global filter ('searchable = TRUE')
+        # 'r' = processing
+        # 't' = the table
+        # 'i' = info
+        # 'p' = pagination
+        dom = 'lBfrtip', 
+        buttons = c('copy', 'csv', 'excel', 'pdf', 'print'), # Download buttons
+        
+        # --- Pagination ---
+        pageLength = 10,              # <-- 'defaultPageSize = 10'
+        lengthMenu = c(10, 25, 50, 100), # <-- 'pageSizeOptions'
+        
+        # --- Sorting ---
+        order = default_sort,         # <-- 'defaultSorted = "Region"'
+        
+        # --- Alignment ---
+        columnDefs = list(
+          list(targets = '_all', className = 'dt-center') # <-- 'defaultColDef'
+        )
+      )
     )
   })
   
@@ -2311,15 +2346,15 @@ server <- function(input, output, session) {
   # This is now much simpler. It just GETS the data
   # from the reactive expression above.
   
-  output$priority_division_erdb <- reactable::renderReactable({
+  output$priority_division_erdb <- DT::renderDataTable({
     
-    # Get the data from our new reactive expression
+    # Get the data from our reactive expression
     data_to_display <- priority_data_reactive()
     
     # --- Custom Rank Formatting Function (Stays here) ---
     add_rank_suffix <- function(rank) {
       if (is.null(rank) || is.na(rank)) {
-        return("-")
+        return("-") # We will replace NAs later, but this handles explicit NULLs
       }
       rank_int <- as.integer(rank)
       formatted_rank <- paste0(
@@ -2335,40 +2370,97 @@ server <- function(input, output, session) {
       return(formatted_rank)
     }
     
-    # --- reactable Output ---
+    # --- Handle Empty Data Case ---
     if (is.null(data_to_display) || nrow(data_to_display) == 0) {
+      # Return a simple table with the message
       return(
-        reactable::reactable(
+        DT::datatable(
           data.frame("Message" = "No data available based on current selection."),
-          filterable = FALSE, 
-          searchable = FALSE
+          rownames = FALSE,
+          options = list(
+            dom = 't', # 't' = table only, no filter/search
+            ordering = FALSE
+          )
         )
       )
     }
     
-    reactable::reactable(
-      data_to_display,
-      filterable = TRUE,
-      searchable = TRUE,
-      defaultPageSize = 15,
+    # --- Data Pre-processing (Replaces reactable's 'cell' and 'na') ---
+    # Define column groups for manipulation
+    rank_cols <- c("Teacher Shortage Rank", "School Principal Shortage Rank", 
+                   "Classroom Shortage Rank", "Last Mile Schools Rank")
+    na_dash_cols <- c("Teacher Shortage", "School Principal Shortage", 
+                      "Classroom Shortage", "Last Mile Schools")
+    
+    # Apply formatting *before* passing to DT
+    processed_data <- data_to_display %>%
+      # Apply the rank suffix function (replicates 'cell = ...')
+      # We use sapply to apply the function to each element
+      dplyr::mutate(across(all_of(rank_cols), ~sapply(., add_rank_suffix))) %>%
       
-      # MODIFICATION: Removed 'downloadable = TRUE'
-      showPageSizeOptions = TRUE,
-      pageSizeOptions = c(15, 25, 50, 100),
+      # Convert data columns to character *before* replacing NAs
+      dplyr::mutate(across(all_of(na_dash_cols), as.character)) %>%
       
-      sortable = TRUE,
-      wrap = TRUE,
-      columns = list(
-        "Teacher Shortage" = reactable::colDef(na = "-", sortNALast = TRUE, align = "center"),
-        "School Principal Shortage" = reactable::colDef(na = "-", sortNALast = TRUE, align = "center"),
-        "Classroom Shortage" = reactable::colDef(na = "-", sortNALast = TRUE, align = "center"),
-        "Last Mile Schools" = reactable::colDef(na = "-", sortNALast = TRUE, align = "center"),
-        "Teacher Shortage Rank" = reactable::colDef(cell = function(value, index) { add_rank_suffix(value) }, sortNALast = TRUE, align = "center", width = 120),
-        "School Principal Shortage Rank" = reactable::colDef(cell = function(value, index) { add_rank_suffix(value) }, sortNALast = TRUE, align = "center", width = 120),
-        "Classroom Shortage Rank" = reactable::colDef(cell = function(value, index) { add_rank_suffix(value) }, sortNALast = TRUE, align = "center", width = 120),
-        "Last Mile Schools Rank" = reactable::colDef(cell = function(value, index) { add_rank_suffix(value) }, sortNALast = TRUE, align = "center", width = 120),
-        Region = reactable::colDef(sticky = "left"),
-        Division = reactable::colDef(sticky = "left")
+      # Replace NAs with "-" (replicates 'na = "-"')
+      dplyr::mutate(across(all_of(c(na_dash_cols, rank_cols)), ~tidyr::replace_na(., "-")))
+    
+    
+    # --- Column Definitions for DT ---
+    # Get column names and 0-based indices for 'columnDefs'
+    col_names <- colnames(processed_data)
+    
+    # Find indices for all columns (for centering)
+    all_col_indices <- seq_along(col_names) - 1
+    
+    # Find indices for rank columns (for width)
+    rank_col_indices <- which(col_names %in% rank_cols) - 1
+    
+    # Build the columnDefs list
+    col_defs <- list(
+      # Center-align ALL columns (replicates 'align = "center"')
+      list(targets = all_col_indices, className = 'dt-center'),
+      
+      # Set specific widths for rank columns (replicates 'width = 120')
+      list(targets = rank_col_indices, width = '120px')
+    )
+    
+    
+    # --- DT::datatable Output ---
+    DT::datatable(
+      processed_data,
+      
+      # --- Features ---
+      filter = 'top',                 # <-- 'filterable = TRUE'
+      rownames = FALSE,
+      extensions = c('Buttons', 'FixedColumns'), # Add FixedColumns for 'sticky'
+      
+      # --- Options List ---
+      options = list(
+        # --- Layout & Features ---
+        # 'l'=length, 'B'=buttons, 'f'=filter, 'r'=processing, 't'=table, 'i'=info, 'p'=pagination
+        dom = 'lBfrtip',
+        buttons = c('copy', 'csv', 'excel', 'pdf', 'print'), # Download buttons
+        ordering = TRUE,              # <-- 'sortable = TRUE' (default)
+        
+        # --- Pagination ---
+        pageLength = 15,              # <-- 'defaultPageSize = 15'
+        lengthMenu = c(15, 25, 50, 100), # <-- 'pageSizeOptions'
+        
+        # --- Fixed Columns (Sticky) ---
+        scrollX = TRUE,               # <-- Required for FixedColumns
+        fixedColumns = list(
+          leftColumns = 2             # <-- 'sticky = "left"' for Region & Division
+        ),
+        
+        # --- Column Definitions ---
+        columnDefs = col_defs,
+        
+        # --- Other ---
+        # 'sortNALast' is not a direct DT feature.
+        # By converting NAs to "-", they will sort as strings (e.g., at the end).
+        language = list(
+          search = "Search all columns:" # Replicates 'searchable = TRUE' label
+        )
       )
     )
   })
@@ -2377,25 +2469,25 @@ server <- function(input, output, session) {
   # This powers the button you made in the UI.
   # It uses the SAME reactive data.
   
-  output$download_priority_data <- downloadHandler(
-    
-    # This sets the name of the file the user will download
-    filename = function() {
-      paste0("priority-division-data-", Sys.Date(), ".csv")
-    },
-    
-    # This function writes the data to the file
-    content = function(file) {
-      # Get the data from our reactive expression
-      data_for_csv <- priority_data_reactive()
-      
-      # Write the data to the 'file' path
-      # NOTE: The downloaded CSV will have the raw data
-      # (e.g., numeric ranks "1", "2", not "1st", "2nd")
-      # which is usually what users want for export.
-      readr::write_csv(data_for_csv, file)
-    }
-  )
+  # output$download_priority_data <- downloadHandler(
+  #   
+  #   # This sets the name of the file the user will download
+  #   filename = function() {
+  #     paste0("priority-division-data-", Sys.Date(), ".csv")
+  #   },
+  #   
+  #   # This function writes the data to the file
+  #   content = function(file) {
+  #     # Get the data from our reactive expression
+  #     data_for_csv <- priority_data_reactive()
+  #     
+  #     # Write the data to the 'file' path
+  #     # NOTE: The downloaded CSV will have the raw data
+  #     # (e.g., numeric ranks "1", "2", not "1st", "2nd")
+  #     # which is usually what users want for export.
+  #     readr::write_csv(data_for_csv, file)
+  #   }
+  # )
   
   
   output$StrideLogo <- renderImage({
@@ -6041,9 +6133,7 @@ server <- function(input, output, session) {
               text-align: center;
             }
           "))),
-              reactable::reactableOutput("priority_division_erdb"),
-              hr(),
-              downloadButton("download_priority_data", "Download SDO Ranking as CSV", class = "btn-success"),
+              dataTableOutput("priority_division_erdb"),
               height = 800
             )
           ),
@@ -6488,6 +6578,7 @@ server <- function(input, output, session) {
             
             # --- Start of Tabset (now ABOVE the summary cards) ---
             navset_tab(
+              # Note: All panels are commented out, so this tabset will be empty.
               # nav_panel("Regional Breakdown",
               #           plotlyOutput("Teaching_Deployment_Region_Graph")
               # ),
@@ -6504,7 +6595,7 @@ server <- function(input, output, session) {
             
             # --- Summary Cards ---
             layout_column_wrap(
-              width = 1/5,
+              width = 1/4,
               card(
                 card_header(strong("RO Filling-up Rate")),
                 valueBoxOutput("f")
@@ -6520,41 +6611,42 @@ server <- function(input, output, session) {
               card(
                 card_header(strong("SDO Unfilled Items")),
                 valueBoxOutput("b")
+              )
+              # card(
+              #   card_header(strong("SDO Net Shortage")),
+              #   valueBoxOutput("e")
+              # )
+            ),
+            
+            hr(),
+            
+            layout_columns(
+              card(
+                card_header(strong("Teacher Excess and Shortage")),
+                dataTableOutput("TeacherShortage_Table")
               ),
               card(
-                card_header(strong("SDO Net Shortage")),
-                valueBoxOutput("e")
-              )
+                full_screen = TRUE,
+                card_header(strong("Personnel Deployment Mapping")),
+                leafletOutput("TeacherShortage_Mapping", height = 700)
+              ),
+              # card(
+              #   height = 200,
+              #   card_header(div(
+              #     "School Summary",
+              #     tags$span(em("(Select a school from the table above)"),
+              #               style = "font-size: 0.7em; color: grey;")
+              #   )),
+              #   uiOutput("TeacherShortage_Assessment")
+              # ),
+              col_widths = c(4, 8)
             )
-          )
-        ),
+          ) # <- End accordion_panel
+        ) # <- End accordion
         
-        hr(),
-        
-        layout_columns(
-          card(
-            card_header(strong("Teacher Excess and Shortage")),
-            dataTableOutput("TeacherShortage_Table")
-          ),
-          card(
-            full_screen = TRUE,
-            card_header(strong("Personnel Deployment Mapping")),
-            leafletOutput("TeacherShortage_Mapping", height = 700)
-          ),
-          card(
-            height = 200,
-            card_header(div(
-              "School Summary",
-              tags$span(em("(Select a school from the table above)"),
-                        style = "font-size: 0.7em; color: grey;")
-            )),
-            uiOutput("TeacherShortage_Assessment")
-          ),
-          col_widths = c(4, 8, 12)
-        )
-      )
+      ) # <--- THIS WAS THE MISSING PARENTHESIS
       
-    }
+    } # <- End if
     else if (selected_resource_type == "Non-teaching Deployment") {
       tagList(
         h3("Non-teaching Deployment Overview"),
@@ -12794,7 +12886,7 @@ server <- function(input, output, session) {
     }
   })
   
-  output$HROD_Table <- DT::renderDT(server = TRUE, {
+  output$HROD_Table <- DT::renderDT(server = FALSE, {
     all_regions <- unique(uni$Region)
     all_divisions <- unique(uni$Division)
     
@@ -12854,7 +12946,7 @@ server <- function(input, output, session) {
     
   })
   
-  output$ThirdLevel_Table <- DT::renderDT(server = TRUE, {
+  output$ThirdLevel_Table <- DT::renderDT(server = FALSE, {
     
     
     datatable(
@@ -12914,7 +13006,7 @@ server <- function(input, output, session) {
   })
   
   # --- Render DT (with robust "-" replacement for blanks/NA/#N/A) ---
-  output$EFD_Table <- DT::renderDT(server = TRUE, {
+  output$EFD_Table <- DT::renderDT(server = FALSE, {
     df <- filtered_EFD_reactive()
     
     if (is.null(df) || !is.data.frame(df) || nrow(df) == 0) {
@@ -13207,15 +13299,14 @@ server <- function(input, output, session) {
                 card_header(tags$h4("Feature 3: Data Deployment")),
                 card_body(
                   # Content of Feature 3
-                  p(em("The platform features a comprehensive tabular display of school-level data. You can click on the columns to sort the data or search using space below each column. You can also click the download button below to download this table into a CSV file!"), ""), # Added citation placeholder
+                  p(em("The platform features a comprehensive tabular display of school-level data. You can click on the columns to sort the data or search using space below each column. You can also click the floating buttons above the table to download this table into your preferred file type!"), ""), # Added citation placeholder
                   # Inner card for reactable can remain or be removed
                   card(
                     card_body(
                       tagList(
-                        reactableOutput("feature_3_table"),
+                        dataTableOutput("feature_3_table"),
                         div(
                           style = "text-align: right; margin-top: 10px;",
-                          downloadButton("download_feature3", "Download Sample Data", class = "btn-primary btn-sm")
                         )
                       )
                     )
@@ -14654,7 +14745,7 @@ server <- function(input, output, session) {
       }
     })
     
-    output$TeacherShortage_Table <- DT::renderDT(server = FALSE, {datatable(dfreact_TS() %>% select("School.Name","TeacherShortage","TeacherExcess") %>% rename("School" = School.Name, "Shortage" = TeacherShortage, "Excess" = TeacherExcess), extension = 'Buttons', rownames = FALSE, options = list(scrollX = TRUE, pageLength = 5, columnDefs = list(list(className = 'dt-center', targets ="_all")), dom = 'Bfrtip', buttons = list('csv','excel','pdf','print')))})
+    output$TeacherShortage_Table <- DT::renderDT(server = FALSE, {datatable(dfreact_TS() %>% select("School.Name","TeacherShortage","TeacherExcess") %>% rename("School" = School.Name, "Shortage" = TeacherShortage, "Excess" = TeacherExcess), extension = 'Buttons', rownames = FALSE, options = list(scrollX = TRUE, pageLength = 10, columnDefs = list(list(className = 'dt-center', targets ="_all")), dom = 'Bfrtip', buttons = list('csv','excel','pdf','print')))})
     
     # ... (All your renderValueBox and other outputs) ...
     
@@ -15427,7 +15518,7 @@ server <- function(input, output, session) {
   
   
   # --- Render DataTable ---
-  output$GMISTable1 <- renderDataTable({
+  output$GMISTable1 <- renderDataTable(server = TRUE, {
     dfGMIS <- read.csv("GMIS-FillingUpPerPosition-2025.csv")
     table_data <- filtered_GMIS()$table
     
