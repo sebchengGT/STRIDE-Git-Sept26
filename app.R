@@ -1162,6 +1162,97 @@ server <- function(input, output, session) {
     )
   }
   
+  #EDUCATION RESOURCE DASHBOARD OVERVIEW
+  # --- Overview Hard-Coded Value Boxes ---
+  
+  # 1. Central Office
+  output$central_office_erdb <- renderUI({
+    bslib::card(
+      style = "background-color: #FFFFFF;",
+      bslib::card_header("Central Office", class = "text-center"),
+      bslib::card_body(
+        tags$h3("1", style = "text-align: center; font-weight: 700; color: #2c3895;")
+      )
+    )
+  })
+  
+  # 2. Regional Offices
+  output$regional_offices_erdb <- renderUI({
+    bslib::card(
+      style = "background-color: #FFFFFF;",
+      bslib::card_header("Regional Offices", class = "text-center"),
+      bslib::card_body(
+        tags$h3("16", style = "text-align: center; font-weight: 700; color: #2c3895;")
+      )
+    )
+  })
+  
+  # 3. Schools Division Offices
+  output$sdo_erdb <- renderUI({
+    bslib::card(
+      style = "background-color: #FFFFFF;",
+      bslib::card_header("Schools Division Offices", class = "text-center"),
+      bslib::card_body(
+        tags$h3("218", style = "text-align: center; font-weight: 700; color: #2c3895;")
+      )
+    )
+  })
+  
+  # 4. Public Schools
+  output$public_schools_erdb <- renderUI({
+    bslib::card(
+      style = "background-color: #FFFFFF;",
+      bslib::card_header("Public Schools", class = "text-center"),
+      bslib::card_body(
+        tags$h3("45,785", style = "text-align: center; font-weight: 700; color: #2c3895;")
+      )
+    )
+  })
+  
+  # 5. Private Schools
+  output$private_schools_erdb <- renderUI({
+    bslib::card(
+      style = "background-color: #FFFFFF;",
+      bslib::card_header("Private Schools", class = "text-center"),
+      bslib::card_body(
+        tags$h3("12,624", style = "text-align: center; font-weight: 700; color: #2c3895;")
+      )
+    )
+  })
+  
+  # 6. SUCs/LUCs
+  output$suc_luc_erdb <- renderUI({
+    bslib::card(
+      style = "background-color: #FFFFFF;",
+      bslib::card_header("SUCs / LUCs", class = "text-center"),
+      bslib::card_body(
+        tags$h3("220", style = "text-align: center; font-weight: 700; color: #2c3895;")
+      )
+    )
+  })
+  
+  # 7. Plantilla Positions
+  output$plantilla_erdb <- renderUI({
+    bslib::card(
+      style = "background-color: #FFFFFF;",
+      bslib::card_header("Plantilla Positions", class = "text-center"),
+      bslib::card_body(
+        tags$h3("1,030,897", style = "text-align: center; font-weight: 700; color: #2c3895;")
+      )
+    )
+  })
+  
+  # 8. Total Schools (public & private)
+  output$total_schools_erdb1 <- renderUI({
+    bslib::card(
+      style = "background-color: #FFFFFF;",
+      bslib::card_header("Total Schools (Public + Private)", class = "text-center"),
+      bslib::card_body(
+        tags$h3("58,409", style = "text-align: center; font-weight: 700; color: #2c3895;")
+      )
+    )
+  })
+  
   # ---------------------------------------------------------------------------
   
   # 1. Total Schools (White box)
@@ -3075,125 +3166,263 @@ server <- function(input, output, session) {
       " # End of CSS string
       ), # End of bs_add_rules
       nav_spacer(),
-      
+      tags$head(
+        tags$style(HTML("
+      /* --- DEPED COLOR THEME --- */
+      :root {
+        --deped-blue: #003366;
+        --deped-gold: #FFB81C;
+        --deped-light: #f4f6fa;
+        --deped-white: #ffffff;
+      }
+
+      /* --- PAGE LAYOUT --- */
+      body, html {
+        height: 100%;
+        margin: 0;
+        background: var(--deped-light);
+        overflow-y: auto !important;
+        overflow-x: hidden;
+      }
+
+      .layout_erdb {
+        display: flex;
+        min-height: 100vh;
+        background: var(--deped-light);
+      }
+
+      /* --- SIDEBAR --- */
+      .sidebar_erdb {
+        width: 260px;
+        background: var(--deped-blue);
+        color: var(--deped-white);
+        padding: 20px;
+        border-radius: 0 12px 12px 0;
+        box-shadow: 2px 0 8px rgba(0,0,0,0.15);
+        position: sticky;
+        top: 0;
+        height: 100vh;
+        flex-shrink: 0;
+      }
+
+      .sidebar_erdb h4 {
+        color: var(--deped-gold);
+        font-weight: 700;
+        text-align: center;
+        margin-bottom: 20px;
+      }
+
+      /* --- SIDEBAR BUTTONS --- */
+      .btn-card {
+        background: rgba(255,255,255,0.1);
+        border: 1px solid rgba(255,255,255,0.15);
+        color: var(--deped-white);
+        border-radius: 10px;
+        text-align: left;
+        padding: 12px 16px;
+        display: flex;
+        align-items: center;
+        width: 100%;
+        transition: all 0.2s ease-in-out;
+      }
+
+      .btn-card:hover, .btn-card:focus {
+        background: var(--deped-gold) !important;
+        color: var(--deped-blue) !important;
+        transform: scale(1.02);
+        box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+      }
+
+      .btn-card h5 {
+        display: inline-block;
+        margin-left: 8px;
+        font-size: 1.05rem;
+        font-weight: 600;
+      }
+
+      /* --- MAIN CONTENT --- */
+      .main-content-erdb {
+        flex-grow: 1;
+        padding: 25px;
+        background: var(--deped-light);
+        overflow-x: hidden;
+      }
+
+      /* --- CARD STYLING --- */
+      .card {
+        border-radius: 12px;
+        border: none;
+        box-shadow: 0 3px 8px rgba(0,0,0,0.1);
+        background-color: var(--deped-white);
+        margin-bottom: 20px;
+      }
+
+      .card-header {
+        background-color: var(--deped-blue);
+        color: var(--deped-white);
+        font-weight: 600;
+        font-size: 1.05rem;
+        border-radius: 12px 12px 0 0;
+      }
+
+      /* --- GLOBAL SCROLLBAR --- */
+      ::-webkit-scrollbar {
+        width: 10px;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #003366;
+        border-radius: 10px;
+      }
+    
+ /* =====================================================
+       NEWS CAROUSEL STYLES
+       ===================================================== */
+    .news-container {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      width: 100%;
+      overflow: hidden;
+    }
+
+    .news-wrapper {
+      display: flex;
+      overflow-x: hidden;
+      scroll-behavior: smooth;
+      gap: 1.5rem;
+      width: 90%;
+    }
+
+    .news-card {
+      min-width: 30%;
+      cursor: pointer;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      flex-shrink: 0;
+    }
+
+    .news-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+    }
+
+    .arrow {
+      background-color: var(--deped-blue);
+      color: white;
+      border: none;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      cursor: pointer;
+      font-size: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s ease;
+    }
+
+    .arrow:hover {
+      background-color: var(--deped-gold);
+      color: var(--deped-blue);
+    }
+
+    .arrow.left {
+      position: absolute;
+      left: 10px;
+    }
+
+    .arrow.right {
+      position: absolute;
+      right: 10px;
+    }
+
+  "))
+      ),
       # --- Navigation Panels and Menus ---
       nav_panel(
         title = tags$b("Home"),
         icon = bs_icon("house-door-fill"),
         value = "home_tab",
-        # <<<--- PASTE YOUR HOME PAGE UI CODE (tagList) HERE --->>>
+        
+        # --- HOME PAGE UI ---
         tagList(
-          useShinyjs(),  # Still needed here for this panel's interactivity
-          tags$head(
-            tags$style(HTML("
-    /* =====================================================
-       DEPED COLOR THEME
-       ===================================================== */
-    :root {
-      --deped-blue: #003366;
-      --deped-gold: #FFB81C;
-      --deped-light: #f4f6fa;
-      --deped-white: #ffffff;
-    }
-
-
-
-    /* =====================================================
-       SIDEBAR
-       ===================================================== */
-    .sidebar_erdb {
-      width: 260px;
-      background: var(--deped-blue);
-      color: var(--deped-white);
-      padding: 20px;
-      border-radius: 0 12px 12px 0;
-      box-shadow: 2px 0 8px rgba(0,0,0,0.15);
-      position: sticky;
-      top: 60px; /* Adjust top based on navbar height */
-      height: calc(100vh - 60px); /* Adjust height based on navbar height */
-      flex-shrink: 0;
-      overflow-y: auto;
-    }
-
-    .sidebar_erdb h4 {
-      color: var(--deped-gold);
-      font-weight: 700;
-      text-align: center;
-      margin-bottom: 20px;
-    }
-
-    /* =====================================================
-       SIDEBAR BUTTONS
-       ===================================================== */
-    .btn-card {
-      background: rgba(255,255,255,0.1);
-      border: 1px solid rgba(255,255,255,0.15);
-      color: var(--deped-white);
-      border-radius: 10px;
-      text-align: left;
-      padding: 12px 16px;
-      display: flex;
-      align-items: center;
-      width: 100%;
-      transition: all 0.2s ease-in-out;
-    }
-
-    .btn-card:hover,
-    .btn-card:focus {
-      background: var(--deped-gold) !important;
-      color: var(--deped-blue) !important;
-      transform: scale(1.02);
-      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-    }
-
-    .btn-card h5 {
-      display: inline-block;
-      margin-left: 8px;
-      font-size: 1.05rem;
-      font-weight: 600;
-    }
-
-
-
-    /* =====================================================
-       GLOBAL SCROLLBAR
-       ===================================================== */
-    ::-webkit-scrollbar {
-      width: 10px;
-    }
-
-    ::-webkit-scrollbar-thumb {
-      background:  #003366;
-      border-radius: 10px;
-    }
-
-
-  "))
-          ),
-          # --- MAIN LAYOUT Div ---
+          useShinyjs(),
+          h3("Latest News & Updates", class = "text-center mb-4"),
+          
+          # =====================================================
+          # NEWS CAROUSEL SECTION
+          # =====================================================
           div(
-            class = "layout_erdb",
-            # --- SIDEBAR Div ---
+            class = "news-container",
+            
+            # --- LEFT ARROW ---
+            tags$button("<", class = "arrow left", id = "arrowLeft"),
+            
+            # --- WRAPPER FOR NEWS CARDS ---
             div(
-              class = "sidebar_erdb",
-              h4("Select Category"),
-              actionButton("erdb_hr", label = tagList(bs_icon("people-fill", size = 24), tags$h5("Human Resource")), class = "btn-card mb-2"), # source: 187
-              actionButton("erdb_school", label = tagList(bs_icon("building", size = 24), tags$h5("Basic Info")), class = "btn-card mb-2"), # source: 187
-              actionButton("erdb_infra", label = tagList(bs_icon("tools", size = 24), tags$h5("Infrastructure")), class = "btn-card mb-2"), # source: 188
-              actionButton("erdb_financial", label = tagList(bs_icon("currency-dollar", size = 24), tags$h5("Financial")), class = "btn-card mb-2"), # source: 188
-              actionButton("erdb_monitoring", label = tagList(bs_icon("graph-up", size = 24), tags$h5("Monitoring")), class = "btn-card mb-2"), # source: 188
-              actionButton("erdb_ppas", label = tagList(bs_icon("clipboard-data", size = 24), tags$h5("PPAs")), class = "btn-card mb-2") # source: 188
-            ), # End Sidebar Div
-            # --- MAIN CONTENT Div ---
-            div(
-              id = "main_erdb_content",
-              uiOutput("dynamic_erdb_panel"), # This will render the content based on sidebar clicks
-              class = "main-content-erdb"
-            ) # End Main Content Div
-          ) # End Main Layout Div
-        ) # End tagList for Home content
-      ), # End of Home nav_panel - COMMA is correct here
-      
+              class = "news-wrapper",
+              id = "newsWrapper",
+              
+              # --- NEWS CARD 1 ---
+              card(
+                class = "news-card",
+                onClick = "Shiny.setInputValue('news_clicked', 'news1', {priority: 'event'});",
+                card_header("DepEd Launches New Initiative"),
+                card_body(
+                  tags$p("A new education reform aims to modernize learning resources...", class = "text-muted"),
+                  tags$small("Click to read more", style = "font-style: italic; color: #2c3895;")
+                )
+              ),
+              
+              # --- NEWS CARD 2 ---
+              card(
+                class = "news-card",
+                onClick = "Shiny.setInputValue('news_clicked', 'news2', {priority: 'event'});",
+                card_header("Infrastructure Development Updates"),
+                card_body(
+                  tags$p("Over 200 new classrooms were built this year...", class = "text-muted"),
+                  tags$small("Click to read more", style = "font-style: italic; color: #2c3895;")
+                )
+              ),
+              
+              # --- NEWS CARD 3 ---
+              card(
+                class = "news-card",
+                onClick = "Shiny.setInputValue('news_clicked', 'news3', {priority: 'event'});",
+                card_header("Teacher Training Expansion"),
+                card_body(
+                  tags$p("Training programs for 5,000 educators launched nationwide...", class = "text-muted"),
+                  tags$small("Click to read more", style = "font-style: italic; color: #2c3895;")
+                )
+              ),
+              
+              # --- NEWS CARD 4 (EXTRA) ---
+              card(
+                class = "news-card",
+                onClick = "Shiny.setInputValue('news_clicked', 'news4', {priority: 'event'});",
+                card_header("Digital Learning Integration"),
+                card_body(
+                  tags$p("DepEd strengthens its digital curriculum with new e-learning tools...", class = "text-muted"),
+                  tags$small("Click to read more", style = "font-style: italic; color: #2c3895;")
+                )
+              )
+            ),
+            
+            # --- RIGHT ARROW ---
+            tags$button(">", class = "arrow right", id = "arrowRight")
+          )
+        )
+      ),
+    # --- JS SCROLL FUNCTIONALITY ---
+    tags$script(HTML("
+  const wrapper = document.getElementById('newsWrapper');
+  document.getElementById('arrowLeft').onclick = () => {
+    wrapper.scrollBy({ left: -400, behavior: 'smooth' });
+  };
+  document.getElementById('arrowRight').onclick = () => {
+    wrapper.scrollBy({ left: 400, behavior: 'smooth' });
+  };
+")),
       #EDUCATION RESOURCE DASHBOARD
       nav_menu(
         title = tagList(bs_icon("speedometer"), tags$b("Dashboard")),
@@ -3221,16 +3450,15 @@ server <- function(input, output, session) {
                   class = "w-100 btn-card"
                 ),
                 
-                
                 actionButton(
-                  "erdb_hr",
-                  label = tagList(bs_icon("people", size = 24), tags$h5("Human Resource")),
+                  "erdb_basic",
+                  label = tagList(bs_icon("info-circle", size = 24), tags$h5("Basic Information")),
                   class = "w-100 btn-card"
                 ),
                 
                 actionButton(
-                  "erdb_basic",
-                  label = tagList(bs_icon("info-circle", size = 24), tags$h5("Basic Information")),
+                  "erdb_hr",
+                  label = tagList(bs_icon("people", size = 24), tags$h5("Human Resource")),
                   class = "w-100 btn-card"
                 ),
                 
@@ -5951,10 +6179,36 @@ server <- function(input, output, session) {
   #   }
   # })
   # 
+  
+  #HOME SERVER
+  # --- Observe Click Events for News Cards ---
+  observeEvent(input$news_clicked, {
+    showModal(
+      modalDialog(
+        title = switch(input$news_clicked,
+                       "news1" = "DepEd Launches New Initiative",
+                       "news2" = "Infrastructure Development Updates",
+                       "news3" = "Teacher Training Expansion"
+        ),
+        
+        tags$p(switch(input$news_clicked,
+                      "news1" = "DepEd announced a comprehensive reform program focused on digital learning materials, inclusive access, and curriculum modernization. The initiative will start implementation in the next academic year.",
+                      "news2" = "The Department of Education has completed construction of over 200 classrooms nationwide, ensuring better facilities for public schools under the 2025 infrastructure plan.",
+                      "news3" = "Over 5,000 teachers across 16 regions have joined the newly launched training program focused on digital literacy and learner-centered approaches."
+        )),
+        
+        easyClose = TRUE,
+        footer = tagList(
+          modalButton("Close")
+        )
+      )
+    )
+  })
+  
   # --- EDUCATION RESOURCE DASHBOARD SERVER ---
   
   # Track which category is selected
-  erdb_selection <- reactiveVal("education resource dashboard")
+  erdb_selection <- reactiveVal("Overview")
   
   # --- Observe Sidebar Button Clicks ---
   observeEvent(input$erdb_overview, { erdb_selection("Overview") })
@@ -5978,28 +6232,17 @@ server <- function(input, output, session) {
         h3("Education Resource Dashboard Overview"),
         hr(),
         
-        # --- Summary Cards Section ---
-        layout_column_wrap(
-          width = 1/3,
-          heights_equal = "row",
-          
-          card(
-            full_screen = TRUE,
-            card_header("Total Schools"),
-            valueBox("10,542", subtitle = "Nationwide", status = "primary")
-          ),
-          
-          card(
-            full_screen = TRUE,
-            card_header("Total Teachers"),
-            valueBox("850,230", subtitle = "Active Personnel", status = "success")
-          ),
-          
-          card(
-            full_screen = TRUE,
-            card_header("Total Classrooms"),
-            valueBox("523,410", subtitle = "Across Regions", status = "info")
-          )
+        # --- Reactive Values (hard-coded for now) ---
+        layout_columns(
+          uiOutput("total_schools_erdb1"),
+          uiOutput("central_office_erdb"),
+          uiOutput("regional_offices_erdb"),
+          uiOutput("sdo_erdb"),
+          uiOutput("public_schools_erdb"),
+          uiOutput("private_schools_erdb"),
+          uiOutput("suc_luc_erdb"),
+          uiOutput("plantilla_erdb"),
+          col_widths = c(3, 3, 3, 3)
         ),
         
         hr(),
@@ -6020,6 +6263,7 @@ server <- function(input, output, session) {
         )
       )
     }
+    
     # =====================================================
     # HUMAN RESOURCE SECTION
     # =====================================================
