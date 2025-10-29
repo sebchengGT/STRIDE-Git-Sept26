@@ -80,23 +80,10 @@ body.login-bg {
   margin-bottom: 10px;
 }
 
-
-.login-left-logos img:first-child {
-    transform: translateX(-414px);
-    margin-bottom: -110px;
-    height: 185px;
-    width: auto;
-    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.4));
-}
-
-/* Example: Shift the second logo slightly down */
-.login-left-logos img:last-child {
-      transform: translateY(-74px);
-    margin-left: -616px;
-    height: 132px;
-    width: auto;
-    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.4));
-    margin-right: -25px;
+.left-logo {
+  height: 161px;
+  width: auto;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.4));
 }
 
 /* STRIDE Logo Text Styling (Login Left) */
@@ -163,16 +150,15 @@ body.login-bg {
 }
 
 .login-logo-top { /* Logo inside login card */
-  width: 158px;
-  margin-bottom: 23px;
-  margin-top: -15px;
+  width: 120px;
+  margin-bottom: 20px;
 }
 
 @media (min-width: 992px) {
   .login-logo-top {
-    width: 154px;
-    margin-bottom: 29px;
-    margin-top: -14px;
+    width: 304px;
+    margin-bottom: 5px;
+    margin-top: -25px;
   }
 }
 
@@ -578,20 +564,6 @@ body.show-header-footer .app-footer { display: block !important; /* Or flex, dep
   text-align: left !important;
   font-weight: 600;
   color: #002D62; /* optional – DepEd blue */
-}
-
-/* --- PREVENT NAV ITEMS FROM WRAPPING --- */
-.navbar-nav {
-  flex-wrap: nowrap !important; /* Tells nav items not to wrap to a new line */
-  white-space: nowrap !important; /* Extra safeguard for some browsers */
-}
-
-/* --- ALLOW NAVBAR TO SCROLL INTERNALLY --- */
-.navbar .container-fluid {
-  flex-wrap: nowrap !important; /* Ensures brand and nav items stay on one line */
-}
-.navbar-collapse {
-  overflow-x: auto !important; /* Allows the nav items to scroll horizontally IF they overflow */
 }
     
 
