@@ -1162,97 +1162,6 @@ server <- function(input, output, session) {
     )
   }
   
-  #EDUCATION RESOURCE DASHBOARD OVERVIEW
-  # --- Overview Hard-Coded Value Boxes ---
-  
-  # 1. Central Office
-  output$central_office_erdb <- renderUI({
-    bslib::card(
-      style = "background-color: #FFFFFF;",
-      bslib::card_header("Central Office", class = "text-center"),
-      bslib::card_body(
-        tags$h3("1", style = "text-align: center; font-weight: 700; color: #2c3895;")
-      )
-    )
-  })
-  
-  # 2. Regional Offices
-  output$regional_offices_erdb <- renderUI({
-    bslib::card(
-      style = "background-color: #FFFFFF;",
-      bslib::card_header("Regional Offices", class = "text-center"),
-      bslib::card_body(
-        tags$h3("16", style = "text-align: center; font-weight: 700; color: #2c3895;")
-      )
-    )
-  })
-  
-  # 3. Schools Division Offices
-  output$sdo_erdb <- renderUI({
-    bslib::card(
-      style = "background-color: #FFFFFF;",
-      bslib::card_header("Schools Division Offices", class = "text-center"),
-      bslib::card_body(
-        tags$h3("218", style = "text-align: center; font-weight: 700; color: #2c3895;")
-      )
-    )
-  })
-  
-  # 4. Public Schools
-  output$public_schools_erdb <- renderUI({
-    bslib::card(
-      style = "background-color: #FFFFFF;",
-      bslib::card_header("Public Schools", class = "text-center"),
-      bslib::card_body(
-        tags$h3("45,785", style = "text-align: center; font-weight: 700; color: #2c3895;")
-      )
-    )
-  })
-  
-  # 5. Private Schools
-  output$private_schools_erdb <- renderUI({
-    bslib::card(
-      style = "background-color: #FFFFFF;",
-      bslib::card_header("Private Schools", class = "text-center"),
-      bslib::card_body(
-        tags$h3("12,624", style = "text-align: center; font-weight: 700; color: #2c3895;")
-      )
-    )
-  })
-  
-  # 6. SUCs/LUCs
-  output$suc_luc_erdb <- renderUI({
-    bslib::card(
-      style = "background-color: #FFFFFF;",
-      bslib::card_header("SUCs / LUCs", class = "text-center"),
-      bslib::card_body(
-        tags$h3("220", style = "text-align: center; font-weight: 700; color: #2c3895;")
-      )
-    )
-  })
-  
-  # 7. Plantilla Positions
-  output$plantilla_erdb <- renderUI({
-    bslib::card(
-      style = "background-color: #FFFFFF;",
-      bslib::card_header("Plantilla Positions", class = "text-center"),
-      bslib::card_body(
-        tags$h3("1,030,897", style = "text-align: center; font-weight: 700; color: #2c3895;")
-      )
-    )
-  })
-  
-  # 8. Total Schools (public & private)
-  output$total_schools_erdb1 <- renderUI({
-    bslib::card(
-      style = "background-color: #FFFFFF;",
-      bslib::card_header("Total Schools (Public + Private)", class = "text-center"),
-      bslib::card_body(
-        tags$h3("58,409", style = "text-align: center; font-weight: 700; color: #2c3895;")
-      )
-    )
-  })
-  
   # ---------------------------------------------------------------------------
   
   # 1. Total Schools (White box)
@@ -3166,266 +3075,106 @@ server <- function(input, output, session) {
       " # End of CSS string
       ), # End of bs_add_rules
       nav_spacer(),
-      tags$head(
-        tags$style(HTML("
-      /* --- DEPED COLOR THEME --- */
-      :root {
-        --deped-blue: #003366;
-        --deped-gold: #FFB81C;
-        --deped-light: #f4f6fa;
-        --deped-white: #ffffff;
-      }
-
-      /* --- PAGE LAYOUT --- */
-      body, html {
-        height: 100%;
-        margin: 0;
-        background: var(--deped-light);
-        overflow-y: auto !important;
-        overflow-x: hidden;
-      }
-
-      .layout_erdb {
-        display: flex;
-        min-height: 100vh;
-        background: var(--deped-light);
-      }
-
-      /* --- SIDEBAR --- */
-      .sidebar_erdb {
-        width: 260px;
-        background: var(--deped-blue);
-        color: var(--deped-white);
-        padding: 20px;
-        border-radius: 0 12px 12px 0;
-        box-shadow: 2px 0 8px rgba(0,0,0,0.15);
-        position: sticky;
-        top: 0;
-        height: 100vh;
-        flex-shrink: 0;
-      }
-
-      .sidebar_erdb h4 {
-        color: var(--deped-gold);
-        font-weight: 700;
-        text-align: center;
-        margin-bottom: 20px;
-      }
-
-      /* --- SIDEBAR BUTTONS --- */
-      .btn-card {
-        background: rgba(255,255,255,0.1);
-        border: 1px solid rgba(255,255,255,0.15);
-        color: var(--deped-white);
-        border-radius: 10px;
-        text-align: left;
-        padding: 12px 16px;
-        display: flex;
-        align-items: center;
-        width: 100%;
-        transition: all 0.2s ease-in-out;
-      }
-
-      .btn-card:hover, .btn-card:focus {
-        background: var(--deped-gold) !important;
-        color: var(--deped-blue) !important;
-        transform: scale(1.02);
-        box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-      }
-
-      .btn-card h5 {
-        display: inline-block;
-        margin-left: 8px;
-        font-size: 1.05rem;
-        font-weight: 600;
-      }
-
-      /* --- MAIN CONTENT --- */
-      .main-content-erdb {
-        flex-grow: 1;
-        padding: 25px;
-        background: var(--deped-light);
-        overflow-x: hidden;
-      }
-
-      /* --- CARD STYLING --- */
-      .card {
-        border-radius: 12px;
-        border: none;
-        box-shadow: 0 3px 8px rgba(0,0,0,0.1);
-        background-color: var(--deped-white);
-        margin-bottom: 20px;
-      }
-
-      .card-header {
-        background-color: var(--deped-blue);
-        color: var(--deped-white);
-        font-weight: 600;
-        font-size: 1.05rem;
-        border-radius: 12px 12px 0 0;
-      }
-
-      /* --- GLOBAL SCROLLBAR --- */
-      ::-webkit-scrollbar {
-        width: 10px;
-      }
-      ::-webkit-scrollbar-thumb {
-        background: #003366;
-        border-radius: 10px;
-      }
-    
- /* =====================================================
-       NEWS CAROUSEL STYLES
-       ===================================================== */
-    .news-container {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      position: relative;
-      width: 100%;
-      overflow: hidden;
-    }
-
-    .news-wrapper {
-      display: flex;
-      overflow-x: hidden;
-      scroll-behavior: smooth;
-      gap: 1.5rem;
-      width: 90%;
-    }
-
-    .news-card {
-      min-width: 30%;
-      cursor: pointer;
-      transition: transform 0.2s ease, box-shadow 0.2s ease;
-      flex-shrink: 0;
-    }
-
-    .news-card:hover {
-      transform: translateY(-5px);
-      box-shadow: 0 8px 16px rgba(0,0,0,0.1);
-    }
-
-    .arrow {
-      background-color: var(--deped-blue);
-      color: white;
-      border: none;
-      border-radius: 50%;
-      width: 40px;
-      height: 40px;
-      cursor: pointer;
-      font-size: 18px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: all 0.3s ease;
-    }
-
-    .arrow:hover {
-      background-color: var(--deped-gold);
-      color: var(--deped-blue);
-    }
-
-    .arrow.left {
-      position: absolute;
-      left: 10px;
-    }
-
-    .arrow.right {
-      position: absolute;
-      right: 10px;
-    }
-
-  "))
-      ),
+      
       # --- Navigation Panels and Menus ---
       nav_panel(
         title = tags$b("Home"),
         icon = bs_icon("house-door-fill"),
         value = "home_tab",
-        
-        # --- HOME PAGE UI ---
+        # <<<--- PASTE YOUR HOME PAGE UI CODE (tagList) HERE --->>>
         tagList(
-          useShinyjs(),
-          h3("Latest News & Updates", class = "text-center mb-4"),
-          
-          # =====================================================
-          # NEWS CAROUSEL SECTION
-          # =====================================================
+          useShinyjs(),  # Still needed here for this panel's interactivity
+          tags$head(
+            tags$style(HTML("
+    /* =====================================================
+       DEPED COLOR THEME
+       ===================================================== */
+    :root {
+      --deped-blue: #003366;
+      --deped-gold: #FFB81C;
+      --deped-light: #f4f6fa;
+      --deped-white: #ffffff;
+    }
+
+
+
+    /* =====================================================
+       SIDEBAR
+       ===================================================== */
+    .sidebar_erdb {
+      width: 260px;
+      background: var(--deped-blue);
+      color: var(--deped-white);
+      padding: 20px;
+      border-radius: 0 12px 12px 0;
+      box-shadow: 2px 0 8px rgba(0,0,0,0.15);
+      position: sticky;
+      top: 60px; /* Adjust top based on navbar height */
+      height: calc(100vh - 60px); /* Adjust height based on navbar height */
+      flex-shrink: 0;
+      overflow-y: auto;
+    }
+
+    .sidebar_erdb h4 {
+      color: var(--deped-gold);
+      font-weight: 700;
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    /* =====================================================
+       SIDEBAR BUTTONS
+       ===================================================== */
+    .btn-card {
+      background: rgba(255,255,255,0.1);
+      border: 1px solid rgba(255,255,255,0.15);
+      color: var(--deped-white);
+      border-radius: 10px;
+      text-align: left;
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      width: 100%;
+      transition: all 0.2s ease-in-out;
+    }
+
+    .btn-card:hover,
+    .btn-card:focus {
+      background: var(--deped-gold) !important;
+      color: var(--deped-blue) !important;
+      transform: scale(1.02);
+      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    }
+
+    .btn-card h5 {
+      display: inline-block;
+      margin-left: 8px;
+      font-size: 1.05rem;
+      font-weight: 600;
+    }
+
+
+
+    /* =====================================================
+       GLOBAL SCROLLBAR
+       ===================================================== */
+    ::-webkit-scrollbar {
+      width: 10px;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background:  #003366;
+      border-radius: 10px;
+    }
+
+
+  "))
+          ),
+          # --- MAIN LAYOUT Div ---
           div(
-            class = "news-container",
-            
-            # --- LEFT ARROW ---
-            tags$button("<", class = "arrow left", id = "arrowLeft"),
-            
-            # --- WRAPPER FOR NEWS CARDS ---
+            class = "layout_erdb",
+            # --- SIDEBAR Div ---
             div(
-<<<<<<< HEAD
-              class = "news-wrapper",
-              id = "newsWrapper",
-              
-              # --- NEWS CARD 1 ---
-              card(
-                class = "news-card",
-                onClick = "Shiny.setInputValue('news_clicked', 'news1', {priority: 'event'});",
-                card_header("DepEd Launches New Initiative"),
-                card_body(
-                  tags$p("A new education reform aims to modernize learning resources...", class = "text-muted"),
-                  tags$small("Click to read more", style = "font-style: italic; color: #2c3895;")
-                )
-              ),
-              
-              # --- NEWS CARD 2 ---
-              card(
-                class = "news-card",
-                onClick = "Shiny.setInputValue('news_clicked', 'news2', {priority: 'event'});",
-                card_header("Infrastructure Development Updates"),
-                card_body(
-                  tags$p("Over 200 new classrooms were built this year...", class = "text-muted"),
-                  tags$small("Click to read more", style = "font-style: italic; color: #2c3895;")
-                )
-              ),
-              
-              # --- NEWS CARD 3 ---
-              card(
-                class = "news-card",
-                onClick = "Shiny.setInputValue('news_clicked', 'news3', {priority: 'event'});",
-                card_header("Teacher Training Expansion"),
-                card_body(
-                  tags$p("Training programs for 5,000 educators launched nationwide...", class = "text-muted"),
-                  tags$small("Click to read more", style = "font-style: italic; color: #2c3895;")
-                )
-              ),
-              
-              # --- NEWS CARD 4 (EXTRA) ---
-              card(
-                class = "news-card",
-                onClick = "Shiny.setInputValue('news_clicked', 'news4', {priority: 'event'});",
-                card_header("Digital Learning Integration"),
-                card_body(
-                  tags$p("DepEd strengthens its digital curriculum with new e-learning tools...", class = "text-muted"),
-                  tags$small("Click to read more", style = "font-style: italic; color: #2c3895;")
-                )
-              )
-            ),
-            
-            # --- RIGHT ARROW ---
-            tags$button(">", class = "arrow right", id = "arrowRight")
-          )
-        )
-      ),
-    # --- JS SCROLL FUNCTIONALITY ---
-    tags$script(HTML("
-  const wrapper = document.getElementById('newsWrapper');
-  document.getElementById('arrowLeft').onclick = () => {
-    wrapper.scrollBy({ left: -400, behavior: 'smooth' });
-  };
-  document.getElementById('arrowRight').onclick = () => {
-    wrapper.scrollBy({ left: 400, behavior: 'smooth' });
-  };
-")),
-      #EDUCATION RESOURCE DASHBOARD
-=======
               class = "sidebar_erdb",
               h4("Select Category"),
               actionButton("erdb_hr", label = tagList(bs_icon("people-fill", size = 24), tags$h5("Human Resource")), class = "btn-card mb-2"), # source: 187
@@ -3445,7 +3194,6 @@ server <- function(input, output, session) {
         ) # End tagList for Home content
       ), # End of Home nav_panel - COMMA is correct here
       
->>>>>>> 62057804a8f351f3959a17bad153190cdb819189
       nav_menu(
         title = tagList(bs_icon("speedometer"), tags$b("Dashboard")),
         value = "dashboard_menu",
@@ -3467,25 +3215,14 @@ server <- function(input, output, session) {
                 class = "d-grid gap-3",  # Bootstrap spacing for stacked layout
                 
                 actionButton(
-<<<<<<< HEAD
-                  "erdb_overview",
-                  label = tagList(bs_icon("house", size = 24), tags$h5("Overview")),
+                  "erdb_hr",
+                  label = tagList(bs_icon("people", size = 24), tags$h5("Human Resource")),
                   class = "w-100 btn-card"
                 ),
                 
                 actionButton(
                   "erdb_basic",
                   label = tagList(bs_icon("info-circle", size = 24), tags$h5("Basic Information")),
-=======
-                  "erdb_hr",
-                  label = tagList(bs_icon("people", size = 24), tags$h5("Human Resource")),
->>>>>>> 62057804a8f351f3959a17bad153190cdb819189
-                  class = "w-100 btn-card"
-                ),
-                
-                actionButton(
-                  "erdb_hr",
-                  label = tagList(bs_icon("people", size = 24), tags$h5("Human Resource")),
                   class = "w-100 btn-card"
                 ),
                 
@@ -3523,95 +3260,119 @@ server <- function(input, output, session) {
           )
         ),
         
-        nav_panel("Plantilla Positions",  #GMIS
-                  layout_sidebar(
-                    sidebar = sidebar(
-                      width = 450,
-                      class = "bg-secondary",
-                      h6("Data Toggles:"),
-                      pickerInput(
-                        inputId = "RegionGMIS",
-                        label = "Select one or more Regions:",
-                        choices = c(
-                          "Region I" = "Region I - Ilocos",
-                          "Region II" = "Region II - Cagayan Valley",
-                          "Region III" = "Region III - Central Luzon",
-                          "Region IV-A" = "Region IVA - CALABARZON",
-                          "Region IV-B" = "Region IVB - MIMAROPA",
-                          "Region V" = "Region V - Bicol",
-                          "Region VI" = "Region VI - Western Visayas",
-                          "Region VII" = "Region VII - Central Visayas",
-                          "Region VIII" = "Region VIII - Eastern Visayas",
-                          "Region IX" = "Region IX - Zamboanga Peninsula",
-                          "Region X" = "Region X - Northern Mindanao",
-                          "Region XI" = "Region XI - Davao",
-                          "Region XII" = "Region XII - SOCCSKSARGEN",
-                          "CARAGA" = "Region XIII - CARAGA",
-                          "CAR" = "Cordillera Administrative Region (CAR)",
-                          "NCR" = "National Capital Region (NCR)"
-                        ),
-                        selected = c(
-                          "Region I" = "Region I - Ilocos",
-                          "Region II" = "Region II - Cagayan Valley",
-                          "Region III" = "Region III - Central Luzon",
-                          "Region IV-A" = "Region IVA - CALABARZON",
-                          "Region IV-B" = "Region IVB - MIMAROPA",
-                          "Region V" = "Region V - Bicol",
-                          "Region VI" = "Region VI - Western Visayas",
-                          "Region VII" = "Region VII - Central Visayas",
-                          "Region VIII" = "Region VIII - Eastern Visayas",
-                          "Region IX" = "Region IX - Zamboanga Peninsula",
-                          "Region X" = "Region X - Northern Mindanao",
-                          "Region XI" = "Region XI - Davao",
-                          "Region XII" = "Region XII - SOCCSKSARGEN",
-                          "CARAGA" = "Region XIII - CARAGA",
-                          "CAR" = "Cordillera Administrative Region (CAR)",
-                          "NCR" = "National Capital Region (NCR)"
-                        ), # You can set default selected values here
-                        multiple = TRUE, # CRITICAL CHANGE: Must be TRUE to enable Select All/Deselect All
-                        options = pickerOptions(
-                          actionsBox = TRUE, # Already correct
-                          liveSearch = TRUE,
-                          header = "Select Regions",
-                          title = "No Regions Selected",
-                          selectedTextFormat = "count > 3",
-                          dropupAuto = FALSE,
-                          dropup = FALSE
-                        ),
-                        choicesOpt = list()
-                      ),
-                      uiOutput("SDOSelectionGMIS"),
-                      # pickerInput(
-                      #   inputId = "PosCatGMIS",
-                      #   label = "Select a Position Category:",
-                      #   choices = c(
-                      #     "General Civil Servant" = "General Civil Servant",
-                      #     "Teaching Related" = "Teaching Related",
-                      #     "Allied Medical" = "Allied Medical",
-                      #     "Medical" = "Medical",
-                      #     "Teaching" = "Teaching"
-                      #   ),
-                      #   selected = c(
-                      #     "Teaching" = "Teaching"
-                      #   ),
-                      #   multiple = TRUE,
-                      #   options = pickerOptions(
-                      #     liveSearch = TRUE,
-                      #     actionsBox = TRUE, # This adds the "Select All" and "Deselect All" buttons
-                      #     title = "No Category Selected",
-                      #     header = "Select a Category"
-                      #   )
-                      # ),
-                      uiOutput("PosSelectionGMIS")),
-                    # input_task_button("GMISRun", icon_busy = fontawesome::fa_i("refresh", class = "fa-spin", "aria-hidden" = "true"), strong("Show Selection"), class = "btn-danger")),
-                    layout_columns(
-                      card(
-                        card_header(strong("GMIS Data")),
-                        plotlyOutput("GMISTable")),
-                      card(
-                        card_header(strong("GMIS Data")),
-                        dataTableOutput("GMISTable1")),
-                      col_widths = c(12,12)))), # End of Plantilla nav_panel - COMMA is correct
+        # nav_panel("Plantilla Positions",  #GMIS
+        #           layout_sidebar(
+        #             sidebar = sidebar(
+        #               width = 450,
+        #               class = "bg-secondary",
+        #               h6("Data Toggles:"),
+        #               pickerInput(
+        #                 inputId = "RegionGMIS",
+        #                 label = "Select one or more Regions:",
+        #                 choices = c(
+        #                   "Region I" = "Region I - Ilocos",
+        #                   "Region II" = "Region II - Cagayan Valley",
+        #                   "Region III" = "Region III - Central Luzon",
+        #                   "Region IV-A" = "Region IVA - CALABARZON",
+        #                   "Region IV-B" = "Region IVB - MIMAROPA",
+        #                   "Region V" = "Region V - Bicol",
+        #                   "Region VI" = "Region VI - Western Visayas",
+        #                   "Region VII" = "Region VII - Central Visayas",
+        #                   "Region VIII" = "Region VIII - Eastern Visayas",
+        #                   "Region IX" = "Region IX - Zamboanga Peninsula",
+        #                   "Region X" = "Region X - Northern Mindanao",
+        #                   "Region XI" = "Region XI - Davao",
+        #                   "Region XII" = "Region XII - SOCCSKSARGEN",
+        #                   "CARAGA" = "Region XIII - CARAGA",
+        #                   "CAR" = "Cordillera Administrative Region (CAR)",
+        #                   "NCR" = "National Capital Region (NCR)"
+        #                 ),
+        #                 selected = c(
+        #                   "Region I" = "Region I - Ilocos",
+        #                   "Region II" = "Region II - Cagayan Valley",
+        #                   "Region III" = "Region III - Central Luzon",
+        #                   "Region IV-A" = "Region IVA - CALABARZON",
+        #                   "Region IV-B" = "Region IVB - MIMAROPA",
+        #                   "Region V" = "Region V - Bicol",
+        #                   "Region VI" = "Region VI - Western Visayas",
+        #                   "Region VII" = "Region VII - Central Visayas",
+        #                   "Region VIII" = "Region VIII - Eastern Visayas",
+        #                   "Region IX" = "Region IX - Zamboanga Peninsula",
+        #                   "Region X" = "Region X - Northern Mindanao",
+        #                   "Region XI" = "Region XI - Davao",
+        #                   "Region XII" = "Region XII - SOCCSKSARGEN",
+        #                   "CARAGA" = "Region XIII - CARAGA",
+        #                   "CAR" = "Cordillera Administrative Region (CAR)",
+        #                   "NCR" = "National Capital Region (NCR)"
+        #                 ), # You can set default selected values here
+        #                 multiple = TRUE, # CRITICAL CHANGE: Must be TRUE to enable Select All/Deselect All
+        #                 options = pickerOptions(
+        #                   actionsBox = TRUE, # Already correct
+        #                   liveSearch = TRUE,
+        #                   header = "Select Regions",
+        #                   title = "No Regions Selected",
+        #                   selectedTextFormat = "count > 3",
+        #                   dropupAuto = FALSE,
+        #                   dropup = FALSE
+        #                 ),
+        #                 choicesOpt = list()
+        #               ),
+        #               uiOutput("SDOSelectionGMIS"),
+        #               # pickerInput(
+        #               #   inputId = "PosCatGMIS",
+        #               #   label = "Select a Position Category:",
+        #               #   choices = c(
+        #               #     "General Civil Servant" = "General Civil Servant",
+        #               #     "Teaching Related" = "Teaching Related",
+        #               #     "Allied Medical" = "Allied Medical",
+        #               #     "Medical" = "Medical",
+        #               #     "Teaching" = "Teaching"
+        #               #   ),
+        #               #   selected = c(
+        #               #     "Teaching" = "Teaching"
+        #               #   ),
+        #               #   multiple = TRUE,
+        #               #   options = pickerOptions(
+        #               #     liveSearch = TRUE,
+        #               #     actionsBox = TRUE, # This adds the "Select All" and "Deselect All" buttons
+        #               #     title = "No Category Selected",
+        #               #     header = "Select a Category"
+        #               #   )
+        #               # ),
+        #               uiOutput("PosSelectionGMIS")),
+        #             # input_task_button("GMISRun", icon_busy = fontawesome::fa_i("refresh", class = "fa-spin", "aria-hidden" = "true"), strong("Show Selection"), class = "btn-danger")),
+        #             layout_columns(
+        #               card(
+        #                 card_header(strong("GMIS Data")),
+        #                 plotlyOutput("GMISTable")),
+        #               card(
+        #                 card_header(strong("GMIS Data")),
+        #                 dataTableOutput("GMISTable1")),
+        #               col_widths = c(12,12)))), # End of Plantilla nav_panel - COMMA is correct
+        # --- PLANTILLA POSITIONS PANEL ---
+        nav_panel(
+          "Plantilla Positions",
+          layout_sidebar(
+            sidebar = sidebar(
+              width = 400,
+              class = "bg-secondary text-white",
+              h5("Select Positions"),
+              checkboxGroupInput(
+                "selected_positions",
+                label = NULL,
+                choices = unique(dfGMIS$Position),
+                selected = head(unique(dfGMIS$Position), 1)
+              ),
+              br(),
+              actionButton("btn_back_drilldown", "⬅ Back", class = "btn btn-light w-100 mt-3")
+            ),
+            
+            # --- MAIN CONTENT ---
+            layout_columns(
+              uiOutput("dynamic_positions_ui")
+            )
+          )
+        ),
         nav_panel(
           title = "Infrastructure and Education Facilities",
           layout_sidebar(
@@ -6206,36 +5967,10 @@ server <- function(input, output, session) {
   #   }
   # })
   # 
-  
-  #HOME SERVER
-  # --- Observe Click Events for News Cards ---
-  observeEvent(input$news_clicked, {
-    showModal(
-      modalDialog(
-        title = switch(input$news_clicked,
-                       "news1" = "DepEd Launches New Initiative",
-                       "news2" = "Infrastructure Development Updates",
-                       "news3" = "Teacher Training Expansion"
-        ),
-        
-        tags$p(switch(input$news_clicked,
-                      "news1" = "DepEd announced a comprehensive reform program focused on digital learning materials, inclusive access, and curriculum modernization. The initiative will start implementation in the next academic year.",
-                      "news2" = "The Department of Education has completed construction of over 200 classrooms nationwide, ensuring better facilities for public schools under the 2025 infrastructure plan.",
-                      "news3" = "Over 5,000 teachers across 16 regions have joined the newly launched training program focused on digital literacy and learner-centered approaches."
-        )),
-        
-        easyClose = TRUE,
-        footer = tagList(
-          modalButton("Close")
-        )
-      )
-    )
-  })
-  
   # --- EDUCATION RESOURCE DASHBOARD SERVER ---
   
   # Track which category is selected
-  erdb_selection <- reactiveVal("Overview")
+  erdb_selection <- reactiveVal("education resource dashboard")
   
   # --- Observe Sidebar Button Clicks ---
   observeEvent(input$erdb_hr,         { erdb_selection("Human Resource") })
@@ -6251,49 +5986,6 @@ server <- function(input, output, session) {
     selected <- erdb_selection()
     
     # =====================================================
-<<<<<<< HEAD
-    # OVERVIEW SECTION
-    # =====================================================
-    if (selected == "Overview") {
-      tagList(
-        h3("Education Resource Dashboard Overview"),
-        hr(),
-        
-        # --- Reactive Values (hard-coded for now) ---
-        layout_columns(
-          uiOutput("total_schools_erdb1"),
-          uiOutput("central_office_erdb"),
-          uiOutput("regional_offices_erdb"),
-          uiOutput("sdo_erdb"),
-          uiOutput("public_schools_erdb"),
-          uiOutput("private_schools_erdb"),
-          uiOutput("suc_luc_erdb"),
-          uiOutput("plantilla_erdb"),
-          col_widths = c(3, 3, 3, 3)
-        ),
-        
-        hr(),
-        
-        # --- Overview Chart Section ---
-        layout_columns(
-          card(
-            full_screen = TRUE,
-            card_header("Regional Summary Snapshot"),
-            plotlyOutput("overview_plot", height = "450px")
-          ),
-          card(
-            full_screen = TRUE,
-            card_header("Key Indicators"),
-            plotlyOutput("overview_indicators", height = "450px")
-          ),
-          col_widths = c(6, 6)
-        )
-      )
-    }
-    
-    # =====================================================
-=======
->>>>>>> 62057804a8f351f3959a17bad153190cdb819189
     # HUMAN RESOURCE SECTION
     # =====================================================
     if (selected == "Human Resource") {
@@ -13888,89 +13580,245 @@ server <- function(input, output, session) {
     data_column <- uni[[otherdata2]]
     selectInput("otherdataselect",strong("Select a Category:"), c(unique(data_column[!is.na(data_column) & data_column != "#N/A" & data_column != "For Verification"])))
   })
-  
-  output$SDOSelectionGMIS <- renderUI({
-    dfGMISRegDiv <- read.csv("GMIS-Apr2025-RegDiv.csv")
-    # Get the list of divisions based on the selected region
-    divisions <- dfGMISRegDiv[dfGMISRegDiv$Region %in% input$RegionGMIS, "Division"]
-    
-    # Render the pickerInput
-    pickerInput(
-      inputId = "SDOGMIS",
-      label = "Select a Division:",
-      choices = divisions,
-      selected = divisions,
-      multiple = TRUE,
-      options = pickerOptions(
-        actionsBox = TRUE, # Changed to TRUE
-        liveSearch = TRUE,
-        header = "Select one or more Divisions", # Changed header text
-        title = "No Divisions Selected", # Changed title text
-        selectedTextFormat = "count > 3",
-        dropupAuto = FALSE, # This tells it NOT to automatically switch direction
-        dropup = FALSE # Added this option
-      ),
-      choicesOpt = list()
-    )
-  })
-  
-  output$PosSelectionGMIS <- renderUI({
-    dfGMISPosCat <- read.csv("GMIS-Apr2025-PosCat.csv")
-    # Filter the data frame to get positions based on the selected position category
-    positions <- sort(unique(dfGMISPosCat$Position))
-    
-    # Render the pickerInput
-    pickerInput(
-      inputId = "PosSelGMIS",
-      label = "Select a Position:",
-      choices = positions,
-      selected = c("Teacher I","Teacher II","Teacher III"),
-      multiple = TRUE,
-      options = pickerOptions(
-        actionsBox = TRUE, # Changed to TRUE
-        liveSearch = TRUE,
-        header = "Select Positions", # Changed header text
-        title = "No Positions Selected", # Changed title text
-        selectedTextFormat = "count > 3",
-        dropupAuto = FALSE, # This tells it NOT to automatically switch direction
-        dropup = FALSE # Added this option
-      ),
-      choicesOpt = list()
-    )
-  })
-  
-  ### GMIS Count
-  
+  # --- SERVER LOGIC FOR PLANTILLA POSITIONS ---
   observe({
-    PosCatGMISRCT <- input$PosCatGMIS
-    req(PosCatGMISRCT)
-    PosSelGMISRCT <- input$PosSelGMIS
-    req(PosSelGMISRCT)
+    req(input$selected_positions)
     
-    output$itemcount <- renderPlot({
-      dfGMIS <- read.csv("GMIS-FillingUpPerPosition-2025.csv")
-      mainreact1g <- dfGMIS %>% filter(Position == PosSelGMISRCT) %>% group_by(Region) %>% summarise(Filled = sum(Total.Filled, na.rm = TRUE), Unfilled = sum(Total.Unfilled, na.rm = TRUE)) |>  pivot_longer(cols = c(Filled,Unfilled), names_to = "Category", values_to = "Count")
-      ggplot(mainreact1g, aes(x=reorder(Region,-Count), y=Count, fill = factor(Category, levels = c("Unfilled","Filled")))) +
-        geom_bar(stat = "identity",position = "stack", color = "black") +
-        geom_text(data = subset(mainreact1g, Count != 0), aes(label = Count),vjust =-1,position = position_stack(vjust = 0.5), check_overlap = TRUE)+
-        scale_fill_manual(values = c("Filled" = "green","Unfilled" = "grey")) +
-        guides(fill = guide_legend(nrow = 1)) + 
-        labs(x ="", y="",fill="Inventory")+
-        theme(axis.text.x = element_text(size = 14, angle = 45, hjust = 1),
-              legend.position = "top")})
+    # --- Shared global drilldown state (applies to ALL cards) ---
+    global_drill_state <- reactiveVal(list(region = NULL))
+    global_trigger <- reactiveVal(0)
     
-    output$itemcount2 <- renderPlot({
-      dfGMIS <- read.csv("GMIS-FillingUpPerPosition-2025.csv")
-      mainreact1g <- dfGMIS %>% filter(Position == PosSelGMISRCT) %>% filter(Region == input$RegionCountItem) %>% group_by(Division) %>% summarise(Filled = sum(Total.Filled, na.rm = TRUE), Unfilled = sum(Total.Unfilled, na.rm = TRUE))  %>%  pivot_longer(cols = c(Filled,Unfilled), names_to = "Category", values_to = "Count")
-      ggplot(mainreact1g, aes(x=reorder(Division,-Count), y=Count, fill = factor(Category, levels = c("Unfilled","Filled")))) +
-        geom_bar(stat = "identity",position = "stack", color = "black") +
-        geom_text(data = subset(mainreact1g, Count != 0), aes(label = Count),vjust =-1, position = position_stack(vjust = 0.5), check_overlap = TRUE)+
-        scale_fill_manual(values = c("Filled" = "green","Unfilled" = "grey")) +
-        guides(fill = guide_legend(nrow = 1)) + 
-        labs(x ="", y="",fill="Inventory")+
-        theme(axis.text.x = element_text(size = 14, angle = 45, hjust = 1),
-              legend.position = "top")})
+    # --- Render Dynamic Cards Layout ---
+    output$dynamic_positions_ui <- renderUI({
+      req(input$selected_positions)
+      
+      cards <- lapply(input$selected_positions, function(pos) {
+        plot_id <- paste0("plot_", gsub(" ", "_", pos))
+        vbox_id <- paste0("vbox_", gsub(" ", "_", pos))
+        
+        card(
+          full_screen = TRUE,
+          class = "shadow-sm p-2",
+          card_header(
+            h4(pos, class = "m-0 pt-1")
+          ),
+          card_body(
+            layout_column_wrap(width = 1/3, valueBoxOutput(vbox_id)),
+            plotlyOutput(plot_id, height = "450px")
+          )
+        )
+      })
+      
+      layout_column_wrap(
+        width = 1/3,
+        heights_equal = "row",
+        !!!cards
+      )
+    })
+    
+    # --- Generate Each Card’s Logic ---
+    lapply(input$selected_positions, function(pos) {
+      plot_id <- paste0("plot_", gsub(" ", "_", pos))
+      vbox_id <- paste0("vbox_", gsub(" ", "_", pos))
+      source_id <- paste0("drilldown_source_", gsub(" ", "_", pos))
+      
+      df_sub <- reactive({
+        dfGMIS %>% filter(Position == pos)
+      })
+      
+      # --- Value Box ---
+      output[[vbox_id]] <- renderValueBox({
+        total <- df_sub() %>%
+          summarise(total = sum(Total.Filled + Total.Unfilled, na.rm = TRUE)) %>%
+          pull(total)
+        
+        valueBox(
+          value = formatC(total, format = "d", big.mark = ","),
+          subtitle = paste("Total Positions:", pos),
+          icon = bs_icon("person-badge"),
+          color = "blue"
+        )
+      })
+      
+      # --- Plot with Global Drilldown ---
+      output[[plot_id]] <- renderPlotly({
+        trigger <- global_trigger()  # re-render when drilldown changes
+        state <- global_drill_state()
+        if (is.null(state)) state <- list(region = NULL)
+        
+        df <- df_sub()
+        
+        # --- LEVEL 1: Region View ---
+        if (is.null(state$region)) {
+          plot_data <- df %>%
+            group_by(GMIS.Region) %>%
+            summarise(
+              Filled = sum(Total.Filled, na.rm = TRUE),
+              Unfilled = sum(Total.Unfilled, na.rm = TRUE),
+              .groups = "drop"
+            ) %>%
+            tidyr::pivot_longer(cols = c(Filled, Unfilled),
+                                names_to = "Type", values_to = "Count")
+          title_txt <- paste("Total Positions by Region -", pos)
+          y_formula <- ~GMIS.Region
+          
+          # --- LEVEL 2: Division View ---
+        } else {
+          plot_data <- df %>%
+            filter(GMIS.Region == state$region) %>%
+            group_by(GMIS.Division) %>%
+            summarise(
+              Filled = sum(Total.Filled, na.rm = TRUE),
+              Unfilled = sum(Total.Unfilled, na.rm = TRUE),
+              .groups = "drop"
+            ) %>%
+            tidyr::pivot_longer(cols = c(Filled, Unfilled),
+                                names_to = "Type", values_to = "Count")
+          title_txt <- paste("Positions in", state$region)
+          y_formula <- ~GMIS.Division
+        }
+        
+        # Handle empty data
+        if (nrow(plot_data) == 0) {
+          return(plot_ly() %>% layout(title = title_txt))
+        }
+        
+        max_val <- max(plot_data$Count, na.rm = TRUE)
+        color_map <- c("Filled" = "#007B3E", "Unfilled" = "#FF0000")
+        
+        plot_ly(
+          data = plot_data,
+          y = y_formula,
+          x = ~Count,
+          color = ~Type,
+          colors = color_map,
+          type = 'bar',
+          orientation = 'h',
+          source = source_id,
+          text = ~Count,
+          texttemplate = '%{x:,.0f}',
+          textposition = 'inside'
+        ) %>%
+          layout(
+            barmode = 'group',
+            title = title_txt,
+            xaxis = list(title = "Number of Positions", range = c(0, max_val * 1.15)),
+            yaxis = list(title = "", categoryorder = "total descending", autorange = "reversed"),
+            legend = list(x = 0.85, y = 0.95)
+          )
+      })
+      
+      # --- Drilldown Handler (Global Sync) ---
+      observeEvent(event_data("plotly_click", source = source_id), {
+        click_data <- event_data("plotly_click", source = source_id)
+        if (is.null(click_data)) return()
+        
+        cat_clicked <- click_data$y
+        if (is.null(cat_clicked)) return()
+        
+        current_state <- isolate(global_drill_state())
+        if (is.null(current_state)) current_state <- list(region = NULL)
+        
+        # Only allow 1 drilldown level: Region -> Division
+        if (is.null(current_state$region)) {
+          global_drill_state(list(region = as.character(cat_clicked)))
+          global_trigger(global_trigger() + 1)
+        }
+      }, ignoreNULL = TRUE, ignoreInit = TRUE)
+    })
+    
+    # --- ONE BACK BUTTON (GLOBAL) ---
+    observeEvent(input$btn_back_drilldown, {
+      state <- isolate(global_drill_state())
+      if (!is.null(state$region)) {
+        global_drill_state(list(region = NULL))
+        global_trigger(global_trigger() + 1)
+      }
+    })
   })
+  
+  # output$SDOSelectionGMIS <- renderUI({
+  #   dfGMISRegDiv <- read.csv("GMIS-Apr2025-RegDiv.csv")
+  #   # Get the list of divisions based on the selected region
+  #   divisions <- dfGMISRegDiv[dfGMISRegDiv$Region %in% input$RegionGMIS, "Division"]
+  #   
+  #   # Render the pickerInput
+  #   pickerInput(
+  #     inputId = "SDOGMIS",
+  #     label = "Select a Division:",
+  #     choices = divisions,
+  #     selected = divisions,
+  #     multiple = TRUE,
+  #     options = pickerOptions(
+  #       actionsBox = TRUE, # Changed to TRUE
+  #       liveSearch = TRUE,
+  #       header = "Select one or more Divisions", # Changed header text
+  #       title = "No Divisions Selected", # Changed title text
+  #       selectedTextFormat = "count > 3",
+  #       dropupAuto = FALSE, # This tells it NOT to automatically switch direction
+  #       dropup = FALSE # Added this option
+  #     ),
+  #     choicesOpt = list()
+  #   )
+  # })
+  # 
+  # output$PosSelectionGMIS <- renderUI({
+  #   dfGMISPosCat <- read.csv("GMIS-Apr2025-PosCat.csv")
+  #   # Filter the data frame to get positions based on the selected position category
+  #   positions <- sort(unique(dfGMISPosCat$Position))
+  #   
+  #   # Render the pickerInput
+  #   pickerInput(
+  #     inputId = "PosSelGMIS",
+  #     label = "Select a Position:",
+  #     choices = positions,
+  #     selected = c("Teacher I","Teacher II","Teacher III"),
+  #     multiple = TRUE,
+  #     options = pickerOptions(
+  #       actionsBox = TRUE, # Changed to TRUE
+  #       liveSearch = TRUE,
+  #       header = "Select Positions", # Changed header text
+  #       title = "No Positions Selected", # Changed title text
+  #       selectedTextFormat = "count > 3",
+  #       dropupAuto = FALSE, # This tells it NOT to automatically switch direction
+  #       dropup = FALSE # Added this option
+  #     ),
+  #     choicesOpt = list()
+  #   )
+  # })
+  # 
+  # ### GMIS Count
+  # 
+  # observe({
+  #   PosCatGMISRCT <- input$PosCatGMIS
+  #   req(PosCatGMISRCT)
+  #   PosSelGMISRCT <- input$PosSelGMIS
+  #   req(PosSelGMISRCT)
+  #   
+  #   output$itemcount <- renderPlot({
+  #     dfGMIS <- read.csv("GMIS-FillingUpPerPosition-2025.csv")
+  #     mainreact1g <- dfGMIS %>% filter(Position == PosSelGMISRCT) %>% group_by(Region) %>% summarise(Filled = sum(Total.Filled, na.rm = TRUE), Unfilled = sum(Total.Unfilled, na.rm = TRUE)) |>  pivot_longer(cols = c(Filled,Unfilled), names_to = "Category", values_to = "Count")
+  #     ggplot(mainreact1g, aes(x=reorder(Region,-Count), y=Count, fill = factor(Category, levels = c("Unfilled","Filled")))) +
+  #       geom_bar(stat = "identity",position = "stack", color = "black") +
+  #       geom_text(data = subset(mainreact1g, Count != 0), aes(label = Count),vjust =-1,position = position_stack(vjust = 0.5), check_overlap = TRUE)+
+  #       scale_fill_manual(values = c("Filled" = "green","Unfilled" = "grey")) +
+  #       guides(fill = guide_legend(nrow = 1)) + 
+  #       labs(x ="", y="",fill="Inventory")+
+  #       theme(axis.text.x = element_text(size = 14, angle = 45, hjust = 1),
+  #             legend.position = "top")})
+  #   
+  #   output$itemcount2 <- renderPlot({
+  #     dfGMIS <- read.csv("GMIS-FillingUpPerPosition-2025.csv")
+  #     mainreact1g <- dfGMIS %>% filter(Position == PosSelGMISRCT) %>% filter(Region == input$RegionCountItem) %>% group_by(Division) %>% summarise(Filled = sum(Total.Filled, na.rm = TRUE), Unfilled = sum(Total.Unfilled, na.rm = TRUE))  %>%  pivot_longer(cols = c(Filled,Unfilled), names_to = "Category", values_to = "Count")
+  #     ggplot(mainreact1g, aes(x=reorder(Division,-Count), y=Count, fill = factor(Category, levels = c("Unfilled","Filled")))) +
+  #       geom_bar(stat = "identity",position = "stack", color = "black") +
+  #       geom_text(data = subset(mainreact1g, Count != 0), aes(label = Count),vjust =-1, position = position_stack(vjust = 0.5), check_overlap = TRUE)+
+  #       scale_fill_manual(values = c("Filled" = "green","Unfilled" = "grey")) +
+  #       guides(fill = guide_legend(nrow = 1)) + 
+  #       labs(x ="", y="",fill="Inventory")+
+  #       theme(axis.text.x = element_text(size = 14, angle = 45, hjust = 1),
+  #             legend.position = "top")})
+  # })
   
   observeEvent(input$TextRun, {
     
