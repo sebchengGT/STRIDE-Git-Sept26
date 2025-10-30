@@ -56,8 +56,21 @@ SHEET_NAME <- "Sheet1" # Assuming the data is on the first tab
 school_data <- reactiveVal(NULL)
 df <- read_parquet("School-Level-v2.parquet") # per Level Data
 uni <- read_parquet("School-Unique-v2.parquet") # School-level Data
+# === PRIVATE SCHOOL DATA ===
+PrivateSchools <- read.csv("Private Schools Oct.2025.csv") %>%
+  mutate(
+    Region = trimws(Region),
+    Division = trimws(Division),
+    Legislative.District = ifelse(
+      is.na(Legislative.District) | Legislative.District == "",
+      "Unspecified / No District Data",
+      trimws(Legislative.District)
+    ),
+    Seats = as.numeric(gsub("[^0-9]", "", Total.Seats))
+  )
 IndALL <- read_parquet("IndDistance.ALL2.parquet") # Industry Distances
 ind <- read_parquet("SHS-Industry.parquet") # Industry Coordinates
+
 # Clean Sector names
 ind <- ind %>%
   mutate(
@@ -1430,87 +1443,247 @@ server <- function(input, output, session) {
       )
   })
   
-  # Classroom Shortage Plot
-  output$classroomshortage_plot_erdb <- renderPlotly({
+  # === Total Enrollment Drilldown Graph (Basic Information Section) ===
+  # === Total Enrollment Drilldown Graph (Basic Information Section) ===
+  output$total_enrollment_plot_erdb <- renderPlotly({
     state <- drilldown_state()
     
-    if (is.null(state$region)) {
-      # National View -> Group by Region
-      plot_data <- LMS %>% # Using base LMS data
-        group_by(Region) %>%
-        summarise(TotalShortage = sum(Estimated_CL_Shortage, na.rm = TRUE), .groups = 'drop')
-      
-      max_schools <- max(plot_data$TotalShortage, na.rm = TRUE)
-      
-      p <- plot_ly(
-        data = plot_data, 
-        y = ~Region,                # Flipped
-        x = ~TotalShortage,         # Flipped
-        type = 'bar', 
-        source = "drilldown_source_2",
-        text = ~TotalShortage,      # Added
-        texttemplate = '%{x:,.0f}',# Added
-        textposition = 'outside'   # Added
-      ) %>%
-        layout(
-          title = "Classroom Shortage by Region", 
-          xaxis = list(title = "Total Shortage", tickformat = ",", range = c(0, max_schools * 1.15)), # Swapped
-          yaxis = list(title = "", categoryorder = "total descending", autorange = "reversed") # Swapped
-        )
-      
+    # 1️⃣ Filter based on drilldown level
+    plot_data <- if (is.null(state$region)) {
+      uni
     } else if (is.null(state$division)) {
-      # Regional View -> Group by Division
-      plot_data <- LMS %>% # Using base LMS data
-        filter(Region == state$region) %>%
-        group_by(Division) %>%
-        summarise(TotalShortage = sum(Estimated_CL_Shortage, na.rm = TRUE), .groups = 'drop')
-      
-      max_schools <- max(plot_data$TotalShortage, na.rm = TRUE)
-      
-      
-      p <- plot_ly(
-        data = plot_data, 
-        y = ~Division,              # Flipped
-        x = ~TotalShortage,         # Flipped
-        type = 'bar', 
-        source = "drilldown_source_2",
-        text = ~TotalShortage,      # Added
-        texttemplate = '%{x:,.0f}',# Added
-        textposition = 'outside'   # Added
-      ) %>%
-        layout(
-          title = paste("Classroom Shortage in", state$region), 
-          xaxis = list(title = "Total Shortage", tickformat = ",", range = c(0, max_schools * 1.15)), # Swapped
-          yaxis = list(title = "", categoryorder = "total descending", autorange = "reversed") # Swapped
-        )
-      
+      uni %>% filter(Region == state$region)
     } else {
-      # Divisional View -> Group by Legislative District
-      plot_data <- LMS %>% # Using base LMS data
-        filter(Region == state$region, Division == state$division) %>%
-        group_by(Legislative.District) %>%
-        summarise(TotalShortage = sum(Estimated_CL_Shortage, na.rm = TRUE), .groups = 'drop')
-      
-      max_schools <- max(plot_data$TotalShortage, na.rm = TRUE)
-      
-      
-      p <- plot_ly(
-        data = plot_data, 
-        y = ~Legislative.District,  # Flipped
-        x = ~TotalShortage,         # Flipped
-        type = 'bar',
-        text = ~TotalShortage,      # Added
-        texttemplate = '%{x:,.0f}',# Added
-        textposition = 'outside'   # Added
-      ) %>% 
-        layout(
-          title = paste("Classroom Shortage in", state$division), 
-          xaxis = list(title = "Total Shortage", tickformat = ",", range = c(0, max_schools * 1.15)), # Swapped
-          yaxis = list(title = "Legislative District", categoryorder = "total descending", autorange = "reversed") # Swapped
+      uni %>% filter(Region == state$region, Division == state$division)
+    }
+    
+    # 2️⃣ Summarize by current level
+    plot_summary <- if (is.null(state$region)) {
+      plot_data %>%
+        group_by(group_col = Region) %>%
+        summarise(
+          ES = sum(as.numeric(ES.Enrolment), na.rm = TRUE),
+          JHS = sum(as.numeric(JHS.Enrolment), na.rm = TRUE),
+          SHS = sum(as.numeric(SHS.Enrolment), na.rm = TRUE),
+          .groups = "drop"
+        )
+    } else if (is.null(state$division)) {
+      plot_data %>%
+        group_by(group_col = Division) %>%
+        summarise(
+          ES = sum(as.numeric(ES.Enrolment), na.rm = TRUE),
+          JHS = sum(as.numeric(JHS.Enrolment), na.rm = TRUE),
+          SHS = sum(as.numeric(SHS.Enrolment), na.rm = TRUE),
+          .groups = "drop"
+        )
+    } else {
+      plot_data %>%
+        group_by(group_col = Legislative.District) %>%
+        summarise(
+          ES = sum(as.numeric(ES.Enrolment), na.rm = TRUE),
+          JHS = sum(as.numeric(JHS.Enrolment), na.rm = TRUE),
+          SHS = sum(as.numeric(SHS.Enrolment), na.rm = TRUE),
+          .groups = "drop"
         )
     }
-    p
+    
+    # 3️⃣ Build stacked bar plot
+    plot_ly(plot_summary, source = "drilldown_source_5") %>%
+      add_bars(y = ~group_col, x = ~ES, name = "ES", orientation = "h", marker = list(color = "#4e79a7")) %>%
+      add_bars(y = ~group_col, x = ~JHS, name = "JHS", orientation = "h", marker = list(color = "#f28e2b")) %>%
+      add_bars(y = ~group_col, x = ~SHS, name = "SHS", orientation = "h", marker = list(color = "#e15759")) %>%
+      layout(
+        barmode = "stack",
+        title = if (is.null(state$region)) {
+          "Total Enrollment by Region"
+        } else if (is.null(state$division)) {
+          paste("Total Enrollment by Division (", state$region, ")")
+        } else {
+          paste("Total Enrollment by Legislative District (", state$division, ")")
+        },
+        xaxis = list(title = "Enrollment", tickformat = ","),
+        yaxis = list(title = "", categoryorder = "total ascending", autorange = "reversed"),
+        legend = list(orientation = "h", x = 0.3, y = -0.15)
+      )
   })
+  
+  
+  
+  # --- PRIVATE SCHOOLS DRILLDOWN GRAPH (NEW) ---
+  
+  private_drilldown <- reactiveVal(list(level = "region", filter = NULL))
+  
+  # Filtered dataset depending on drilldown
+  filtered_private_data <- reactive({
+    state <- private_drilldown()
+    data <- PrivateSchools
+    
+    if (state$level == "region" && !is.null(state$filter)) {
+      data <- data %>% filter(Region == state$filter)
+    } else if (state$level == "division" && !is.null(state$filter)) {
+      data <- data %>% filter(Division == state$filter)
+    } else if (state$level == "district" && !is.null(state$filter)) {
+      data <- data %>% filter(Legislative.District == state$filter)
+    }
+    
+    data
+  })
+  
+  # --- Total Private Schools ---
+  output$total_private_schools_box <- renderUI({
+    total <- nrow(filtered_private_data())
+    card(
+      style = "background-color: #FFFFFF;",
+      card_header("Total Private Schools", class = "text-center"),
+      card_body(tags$h3(scales::comma(total),
+                        style = "text-align:center; font-weight:700; color:#17428C;"))
+    )
+  })
+  
+  output$total_private_seats_box <- renderUI({
+    total_seats <- sum(filtered_private_data()$Seats, na.rm = TRUE)
+    card(
+      style = "background-color: #FFFFFF;",
+      card_header("Total Seats in Private Schools", class = "text-center"),
+      card_body(tags$h3(scales::comma(total_seats),
+                        style = "text-align:center; font-weight:700; color:#17428C;"))
+    )
+  })
+  
+  output$private_schools_count_plot <- renderPlotly({
+    state <- private_drilldown()
+    data <- PrivateSchools
+    
+    if (state$level == "region") {
+      df <- data %>%
+        group_by(Region) %>%
+        summarise(PrivateSchools = n()) %>%
+        arrange(desc(PrivateSchools))    # highest first
+      title <- "Number of Private Schools per Region"
+      ycol <- ~Region
+    } else if (state$level == "division") {
+      df <- data %>%
+        filter(Region == state$filter) %>%
+        group_by(Division) %>%
+        summarise(PrivateSchools = n()) %>%
+        arrange(desc(PrivateSchools))
+      title <- paste("Number of Private Schools in", state$filter)
+      ycol <- ~Division
+    } else {
+      df <- data %>%
+        filter(Division == state$filter) %>%
+        group_by(Legislative.District) %>%
+        summarise(PrivateSchools = n()) %>%
+        arrange(desc(PrivateSchools))
+      title <- paste("Private Schools by Legislative District in", state$filter)
+      ycol <- ~`Legislative.District`
+    }
+    
+    plot_ly(
+      df,
+      y = ycol,
+      x = ~PrivateSchools,
+      type = "bar",
+      color = I("#17428C"),
+      text = ~scales::comma(PrivateSchools),
+      textposition = "outside",
+      source = "private_school_drill"
+    ) %>%
+      layout(
+        title = list(text = title, x = 0, font = list(size = 18, family = "Poppins")),
+        xaxis = list(title = "Number of Private Schools"),
+        yaxis = list(title = "", automargin = TRUE),
+        margin = list(l = 130, r = 50, t = 60, b = 40),
+        showlegend = FALSE,
+        height = 600
+      )
+  })
+  
+  output$private_schools_seats_plot <- renderPlotly({
+    state <- private_drilldown()
+    data <- PrivateSchools
+    
+    if (state$level == "region") {
+      df <- data %>%
+        group_by(Region) %>%
+        summarise(TotalSeats = sum(Seats, na.rm = TRUE)) %>%
+        arrange(desc(TotalSeats))
+      title <- "Number of Seats in Private Schools per Region"
+      ycol <- ~Region
+    } else if (state$level == "division") {
+      df <- data %>%
+        filter(Region == state$filter) %>%
+        group_by(Division) %>%
+        summarise(TotalSeats = sum(Seats, na.rm = TRUE)) %>%
+        arrange(desc(TotalSeats))
+      title <- paste("Number of Seats in Private Schools in", state$filter)
+      ycol <- ~Division
+    } else {
+      df <- data %>%
+        filter(Division == state$filter) %>%
+        group_by(Legislative.District) %>%
+        summarise(TotalSeats = sum(Seats, na.rm = TRUE)) %>%
+        arrange(desc(TotalSeats))
+      title <- paste("Seats in Private Schools by Legislative District in", state$filter)
+      ycol <- ~`Legislative.District`
+    }
+    
+    plot_ly(
+      df,
+      y = ycol,
+      x = ~TotalSeats,
+      type = "bar",
+      orientation = "h",
+      color = I("#1D75BC"),
+      text = ~scales::comma(TotalSeats),
+      textposition = "outside",
+      source = "private_seats_drill"
+    ) %>%
+      layout(
+        title = list(text = title, x = 0, font = list(size = 18, family = "Poppins")),
+        xaxis = list(title = "Number of Seats"),
+        yaxis = list(title = "", autorange = "reversed"),
+        margin = list(l = 130, r = 50, t = 60, b = 40),
+        showlegend = FALSE,
+        height = 600
+      )
+  })
+  
+  # === Drilldown on click ===
+  observeEvent(event_data("plotly_click", source = "private_school_drill"), {
+    click <- event_data("plotly_click", source = "private_school_drill")$y
+    if (is.null(click)) return()
+    state <- private_drilldown()
+    if (state$level == "region") {
+      private_drilldown(list(level = "division", filter = click))
+    } else if (state$level == "division") {
+      private_drilldown(list(level = "district", filter = click))
+    }
+  })
+  
+  observeEvent(event_data("plotly_click", source = "private_seats_drill"), {
+    click <- event_data("plotly_click", source = "private_seats_drill")$y
+    if (is.null(click)) return()
+    state <- private_drilldown()
+    if (state$level == "region") {
+      private_drilldown(list(level = "division", filter = click))
+    } else if (state$level == "division") {
+      private_drilldown(list(level = "district", filter = click))
+    }
+  })
+  
+  # === Back button ===
+  observeEvent(input$private_back, {
+    state <- private_drilldown()
+    if (state$level == "district") {
+      parent <- PrivateSchools %>% filter(Division == state$filter) %>%
+        slice(1) %>% pull(Region)
+      private_drilldown(list(level = "division", filter = parent))
+    } else if (state$level == "division") {
+      private_drilldown(list(level = "region", filter = NULL))
+    }
+  })
+  
   
   # LMS Plot
   output$LMS_plot_erdb <- renderPlotly({
@@ -6123,12 +6296,74 @@ server <- function(input, output, session) {
             
             # --- Charts Section ---
             layout_columns(
-              card(full_screen = TRUE, card_header("Number of Schools (Click to Drill Down)"), plotlyOutput("totalschools_plot_erdb")),
-              card(full_screen = TRUE, card_header("Curricular Offering"), plotlyOutput("curricular_plot_erdb")),
-              card(full_screen = TRUE, card_header("School Size Typology"), plotlyOutput("typology_plot_erdb")),
-              card(full_screen = TRUE, card_header("Last Mile Schools"), plotlyOutput("LMS_plot_erdb", height = "420px")),
+              # Row 1
+              card(
+                full_screen = TRUE,
+                card_header("Number of Schools (Click to Drill Down)"),
+                plotlyOutput("totalschools_plot_erdb")
+              ),
+              card(
+                full_screen = TRUE,
+                card_header("Total Enrollment (Click to Drill Down)"),
+                plotlyOutput("total_enrollment_plot_erdb", height = "420px")
+              ),
+              
+              # Row 2
+              card(
+                full_screen = TRUE,
+                card_header("Curricular Offering"),
+                plotlyOutput("curricular_plot_erdb")
+              ),
+              card(
+                full_screen = TRUE,
+                card_header("School Size Typology"),
+                plotlyOutput("typology_plot_erdb")
+              ),
+              
+              # Row 3
+              card(
+                full_screen = TRUE,
+                card_header("Last Mile Schools"),
+                plotlyOutput("LMS_plot_erdb", height = "420px")
+              ),
+              
               col_widths = c(6, 6, 6, 6)
+            ),
+            
+            # === PRIVATE SCHOOLS SECTION ===
+            
+            layout_columns(
+              col_widths = c(6, 6),
+              uiOutput("total_private_schools_box"),
+              uiOutput("total_private_seats_box")
+            ),
+            
+            layout_columns(
+              col_widths = c(6, 6),
+              
+              card(
+                full_screen = TRUE,
+                card_header(
+                  div(
+                    "Number of Private Schools (Click to Drill Down)",
+                    actionButton("private_back", "⬅ Back", class = "btn btn-sm btn-outline-primary float-end")
+                  )
+                ),
+                plotlyOutput("private_schools_count_plot", height = "420px")
+              ),
+              
+              card(
+                full_screen = TRUE,
+                card_header(
+                  div(
+                    "Number of Seats in Private Schools (Click to Drill Down)",
+                    actionButton("private_back2", "⬅ Back", class = "btn btn-sm btn-outline-primary float-end")
+                  )
+                ),
+                plotlyOutput("private_schools_seats_plot", height = "420px")
+              )
             )
+            
           ),
           
           # =====================================================
