@@ -37,8 +37,21 @@ SHEET_NAME <- "Sheet1" # Assuming the data is on the first tab
 school_data <- reactiveVal(NULL)
 df <- read_parquet("School-Level-v2.parquet") # per Level Data
 uni <- read_parquet("School-Unique-v2.parquet") # School-level Data
+# === PRIVATE SCHOOL DATA ===
+PrivateSchools <- read.csv("Private Schools Oct.2025.csv") %>%
+  mutate(
+    Region = trimws(Region),
+    Division = trimws(Division),
+    Legislative.District = ifelse(
+      is.na(Legislative.District) | Legislative.District == "",
+      "Unspecified / No District Data",
+      trimws(Legislative.District)
+    ),
+    Seats = as.numeric(gsub("[^0-9]", "", Total.Seats))
+  )
 IndALL <- read_parquet("IndDistance.ALL2.parquet") # Industry Distances
 ind <- read_parquet("SHS-Industry.parquet") # Industry Coordinates
+
 # Clean Sector names
 ind <- ind %>%
   mutate(
@@ -1466,87 +1479,247 @@ server <- function(input, output, session) {
       )
   })
   
-  # Classroom Shortage Plot
-  output$classroomshortage_plot_erdb <- renderPlotly({
+  # === Total Enrollment Drilldown Graph (Basic Information Section) ===
+  # === Total Enrollment Drilldown Graph (Basic Information Section) ===
+  output$total_enrollment_plot_erdb <- renderPlotly({
     state <- drilldown_state()
     
-    if (is.null(state$region)) {
-      # National View -> Group by Region
-      plot_data <- LMS %>% # Using base LMS data
-        group_by(Region) %>%
-        summarise(TotalShortage = sum(Estimated_CL_Shortage, na.rm = TRUE), .groups = 'drop')
-      
-      max_schools <- max(plot_data$TotalShortage, na.rm = TRUE)
-      
-      p <- plot_ly(
-        data = plot_data, 
-        y = ~Region,                # Flipped
-        x = ~TotalShortage,         # Flipped
-        type = 'bar', 
-        source = "drilldown_source_2",
-        text = ~TotalShortage,      # Added
-        texttemplate = '%{x:,.0f}',# Added
-        textposition = 'outside'   # Added
-      ) %>%
-        layout(
-          title = "Classroom Shortage by Region", 
-          xaxis = list(title = "Total Shortage", tickformat = ",", range = c(0, max_schools * 1.15)), # Swapped
-          yaxis = list(title = "", categoryorder = "total descending", autorange = "reversed") # Swapped
-        )
-      
+    # 1️⃣ Filter based on drilldown level
+    plot_data <- if (is.null(state$region)) {
+      uni
     } else if (is.null(state$division)) {
-      # Regional View -> Group by Division
-      plot_data <- LMS %>% # Using base LMS data
-        filter(Region == state$region) %>%
-        group_by(Division) %>%
-        summarise(TotalShortage = sum(Estimated_CL_Shortage, na.rm = TRUE), .groups = 'drop')
-      
-      max_schools <- max(plot_data$TotalShortage, na.rm = TRUE)
-      
-      
-      p <- plot_ly(
-        data = plot_data, 
-        y = ~Division,              # Flipped
-        x = ~TotalShortage,         # Flipped
-        type = 'bar', 
-        source = "drilldown_source_2",
-        text = ~TotalShortage,      # Added
-        texttemplate = '%{x:,.0f}',# Added
-        textposition = 'outside'   # Added
-      ) %>%
-        layout(
-          title = paste("Classroom Shortage in", state$region), 
-          xaxis = list(title = "Total Shortage", tickformat = ",", range = c(0, max_schools * 1.15)), # Swapped
-          yaxis = list(title = "", categoryorder = "total descending", autorange = "reversed") # Swapped
-        )
-      
+      uni %>% filter(Region == state$region)
     } else {
-      # Divisional View -> Group by Legislative District
-      plot_data <- LMS %>% # Using base LMS data
-        filter(Region == state$region, Division == state$division) %>%
-        group_by(Legislative.District) %>%
-        summarise(TotalShortage = sum(Estimated_CL_Shortage, na.rm = TRUE), .groups = 'drop')
-      
-      max_schools <- max(plot_data$TotalShortage, na.rm = TRUE)
-      
-      
-      p <- plot_ly(
-        data = plot_data, 
-        y = ~Legislative.District,  # Flipped
-        x = ~TotalShortage,         # Flipped
-        type = 'bar',
-        text = ~TotalShortage,      # Added
-        texttemplate = '%{x:,.0f}',# Added
-        textposition = 'outside'   # Added
-      ) %>% 
-        layout(
-          title = paste("Classroom Shortage in", state$division), 
-          xaxis = list(title = "Total Shortage", tickformat = ",", range = c(0, max_schools * 1.15)), # Swapped
-          yaxis = list(title = "Legislative District", categoryorder = "total descending", autorange = "reversed") # Swapped
+      uni %>% filter(Region == state$region, Division == state$division)
+    }
+    
+    # 2️⃣ Summarize by current level
+    plot_summary <- if (is.null(state$region)) {
+      plot_data %>%
+        group_by(group_col = Region) %>%
+        summarise(
+          ES = sum(as.numeric(ES.Enrolment), na.rm = TRUE),
+          JHS = sum(as.numeric(JHS.Enrolment), na.rm = TRUE),
+          SHS = sum(as.numeric(SHS.Enrolment), na.rm = TRUE),
+          .groups = "drop"
+        )
+    } else if (is.null(state$division)) {
+      plot_data %>%
+        group_by(group_col = Division) %>%
+        summarise(
+          ES = sum(as.numeric(ES.Enrolment), na.rm = TRUE),
+          JHS = sum(as.numeric(JHS.Enrolment), na.rm = TRUE),
+          SHS = sum(as.numeric(SHS.Enrolment), na.rm = TRUE),
+          .groups = "drop"
+        )
+    } else {
+      plot_data %>%
+        group_by(group_col = Legislative.District) %>%
+        summarise(
+          ES = sum(as.numeric(ES.Enrolment), na.rm = TRUE),
+          JHS = sum(as.numeric(JHS.Enrolment), na.rm = TRUE),
+          SHS = sum(as.numeric(SHS.Enrolment), na.rm = TRUE),
+          .groups = "drop"
         )
     }
-    p
+    
+    # 3️⃣ Build stacked bar plot
+    plot_ly(plot_summary, source = "drilldown_source_5") %>%
+      add_bars(y = ~group_col, x = ~ES, name = "ES", orientation = "h", marker = list(color = "#4e79a7")) %>%
+      add_bars(y = ~group_col, x = ~JHS, name = "JHS", orientation = "h", marker = list(color = "#f28e2b")) %>%
+      add_bars(y = ~group_col, x = ~SHS, name = "SHS", orientation = "h", marker = list(color = "#e15759")) %>%
+      layout(
+        barmode = "stack",
+        title = if (is.null(state$region)) {
+          "Total Enrollment by Region"
+        } else if (is.null(state$division)) {
+          paste("Total Enrollment by Division (", state$region, ")")
+        } else {
+          paste("Total Enrollment by Legislative District (", state$division, ")")
+        },
+        xaxis = list(title = "Enrollment", tickformat = ","),
+        yaxis = list(title = "", categoryorder = "total ascending", autorange = "reversed"),
+        legend = list(orientation = "h", x = 0.3, y = -0.15)
+      )
   })
+  
+  
+  
+  # --- PRIVATE SCHOOLS DRILLDOWN GRAPH (NEW) ---
+  
+  private_drilldown <- reactiveVal(list(level = "region", filter = NULL))
+  
+  # Filtered dataset depending on drilldown
+  filtered_private_data <- reactive({
+    state <- private_drilldown()
+    data <- PrivateSchools
+    
+    if (state$level == "region" && !is.null(state$filter)) {
+      data <- data %>% filter(Region == state$filter)
+    } else if (state$level == "division" && !is.null(state$filter)) {
+      data <- data %>% filter(Division == state$filter)
+    } else if (state$level == "district" && !is.null(state$filter)) {
+      data <- data %>% filter(Legislative.District == state$filter)
+    }
+    
+    data
+  })
+  
+  # --- Total Private Schools ---
+  output$total_private_schools_box <- renderUI({
+    total <- nrow(filtered_private_data())
+    card(
+      style = "background-color: #FFFFFF;",
+      card_header("Total Private Schools", class = "text-center"),
+      card_body(tags$h3(scales::comma(total),
+                        style = "text-align:center; font-weight:700; color:#17428C;"))
+    )
+  })
+  
+  output$total_private_seats_box <- renderUI({
+    total_seats <- sum(filtered_private_data()$Seats, na.rm = TRUE)
+    card(
+      style = "background-color: #FFFFFF;",
+      card_header("Total Seats in Private Schools", class = "text-center"),
+      card_body(tags$h3(scales::comma(total_seats),
+                        style = "text-align:center; font-weight:700; color:#17428C;"))
+    )
+  })
+  
+  output$private_schools_count_plot <- renderPlotly({
+    state <- private_drilldown()
+    data <- PrivateSchools
+    
+    if (state$level == "region") {
+      df <- data %>%
+        group_by(Region) %>%
+        summarise(PrivateSchools = n()) %>%
+        arrange(desc(PrivateSchools))    # highest first
+      title <- "Number of Private Schools per Region"
+      ycol <- ~Region
+    } else if (state$level == "division") {
+      df <- data %>%
+        filter(Region == state$filter) %>%
+        group_by(Division) %>%
+        summarise(PrivateSchools = n()) %>%
+        arrange(desc(PrivateSchools))
+      title <- paste("Number of Private Schools in", state$filter)
+      ycol <- ~Division
+    } else {
+      df <- data %>%
+        filter(Division == state$filter) %>%
+        group_by(Legislative.District) %>%
+        summarise(PrivateSchools = n()) %>%
+        arrange(desc(PrivateSchools))
+      title <- paste("Private Schools by Legislative District in", state$filter)
+      ycol <- ~`Legislative.District`
+    }
+    
+    plot_ly(
+      df,
+      y = ycol,
+      x = ~PrivateSchools,
+      type = "bar",
+      color = I("#17428C"),
+      text = ~scales::comma(PrivateSchools),
+      textposition = "outside",
+      source = "private_school_drill"
+    ) %>%
+      layout(
+        title = list(text = title, x = 0, font = list(size = 18, family = "Poppins")),
+        xaxis = list(title = "Number of Private Schools"),
+        yaxis = list(title = "", automargin = TRUE),
+        margin = list(l = 130, r = 50, t = 60, b = 40),
+        showlegend = FALSE,
+        height = 600
+      )
+  })
+  
+  output$private_schools_seats_plot <- renderPlotly({
+    state <- private_drilldown()
+    data <- PrivateSchools
+    
+    if (state$level == "region") {
+      df <- data %>%
+        group_by(Region) %>%
+        summarise(TotalSeats = sum(Seats, na.rm = TRUE)) %>%
+        arrange(desc(TotalSeats))
+      title <- "Number of Seats in Private Schools per Region"
+      ycol <- ~Region
+    } else if (state$level == "division") {
+      df <- data %>%
+        filter(Region == state$filter) %>%
+        group_by(Division) %>%
+        summarise(TotalSeats = sum(Seats, na.rm = TRUE)) %>%
+        arrange(desc(TotalSeats))
+      title <- paste("Number of Seats in Private Schools in", state$filter)
+      ycol <- ~Division
+    } else {
+      df <- data %>%
+        filter(Division == state$filter) %>%
+        group_by(Legislative.District) %>%
+        summarise(TotalSeats = sum(Seats, na.rm = TRUE)) %>%
+        arrange(desc(TotalSeats))
+      title <- paste("Seats in Private Schools by Legislative District in", state$filter)
+      ycol <- ~`Legislative.District`
+    }
+    
+    plot_ly(
+      df,
+      y = ycol,
+      x = ~TotalSeats,
+      type = "bar",
+      orientation = "h",
+      color = I("#1D75BC"),
+      text = ~scales::comma(TotalSeats),
+      textposition = "outside",
+      source = "private_seats_drill"
+    ) %>%
+      layout(
+        title = list(text = title, x = 0, font = list(size = 18, family = "Poppins")),
+        xaxis = list(title = "Number of Seats"),
+        yaxis = list(title = "", autorange = "reversed"),
+        margin = list(l = 130, r = 50, t = 60, b = 40),
+        showlegend = FALSE,
+        height = 600
+      )
+  })
+  
+  # === Drilldown on click ===
+  observeEvent(event_data("plotly_click", source = "private_school_drill"), {
+    click <- event_data("plotly_click", source = "private_school_drill")$y
+    if (is.null(click)) return()
+    state <- private_drilldown()
+    if (state$level == "region") {
+      private_drilldown(list(level = "division", filter = click))
+    } else if (state$level == "division") {
+      private_drilldown(list(level = "district", filter = click))
+    }
+  })
+  
+  observeEvent(event_data("plotly_click", source = "private_seats_drill"), {
+    click <- event_data("plotly_click", source = "private_seats_drill")$y
+    if (is.null(click)) return()
+    state <- private_drilldown()
+    if (state$level == "region") {
+      private_drilldown(list(level = "division", filter = click))
+    } else if (state$level == "division") {
+      private_drilldown(list(level = "district", filter = click))
+    }
+  })
+  
+  # === Back button ===
+  observeEvent(input$private_back, {
+    state <- private_drilldown()
+    if (state$level == "district") {
+      parent <- PrivateSchools %>% filter(Division == state$filter) %>%
+        slice(1) %>% pull(Region)
+      private_drilldown(list(level = "division", filter = parent))
+    } else if (state$level == "division") {
+      private_drilldown(list(level = "region", filter = NULL))
+    }
+  })
+  
   
   # LMS Plot
   output$LMS_plot_erdb <- renderPlotly({
@@ -3424,6 +3597,33 @@ server <- function(input, output, session) {
         #                 card_header(strong("GMIS Data")),
         #                 dataTableOutput("GMISTable1")),
         #               col_widths = c(12,12)))), # End of Plantilla nav_panel - COMMA is correct
+<<<<<<< HEAD
+=======
+        # --- PLANTILLA POSITIONS PANEL ---
+        nav_panel(
+          "Plantilla Positions",
+          layout_sidebar(
+            sidebar = sidebar(
+              width = 400,
+              class = "bg-secondary text-white",
+              h5("Select Positions"),
+              checkboxGroupInput(
+                "selected_positions",
+                label = NULL,
+                choices = unique(dfGMIS$Position),
+                selected = head(unique(dfGMIS$Position), 1)
+              ),
+              br(),
+              actionButton("btn_back_drilldown", "⬅ Back", class = "btn btn-light w-100 mt-3")
+            ),
+            
+            # --- MAIN CONTENT ---
+            layout_columns(
+              uiOutput("dynamic_positions_ui")
+            )
+          )
+        ),
+>>>>>>> 1eced3c647bedfc74d4f75760c58f78fd8e51344
         nav_panel(
           title = "Infrastructure and Education Facilities",
           layout_sidebar(
@@ -6351,12 +6551,74 @@ server <- function(input, output, session) {
             
             # --- Charts Section ---
             layout_columns(
-              card(full_screen = TRUE, card_header("Number of Schools (Click to Drill Down)"), plotlyOutput("totalschools_plot_erdb")),
-              card(full_screen = TRUE, card_header("Curricular Offering"), plotlyOutput("curricular_plot_erdb")),
-              card(full_screen = TRUE, card_header("School Size Typology"), plotlyOutput("typology_plot_erdb")),
-              card(full_screen = TRUE, card_header("Last Mile Schools"), plotlyOutput("LMS_plot_erdb", height = "420px")),
+              # Row 1
+              card(
+                full_screen = TRUE,
+                card_header("Number of Schools (Click to Drill Down)"),
+                plotlyOutput("totalschools_plot_erdb")
+              ),
+              card(
+                full_screen = TRUE,
+                card_header("Total Enrollment (Click to Drill Down)"),
+                plotlyOutput("total_enrollment_plot_erdb", height = "420px")
+              ),
+              
+              # Row 2
+              card(
+                full_screen = TRUE,
+                card_header("Curricular Offering"),
+                plotlyOutput("curricular_plot_erdb")
+              ),
+              card(
+                full_screen = TRUE,
+                card_header("School Size Typology"),
+                plotlyOutput("typology_plot_erdb")
+              ),
+              
+              # Row 3
+              card(
+                full_screen = TRUE,
+                card_header("Last Mile Schools"),
+                plotlyOutput("LMS_plot_erdb", height = "420px")
+              ),
+              
               col_widths = c(6, 6, 6, 6)
+            ),
+            
+            # === PRIVATE SCHOOLS SECTION ===
+            
+            layout_columns(
+              col_widths = c(6, 6),
+              uiOutput("total_private_schools_box"),
+              uiOutput("total_private_seats_box")
+            ),
+            
+            layout_columns(
+              col_widths = c(6, 6),
+              
+              card(
+                full_screen = TRUE,
+                card_header(
+                  div(
+                    "Number of Private Schools (Click to Drill Down)",
+                    actionButton("private_back", "⬅ Back", class = "btn btn-sm btn-outline-primary float-end")
+                  )
+                ),
+                plotlyOutput("private_schools_count_plot", height = "420px")
+              ),
+              
+              card(
+                full_screen = TRUE,
+                card_header(
+                  div(
+                    "Number of Seats in Private Schools (Click to Drill Down)",
+                    actionButton("private_back2", "⬅ Back", class = "btn btn-sm btn-outline-primary float-end")
+                  )
+                ),
+                plotlyOutput("private_schools_seats_plot", height = "420px")
+              )
             )
+            
           ),
           
           # =====================================================
@@ -13876,89 +14138,245 @@ server <- function(input, output, session) {
     data_column <- uni[[otherdata2]]
     selectInput("otherdataselect",strong("Select a Category:"), c(unique(data_column[!is.na(data_column) & data_column != "#N/A" & data_column != "For Verification"])))
   })
-  
-  output$SDOSelectionGMIS <- renderUI({
-    dfGMISRegDiv <- read.csv("GMIS-Apr2025-RegDiv.csv")
-    # Get the list of divisions based on the selected region
-    divisions <- dfGMISRegDiv[dfGMISRegDiv$Region %in% input$RegionGMIS, "Division"]
-    
-    # Render the pickerInput
-    pickerInput(
-      inputId = "SDOGMIS",
-      label = "Select a Division:",
-      choices = divisions,
-      selected = divisions,
-      multiple = TRUE,
-      options = pickerOptions(
-        actionsBox = TRUE, # Changed to TRUE
-        liveSearch = TRUE,
-        header = "Select one or more Divisions", # Changed header text
-        title = "No Divisions Selected", # Changed title text
-        selectedTextFormat = "count > 3",
-        dropupAuto = FALSE, # This tells it NOT to automatically switch direction
-        dropup = FALSE # Added this option
-      ),
-      choicesOpt = list()
-    )
-  })
-  
-  output$PosSelectionGMIS <- renderUI({
-    dfGMISPosCat <- read.csv("GMIS-Apr2025-PosCat.csv")
-    # Filter the data frame to get positions based on the selected position category
-    positions <- sort(unique(dfGMISPosCat$Position))
-    
-    # Render the pickerInput
-    pickerInput(
-      inputId = "PosSelGMIS",
-      label = "Select a Position:",
-      choices = positions,
-      selected = c("Teacher I","Teacher II","Teacher III"),
-      multiple = TRUE,
-      options = pickerOptions(
-        actionsBox = TRUE, # Changed to TRUE
-        liveSearch = TRUE,
-        header = "Select Positions", # Changed header text
-        title = "No Positions Selected", # Changed title text
-        selectedTextFormat = "count > 3",
-        dropupAuto = FALSE, # This tells it NOT to automatically switch direction
-        dropup = FALSE # Added this option
-      ),
-      choicesOpt = list()
-    )
-  })
-  
-  ### GMIS Count
-  
+  # --- SERVER LOGIC FOR PLANTILLA POSITIONS ---
   observe({
-    PosCatGMISRCT <- input$PosCatGMIS
-    req(PosCatGMISRCT)
-    PosSelGMISRCT <- input$PosSelGMIS
-    req(PosSelGMISRCT)
+    req(input$selected_positions)
     
-    output$itemcount <- renderPlot({
-      dfGMIS <- read.csv("GMIS-FillingUpPerPosition-2025.csv")
-      mainreact1g <- dfGMIS %>% filter(Position == PosSelGMISRCT) %>% group_by(Region) %>% summarise(Filled = sum(Total.Filled, na.rm = TRUE), Unfilled = sum(Total.Unfilled, na.rm = TRUE)) |>  pivot_longer(cols = c(Filled,Unfilled), names_to = "Category", values_to = "Count")
-      ggplot(mainreact1g, aes(x=reorder(Region,-Count), y=Count, fill = factor(Category, levels = c("Unfilled","Filled")))) +
-        geom_bar(stat = "identity",position = "stack", color = "black") +
-        geom_text(data = subset(mainreact1g, Count != 0), aes(label = Count),vjust =-1,position = position_stack(vjust = 0.5), check_overlap = TRUE)+
-        scale_fill_manual(values = c("Filled" = "green","Unfilled" = "grey")) +
-        guides(fill = guide_legend(nrow = 1)) + 
-        labs(x ="", y="",fill="Inventory")+
-        theme(axis.text.x = element_text(size = 14, angle = 45, hjust = 1),
-              legend.position = "top")})
+    # --- Shared global drilldown state (applies to ALL cards) ---
+    global_drill_state <- reactiveVal(list(region = NULL))
+    global_trigger <- reactiveVal(0)
     
-    output$itemcount2 <- renderPlot({
-      dfGMIS <- read.csv("GMIS-FillingUpPerPosition-2025.csv")
-      mainreact1g <- dfGMIS %>% filter(Position == PosSelGMISRCT) %>% filter(Region == input$RegionCountItem) %>% group_by(Division) %>% summarise(Filled = sum(Total.Filled, na.rm = TRUE), Unfilled = sum(Total.Unfilled, na.rm = TRUE))  %>%  pivot_longer(cols = c(Filled,Unfilled), names_to = "Category", values_to = "Count")
-      ggplot(mainreact1g, aes(x=reorder(Division,-Count), y=Count, fill = factor(Category, levels = c("Unfilled","Filled")))) +
-        geom_bar(stat = "identity",position = "stack", color = "black") +
-        geom_text(data = subset(mainreact1g, Count != 0), aes(label = Count),vjust =-1, position = position_stack(vjust = 0.5), check_overlap = TRUE)+
-        scale_fill_manual(values = c("Filled" = "green","Unfilled" = "grey")) +
-        guides(fill = guide_legend(nrow = 1)) + 
-        labs(x ="", y="",fill="Inventory")+
-        theme(axis.text.x = element_text(size = 14, angle = 45, hjust = 1),
-              legend.position = "top")})
+    # --- Render Dynamic Cards Layout ---
+    output$dynamic_positions_ui <- renderUI({
+      req(input$selected_positions)
+      
+      cards <- lapply(input$selected_positions, function(pos) {
+        plot_id <- paste0("plot_", gsub(" ", "_", pos))
+        vbox_id <- paste0("vbox_", gsub(" ", "_", pos))
+        
+        card(
+          full_screen = TRUE,
+          class = "shadow-sm p-2",
+          card_header(
+            h4(pos, class = "m-0 pt-1")
+          ),
+          card_body(
+            layout_column_wrap(width = 1/3, valueBoxOutput(vbox_id)),
+            plotlyOutput(plot_id, height = "450px")
+          )
+        )
+      })
+      
+      layout_column_wrap(
+        width = 1/3,
+        heights_equal = "row",
+        !!!cards
+      )
+    })
+    
+    # --- Generate Each Card’s Logic ---
+    lapply(input$selected_positions, function(pos) {
+      plot_id <- paste0("plot_", gsub(" ", "_", pos))
+      vbox_id <- paste0("vbox_", gsub(" ", "_", pos))
+      source_id <- paste0("drilldown_source_", gsub(" ", "_", pos))
+      
+      df_sub <- reactive({
+        dfGMIS %>% filter(Position == pos)
+      })
+      
+      # --- Value Box ---
+      output[[vbox_id]] <- renderValueBox({
+        total <- df_sub() %>%
+          summarise(total = sum(Total.Filled + Total.Unfilled, na.rm = TRUE)) %>%
+          pull(total)
+        
+        valueBox(
+          value = formatC(total, format = "d", big.mark = ","),
+          subtitle = paste("Total Positions:", pos),
+          icon = bs_icon("person-badge"),
+          color = "blue"
+        )
+      })
+      
+      # --- Plot with Global Drilldown ---
+      output[[plot_id]] <- renderPlotly({
+        trigger <- global_trigger()  # re-render when drilldown changes
+        state <- global_drill_state()
+        if (is.null(state)) state <- list(region = NULL)
+        
+        df <- df_sub()
+        
+        # --- LEVEL 1: Region View ---
+        if (is.null(state$region)) {
+          plot_data <- df %>%
+            group_by(GMIS.Region) %>%
+            summarise(
+              Filled = sum(Total.Filled, na.rm = TRUE),
+              Unfilled = sum(Total.Unfilled, na.rm = TRUE),
+              .groups = "drop"
+            ) %>%
+            tidyr::pivot_longer(cols = c(Filled, Unfilled),
+                                names_to = "Type", values_to = "Count")
+          title_txt <- paste("Total Positions by Region -", pos)
+          y_formula <- ~GMIS.Region
+          
+          # --- LEVEL 2: Division View ---
+        } else {
+          plot_data <- df %>%
+            filter(GMIS.Region == state$region) %>%
+            group_by(GMIS.Division) %>%
+            summarise(
+              Filled = sum(Total.Filled, na.rm = TRUE),
+              Unfilled = sum(Total.Unfilled, na.rm = TRUE),
+              .groups = "drop"
+            ) %>%
+            tidyr::pivot_longer(cols = c(Filled, Unfilled),
+                                names_to = "Type", values_to = "Count")
+          title_txt <- paste("Positions in", state$region)
+          y_formula <- ~GMIS.Division
+        }
+        
+        # Handle empty data
+        if (nrow(plot_data) == 0) {
+          return(plot_ly() %>% layout(title = title_txt))
+        }
+        
+        max_val <- max(plot_data$Count, na.rm = TRUE)
+        color_map <- c("Filled" = "#007B3E", "Unfilled" = "#FF0000")
+        
+        plot_ly(
+          data = plot_data,
+          y = y_formula,
+          x = ~Count,
+          color = ~Type,
+          colors = color_map,
+          type = 'bar',
+          orientation = 'h',
+          source = source_id,
+          text = ~Count,
+          texttemplate = '%{x:,.0f}',
+          textposition = 'inside'
+        ) %>%
+          layout(
+            barmode = 'group',
+            title = title_txt,
+            xaxis = list(title = "Number of Positions", range = c(0, max_val * 1.15)),
+            yaxis = list(title = "", categoryorder = "total descending", autorange = "reversed"),
+            legend = list(x = 0.85, y = 0.95)
+          )
+      })
+      
+      # --- Drilldown Handler (Global Sync) ---
+      observeEvent(event_data("plotly_click", source = source_id), {
+        click_data <- event_data("plotly_click", source = source_id)
+        if (is.null(click_data)) return()
+        
+        cat_clicked <- click_data$y
+        if (is.null(cat_clicked)) return()
+        
+        current_state <- isolate(global_drill_state())
+        if (is.null(current_state)) current_state <- list(region = NULL)
+        
+        # Only allow 1 drilldown level: Region -> Division
+        if (is.null(current_state$region)) {
+          global_drill_state(list(region = as.character(cat_clicked)))
+          global_trigger(global_trigger() + 1)
+        }
+      }, ignoreNULL = TRUE, ignoreInit = TRUE)
+    })
+    
+    # --- ONE BACK BUTTON (GLOBAL) ---
+    observeEvent(input$btn_back_drilldown, {
+      state <- isolate(global_drill_state())
+      if (!is.null(state$region)) {
+        global_drill_state(list(region = NULL))
+        global_trigger(global_trigger() + 1)
+      }
+    })
   })
+  
+  # output$SDOSelectionGMIS <- renderUI({
+  #   dfGMISRegDiv <- read.csv("GMIS-Apr2025-RegDiv.csv")
+  #   # Get the list of divisions based on the selected region
+  #   divisions <- dfGMISRegDiv[dfGMISRegDiv$Region %in% input$RegionGMIS, "Division"]
+  #   
+  #   # Render the pickerInput
+  #   pickerInput(
+  #     inputId = "SDOGMIS",
+  #     label = "Select a Division:",
+  #     choices = divisions,
+  #     selected = divisions,
+  #     multiple = TRUE,
+  #     options = pickerOptions(
+  #       actionsBox = TRUE, # Changed to TRUE
+  #       liveSearch = TRUE,
+  #       header = "Select one or more Divisions", # Changed header text
+  #       title = "No Divisions Selected", # Changed title text
+  #       selectedTextFormat = "count > 3",
+  #       dropupAuto = FALSE, # This tells it NOT to automatically switch direction
+  #       dropup = FALSE # Added this option
+  #     ),
+  #     choicesOpt = list()
+  #   )
+  # })
+  # 
+  # output$PosSelectionGMIS <- renderUI({
+  #   dfGMISPosCat <- read.csv("GMIS-Apr2025-PosCat.csv")
+  #   # Filter the data frame to get positions based on the selected position category
+  #   positions <- sort(unique(dfGMISPosCat$Position))
+  #   
+  #   # Render the pickerInput
+  #   pickerInput(
+  #     inputId = "PosSelGMIS",
+  #     label = "Select a Position:",
+  #     choices = positions,
+  #     selected = c("Teacher I","Teacher II","Teacher III"),
+  #     multiple = TRUE,
+  #     options = pickerOptions(
+  #       actionsBox = TRUE, # Changed to TRUE
+  #       liveSearch = TRUE,
+  #       header = "Select Positions", # Changed header text
+  #       title = "No Positions Selected", # Changed title text
+  #       selectedTextFormat = "count > 3",
+  #       dropupAuto = FALSE, # This tells it NOT to automatically switch direction
+  #       dropup = FALSE # Added this option
+  #     ),
+  #     choicesOpt = list()
+  #   )
+  # })
+  # 
+  # ### GMIS Count
+  # 
+  # observe({
+  #   PosCatGMISRCT <- input$PosCatGMIS
+  #   req(PosCatGMISRCT)
+  #   PosSelGMISRCT <- input$PosSelGMIS
+  #   req(PosSelGMISRCT)
+  #   
+  #   output$itemcount <- renderPlot({
+  #     dfGMIS <- read.csv("GMIS-FillingUpPerPosition-2025.csv")
+  #     mainreact1g <- dfGMIS %>% filter(Position == PosSelGMISRCT) %>% group_by(Region) %>% summarise(Filled = sum(Total.Filled, na.rm = TRUE), Unfilled = sum(Total.Unfilled, na.rm = TRUE)) |>  pivot_longer(cols = c(Filled,Unfilled), names_to = "Category", values_to = "Count")
+  #     ggplot(mainreact1g, aes(x=reorder(Region,-Count), y=Count, fill = factor(Category, levels = c("Unfilled","Filled")))) +
+  #       geom_bar(stat = "identity",position = "stack", color = "black") +
+  #       geom_text(data = subset(mainreact1g, Count != 0), aes(label = Count),vjust =-1,position = position_stack(vjust = 0.5), check_overlap = TRUE)+
+  #       scale_fill_manual(values = c("Filled" = "green","Unfilled" = "grey")) +
+  #       guides(fill = guide_legend(nrow = 1)) + 
+  #       labs(x ="", y="",fill="Inventory")+
+  #       theme(axis.text.x = element_text(size = 14, angle = 45, hjust = 1),
+  #             legend.position = "top")})
+  #   
+  #   output$itemcount2 <- renderPlot({
+  #     dfGMIS <- read.csv("GMIS-FillingUpPerPosition-2025.csv")
+  #     mainreact1g <- dfGMIS %>% filter(Position == PosSelGMISRCT) %>% filter(Region == input$RegionCountItem) %>% group_by(Division) %>% summarise(Filled = sum(Total.Filled, na.rm = TRUE), Unfilled = sum(Total.Unfilled, na.rm = TRUE))  %>%  pivot_longer(cols = c(Filled,Unfilled), names_to = "Category", values_to = "Count")
+  #     ggplot(mainreact1g, aes(x=reorder(Division,-Count), y=Count, fill = factor(Category, levels = c("Unfilled","Filled")))) +
+  #       geom_bar(stat = "identity",position = "stack", color = "black") +
+  #       geom_text(data = subset(mainreact1g, Count != 0), aes(label = Count),vjust =-1, position = position_stack(vjust = 0.5), check_overlap = TRUE)+
+  #       scale_fill_manual(values = c("Filled" = "green","Unfilled" = "grey")) +
+  #       guides(fill = guide_legend(nrow = 1)) + 
+  #       labs(x ="", y="",fill="Inventory")+
+  #       theme(axis.text.x = element_text(size = 14, angle = 45, hjust = 1),
+  #             legend.position = "top")})
+  # })
   
   observeEvent(input$TextRun, {
     
