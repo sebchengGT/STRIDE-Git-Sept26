@@ -3360,6 +3360,7 @@ server <- function(input, output, session) {
             
             # --- WRAPPER FOR NEWS CARDS ---
             div(
+<<<<<<< HEAD
               class = "news-wrapper",
               id = "newsWrapper",
               
@@ -3424,6 +3425,27 @@ server <- function(input, output, session) {
   };
 ")),
       #EDUCATION RESOURCE DASHBOARD
+=======
+              class = "sidebar_erdb",
+              h4("Select Category"),
+              actionButton("erdb_hr", label = tagList(bs_icon("people-fill", size = 24), tags$h5("Human Resource")), class = "btn-card mb-2"), # source: 187
+              actionButton("erdb_school", label = tagList(bs_icon("building", size = 24), tags$h5("Basic Info")), class = "btn-card mb-2"), # source: 187
+              actionButton("erdb_infra", label = tagList(bs_icon("tools", size = 24), tags$h5("Infrastructure")), class = "btn-card mb-2"), # source: 188
+              actionButton("erdb_financial", label = tagList(bs_icon("currency-dollar", size = 24), tags$h5("Financial")), class = "btn-card mb-2"), # source: 188
+              actionButton("erdb_monitoring", label = tagList(bs_icon("graph-up", size = 24), tags$h5("Monitoring")), class = "btn-card mb-2"), # source: 188
+              actionButton("erdb_ppas", label = tagList(bs_icon("clipboard-data", size = 24), tags$h5("PPAs")), class = "btn-card mb-2") # source: 188
+            ), # End Sidebar Div
+            # --- MAIN CONTENT Div ---
+            div(
+              id = "main_erdb_content",
+              uiOutput("dynamic_erdb_panel"), # This will render the content based on sidebar clicks
+              class = "main-content-erdb"
+            ) # End Main Content Div
+          ) # End Main Layout Div
+        ) # End tagList for Home content
+      ), # End of Home nav_panel - COMMA is correct here
+      
+>>>>>>> 62057804a8f351f3959a17bad153190cdb819189
       nav_menu(
         title = tagList(bs_icon("speedometer"), tags$b("Dashboard")),
         value = "dashboard_menu",
@@ -3445,6 +3467,7 @@ server <- function(input, output, session) {
                 class = "d-grid gap-3",  # Bootstrap spacing for stacked layout
                 
                 actionButton(
+<<<<<<< HEAD
                   "erdb_overview",
                   label = tagList(bs_icon("house", size = 24), tags$h5("Overview")),
                   class = "w-100 btn-card"
@@ -3453,6 +3476,10 @@ server <- function(input, output, session) {
                 actionButton(
                   "erdb_basic",
                   label = tagList(bs_icon("info-circle", size = 24), tags$h5("Basic Information")),
+=======
+                  "erdb_hr",
+                  label = tagList(bs_icon("people", size = 24), tags$h5("Human Resource")),
+>>>>>>> 62057804a8f351f3959a17bad153190cdb819189
                   class = "w-100 btn-card"
                 ),
                 
@@ -6211,7 +6238,6 @@ server <- function(input, output, session) {
   erdb_selection <- reactiveVal("Overview")
   
   # --- Observe Sidebar Button Clicks ---
-  observeEvent(input$erdb_overview, { erdb_selection("Overview") })
   observeEvent(input$erdb_hr,         { erdb_selection("Human Resource") })
   observeEvent(input$erdb_basic,      { erdb_selection("Basic Info") })
   observeEvent(input$erdb_infra,      { erdb_selection("Infrastructure") })
@@ -6225,6 +6251,7 @@ server <- function(input, output, session) {
     selected <- erdb_selection()
     
     # =====================================================
+<<<<<<< HEAD
     # OVERVIEW SECTION
     # =====================================================
     if (selected == "Overview") {
@@ -6265,9 +6292,11 @@ server <- function(input, output, session) {
     }
     
     # =====================================================
+=======
+>>>>>>> 62057804a8f351f3959a17bad153190cdb819189
     # HUMAN RESOURCE SECTION
     # =====================================================
-    else if (selected == "Human Resource") {
+    if (selected == "Human Resource") {
       tagList(
         h3("Human Resource Overview"),
         
