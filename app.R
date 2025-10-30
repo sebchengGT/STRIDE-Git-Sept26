@@ -1,22 +1,3 @@
-# TEST COMMIT
-#test commit
-#TEST
-#testtt
-#test1
-#testingsept302025
-#testcommitoctober120252
-#TESTINGGGGGGGGGGGGGGGGGGGGGGGGG
-#oct 13, 2025
-#eeee
-#kleinudeeeeeeeeeeee
-#uddddd
-#updated as of oct 17,2025 4:27pm
-#t=hdhdh
-#updated as of oct 21,2025 48:55am
-#oct 21,2025 UDDDDDDDDDDDDDDD uppp
-#hehehe
-#ttestclea
-#heue
 library(tidyverse)
 library(DT)
 library(dplyr)
@@ -118,6 +99,21 @@ cloud_v3 <- read_parquet("Cloud_Consolidated_v3.parquet")
 #Data Explorer 
 ThirdLevel <- read.csv("2025-Third Level Officials DepEd-cleaned.csv", stringsAsFactors = FALSE)
 
+# dfGMIS data
+dfGMIS <- read.csv("GMIS-FillingUpPerPosition-2025.csv")
+
+# Get unique positions for the dropdown
+all_positions <- c("All Positions" = "All", 
+                   sort(unique(as.character(dfGMIS$Position))))
+
+# Calculate overall totals
+overall_totals <- dfGMIS %>%
+  summarise(
+    Total.Filled = sum(Total.Filled, na.rm = TRUE),
+    Total.Unfilled = sum(Total.Unfilled, na.rm = TRUE)
+  )
+
+# end of dfGMIS data
 
 user_base <- tibble::tibble(
   user = c("iamdeped", "depedadmin"),
@@ -127,28 +123,14 @@ user_base <- tibble::tibble(
   name = c("User One", "User Two")
 )
 
-
-
-
 SERVICE_ACCOUNT_FILE <- "service_account.json" 
 
-# Check if the file exists before attempting to authenticate
-print("Checking for service_account.json...")
-print(file.exists(SERVICE_ACCOUNT_FILE))
 
-if (file.exists(SERVICE_ACCOUNT_FILE)) {
-  library(googlesheets4)
-  gs4_auth(
-    scopes = "https://www.googleapis.com/auth/spreadsheets",
-    path = SERVICE_ACCOUNT_FILE
-  )
-  print("googlesheets4 authenticated successfully using Service Account.")
-} else {
-  warning(paste("❌ Service account key not found at:", SERVICE_ACCOUNT_FILE))
-}
-
-# Define UI for application that draws a histogram
-# --- 5. Run App (Fixed UI) ---
+# (ui_head, ui_containers, ui_loading, ui_footer)
+source("ui_parts/01_head_elements.R")
+source("ui_parts/02_page_containers.R")
+source("ui_parts/03_loading_overlay.R")
+source("ui_parts/04_footer.R")
 
 # Use bslib::page_fluid for the root UI, which is the standard bslib container
 ui <- page_fluid(
@@ -162,136 +144,19 @@ ui <- page_fluid(
                    font_scale = 0.9,
                    base_font = font_google("Alan Sans")),
   
-  # Global Head elements
-  tags$head(
-    # Custom styling for btn-warning (if litera theme overrides it)
-    tags$style(HTML("
-    .btn-warning {
-      background-color: #ffc107 !important; /* classic yellow */
-      border-color: #ffc107 !important;
-      color: #212529 !important; /* readable text */
-      font-weight: 600;
-    }
+  # --- ADD YOUR SOURCED UI PIECES ---
+  ui_head,
+  ui_containers,
+  ui_loading,
+  ui_footer
+  # Note: The 'app_header' you commented out could be another file)
 
-    .btn-warning:hover {
-      background-color: #e0a800 !important; /* darker yellow hover */
-      border-color: #d39e00 !important;
-      color: #fff !important;
-    }
-    ")),
-    
-    # External files (ensure they are in the 'www' folder)
-    includeCSS("www/style.css"),
-    includeScript("www/script.js"),
-    
-    tags$link(rel = "icon", type = "image/png", href = "deped_logo.png"),
-    
-    # Leaflet smooth marker bouncing script
-    tags$script(src = "https://unpkg.com/leaflet.smoothmarkerbouncing/leaflet.smoothmarkerbouncing.js"),
-    
-    # Viewport meta tag
-    tags$meta(name = "viewport", content = "width=device-width, initial-scale=1.0, maximum-scale=3.0")
-  ),
-  
-  # Header (always visible)
-  # shinyjs::hidden(
-  #   # --- Government-style Top Header ---
-  #   tags$div(
-  #     id = "app_header",
-  #     class = "app-header",
-  #     style = "display: flex; align-items: center; gap: 15px; justify-content: center;",
-  #     
-  #     # Left logo
-  #     tags$img(src = "logo3.png", class = "header-logo-left"),
-  #     
-  #     # Center text
-  #     tags$div(
-  #       class = "header-title",
-  #       h2("DepEd STRIDE"),
-  #       p("Strategic Inventory for Deployment Efficiency")
-  #     ),
-  #     
-  #     # Right logo
-  #     tags$img(src = "HROD LOGO1.png", class = "header-logo-right")
-  #   )
-  # ),
-  
-  
-  
-  
-  # 💡 CRITICAL FIX: The dynamic container for login/main app UI
-  uiOutput("page_ui"),
-  
-  shinyjs::hidden(
-    div(
-      id = "main_content",
-      uiOutput("STRIDE1"))),
-  
-  shinyjs::hidden(
-    div(
-      id = "mgmt_content",
-      uiOutput("STRIDE2"))),
-  
-  shinyjs::hidden(
-    div(
-      id = "data_input_content",
-      uiOutput("STRIDE_data"))),
-  
-  
-  tags$div(
-    id = "loading-overlay",
-    style = "
-    display: none;
-    position: fixed;
-    top: 0; left: 0;
-    width: 100%; height: 100%;
-    background-color: #ffffff;
-    z-index: 99999;
-    text-align: center;
-  ",
-    tags$div(
-      style = "position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-             color: black; font-size: 1.3em;",
-      tags$img(src = "LOAD.gif", height = "80px"),  # 👈 replace with your GIF or logo
-      tags$p(id = "loading-text", "Welcome to STRIDE...")
-    )
-  ),
-  
-  tags$head(
-    tags$link(
-      href = "https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap",
-      rel = "stylesheet"
-    ),
-    tags$style(HTML("
-    body, h1, h2, h3, h4, h5, h6, p, span, button {
-      font-family: 'Poppins', sans-serif !important;
-    }
-  "))
-  ),
-  tags$link(rel = "preconnect", href = "https://fonts.gstatic.com", crossorigin = "anonymous"),
-  
-  
-  
-  
-  
-  
-  
-  # Footer (always visible)
-  shinyjs::hidden(
-    tags$footer(
-      id = "app_footer",
-      class = "app-footer",
-      tags$p("© Based on GMIS (April 2025) and eBEIS (SY 2024–2025)")))
 )
 
-
-
-
-
-
+# MAIN SERVER CONTENT 
 # Define server logic required to draw a histogram
 server <- function(input, output, session) {
-  
+
   # --- Logic for Feature 1 (Drilldown) ---
   
   current_drilldown <- reactiveVal(list(level = "region", filter = NULL))
@@ -925,6 +790,177 @@ server <- function(input, output, session) {
   # (This remains the same)
   # --- Reactive Value for Drill-down State ---
   # Add 'last_clicked_source' to track which plot was clicked
+  
+  #==============================================================
+  # EDUCATION RESOURCE DASHBOARD : OVERVIEW
+  # ============================================================
+  # Store state for Plot 1
+  # Store state for Plot 1
+  # --- State Management with reactiveVal ---
+  # 1a. Prepare dfGMIS for Plot 1 (Simplified)
+  updateSelectInput(
+    session = session,
+    inputId = "position_filter",
+    choices = all_positions,
+    selected = "Teacher I"
+  )
+  
+  # ============================================================
+  # PLOT 1: OVERALL
+  # ============================================================
+  
+  # 1a. Prepare data for Plot 1
+  dfgmisplot <- reactive({
+    # <--- FIX: Use the global dfGMIS, don't read the CSV again
+    dfGMIS %>%
+      group_by(Old.Region) %>%
+      summarise(
+        Filled = sum(Total.Filled, na.rm = TRUE),
+        Unfilled = sum(Total.Unfilled, na.rm = TRUE),
+        .groups = 'drop'
+      ) %>%
+      rename(Group = Old.Region)
+  })
+  
+  # 1b. Render Plot 1
+  output$overall_GMIS <- renderPlotly({
+    # <--- FIX: Use the reactive 'dfgmisplot()' created above
+    dfgmis_plot1 <- dfgmisplot() %>%
+      pivot_longer(
+        cols = c(Filled, Unfilled),
+        names_to = "Status",
+        values_to = "Count"
+      )
+    
+    p <- plot_ly(
+      data = dfgmis_plot1,
+      y = ~Group,
+      x = ~Count,
+      color = ~Status,
+      colors = c("Filled" = "#198754", "Unfilled" = "#DC3545"),
+      type = "bar",
+      orientation = "h"
+    ) %>%
+      layout(
+        barmode = "stack",
+        yaxis = list(title = "", categoryorder = "total ascending"),
+        xaxis = list(title = "Total Positions"),
+        legend = list(title = list(text = "Status")),
+        clickmode = "none"
+      )
+    
+    p
+  })
+  
+  # 1c & 1d: Click and "Back" observers REMOVED
+
+  # 1e. Render dynamic value boxes for Plot 1 (No Change)
+  output$value_box_1_filled <- renderUI({
+    current_data <- dfgmisplot()
+    total_filled <- sum(current_data$Filled, na.rm = TRUE)
+    value_box(
+      title = "Filled (Current View)",
+      value = format(total_filled, big.mark = ","),
+      showcase = bsicons::bs_icon("person-check"),
+      theme = "bg-gradient-success-light"
+    )
+  })
+
+  output$value_box_1_unfilled <- renderUI({
+    current_data <- dfgmisplot()
+    total_unfilled <- sum(current_data$Unfilled, na.rm = TRUE)
+    value_box(
+      title = "Unfilled (Current View)",
+      value = format(total_unfilled, big.mark = ","),
+      showcase = bsicons::bs_icon("person-x"),
+      theme = "bg-gradient-danger-light"
+    )
+  })
+
+
+  # --- Plot 2: Filtered Regional Plot ---
+
+  # 2a. Prepare dfGMIS for Plot 2 (Simplified)
+  # 2a. Prepare data for Plot 2
+  data_for_plot2x <- reactive({
+    req(input$position_filter) # Good, this prevents errors on startup
+    
+    # <--- FIX: Start with the global dfGMIS
+    filtered_datax <- dfGMIS 
+    
+    # <--- FIX: Apply the filter logic correctly
+    if (input$position_filter != "All") {
+      filtered_datax <- filtered_datax %>%
+        filter(Position == input$position_filter)
+    }
+    
+    # Now, group the filtered data (which is either "All" or one position)
+    filtered_datax %>%
+      group_by(Old.Region) %>%
+      summarise(
+        Filled = sum(Total.Filled, na.rm = TRUE),
+        Unfilled = sum(Total.Unfilled, na.rm = TRUE),
+        .groups = 'drop'
+      ) %>%
+      rename(Group = Old.Region)
+  })
+  
+  # 2b. Render Plot 2 (This logic was fine, it just needed 'data_for_plot2x' to work)
+  output$filtered_GMIS <- renderPlotly({
+    dfgmis_plot1x <- data_for_plot2x() %>%
+      pivot_longer(
+        cols = c(Filled, Unfilled),
+        names_to = "Status",
+        values_to = "Count"
+      )
+    
+    q <- plot_ly(
+      data = dfgmis_plot1x,
+      y = ~Group,
+      x = ~Count,
+      color = ~Status,
+      colors = c("Filled" = "#198754", "Unfilled" = "#DC3545"),
+      type = "bar",
+      orientation = "h"
+    ) %>%
+      layout(
+        barmode = "stack",
+        yaxis = list(title = "", categoryorder = "total ascending"),
+        xaxis = list(title = "Total Positions"),
+        showlegend = FALSE,
+        clickmode = "none"
+      )
+    
+    q
+  })
+
+  # 2c, 2d, 2e: Click, "Back", and filter observers REMOVED
+
+  # 2f. Render dynamic value boxes for Plot 2 (No Change)
+  output$value_box_2_filled <- renderUI({
+    current_data <- data_for_plot2x()
+    total_filled <- sum(current_data$Filled, na.rm = TRUE)
+    value_box(
+      title = "Filled (Filtered View)",
+      value = format(total_filled, big.mark = ","),
+      showcase = bsicons::bs_icon("person-check"),
+      theme = "bg-gradient-success-light"
+    )
+  })
+
+  output$value_box_2_unfilled <- renderUI({
+    current_data <- data_for_plot2x()
+    total_unfilled <- sum(current_data$Unfilled, na.rm = TRUE)
+    value_box(
+      title = "Unfilled (Filtered View)",
+      value = format(total_unfilled, big.mark = ","),
+      showcase = bsicons::bs_icon("person-x"),
+      theme = "bg-gradient-danger-light"
+    )
+  })
+  
+  
+  
   drilldown_state <- reactiveVal(list(
     region = NULL, 
     division = NULL, 
@@ -3020,60 +3056,62 @@ server <- function(input, output, session) {
         bootswatch = "sandstone",
         font_scale = 0.9,
         base_font = font_google("Poppins")
-      ) |> bs_add_rules(
-        "
-      /* --- Make Navbar Sticky at the Top --- */
-      .bslib-navbar,
-      .navbar {
-        position: sticky !important;
-        position: -webkit-sticky !important; /* Safari */
-        top: 0px !important;                 /* Stick to the very top */
-        z-index: 4 !important;
-        background-color: #ffffff !important; /* White background */
-        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15) !important; /* Shadow */
-        padding-top: 0.5rem !important;
-        padding-bottom: 0.5rem !important;
-        border-bottom: 2px solid #dee2e6 !important; /* Add a subtle gray line */
-      }
-
-      /* --- Style the Brand/Title Area --- */
-      .navbar-brand { padding-top: 0; padding-bottom: 0; }
-      .navbar-brand span { color: #003366 !important; text-shadow: 1px 1px 1px rgba(0,0,0,0.1); }
-      .navbar-brand small { color: #495057 !important; }
-
-      /* --- Style Navigation Links --- */
-      .navbar-nav .nav-link {
-        color: #003366 !important; font-weight: 500;
-        padding-left: 1rem !important; padding-right: 1rem !important;
-        transition: color 0.2s ease, background-color 0.2s ease;
-      }
-      .navbar-nav .nav-link:hover,
-      .navbar-nav .nav-link:focus {
-        color: #0056b3 !important; background-color: rgba(0, 51, 102, 0.05); border-radius: 4px;
-      }
-
-      /* --- Style Active Navigation Link --- */
-      .navbar-nav .nav-link.active {
-        color: #D62828 !important; font-weight: 700;
-        border-bottom: 3px solid #D62828; background-color: transparent !important;
-      }
-
-      /* --- Style Dropdown Menus --- */
-      .dropdown-menu { border: none !important; box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important; border-radius: 0 0 8px 8px !important; }
-      .dropdown-item { color: #003366 !important; font-weight: 500; }
-      .dropdown-item:hover, .dropdown-item:focus { background-color: rgba(0, 51, 102, 0.08) !important; color: #0056b3 !important; }
-
-      /* --- Ensure Right Alignment of Nav Items --- */
-      .navbar-collapse { justify-content: flex-end !important; }
-      .navbar-nav { margin-left: auto; }
-
-      /* Include other specific rules if needed */
-      .nav-tabs .nav-link, .nav-pills .nav-link, .accordion-button { font-weight: bold; }
-      .sidebar-title { color: #002D62; font-weight: bold; }
-      .sidebar h4 { color: #002D62; font-weight: bold; }
-
-      " # End of CSS string
-      ), # End of bs_add_rules
+      ), 
+      
+      # |> bs_add_rules(
+      #   "
+      # /* --- Make Navbar Sticky at the Top --- */
+      # .bslib-navbar,
+      # .navbar {
+      #   position: sticky !important;
+      #   position: -webkit-sticky !important; /* Safari */
+      #   top: 0px !important;                 /* Stick to the very top */
+      #   z-index: 4 !important;
+      #   background-color: #ffffff !important; /* White background */
+      #   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15) !important; /* Shadow */
+      #   padding-top: 0.5rem !important;
+      #   padding-bottom: 0.5rem !important;
+      #   border-bottom: 2px solid #dee2e6 !important; /* Add a subtle gray line */
+      # }
+      # 
+      # /* --- Style the Brand/Title Area --- */
+      # .navbar-brand { padding-top: 0; padding-bottom: 0; }
+      # .navbar-brand span { color: #003366 !important; text-shadow: 1px 1px 1px rgba(0,0,0,0.1); }
+      # .navbar-brand small { color: #495057 !important; }
+      # 
+      # /* --- Style Navigation Links --- */
+      # .navbar-nav .nav-link {
+      #   color: #003366 !important; font-weight: 500;
+      #   padding-left: 1rem !important; padding-right: 1rem !important;
+      #   transition: color 0.2s ease, background-color 0.2s ease;
+      # }
+      # .navbar-nav .nav-link:hover,
+      # .navbar-nav .nav-link:focus {
+      #   color: #0056b3 !important; background-color: rgba(0, 51, 102, 0.05); border-radius: 4px;
+      # }
+      # 
+      # /* --- Style Active Navigation Link --- */
+      # .navbar-nav .nav-link.active {
+      #   color: #D62828 !important; font-weight: 700;
+      #   border-bottom: 3px solid #D62828; background-color: transparent !important;
+      # }
+      # 
+      # /* --- Style Dropdown Menus --- */
+      # .dropdown-menu { border: none !important; box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important; border-radius: 0 0 8px 8px !important; }
+      # .dropdown-item { color: #003366 !important; font-weight: 500; }
+      # .dropdown-item:hover, .dropdown-item:focus { background-color: rgba(0, 51, 102, 0.08) !important; color: #0056b3 !important; }
+      # 
+      # /* --- Ensure Right Alignment of Nav Items --- */
+      # .navbar-collapse { justify-content: flex-end !important; }
+      # .navbar-nav { margin-left: auto; }
+      # 
+      # /* Include other specific rules if needed */
+      # .nav-tabs .nav-link, .nav-pills .nav-link, .accordion-button { font-weight: bold; }
+      # .sidebar-title { color: #002D62; font-weight: bold; }
+      # .sidebar h4 { color: #002D62; font-weight: bold; }
+      # 
+      # " # End of CSS string
+      # ), # End of bs_add_rules
       nav_spacer(),
       
       # --- Navigation Panels and Menus ---
@@ -3177,6 +3215,11 @@ server <- function(input, output, session) {
             div(
               class = "sidebar_erdb",
               h4("Select Category"),
+              actionButton(
+                "erdb_overview",
+                label = tagList(bs_icon("house", size = 24), tags$h5("Overview")),
+                class = "w-100 btn-card"
+              ),
               actionButton("erdb_hr", label = tagList(bs_icon("people-fill", size = 24), tags$h5("Human Resource")), class = "btn-card mb-2"), # source: 187
               actionButton("erdb_school", label = tagList(bs_icon("building", size = 24), tags$h5("Basic Info")), class = "btn-card mb-2"), # source: 187
               actionButton("erdb_infra", label = tagList(bs_icon("tools", size = 24), tags$h5("Infrastructure")), class = "btn-card mb-2"), # source: 188
@@ -3185,11 +3228,11 @@ server <- function(input, output, session) {
               actionButton("erdb_ppas", label = tagList(bs_icon("clipboard-data", size = 24), tags$h5("PPAs")), class = "btn-card mb-2") # source: 188
             ), # End Sidebar Div
             # --- MAIN CONTENT Div ---
-            div(
-              id = "main_erdb_content",
-              uiOutput("dynamic_erdb_panel"), # This will render the content based on sidebar clicks
-              class = "main-content-erdb"
-            ) # End Main Content Div
+            # div(
+            #   id = "main_erdb_content",
+            #   uiOutput("dynamic_erdb_panel"), # This will render the content based on sidebar clicks
+            #   class = "main-content-erdb"
+            # ) # End Main Content Div
           ) # End Main Layout Div
         ) # End tagList for Home content
       ), # End of Home nav_panel - COMMA is correct here
@@ -3197,158 +3240,190 @@ server <- function(input, output, session) {
       nav_menu(
         title = tagList(bs_icon("speedometer"), tags$b("Dashboard")),
         value = "dashboard_menu",
+        # Assuming this is inside a larger page_navbar structure
         nav_panel(
           title = "Education Resource Dashboard",
           
-          # --- SIDEBAR + MAIN CONTENT LAYOUT ---
-          layout_columns(
-            col_widths = c(3, 9),  # Sidebar = 3 cols, Main Content = 9 cols
+          # --- SIDEBAR + MAIN CONTENT LAYOUT (using bslib::layout_sidebar) ---
+          layout_sidebar(
             
-            # --- SIDEBAR SECTION ---
-            div(
-              class = "sidebar_erdb",
+            # 1. SIDEBAR CONTENT
+            # The sidebar argument handles the first column (col_widths = 2)
+            sidebar = sidebar(
+              width = 250, # Set a fixed or proportional width for the sidebar
+              class = "sidebar_erdb", # Retain your custom class if needed
               
-              h4("Select Category", class = "text-center mb-3"),
+              tags$h4("Select Category", class = "text-center mb-3"),
               
-              # Sidebar Buttons (Cards)
+              # Stacked Buttons/Cards
               div(
-                class = "d-grid gap-3",  # Bootstrap spacing for stacked layout
+                class = "d-grid gap-3", # Bootstrap class for vertical stacking/spacing
                 
+                # Use bslib::card or actionButton; I'll stick to actionButton for your logic
+                actionButton(
+                  "erdb_overview",
+                  label = tags$div(
+                    bs_icon("house", size = 20), 
+                    tags$h5("Overview", class = "mb-0") # mb-0 helps align text
+                  ),
+                  class = "w-100 btn-card d-flex align-items-center justify-content-start" 
+                ),
+                
+                # NOTE: Repeat this pattern for all other buttons
                 actionButton(
                   "erdb_hr",
-                  label = tagList(bs_icon("people", size = 24), tags$h5("Human Resource")),
-                  class = "w-100 btn-card"
+                  label = tags$div(
+                    bs_icon("people", size = 20), 
+                    tags$h5("Human Resource", class = "mb-0")
+                  ),
+                  class = "w-100 btn-card d-flex align-items-center justify-content-start"
                 ),
                 
                 actionButton(
                   "erdb_basic",
-                  label = tagList(bs_icon("info-circle", size = 24), tags$h5("Basic Information")),
-                  class = "w-100 btn-card"
+                  label = tags$div(
+                    bs_icon("info-circle", size = 20), 
+                    tags$h5("Basic Information", class = "mb-0")
+                  ),
+                  class = "w-100 btn-card d-flex align-items-center justify-content-start"
                 ),
                 
                 actionButton(
                   "erdb_infra",
-                  label = tagList(bs_icon("building", size = 24), tags$h5("Infrastructure")),
-                  class = "w-100 btn-card"
+                  label = tags$div(
+                    bs_icon("building", size = 20), 
+                    tags$h5("Infrastructure", class = "mb-0")
+                  ),
+                  class = "w-100 btn-card d-flex align-items-center justify-content-start"
                 ),
                 
                 actionButton(
                   "erdb_fin",
-                  label = tagList(bs_icon("currency-exchange", size = 24), tags$h5("Financial")),
-                  class = "w-100 btn-card"
+                  label = tags$div(
+                    bs_icon("currency-exchange", size = 20), 
+                    tags$h5("Financial", class = "mb-0")
+                  ),
+                  class = "w-100 btn-card d-flex align-items-center justify-content-start"
                 ),
                 
                 actionButton(
                   "erdb_monitoring",
-                  label = tagList(bs_icon("bar-chart-line", size = 24), tags$h5("Monitoring")),
-                  class = "w-100 btn-card"
+                  label = tags$div(
+                    bs_icon("bar-chart-line", size = 20), 
+                    tags$h5("Monitoring", class = "mb-0")
+                  ),
+                  class = "w-100 btn-card d-flex align-items-center justify-content-start"
                 ),
                 
                 actionButton(
                   "erdb_ppas",
-                  label = tagList(bs_icon("clipboard-check", size = 24), tags$h5("PPAs")),
-                  class = "w-100 btn-card"
+                  label = tags$div(
+                    bs_icon("clipboard-check", size = 20), 
+                    tags$h5("PPAs", class = "mb-0")
+                  ),
+                  class = "w-100 btn-card d-flex align-items-center justify-content-start"
                 )
-              )
-            ),
+              ) # /div .d-grid
+            ), # /sidebar
             
-            # --- MAIN CONTENT AREA (Dynamic) ---
+            # 2. MAIN CONTENT AREA
+            # The main content area handles the second column (col_widths = 10)
             div(
-              class = "main_content_erdb",
-              uiOutput("erdb_content")  # Dynamic area that changes based on button clicks
+              class = "main_content_erdb", # Retain your custom class if needed
+              uiOutput("erdb_content")    # Dynamic area that changes based on button clicks
             )
-          )
-        ),
+          ) # /layout_sidebar
+        ), # /nav_panel
         
-        nav_panel("Plantilla Positions",  #GMIS
-                  layout_sidebar(
-                    sidebar = sidebar(
-                      width = 450,
-                      class = "bg-secondary",
-                      h6("Data Toggles:"),
-                      pickerInput(
-                        inputId = "RegionGMIS",
-                        label = "Select one or more Regions:",
-                        choices = c(
-                          "Region I" = "Region I - Ilocos",
-                          "Region II" = "Region II - Cagayan Valley",
-                          "Region III" = "Region III - Central Luzon",
-                          "Region IV-A" = "Region IVA - CALABARZON",
-                          "Region IV-B" = "Region IVB - MIMAROPA",
-                          "Region V" = "Region V - Bicol",
-                          "Region VI" = "Region VI - Western Visayas",
-                          "Region VII" = "Region VII - Central Visayas",
-                          "Region VIII" = "Region VIII - Eastern Visayas",
-                          "Region IX" = "Region IX - Zamboanga Peninsula",
-                          "Region X" = "Region X - Northern Mindanao",
-                          "Region XI" = "Region XI - Davao",
-                          "Region XII" = "Region XII - SOCCSKSARGEN",
-                          "CARAGA" = "Region XIII - CARAGA",
-                          "CAR" = "Cordillera Administrative Region (CAR)",
-                          "NCR" = "National Capital Region (NCR)"
-                        ),
-                        selected = c(
-                          "Region I" = "Region I - Ilocos",
-                          "Region II" = "Region II - Cagayan Valley",
-                          "Region III" = "Region III - Central Luzon",
-                          "Region IV-A" = "Region IVA - CALABARZON",
-                          "Region IV-B" = "Region IVB - MIMAROPA",
-                          "Region V" = "Region V - Bicol",
-                          "Region VI" = "Region VI - Western Visayas",
-                          "Region VII" = "Region VII - Central Visayas",
-                          "Region VIII" = "Region VIII - Eastern Visayas",
-                          "Region IX" = "Region IX - Zamboanga Peninsula",
-                          "Region X" = "Region X - Northern Mindanao",
-                          "Region XI" = "Region XI - Davao",
-                          "Region XII" = "Region XII - SOCCSKSARGEN",
-                          "CARAGA" = "Region XIII - CARAGA",
-                          "CAR" = "Cordillera Administrative Region (CAR)",
-                          "NCR" = "National Capital Region (NCR)"
-                        ), # You can set default selected values here
-                        multiple = TRUE, # CRITICAL CHANGE: Must be TRUE to enable Select All/Deselect All
-                        options = pickerOptions(
-                          actionsBox = TRUE, # Already correct
-                          liveSearch = TRUE,
-                          header = "Select Regions",
-                          title = "No Regions Selected",
-                          selectedTextFormat = "count > 3",
-                          dropupAuto = FALSE,
-                          dropup = FALSE
-                        ),
-                        choicesOpt = list()
-                      ),
-                      uiOutput("SDOSelectionGMIS"),
-                      # pickerInput(
-                      #   inputId = "PosCatGMIS",
-                      #   label = "Select a Position Category:",
-                      #   choices = c(
-                      #     "General Civil Servant" = "General Civil Servant",
-                      #     "Teaching Related" = "Teaching Related",
-                      #     "Allied Medical" = "Allied Medical",
-                      #     "Medical" = "Medical",
-                      #     "Teaching" = "Teaching"
-                      #   ),
-                      #   selected = c(
-                      #     "Teaching" = "Teaching"
-                      #   ),
-                      #   multiple = TRUE,
-                      #   options = pickerOptions(
-                      #     liveSearch = TRUE,
-                      #     actionsBox = TRUE, # This adds the "Select All" and "Deselect All" buttons
-                      #     title = "No Category Selected",
-                      #     header = "Select a Category"
-                      #   )
-                      # ),
-                      uiOutput("PosSelectionGMIS")),
-                    # input_task_button("GMISRun", icon_busy = fontawesome::fa_i("refresh", class = "fa-spin", "aria-hidden" = "true"), strong("Show Selection"), class = "btn-danger")),
-                    layout_columns(
-                      card(
-                        card_header(strong("GMIS Data")),
-                        plotlyOutput("GMISTable")),
-                      card(
-                        card_header(strong("GMIS Data")),
-                        dataTableOutput("GMISTable1")),
-                      col_widths = c(12,12)))), # End of Plantilla nav_panel - COMMA is correct
+        # nav_panel("Plantilla Positions",  #GMIS
+        #           layout_sidebar(
+        #             sidebar = sidebar(
+        #               width = 450,
+        #               class = "bg-secondary",
+        #               h6("Data Toggles:"),
+        #               pickerInput(
+        #                 inputId = "RegionGMIS",
+        #                 label = "Select one or more Regions:",
+        #                 choices = c(
+        #                   "Region I" = "Region I - Ilocos",
+        #                   "Region II" = "Region II - Cagayan Valley",
+        #                   "Region III" = "Region III - Central Luzon",
+        #                   "Region IV-A" = "Region IVA - CALABARZON",
+        #                   "Region IV-B" = "Region IVB - MIMAROPA",
+        #                   "Region V" = "Region V - Bicol",
+        #                   "Region VI" = "Region VI - Western Visayas",
+        #                   "Region VII" = "Region VII - Central Visayas",
+        #                   "Region VIII" = "Region VIII - Eastern Visayas",
+        #                   "Region IX" = "Region IX - Zamboanga Peninsula",
+        #                   "Region X" = "Region X - Northern Mindanao",
+        #                   "Region XI" = "Region XI - Davao",
+        #                   "Region XII" = "Region XII - SOCCSKSARGEN",
+        #                   "CARAGA" = "Region XIII - CARAGA",
+        #                   "CAR" = "Cordillera Administrative Region (CAR)",
+        #                   "NCR" = "National Capital Region (NCR)"
+        #                 ),
+        #                 selected = c(
+        #                   "Region I" = "Region I - Ilocos",
+        #                   "Region II" = "Region II - Cagayan Valley",
+        #                   "Region III" = "Region III - Central Luzon",
+        #                   "Region IV-A" = "Region IVA - CALABARZON",
+        #                   "Region IV-B" = "Region IVB - MIMAROPA",
+        #                   "Region V" = "Region V - Bicol",
+        #                   "Region VI" = "Region VI - Western Visayas",
+        #                   "Region VII" = "Region VII - Central Visayas",
+        #                   "Region VIII" = "Region VIII - Eastern Visayas",
+        #                   "Region IX" = "Region IX - Zamboanga Peninsula",
+        #                   "Region X" = "Region X - Northern Mindanao",
+        #                   "Region XI" = "Region XI - Davao",
+        #                   "Region XII" = "Region XII - SOCCSKSARGEN",
+        #                   "CARAGA" = "Region XIII - CARAGA",
+        #                   "CAR" = "Cordillera Administrative Region (CAR)",
+        #                   "NCR" = "National Capital Region (NCR)"
+        #                 ), # You can set default selected values here
+        #                 multiple = TRUE, # CRITICAL CHANGE: Must be TRUE to enable Select All/Deselect All
+        #                 options = pickerOptions(
+        #                   actionsBox = TRUE, # Already correct
+        #                   liveSearch = TRUE,
+        #                   header = "Select Regions",
+        #                   title = "No Regions Selected",
+        #                   selectedTextFormat = "count > 3",
+        #                   dropupAuto = FALSE,
+        #                   dropup = FALSE
+        #                 ),
+        #                 choicesOpt = list()
+        #               ),
+        #               uiOutput("SDOSelectionGMIS"),
+        #               # pickerInput(
+        #               #   inputId = "PosCatGMIS",
+        #               #   label = "Select a Position Category:",
+        #               #   choices = c(
+        #               #     "General Civil Servant" = "General Civil Servant",
+        #               #     "Teaching Related" = "Teaching Related",
+        #               #     "Allied Medical" = "Allied Medical",
+        #               #     "Medical" = "Medical",
+        #               #     "Teaching" = "Teaching"
+        #               #   ),
+        #               #   selected = c(
+        #               #     "Teaching" = "Teaching"
+        #               #   ),
+        #               #   multiple = TRUE,
+        #               #   options = pickerOptions(
+        #               #     liveSearch = TRUE,
+        #               #     actionsBox = TRUE, # This adds the "Select All" and "Deselect All" buttons
+        #               #     title = "No Category Selected",
+        #               #     header = "Select a Category"
+        #               #   )
+        #               # ),
+        #               uiOutput("PosSelectionGMIS")),
+        #             # input_task_button("GMISRun", icon_busy = fontawesome::fa_i("refresh", class = "fa-spin", "aria-hidden" = "true"), strong("Show Selection"), class = "btn-danger")),
+        #             layout_columns(
+        #               card(
+        #                 card_header(strong("GMIS Data")),
+        #                 plotlyOutput("GMISTable")),
+        #               card(
+        #                 card_header(strong("GMIS Data")),
+        #                 dataTableOutput("GMISTable1")),
+        #               col_widths = c(12,12)))), # End of Plantilla nav_panel - COMMA is correct
         nav_panel(
           title = "Infrastructure and Education Facilities",
           layout_sidebar(
@@ -5945,10 +6020,11 @@ server <- function(input, output, session) {
   # 
   # --- EDUCATION RESOURCE DASHBOARD SERVER ---
   
-  # Track which category is selected
-  erdb_selection <- reactiveVal("education resource dashboard")
+  # line 2593
+  erdb_selection <- reactiveVal("Overview")
   
   # --- Observe Sidebar Button Clicks ---
+  observeEvent(input$erdb_overview, { erdb_selection("Overview") })
   observeEvent(input$erdb_hr,         { erdb_selection("Human Resource") })
   observeEvent(input$erdb_basic,      { erdb_selection("Basic Info") })
   observeEvent(input$erdb_infra,      { erdb_selection("Infrastructure") })
@@ -5961,10 +6037,162 @@ server <- function(input, output, session) {
   output$erdb_content <- renderUI({
     selected <- erdb_selection()
     
+    if (selected == "Overview") {
+      # This code assumes it is the content being returned by your reactive
+      # server function to fill uiOutput("erdb_content") when the "Overview" button is clicked.
+      
+      # The overall structure is just a single layout_columns()
+      layout_columns(
+        # Set the column widths for all 11 items (8 value boxes + hr + 2 main cards)
+        col_widths = c(
+          # Row 1 (Value Boxes 1-4: 4 items, 3 columns each)
+          3, 3, 3, 3,
+          # Row 2 (Value Boxes 5-8: 4 items, 3 columns each)
+          3, 3, 3, 3,
+          # Row 3 (Separator: 1 item, 12 columns wide)
+          # 12,
+          # Row 4 (Plots and Filter: 2 items, 9 columns total)
+          6, 6 
+          # Note: I'll use 6, 3, 3 to cleanly separate the large plot, the small plot, and the filter UI 
+          # The structure is flexible, but 6+3=9 is what you had, so I'll structure the last row to 6, 6
+        ),
+        
+        # --- Row 1: Top 4 Value Boxes (Items 1-4) ---
+        
+        # 1. Total Schools (public & private)
+        card(
+          style = "background-color: #FFFFFF;",
+          card_header("Total Schools (Public + Private)", class = "text-center"),
+          card_body(
+            tags$h3("58,409", style = "text-align: center; font-weight: 700; color: #2c3895;")
+          )
+        ),
+        
+        # 2. Central Office
+        card(
+          style = "background-color: #FFFFFF;",
+          card_header("Central Office", class = "text-center"),
+          card_body(
+            tags$h3("1", style = "text-align: center; font-weight: 700; color: #2c3895;")
+          )
+        ),
+        
+        # 3. Regional Offices
+        card(
+          style = "background-color: #FFFFFF;",
+          card_header("Regional Offices", class = "text-center"),
+          card_body(
+            tags$h3("16", style = "text-align: center; font-weight: 700; color: #2c3895;")
+          )
+        ),
+        
+        # 4. Schools Division Offices
+        card(
+          style = "background-color: #FFFFFF;",
+          card_header("Schools Division Offices", class = "text-center"),
+          card_body(
+            tags$h3("218", style = "text-align: center; font-weight: 700; color: #2c3895;")
+          )
+        ),
+        
+        # --- Row 2: Bottom 4 Value Boxes (Items 5-8) ---
+        
+        # 5. Public Schools
+        card(
+          style = "background-color: #FFFFFF;",
+          card_header("Public Schools", class = "text-center"),
+          card_body(
+            tags$h3("45,785", style = "text-align: center; font-weight: 700; color: #2c3895;")
+          )
+        ),
+        
+        # 6. Private Schools
+        card(
+          style = "background-color: #FFFFFF;",
+          card_header("Private Schools", class = "text-center"),
+          card_body(
+            tags$h3("12,624", style = "text-align: center; font-weight: 700; color: #2c3895;")
+          )
+        ),
+        
+        # 7. SUCs/LUCs
+        card(
+          style = "background-color: #FFFFFF;",
+          card_header("SUCs / LUCs", class = "text-center"),
+          card_body(
+            tags$h3("220", style = "text-align: center; font-weight: 700; color: #2c3895;")
+          )
+        ),
+        
+        # 8. Plantilla Positions
+        card(
+          style = "background-color: #FFFFFF;",
+          card_header("Plantilla Positions", class = "text-center"),
+          card_body(
+            tags$h3("1,030,897", style = "text-align: center; font-weight: 700; color: #2c3895;")
+          )
+        ),
+        
+        # --- Row 3: Separator (Item 9) ---
+        # The hr() will occupy 12 columns, forcing the next item to the next row
+        card(
+          selectInput(
+            "position_filter",
+            "Select Position:",
+            choices = NULL
+          )
+        ),
+        
+        # --- Row 4: Main Plots (Items 10-12) ---
+        
+        # 10. Main Plot (6 columns)
+        card(
+          full_screen = TRUE,
+          card_header(
+            "Positions by Region (All Positions)"
+          ),
+          card_body(
+            plotlyOutput("overall_GMIS")
+          )
+        ),
+        
+        # 11. Filter Input Card + Filtered Plot (The remaining 6 columns of the row)
+        card(
+          full_screen = TRUE,
+          card_header(
+            "Filtered by Position"
+          ),
+          card_body(
+            # Assuming 'all_positions' is defined globally for the UI (as discussed before)
+            plotlyOutput("filtered_GMIS")
+          )
+        ),
+        
+        # 12. Overall Totals Card (Commented out in your original, but added for completeness)
+        # This card would also occupy 6 columns to be next to the Filter/Plot card, but since
+        # your original only showed 6 and 3, I'm adjusting to make the full 12 columns used
+        # on that final row. 
+        # Since you had `width=3` for the filter card and `width=6` for the main plot, 
+        # I'll put the Filter Input and Filtered Plot *together* in a 6-column card 
+        # to make the row clean (6 + 6 = 12 columns).
+        
+        # If you want the two plots to be side-by-side:
+        # Plot 1: 6 columns
+        # Filter Card (Filter + Plot 2): 6 columns
+        # This matches the code above.
+        
+        # If you wanted the Totals Card instead of combining the filter/plot:
+        # card(
+        #   card_header("Overall Totals"),
+        #   ...
+        # ),
+        
+        # This ensures only one `layout_columns` is used for the entire dynamic panel content.
+      )} # /layout_columns
     # =====================================================
     # HUMAN RESOURCE SECTION
     # =====================================================
-    if (selected == "Human Resource") {
+    else if (selected == "Human Resource") {
       tagList(
         h3("Human Resource Overview"),
         
@@ -6485,7 +6713,8 @@ server <- function(input, output, session) {
       )
     }
   })
-  
+
+
   
   # Reactive expression to generate the main panel content
   output$dynamic_resource_panel <- renderUI({
@@ -7057,6 +7286,97 @@ server <- function(input, output, session) {
       )
     }
   })
+  
+  #EDUCATION RESOURCE DASHBOARD OVERVIEW
+  # --- Overview Hard-Coded Value Boxes ---
+  
+  # # 1. Central Office
+  # output$central_office_erdb <- renderUI({
+  #   bslib::card(
+  #     style = "background-color: #FFFFFF;",
+  #     bslib::card_header("Central Office", class = "text-center"),
+  #     bslib::card_body(
+  #       tags$h3("1", style = "text-align: center; font-weight: 700; color: #2c3895;")
+  #     )
+  #   )
+  # })
+  # 
+  # # 2. Regional Offices
+  # output$regional_offices_erdb <- renderUI({
+  #   bslib::card(
+  #     style = "background-color: #FFFFFF;",
+  #     bslib::card_header("Regional Offices", class = "text-center"),
+  #     bslib::card_body(
+  #       tags$h3("16", style = "text-align: center; font-weight: 700; color: #2c3895;")
+  #     )
+  #   )
+  # })
+  # 
+  # # 3. Schools Division Offices
+  # output$sdo_erdb <- renderUI({
+  #   bslib::card(
+  #     style = "background-color: #FFFFFF;",
+  #     bslib::card_header("Schools Division Offices", class = "text-center"),
+  #     bslib::card_body(
+  #       tags$h3("218", style = "text-align: center; font-weight: 700; color: #2c3895;")
+  #     )
+  #   )
+  # })
+  # 
+  # # 4. Public Schools
+  # output$public_schools_erdb <- renderUI({
+  #   bslib::card(
+  #     style = "background-color: #FFFFFF;",
+  #     bslib::card_header("Public Schools", class = "text-center"),
+  #     bslib::card_body(
+  #       tags$h3("45,785", style = "text-align: center; font-weight: 700; color: #2c3895;")
+  #     )
+  #   )
+  # })
+  # 
+  # # 5. Private Schools
+  # output$private_schools_erdb <- renderUI({
+  #   bslib::card(
+  #     style = "background-color: #FFFFFF;",
+  #     bslib::card_header("Private Schools", class = "text-center"),
+  #     bslib::card_body(
+  #       tags$h3("12,624", style = "text-align: center; font-weight: 700; color: #2c3895;")
+  #     )
+  #   )
+  # })
+  # 
+  # # 6. SUCs/LUCs
+  # output$suc_luc_erdb <- renderUI({
+  #   bslib::card(
+  #     style = "background-color: #FFFFFF;",
+  #     bslib::card_header("SUCs / LUCs", class = "text-center"),
+  #     bslib::card_body(
+  #       tags$h3("220", style = "text-align: center; font-weight: 700; color: #2c3895;")
+  #     )
+  #   )
+  # })
+  # 
+  # # 7. Plantilla Positions
+  # output$plantilla_erdb <- renderUI({
+  #   bslib::card(
+  #     style = "background-color: #FFFFFF;",
+  #     bslib::card_header("Plantilla Positions", class = "text-center"),
+  #     bslib::card_body(
+  #       tags$h3("1,030,897", style = "text-align: center; font-weight: 700; color: #2c3895;")
+  #     )
+  #   )
+  # })
+  # 
+  # # 8. Total Schools (public & private)
+  # output$total_schools_erdb1 <- renderUI({
+  #   bslib::card(
+  #     style = "background-color: #FFFFFF;",
+  #     bslib::card_header("Total Schools (Public + Private)", class = "text-center"),
+  #     bslib::card_body(
+  #       tags$h3("58,409", style = "text-align: center; font-weight: 700; color: #2c3895;")
+  #     )
+  #   )
+  # })
   
   #For Division:
   
