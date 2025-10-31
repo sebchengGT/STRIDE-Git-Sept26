@@ -10,7 +10,7 @@ body {
 }
 
 * {
-  font-family: 'Poppins', sans-serif !important;
+  font-family: 'Poppins', sans-serif;
 }
 
 html {
@@ -405,7 +405,11 @@ body.dashboard-bg::before {
   position: -webkit-sticky !important; position: sticky !important;
   top: 60px; /* Adjust this based on your FINAL navbar height */
   align-self: flex-start;
-  max-height: calc(100vh - 60px); /* Adjust based on top offset */
+
+  /* --- THIS IS THE FIX --- */
+  /* Change 'max-height' to 'height' */
+  height: calc(100vh - 60px); /* Adjust based on top offset */
+  
   overflow-y: auto !important;
   z-index: 10; /* Below navbar */
   scrollbar-width: thin; scrollbar-color: #002D62 #f9fafc;
