@@ -126,6 +126,11 @@ overall_totals <- dfGMIS %>%
 
 # end of dfGMIS data
 
+metric_choices <- c("Total Teachers" = "TotalTeachers",
+                    "Total Classrooms" = "TotalClassrooms",
+                    "Curricular Offering" = "Modified.COC",
+                    "Size Typology" = "School.Size.Typology")
+
 user_base <- tibble::tibble(
   user = c("iamdeped", "depedadmin"),
   password = c("deped123", "stride123"), # In a real app, use hashed passwords
