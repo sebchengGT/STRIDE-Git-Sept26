@@ -198,6 +198,8 @@ server <- function(input, output, session) {
   source("server_parts/26_rows_selected_for_datatables.R", local = TRUE)
   source("server_parts/27_cloud_graphs_and_tables.R", local = TRUE)
   source("server_parts/28_login_page.R", local = TRUE)
+  source("server_parts/31_build_your_dashboard.R", local = TRUE)
+  
   
   # COMMENTED PARTS
   source("server_parts/94_resource_mapping_graphs.R", local = TRUE)

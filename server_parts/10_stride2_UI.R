@@ -394,6 +394,28 @@ output$STRIDE2 <- renderUI({
       #                 dataTableOutput("GMISTable1")),
       #               col_widths = c(12,12)))), # End of Plantilla nav_panel - COMMA is correct
       # --- PLANTILLA POSITIONS PANEL ---
+      nav_panel("Build your Dashboard",
+        layout_sidebar(
+          sidebar = sidebar(
+            title = "Dashboard Controls",
+            uiOutput("back_button_ui"),
+            pickerInput(
+              inputId = "selected_metrics",
+              label = "Select metrics to display:",
+              choices = metric_choices,
+              selected = "TotalEnrolment",
+              multiple = TRUE, # Allow multiple selections
+              options = list(
+                `actions-box` = TRUE,  # Adds "Select All" and "Deselect All"
+                `dropup-auto` = FALSE, # Forces it to always drop down
+                `live-search` = TRUE,   # <-- Adds the search bar
+                `live-search-style` = 'contains'
+              )
+            )
+          ),
+          uiOutput("dashboard_grid")
+        )
+      ),
       nav_panel(
         "Plantilla Positions",
         layout_sidebar(
